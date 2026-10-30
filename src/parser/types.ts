@@ -8,6 +8,42 @@ export interface JsonObject {
 }
 export type JsonArray = JsonValue[];
 
+/** Primitive values in a participant's declared global store. Types are inferred from initialValue. */
+export type GlobalStoreValue = string | number | boolean;
+export type GlobalStoreValues = Record<string, GlobalStoreValue>;
+export interface GlobalVariableDeclaration extends Pick<ShortTextResponse, 'minCharLength' | 'maxCharLength' | 'minWordLength' | 'maxWordLength' | 'textValidation' | 'builtInValidation'> {
+  initialValue: GlobalStoreValue;
+  /** Inclusive bound, valid only for a numeric initialValue. */
+  min?: number;
+  /** Inclusive bound, valid only for a numeric initialValue. */
+  max?: number;
+  strictMin?: number;
+  strictMax?: number;
+}
+export type GlobalVariableDeclarations = Record<string, GlobalVariableDeclaration | GlobalStoreValue>;
+export type GlobalStoreOperation = 'set' | 'add' | 'subtract' | 'multiply' | 'divide' | 'append' | 'prepend' | 'and' | 'or' | 'toggle';
+/** Transform the operand before applying the action; reverse operations use value op operand. */
+export type GlobalStoreOperandTransform = {
+  operation: 'add' | 'subtract' | 'multiply' | 'divide' | 'subtractFrom' | 'divideInto';
+  value: number;
+} | { operation: 'not' };
+export type GlobalStoreOperand = ({
+  /** Defaults to the current response's submitted answer. */
+  source?: 'answer';
+  value?: never;
+} | {
+  source: 'literal';
+  value: GlobalStoreValue;
+}) & { transforms?: GlobalStoreOperandTransform[] };
+export interface GlobalStoreAction {
+  variable: string;
+  operation: GlobalStoreOperation;
+  /** Omit to use the current answer directly. Not applicable to toggle. */
+  operand?: GlobalStoreOperand;
+}
+/** A numeric literal or an exact reference to a declared numeric store value. */
+export type GlobalStoreNumber = number | `{{globalVariables.${string}}}`;
+
 /**
  * The GlobalConfig is used to generate the list of available studies in the UI.
  * This list is displayed on the landing page when running the app.
@@ -298,11 +334,11 @@ export interface UIConfig {
   previousButtonText?: string;
   /** Whether to redirect a timed out participant to a rejection page. This only works for components where the `nextButtonDisableTime` field is set. */
   timeoutReject?: boolean;
-  /** Controls whether the component should provide feedback to the participant, such as in a training trial. Defaults to false. */
+  /** Enable answer checking and feedback when a component omits provideFeedback and has no answer-level feedback. Defaults to false. */
   provideFeedback?: boolean;
-  /** The number of training attempts allowed for the component. The next button will be disabled until either the correct answer is given or the number of attempts is reached. When the number of attempts is reached, if the answer is incorrect still, the correct value will be shown to the participant. The default value is 2. Providing a value of -1 will allow infinite attempts and the participant must enter the correct answer to continue, and reVISit will not show the correct answer to the user.  */
+  /** The number of answer-checking attempts allowed for the component. Defaults to 2. Check Answer grades responses before Next can continue. With hideCheckAnswerButton, Next performs the check first. Incorrect answers block continuing unless allowFailedTraining is true and attempts are exhausted. The final failed attempt reveals accepted answers. Set -1 for unlimited attempts, requiring a correct answer and hiding the reveal. */
   trainingAttempts?: number;
-  /** Controls whether the component should allow failed training. Defaults to true. */
+  /** Allow continuing with incorrect answers after attempts are exhausted. Defaults to true. */
   allowFailedTraining?: boolean;
   /** Whether or not we want to utilize think-aloud features. If true, will record audio on all components unless deactivated on individual components. Defaults to false. */
   recordAudio?: boolean;
@@ -427,8 +463,9 @@ export type ValueCondition =
  * List equality comparisons ignore selection order.
  * Unanswered or conditionally hidden controlling responses never satisfy a condition.
  */
-export type ResponseVisibilityCondition = {
+export type ResponseVisibilityCondition = ({ globalVariable: string; responseId?: never } & ValueCondition) | {
   responseId: string;
+  globalVariable?: never;
 } & (
   | ValueCondition
   | {
@@ -443,8 +480,12 @@ export type ResponseVisibilityCondition = {
  * Therefore, all responses must include these properties.
  */
 export interface BaseResponse {
+  /** Apply these actions to the final submitted answer, in declared order. */
+  onSubmit?: GlobalStoreAction[];
   /** The id of the response. This is used to identify the response in the data file. */
   id: string;
+  /** Path under `src/public/` to response code. Custom responses require a default React component. Any response code module may export `validate(value, values, response)` to return an error message, a boolean validity result, or null for valid input. It may separately export `score(value, values, response, expected?)` to return a boolean or a score from 0 to 1; null uses ordinary correct-answer matching. `expected` is the configured correct answer when correctness is checked. */
+  path?: string;
   /** The prompt that is displayed to the participant. You can use markdown here to render images, links, etc. */
   prompt: string;
   /** The secondary text that is displayed to the participant under the prompt. This does not accept markdown. */
@@ -502,13 +543,13 @@ export interface NumericalResponse extends BaseResponse {
   /** The default value of the response. Specify a numeric value such as `25` or `3.14`. */
   default?: number;
   /** The minimum value that is accepted in the input. */
-  min?: number;
+  min?: GlobalStoreNumber;
   /** The maximum value that is accepted in the input. */
-  max?: number;
+  max?: GlobalStoreNumber;
   /** Only values above this minimum value are accepted in the input. */
-  strictMin?: number;
+  strictMin?: GlobalStoreNumber;
   /** Only values below this maximum value are accepted in the input. */
-  strictMax?: number;
+  strictMax?: GlobalStoreNumber;
 }
 
 /** The validation operations available for short and long text responses. */
@@ -1248,10 +1289,22 @@ export interface DividerResponse extends Omit<BaseResponse, 'prompt' | 'infoText
 
 export type Response = NumericalResponse | DateResponse | TimeResponse | ShortTextResponse | LongTextResponse | LikertResponse | DropdownResponse | SliderResponse | RadioResponse | CheckboxResponse | RankingResponse | ReactiveResponse | CustomResponse | MatrixResponse | ButtonsResponse | TextOnlyResponse | DividerResponse;
 
+/** Custom training messages. Arrays select a message for each answer-checking attempt (first entry for attempt 1), repeating the last entry for later attempts. Tokens: {attemptsUsed} and {attemptsLeft}. */
+export interface ResponseFeedback {
+  /** Message when this response is correct. */
+  correctText?: string | string[];
+  /** Message when this response is incorrect. Also used after the final attempt when exhaustedText is absent. */
+  incorrectText?: string | string[];
+  /** Message when this response is incorrect and all attempts have been used. */
+  exhaustedText?: string | string[];
+  /** Progressive hints shown alongside incorrect feedback while attempts remain. One per trial-wide answer-checking attempt, repeating the final hint for later attempts. */
+  hints?: string[];
+}
+
 /**
  * The Answer interface is used to define the properties of an answer. Answers are used to define the correct answer for a task. These are generally used in training tasks or if skip logic is required based on the answer.
  *
- * Answers are used to defined correct answers for a task. These are generally used in training tasks or if skip logic is required based on the answer. The answer field is used to define the correct answer to the question. The acceptableLow and acceptableHigh fields are used to define a range of acceptable answers (these are currently only used for training). For example, if the correct answer is 5, and the acceptableLow is 4 and the acceptableHigh is 6, then any answer between 4 and 6 will be considered correct.
+ * Answers are used to defined correct answers for a task. These are generally used in training tasks or if skip logic is required based on the answer. The answer field is used to define the correct answer to the question. The acceptableLow and acceptableHigh fields are used to define a range of acceptable answers (inclusive, also used for skip logic and analysis). For example, if the correct answer is 5, and the acceptableLow is 4 and the acceptableHigh is 6, then any answer between 4 and 6 will be considered correct.
  *
  * Here's an example of how to use the Answer interface to define the correct answer to a question:
  *
@@ -1279,13 +1332,22 @@ export type Response = NumericalResponse | DateResponse | TimeResponse | ShortTe
 export interface Answer {
   /** The id of the answer. This is used to identify the answer in the data file. */
   id: string;
-  /** The correct answer to the question. */
+  /** The exact or preferred answer. Optional when acceptableAnswers or a numeric bound defines accepted answers. */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  answer: any;
+  answer?: any;
   /** The acceptable low value for the answer. This is used to define a range of acceptable answers. */
   acceptableLow?: number;
   /** The acceptable high value for the answer. This is used to define a range of acceptable answers. */
   acceptableHigh?: number;
+  /** Minimum score from 0 to 1 required for this answer to be considered correct. Defaults to 1. @minimum 0 @maximum 1 */
+  correctnessThreshold?: number;
+  /** Accepted complete answers, usable on their own or in addition to answer. Each entry is a complete value, such as a checkbox selection array or a ranking value-to-position object. */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  acceptableAnswers?: any[];
+  /** Whether textual answers must match letter case. Defaults to true. */
+  caseSensitive?: boolean;
+  /** Customize correct and incorrect feedback and hints for this response. */
+  feedback?: ResponseFeedback;
 }
 
 /**
@@ -1347,11 +1409,13 @@ export interface BaseIndividualComponent {
   previousButton?: boolean;
   /** The text that is displayed on the previous button. If present, will override the previous button text setting in the uiConfig. */
   previousButtonText?: string;
-  /** Controls whether the component should provide feedback to the participant, such as in a training trial. If present, will override the provide feedback setting in the uiConfig. */
+  /** Enable answer checking and feedback. Explicit false disables it even with answer-level feedback. When omitted, answer-level feedback enables it before falling back to uiConfig.provideFeedback. */
   provideFeedback?: boolean;
+  /** Hide the Check Answer button and grade answers on Next instead. Defaults to false. Feedback must be enabled by provideFeedback or answer-level feedback. */
+  hideCheckAnswerButton?: boolean;
   /** The number of training attempts allowed for the component. If present, will override the training attempts setting in the uiConfig. */
   trainingAttempts?: number;
-  /** Controls whether the component should allow failed training. If present, will override the allow failed training setting in the uiConfig. */
+  /** Allow continuing with incorrect answers after attempts are exhausted. Overrides uiConfig.allowFailedTraining. Defaults to true. */
   allowFailedTraining?: boolean;
   /** Whether or not we want to utilize think-aloud features. If present, will override the record audio setting in the uiConfig. */
   recordAudio?: boolean;
@@ -1869,7 +1933,7 @@ export interface IndividualComponentAllResponsesCondition {
 
 /** The ComponentBlockCondition interface is used to define a SkipCondition based on the number of correct or incorrect components in a block. All answers on all components in the block are checked.
  *
- * Answers are checked against the correct answers defined in the IndividualComponent's [CorrectAnswer](../Answer). If no correct answers are defined, the component is considered correct by default.
+ * Answers are checked against the correct answers defined in the IndividualComponent's {@link Answer}. If no correct answers are defined, the component is considered correct by default.
  *
  * You might use this if a participant answers two questions in a block incorrectly. Here's an example of how to use the ComponentBlockCondition:
  *
@@ -1903,7 +1967,7 @@ export interface ComponentBlockCondition {
   to: string;
 }
 
-/** The RepeatedComponentBlockCondition interface is used to define a SkipCondition based on the number of correct or incorrect repeated components. You might use this if you need to check if an attention check was failed multiple times. This is similar to the [ComponentBlockCondition](../ComponentBlockCondition), but it only checks a specific repeated component.
+/** The RepeatedComponentBlockCondition interface is used to define a SkipCondition based on the number of correct or incorrect repeated components. You might use this if you need to check if an attention check was failed multiple times. This is similar to {@link ComponentBlockCondition}, but it only checks a specific repeated component.
  *
  * Here's an example of how to use the RepeatedComponentBlockCondition:
  *
@@ -1946,7 +2010,9 @@ export interface RepeatedComponentBlockCondition {
  *
  * Please see the interface definitions for more specific information on the different types of skip conditions.
 */
-export type SkipConditions = (IndividualComponentSingleResponseCondition | IndividualComponentAllResponsesCondition | ComponentBlockCondition | RepeatedComponentBlockCondition)[];
+export type GlobalVariableCondition = { check: 'globalVariable'; variable: string; to: string } & ValueCondition;
+
+export type SkipConditions = (GlobalVariableCondition | IndividualComponentSingleResponseCondition | IndividualComponentAllResponsesCondition | ComponentBlockCondition | RepeatedComponentBlockCondition)[];
 
 /**
  * The DynamicBlock interface is used to define a block where displayed components are controlled by a function. This is useful when you want to generate the sequence based on answers to previous questions or other factors.
@@ -2080,9 +2146,9 @@ export interface DynamicBlock {
  * ]
  * ```
  *
- * The interruptions property specifies an array of interruptions. These can be used for breaks or attention checks. Interruptions can be deterministic or random. Please see [InterruptionBlock](../../type-aliases/InterruptionBlock) for more specific information.
+ * The interruptions property specifies an array of interruptions. These can be used for breaks or attention checks. Interruptions can be deterministic or random. Please see {@link InterruptionBlock} for more specific information.
  *
- * The skip property is used to define skip conditions. This is used to skip to a different component or block based on the response to a component or the number of correct or incorrect responses in a block. Please see [SkipConditions](../../type-aliases/SkipConditions) for more specific information.
+ * The skip property is used to define skip conditions. This is used to skip to a different component or block based on the response to a component or the number of correct or incorrect responses in a block. Please see {@link SkipConditions} for more specific information.
 */
 export type ComponentOrder = 'random' | 'latinSquare' | 'fixed';
 
@@ -2134,19 +2200,22 @@ export type FactorAction = 'cross' | 'zip' | 'concat' | 'keep' | 'remove' | 'sam
 /** A named factor reference or another inline factor expression. */
 export type FactorOption = string | FactorExpression;
 
-interface FactorCombinationExpression {
+/** Combine factors with a Cartesian product (`cross`) or pair corresponding levels (`zip`). */
+export interface FactorCombinationExpression {
   action: 'cross' | 'zip';
   factors: FactorOption[];
   /** Optional output parameter names, one for each input factor. */
   as?: string[];
 }
 
-interface FactorConcatExpression {
+/** Append the conditions from each input factor in order. */
+export interface FactorConcatExpression {
   action: 'concat';
   factors: FactorOption[];
 }
 
-interface FactorSampleExpression {
+/** Select random conditions from the input factors for each participant. */
+export interface FactorSampleExpression {
   action: 'sample';
   factors: FactorOption[];
   /** Whether selected conditions may repeat. */
@@ -2159,7 +2228,8 @@ interface FactorSampleExpression {
   numSamples: number;
 }
 
-interface FactorRepeatExpression {
+/** Repeat the concatenated input conditions a fixed number of times. */
+export interface FactorRepeatExpression {
   action: 'repeat';
   factors: FactorOption[];
   /**
@@ -2170,7 +2240,8 @@ interface FactorRepeatExpression {
   numRepeats: number;
 }
 
-interface FactorKeepRemoveExpressionBase {
+/** Select conditions either by matching parameter values or by matching complete items. */
+export interface FactorKeepRemoveExpressionBase {
   /** Named factor or expression whose conditions are selected. */
   factor: FactorOption;
   /** Parameter values used to select matching conditions. */
@@ -2179,11 +2250,13 @@ interface FactorKeepRemoveExpressionBase {
   items?: FactorObject[] | FactorOption;
 }
 
-interface FactorKeepExpression extends FactorKeepRemoveExpressionBase {
+/** Retain the selected conditions from a factor. */
+export interface FactorKeepExpression extends FactorKeepRemoveExpressionBase {
   action: 'keep';
 }
 
-interface FactorRemoveExpression extends FactorKeepRemoveExpressionBase {
+/** Exclude the selected conditions from a factor. */
+export interface FactorRemoveExpression extends FactorKeepRemoveExpressionBase {
   action: 'remove';
 }
 
@@ -2195,14 +2268,16 @@ export type FactorExpression = FactorCombinationExpression
   | FactorSampleExpression
   | FactorRepeatExpression;
 
+/** A named factor definition: explicit levels, ordered levels, or an expression over other factors. */
 export type Factor = FactorValue[] | OrderedFactorValues | FactorExpression;
 
+/** Materialize components for each condition selected from a factor. */
 export interface FactorBlock {
   type: 'factor';
   id: string;
   /** Named factor or inline factor expression to materialize at this sequence location. */
   factor: FactorOption;
-  /** One or more base components materialized for every factor condition. */
+  /** One or more base components materialized for every factor condition. Names may include factor parameter templates. */
   components: string | string[];
   order?: ComponentOrder;
   interruptions?: InterruptionBlock[];
@@ -2285,6 +2360,8 @@ export type BaseComponents = Record<string, Partial<IndividualComponent>>;
  * The `$schema` line is used to verify the schema. If you're using VSCode (or other similar IDEs), including this line will allow for autocomplete and helpful suggestions when writing the study configuration.
  */
 export interface StudyConfig {
+  /** Participant-wide values committed with accepted trial submissions. */
+  globalVariables?: GlobalVariableDeclarations;
   /** A required json schema property. This should point to the github link for the version of the schema you would like. The `$schema` line is used to verify the schema. If you're using VSCode (or other similar IDEs), including this line will allow for autocomplete and helpful suggestions when writing the study configuration. See examples for more information */
   $schema: string;
   /** The metadata for the study. This is used to identify the study and version in the data file. */
@@ -2295,7 +2372,7 @@ export interface StudyConfig {
   studyRules?: StudyRules;
   /** A list of libraries that are used in the study. This is used to import external libraries into the study. Library names are valid namespaces to be used later. */
   importedLibraries?: string[];
-  /** The base components that are used in the study. These components can be used to template other components. See [BaseComponents](../../type-aliases/BaseComponents) for more information. */
+  /** The base components that are used in the study. These components can be used to template other components. See {@link BaseComponents} for more information. */
   baseComponents?: BaseComponents;
   /** The components that are used in the study. They must be fully defined here with all properties. Some properties may be inherited from baseComponents. */
   components: Record<string, IndividualComponent | InheritedComponent>
@@ -2342,7 +2419,7 @@ export interface LibraryConfig {
   doi?: string;
   /** The external link to the paper/website where the content of the library is based on. */
   externalLink?: string;
-  /** The base components that are used in the study. These components can be used to template other components. See [BaseComponents](../../type-aliases/BaseComponents) for more information. */
+  /** The base components that are used in the study. These components can be used to template other components. See {@link BaseComponents} for more information. */
   baseComponents?: BaseComponents;
 }
 

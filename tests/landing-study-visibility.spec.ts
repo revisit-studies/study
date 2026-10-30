@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { readStoredValue } from './utils';
 
 test('keeps landing visibility and data sharing independent while allowing direct study links', async ({ page }) => {
   await page.route('**/global.json', async (route) => {
@@ -14,7 +15,12 @@ test('keeps landing visibility and data sharing independent while allowing direc
   });
 
   await page.goto('/demo-html');
+  await expect(page.getByTestId('study-interface')).toHaveAttribute('aria-busy', 'false', { timeout: 30000 });
   await expect(page.getByText(/example study.*embed html elements/i)).toBeVisible();
+  await expect.poll(async () => {
+    const assignments = await readStoredValue<Record<string, { timestamp: number }>>(page, 'dev-demo-html/sequenceAssignment');
+    return Object.values(assignments ?? {}).some(({ timestamp }) => timestamp > 0);
+  }, { timeout: 15000 }).toBe(true);
   await page.goto('/analysis/stats/demo-html/manage');
   const manageCards = page.getByRole('tabpanel', { name: 'Manage', exact: true }).locator('.mantine-Paper-root');
   await expect(manageCards.first().getByRole('heading', { name: 'ReVISit Modes', exact: true })).toBeVisible({ timeout: 15000 });
@@ -41,10 +47,10 @@ test('keeps landing visibility and data sharing independent while allowing direc
   const statusIcons = landingCard.locator('.tabler-icon-database, .tabler-icon-schema, .tabler-icon-schema-off, .tabler-icon-graph, .tabler-icon-graph-off');
   const expectPrivateLandingCard = async () => {
     await expect(landingCard.getByText('HTML as a Stimulus', { exact: true })).toBeVisible();
-    await expect(landingCard.getByRole('link', { name: 'Go to Study', exact: true })).toBeVisible();
+    await expect(landingCard.getByRole('button', { name: 'Go to Study', exact: true })).toBeVisible();
     await expect(landingCard.getByText(/^Study Status:/)).toBeVisible();
     await expect(landingCard.getByText(/^Activity:/)).toBeVisible();
-    await expect(landingCard.getByRole('link', { name: 'Analyze & Manage Study', exact: true })).toHaveCount(0);
+    await expect(landingCard.getByRole('button', { name: 'Analyze & Manage Study', exact: true })).toHaveCount(0);
     await expect(landingCard.locator('.mantine-Badge-root')).toHaveCount(0);
     await expect(statusIcons).toHaveCount(3);
   };
@@ -70,7 +76,7 @@ test('keeps landing visibility and data sharing independent while allowing direc
   await page.goto('/');
   await page.reload();
   await expect(page.getByText(/No studies found\./)).toBeVisible();
-  await expect(page.getByRole('link', { name: 'Go to Study', exact: true })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Go to Study', exact: true })).toHaveCount(0);
   await page.goto('/demo-html');
   await expect(page.getByText(/example study.*embed html elements/i)).toBeVisible();
 
@@ -96,9 +102,9 @@ test('keeps landing visibility and data sharing independent while allowing direc
   await expect(sharingSwitch).toBeChecked();
   await page.goto('/');
   await expect(landingCard.getByText(/^Study Status:/)).toBeVisible();
-  await expect(landingCard.getByRole('link', { name: 'Analyze & Manage Study', exact: true })).toBeVisible();
+  await expect(landingCard.getByRole('button', { name: 'Analyze & Manage Study', exact: true })).toBeVisible();
   await expect(landingCard.locator('.mantine-Badge-root')).toHaveCount(3);
   await expect(statusIcons).toHaveCount(3);
-  await landingCard.getByRole('link', { name: 'Go to Study', exact: true }).click();
+  await landingCard.getByRole('button', { name: 'Go to Study', exact: true }).click();
   await expect(page.getByText(/example study.*embed html elements/i)).toBeVisible();
 });

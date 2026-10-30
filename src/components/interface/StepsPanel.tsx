@@ -21,6 +21,7 @@ import {
   IconX,
 } from '@tabler/icons-react';
 import { useNavigate, useLocation } from 'react-router';
+import type { GlobalStoreGraph } from '../../store/globalStoreProvenance';
 import type { ParticipantData, Response, StudyConfig } from '../../parser/types';
 import type { Sequence, StoredAnswer } from '../../store/types';
 import { addPathToComponentBlock } from '../../utils/getSequenceFlatMap';
@@ -233,11 +234,13 @@ function findExcludedComponents(
 }
 
 export function StepsPanel({
+  globalGraph,
   participantSequence,
   participantAnswers,
   studyConfig,
   isAnalysis,
 }: {
+  globalGraph?: GlobalStoreGraph;
   participantSequence?: Sequence;
   participantAnswers: ParticipantData['answers'];
   studyConfig: StudyConfig;
@@ -294,8 +297,8 @@ export function StepsPanel({
   }, [studyConfig.components]);
 
   const skippedTrialOrders = useMemo(() => (participantSequence
-    ? getSkippedTrialOrders(participantSequence, participantAnswers, studyConfig)
-    : new Set<number>()), [participantAnswers, participantSequence, studyConfig]);
+    ? getSkippedTrialOrders(participantSequence, participantAnswers, studyConfig, globalGraph)
+    : new Set<number>()), [participantAnswers, participantSequence, studyConfig, globalGraph]);
 
   useEffect(() => {
     let newFlatTree: StepItem[] = [];
@@ -791,9 +794,7 @@ export function StepsPanel({
           const resolvedComponent = component
             ? studyComponentToIndividualComponent(component, studyConfig)
             : undefined;
-          const correctAnswer = componentAnswer?.correctAnswer?.length
-            ? componentAnswer.correctAnswer
-            : resolvedComponent?.correctAnswer;
+          const correctAnswer = componentAnswer?.correctAnswer ?? resolvedComponent?.correctAnswer;
           const answerStatus = getComponentAnswerStatus(
             componentAnswer,
             correctAnswer,

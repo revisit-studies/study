@@ -1,16 +1,33 @@
 // @vitest-environment jsdom
 
+import { readFileSync } from 'node:fs';
+import { runInNewContext } from 'node:vm';
 import {
-  act, cleanup, render, waitFor,
+  act, cleanup, fireEvent, render, waitFor,
 } from '@testing-library/react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import {
   afterEach, beforeEach, describe, expect, test, vi,
 } from 'vitest';
+import type { GlobalStoreUpdater } from '../../store/types';
 import { IframeController } from '../IframeController';
 import type { WebsiteComponent } from '../../parser/types';
 import { ReplayContext } from '../../store/hooks/useReplay';
 import { getStaticAssetByPath } from '../../utils/getStaticAsset';
+
+const mockStoreUpdater = vi.hoisted(() => ({ current: undefined as GlobalStoreUpdater | undefined }));
+vi.mock('../../store/hooks/useGlobalStore', () => ({
+  useGlobalStore: () => ({}),
+  useGlobalStoreUpdaterRegistration: () => (updater: GlobalStoreUpdater) => {
+    mockStoreUpdater.current = updater;
+    return () => { if (mockStoreUpdater.current === updater) mockStoreUpdater.current = undefined; };
+  },
+}));
+
+vi.mock('../../components/interface/RestorationWarning', () => ({ RestorationWarning: () => null }));
+
+const mockRetained = vi.hoisted(() => ({ graph: undefined as unknown }));
+vi.mock('../../store/hooks/useTrialProvenance', () => ({ useTrialProvenance: () => mockRetained.graph }));
 
 const mockDispatch = vi.fn();
 const mockSetAssetStatus = vi.fn((payload) => ({ type: 'setAssetStatus', payload }));
@@ -19,6 +36,11 @@ const mockUpdateProvenance = vi.fn((payload) => ({ type: 'updateProvenance', pay
 const mockUpdateResponseBlockValidation = vi.fn((payload) => ({ type: 'updateResponseBlockValidation', payload }));
 const mockIsAnalysis = { value: false };
 const mockCurrentComponent = { value: 'countDots' };
+let mockStudyColorMode: 'light' | 'dark' = 'light';
+
+vi.mock('@mantine/core', () => ({
+  useComputedColorScheme: () => mockStudyColorMode,
+}));
 
 vi.mock('react-redux', () => ({
   useDispatch: () => vi.fn(),
@@ -64,27 +86,212 @@ vi.mock('../../ResourceNotFound', () => ({
 describe('IframeController', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockRetained.graph = undefined;
+    mockStoreUpdater.current = undefined;
     vi.mocked(getStaticAssetByPath).mockResolvedValue('<html></html>');
     mockIsAnalysis.value = false;
     mockCurrentComponent.value = 'countDots';
+    mockStudyColorMode = 'light';
   });
 
   afterEach(() => {
     cleanup();
     vi.restoreAllMocks();
+    vi.unstubAllGlobals();
   });
 
   const websiteConfig: WebsiteComponent = { type: 'website', path: 'https://example.com', response: [] };
+
+  test('renders website stimuli when randomUUID is unavailable', () => {
+    vi.stubGlobal('crypto', { randomUUID: undefined });
+    const { container } = render(<IframeController currentConfig={websiteConfig} answers={{}} />);
+    expect(container.querySelector('iframe')).not.toBeNull();
+  });
+
+  test('delivers a seek made while a website replay handler is still loading', async () => {
+    mockIsAnalysis.value = true;
+    const config: WebsiteComponent = { type: 'website', path: 'demo-svelte-trrack/assets/dots-count.html', response: [] };
+    const answers = {};
+    const renderController = (seekTime: number, provState: { dots: number[] }) => (
+      <ReplayContext.Provider value={{ isPlaying: false, seekTime } as never}>
+        <IframeController currentConfig={config} provState={provState} answers={answers} />
+      </ReplayContext.Provider>
+    );
+    const { container, rerender } = render(renderController(0, { dots: [1] }));
+    const iframe = container.querySelector('iframe')!;
+    const frameId = new URL(iframe.src).searchParams.get('id');
+    type MessageListener = (event: unknown) => void;
+    const listeners = new Map<string, MessageListener>();
+    const parent = { postMessage: (data: unknown) => window.dispatchEvent(new MessageEvent('message', { source: iframe.contentWindow, data })) };
+    const helperWindow = { parent, location: { search: `?id=${frameId}` }, addEventListener: (type: string, fn: (event: unknown) => void) => listeners.set(type, fn) };
+    vi.spyOn(iframe.contentWindow!, 'postMessage').mockImplementation((data: unknown) => listeners.get('message')?.({ source: parent, data }));
+    runInNewContext(readFileSync('public/revisitUtilities/revisit-communicate.js', 'utf8'), {
+      window: helperWindow, URLSearchParams, structuredClone, crypto: { randomUUID: () => 'document' }, Date, console,
+    });
+    const api = (helperWindow as unknown as { Revisit: {
+      beginRegistration: () => void;
+      onRestore: (fn: () => void) => void;
+      completeRegistration: () => void;
+      onProvenanceReceive: (fn: (state: { dots: number[] }) => void) => void;
+    } }).Revisit;
+    const output = document.createElement('output');
+    output.textContent = '1';
+    container.appendChild(output);
+    await act(async () => { api.beginRegistration(); });
+    // Svelte fetches/compiles/imports its component before registering the replay callback.
+    await act(async () => { rerender(renderController(5, { dots: [1, 2, 3] })); });
+    await act(async () => {
+      api.onRestore(() => {});
+      api.completeRegistration();
+      api.onProvenanceReceive((state) => { output.textContent = state.dots.join(','); });
+      listeners.get('load')?.({});
+    });
+    expect(container.querySelector('output')?.textContent).toBe('1,2,3');
+    expect(mockUpdateProvenance).not.toHaveBeenCalled();
+    expect(mockSetReactiveAnswers).not.toHaveBeenCalled();
+  });
+
+  test('late updater registration and re-registration do not restart a completed document restoration', () => {
+    const { container } = render(<IframeController currentConfig={{ ...websiteConfig, path: 'purchase.html' }} answers={{}} />);
+    const iframe = container.querySelector('iframe')!;
+    const postMessage = vi.spyOn(iframe.contentWindow!, 'postMessage');
+    const receive = (type: string, message: object) => act(() => {
+      window.dispatchEvent(new MessageEvent('message', {
+        source: iframe.contentWindow,
+        data: { type: `@REVISIT_COMMS/${type}`, iframeId: new URL(iframe.src).searchParams.get('id'), message },
+      }));
+    });
+    receive('WINDOW_READY', { protocolVersion: 1, documentId: 'document' });
+    const request = postMessage.mock.calls.map(([data]) => data).find((data) => data.type === '@REVISIT_COMMS/RESUME').message;
+    receive('RESTORED', { protocolVersion: 1, requestId: request.requestId });
+    expect(iframe.hasAttribute('inert')).toBe(false);
+    receive('WINDOW_READY', { protocolVersion: 1, documentId: 'document', globalStoreUpdater: true });
+    expect(mockStoreUpdater.current).toBeDefined();
+    expect(iframe.hasAttribute('inert')).toBe(false);
+    receive('GLOBAL_STORE_UPDATER', { documentId: 'document', enabled: false });
+    expect(mockStoreUpdater.current).toBeUndefined();
+    receive('WINDOW_READY', { protocolVersion: 1, documentId: 'document', globalStoreUpdater: true });
+    expect(mockStoreUpdater.current).toBeDefined();
+    expect(iframe.hasAttribute('inert')).toBe(false);
+    expect(postMessage.mock.calls.filter(([data]) => data.type === '@REVISIT_COMMS/RESUME')).toHaveLength(1);
+  });
+
+  test('rejects a fresh legacy graph while a revisited website is still registering', () => {
+    mockRetained.graph = { root: 'saved-root' };
+    const { container } = render(<IframeController currentConfig={{ ...websiteConfig, path: 'chart.html' }} answers={{}} />);
+    const iframe = container.querySelector('iframe')!;
+    const iframeId = new URL(iframe.src).searchParams.get('id');
+    const publish = (root: string) => act(() => {
+      window.dispatchEvent(new MessageEvent('message', {
+        source: iframe.contentWindow,
+        data: { iframeId, type: '@REVISIT_COMMS/PROVENANCE', message: { root } },
+      }));
+    });
+    publish('fresh-root');
+    expect(mockUpdateProvenance).not.toHaveBeenCalled();
+    publish('saved-root');
+    expect(mockUpdateProvenance).toHaveBeenCalledWith(expect.objectContaining({ provenanceGraph: { root: 'saved-root' } }));
+  });
+
+  test('bootstraps an external website without changing its URL and ignores stale acknowledgements', () => {
+    const url = 'https://example.com/chart?signature=keep';
+    const { container } = render(<IframeController currentConfig={{ ...websiteConfig, path: url }} answers={{}} />);
+    const iframe = container.querySelector('iframe')!;
+    const postMessage = vi.spyOn(iframe.contentWindow!, 'postMessage');
+    expect(iframe.src).toBe(url);
+    const receive = (type: string, iframeId: string | null, message: unknown) => act(() => {
+      window.dispatchEvent(new MessageEvent('message', { source: iframe.contentWindow, data: { type: `@REVISIT_COMMS/${type}`, iframeId, message } }));
+    });
+    receive('WINDOW_READY', null, { protocolVersion: 1, documentId: 'document' });
+    const initialization = postMessage.mock.calls.map(([data]) => data).find((data) => data.type === '@REVISIT_COMMS/RESUME');
+    expect(initialization.message.documentId).toBe('document');
+    receive('RESTORED', initialization.iframeId, { protocolVersion: 1, requestId: 'stale' });
+    receive('PROVENANCE', initialization.iframeId, { root: 'new-trial' });
+    expect(mockUpdateProvenance).not.toHaveBeenCalled();
+    receive('RESTORED', initialization.iframeId, { protocolVersion: 1, requestId: initialization.message.requestId });
+    receive('PROVENANCE', initialization.iframeId, { root: 'new-trial' });
+    expect(mockUpdateProvenance).toHaveBeenCalledTimes(1);
+  });
 
   test.each(['light', 'dark', undefined] as const)('applies iframe color mode %s in participation and replay without reloading', (colorMode) => {
     const currentConfig = { ...websiteConfig, colorMode };
     const { container, rerender } = render(<IframeController currentConfig={currentConfig} answers={{}} />);
     const iframe = container.querySelector('iframe');
-    expect(iframe?.style.colorScheme).toBe(colorMode ?? 'inherit');
+    expect(iframe?.style.colorScheme).toBe(colorMode ?? 'light');
     mockIsAnalysis.value = true;
     rerender(<IframeController currentConfig={currentConfig} answers={{}} />);
     expect(container.querySelector('iframe')).toBe(iframe);
-    expect(iframe?.style.colorScheme).toBe(colorMode ?? 'inherit');
+    expect(iframe?.style.colorScheme).toBe(colorMode ?? 'light');
+  });
+
+  test.each(['light', 'dark'] as const)('applies study %s inside a local document and preserves overrides without reloading', (studyMode) => {
+    mockStudyColorMode = studyMode;
+    const config: WebsiteComponent = { ...websiteConfig, path: 'study/chart.html' };
+    const { container, rerender } = render(<IframeController currentConfig={config} answers={{}} />);
+    const iframe = container.querySelector('iframe')!;
+    const frameDocument = document.implementation.createHTMLDocument('Stimulus');
+    Object.defineProperty(iframe, 'contentDocument', { value: frameDocument, configurable: true });
+    const root = frameDocument.documentElement;
+    root.style.colorScheme = 'light dark';
+    expect(iframe.style.visibility).toBe('hidden');
+    fireEvent.load(iframe);
+    expect(root.style.colorScheme).toBe(studyMode);
+    expect(iframe.style.visibility).toBe('');
+    const originalSrc = iframe.src;
+
+    const override = studyMode === 'light' ? 'dark' : 'light';
+    rerender(<IframeController currentConfig={{ ...config, colorMode: override }} answers={{}} />);
+    expect(root.style.colorScheme).toBe(override);
+    mockStudyColorMode = override;
+    rerender(<IframeController currentConfig={{ ...config, colorMode: studyMode }} answers={{}} />);
+    expect(root.style.colorScheme).toBe(studyMode);
+    rerender(<IframeController currentConfig={config} answers={{}} />);
+    expect(root.style.colorScheme).toBe(override);
+    expect(container.querySelector('iframe')).toBe(iframe);
+    expect(iframe.src).toBe(originalSrc);
+  });
+
+  test('keeps the color scheme hint when the embedded document is cross-origin', () => {
+    mockStudyColorMode = 'dark';
+    const { container } = render(<IframeController currentConfig={websiteConfig} answers={{}} />);
+    const iframe = container.querySelector('iframe')!;
+    Object.defineProperty(iframe, 'contentDocument', { value: null, configurable: true });
+    fireEvent.load(iframe);
+    expect(iframe.style.colorScheme).toBe('dark');
+  });
+
+  test('hides navigating documents, restores their current theme on pageshow, and removes listeners on unmount', () => {
+    const config: WebsiteComponent = { ...websiteConfig, path: 'study/chart.html' };
+    const { container, rerender, unmount } = render(
+      <>
+        <iframe title="Document host" />
+        <IframeController currentConfig={config} answers={{}} />
+      </>,
+    );
+    const documentHost = container.querySelector('iframe')!;
+    const iframe = container.querySelector('iframe:not([title])')! as HTMLIFrameElement;
+    const frameDocument = documentHost.contentDocument!;
+    const frameWindow = frameDocument.defaultView!;
+    Object.defineProperty(iframe, 'contentDocument', { value: frameDocument, configurable: true });
+    fireEvent.load(iframe);
+    act(() => { frameWindow.dispatchEvent(new frameWindow.Event('pagehide')); });
+    expect(iframe.style.visibility).toBe('hidden');
+    mockStudyColorMode = 'dark';
+    rerender(
+      <>
+        <iframe title="Document host" />
+        <IframeController currentConfig={config} answers={{}} />
+      </>,
+    );
+    frameDocument.documentElement.style.colorScheme = 'light dark';
+    act(() => { frameWindow.dispatchEvent(new frameWindow.Event('pageshow')); });
+    expect(frameDocument.documentElement.style.colorScheme).toBe('dark');
+    expect(iframe.style.visibility).toBe('');
+
+    unmount();
+    frameDocument.documentElement.style.colorScheme = 'light dark';
+    act(() => { frameWindow.dispatchEvent(new frameWindow.Event('pageshow')); });
+    expect(frameDocument.documentElement.style.colorScheme).toBe('light dark');
   });
 
   test('covers sendMessage via answers effect on mount', async () => {
@@ -110,6 +317,7 @@ describe('IframeController', () => {
     );
     render(<IframeController currentConfig={websiteConfig} answers={{}} />);
     window.dispatchEvent(new MessageEvent('message', {
+      source: document.querySelector('iframe')!.contentWindow,
       data: { iframeId: '11111111-2222-3333-4444-555555555555', type: '@REVISIT_COMMS/ANSWERS', message: { q1: 'yes' } },
     }));
     await waitFor(() => expect(mockDispatch).toHaveBeenCalledWith({
@@ -128,6 +336,7 @@ describe('IframeController', () => {
     const provenanceGraph = { root: 'root', current: 'root', nodes: {} };
 
     window.dispatchEvent(new MessageEvent('message', {
+      source: document.querySelector('iframe')!.contentWindow,
       data: {
         iframeId: '11111111-2222-3333-4444-555555555555',
         type: '@REVISIT_COMMS/PROVENANCE',
@@ -152,6 +361,7 @@ describe('IframeController', () => {
     };
     render(<IframeController currentConfig={websiteWithParams} answers={{}} />);
     window.dispatchEvent(new MessageEvent('message', {
+      source: document.querySelector('iframe')!.contentWindow,
       data: { iframeId: '11111111-2222-3333-4444-555555555555', type: '@REVISIT_COMMS/WINDOW_READY' },
     }));
     // sendMessage called with STUDY_DATA; ref.current.contentWindow.postMessage fires
@@ -216,6 +426,7 @@ describe('IframeController', () => {
 
     const iframeId = new URL(iframe!.src).searchParams.get('id');
     window.dispatchEvent(new MessageEvent('message', {
+      source: document.querySelector('iframe')!.contentWindow,
       data: {
         type: '@REVISIT_COMMS/WINDOW_READY',
         iframeId,
@@ -257,6 +468,7 @@ describe('IframeController', () => {
     await waitFor(() => expect(iframe.src).toContain('id='));
     const iframeId = new URL(iframe.src).searchParams.get('id');
     window.dispatchEvent(new MessageEvent('message', {
+      source: document.querySelector('iframe')!.contentWindow,
       data: { type: '@REVISIT_COMMS/WINDOW_READY', iframeId },
     }));
 
@@ -405,4 +617,128 @@ describe('IframeController', () => {
       expect(getStaticAssetByPath).toHaveBeenCalledTimes(1);
     });
   });
+});
+
+test('website updater replies must match the active window, document, and request, and unmount removes registration', async () => {
+  const { container, unmount } = render(<IframeController currentConfig={{ type: 'website', path: 'purchase.html', response: [] }} answers={{}} />);
+  const iframe = container.querySelector('iframe')!;
+  const postMessage = vi.spyOn(iframe.contentWindow!, 'postMessage');
+  const receive = (type: string, message: object, source: MessageEventSource | null = iframe.contentWindow) => act(() => {
+    window.dispatchEvent(new MessageEvent('message', {
+      source,
+      data: {
+        type: `@REVISIT_COMMS/${type}`, iframeId: new URL(iframe.src).searchParams.get('id'), message,
+      },
+    }));
+  });
+  receive('WINDOW_READY', { protocolVersion: 1, documentId: 'document', globalStoreUpdater: true });
+  const result = Promise.resolve(mockStoreUpdater.current!({ store: { budget: 100 }, answers: { cost: 20 } }));
+  const request = postMessage.mock.calls.map(([data]) => data).find((data) => data.type === '@REVISIT_COMMS/GLOBAL_STORE_UPDATE').message;
+  let resolved = false;
+  result.then(() => { resolved = true; });
+  receive('GLOBAL_STORE_RESULT', { ...request, documentId: 'old-document', value: { budget: 1 } });
+  receive('GLOBAL_STORE_RESULT', { ...request, value: { budget: 2 } }, window);
+  receive('GLOBAL_STORE_RESULT', { ...request, requestId: 'old-request', value: { budget: 3 } });
+  await Promise.resolve();
+  expect(resolved).toBe(false);
+  receive('GLOBAL_STORE_RESULT', { ...request, value: { budget: 80 } });
+  await expect(result).resolves.toEqual({ budget: 80 });
+  unmount();
+  expect(mockStoreUpdater.current).toBeUndefined();
+});
+
+test('navigation to a legacy document disposes its outgoing updater and rejects pending work', async () => {
+  const { container } = render(<IframeController currentConfig={{ type: 'website', path: 'purchase.html', response: [] }} answers={{}} />);
+  const iframe = container.querySelector('iframe')!;
+  const postMessage = vi.spyOn(iframe.contentWindow!, 'postMessage');
+  const receive = (type: string, message: object) => act(() => {
+    window.dispatchEvent(new MessageEvent('message', {
+      source: iframe.contentWindow,
+      data: { type: `@REVISIT_COMMS/${type}`, iframeId: new URL(iframe.src).searchParams.get('id'), message },
+    }));
+  });
+  receive('WINDOW_READY', { protocolVersion: 1, documentId: 'first', globalStoreUpdater: true });
+  const resume = postMessage.mock.calls.map(([data]) => data).find((data) => data.type === '@REVISIT_COMMS/RESUME').message;
+  receive('RESTORED', { protocolVersion: 1, requestId: resume.requestId });
+  const rejected = vi.fn();
+  Promise.resolve(mockStoreUpdater.current!({ store: { budget: 100 }, answers: {} })).catch(rejected);
+  receive('WINDOW_READY', { protocolVersion: 0, documentId: 'second', globalStoreUpdater: false });
+  expect(mockStoreUpdater.current).toBeUndefined();
+  await waitFor(() => expect(rejected).toHaveBeenCalledWith(expect.any(Error)));
+  expect(iframe.hasAttribute('inert')).toBe(false);
+});
+
+test('a document that upgrades from protocol zero receives its initial resume exactly once', () => {
+  const { container } = render(<IframeController currentConfig={{ type: 'website', path: 'purchase.html', response: [] }} answers={{}} />);
+  const iframe = container.querySelector('iframe')!;
+  const sent = vi.spyOn(iframe.contentWindow!, 'postMessage');
+  const announce = (protocolVersion: number) => act(() => {
+    window.dispatchEvent(new MessageEvent('message', {
+      source: iframe.contentWindow,
+      data: {
+        type: '@REVISIT_COMMS/WINDOW_READY',
+        iframeId: new URL(iframe.src).searchParams.get('id'),
+        message: { protocolVersion, documentId: 'late-document' },
+      },
+    }));
+  });
+  announce(0);
+  announce(1);
+  announce(1);
+  expect(sent.mock.calls.filter(([data]) => data.type === '@REVISIT_COMMS/RESUME')).toHaveLength(1);
+});
+
+test('a cached document can reannounce with its previous request after another document', () => {
+  const { container } = render(<IframeController currentConfig={{ type: 'website', path: 'purchase.html', response: [] }} answers={{}} />);
+  const iframe = container.querySelector('iframe')!;
+  const sent = vi.spyOn(iframe.contentWindow!, 'postMessage');
+  const announce = (documentId: string, requestId?: string) => act(() => {
+    window.dispatchEvent(new MessageEvent('message', {
+      source: iframe.contentWindow,
+      data: {
+        type: '@REVISIT_COMMS/WINDOW_READY',
+        iframeId: new URL(iframe.src).searchParams.get('id'),
+        requestId,
+        message: { protocolVersion: 1, documentId, globalStoreUpdater: true },
+      },
+    }));
+  });
+  announce('first');
+  const originalRequest = sent.mock.calls.find(([data]) => data.type === '@REVISIT_COMMS/RESUME')![0].message.requestId;
+  announce('second');
+  announce('first', originalRequest);
+  expect(sent.mock.calls.filter(([data]) => data.type === '@REVISIT_COMMS/RESUME').map(([data]) => data.message.documentId)).toEqual(['first', 'second', 'first']);
+  expect(mockStoreUpdater.current).toBeDefined();
+});
+
+test('stimulus answers exclude host form values and their auxiliary fields', () => {
+  const config: WebsiteComponent = {
+    type: 'website',
+    path: 'purchase.html',
+    response: [
+      { id: 'selectedCost', type: 'reactive', prompt: 'Selected cost' },
+      {
+        id: 'hostCost', type: 'numerical', prompt: 'Cost', withDontKnow: true,
+      },
+      {
+        id: 'hostChoice', type: 'radio', prompt: 'Choice', options: ['first'], withOther: true,
+      },
+    ],
+  };
+  const { container } = render(<IframeController currentConfig={config} answers={{}} />);
+  const iframe = container.querySelector('iframe')!;
+  act(() => {
+    window.dispatchEvent(new MessageEvent('message', {
+      source: iframe.contentWindow,
+      data: {
+        type: '@REVISIT_COMMS/ANSWERS',
+        iframeId: new URL(iframe.src).searchParams.get('id'),
+        message: {
+          selectedCost: 15, hostCost: 10, 'hostCost-dontKnow': true, hostChoice: 'other', 'hostChoice-other': 'stale',
+        },
+      },
+    }));
+  });
+  expect(mockSetReactiveAnswers).toHaveBeenCalledWith({ selectedCost: 15 });
+  expect(mockUpdateResponseBlockValidation).toHaveBeenCalledWith(expect.objectContaining({ values: { selectedCost: 15 } }));
 });

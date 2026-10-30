@@ -18,6 +18,7 @@ import { WindowEventsContext } from '../../store/hooks/useWindowEvents';
 import { StudyStoreContext, studyStoreCreator } from '../../store/store';
 import { makeStorageEngine, makeStudyConfig } from '../../tests/utils';
 import { encryptIndex } from '../../utils/encryptDecryptIndex';
+import { StartupInteractionProvider } from '../StartupContext';
 
 // ── mutable state ─────────────────────────────────────────────────────────────
 
@@ -141,18 +142,18 @@ describe('NextButton', () => {
   });
 
   test('renders Next button with default label', () => {
-    const html = renderToStaticMarkup(<NextButton checkAnswer={null} onNext={vi.fn()} />);
+    const html = renderToStaticMarkup(<NextButton onNext={vi.fn()} />);
     expect(html).toContain('Next');
   });
 
   test('renders button with custom label', () => {
-    const html = renderToStaticMarkup(<NextButton label="Continue" checkAnswer={null} onNext={vi.fn()} />);
+    const html = renderToStaticMarkup(<NextButton label="Continue" onNext={vi.fn()} />);
     expect(html).toContain('Continue');
   });
 
   test('does not render PreviousButton when config.previousButton is false', () => {
     const html = renderToStaticMarkup(
-      <NextButton config={{ type: 'questionnaire', response: [], previousButton: false }} checkAnswer={null} onNext={vi.fn()} />,
+      <NextButton config={{ type: 'questionnaire', response: [], previousButton: false }} onNext={vi.fn()} />,
     );
     expect(html).not.toContain('data-testid="prev-btn"');
   });
@@ -163,7 +164,6 @@ describe('NextButton', () => {
         config={{
           type: 'questionnaire', response: [], previousButton: true, previousButtonText: 'Back',
         }}
-        checkAnswer={null}
         onNext={vi.fn()}
       />,
     );
@@ -172,25 +172,48 @@ describe('NextButton', () => {
   });
 
   test('button is disabled when disabled prop is true', () => {
-    const html = renderToStaticMarkup(<NextButton disabled checkAnswer={null} onNext={vi.fn()} />);
+    const html = renderToStaticMarkup(<NextButton disabled onNext={vi.fn()} />);
     expect(html).toContain('disabled');
   });
 
   test('button is disabled when isNextDisabled is true', () => {
     mockIsNextDisabled = true;
-    const html = renderToStaticMarkup(<NextButton checkAnswer={null} onNext={vi.fn()} />);
+    const html = renderToStaticMarkup(<NextButton onNext={vi.fn()} />);
     expect(html).toContain('disabled');
   });
 
-  test('renders checkAnswer element when provided', () => {
-    const html = renderToStaticMarkup(
-      <NextButton checkAnswer={<div data-testid="check">Check Answer</div>} onNext={vi.fn()} />,
+  test('does not start timers or handle Enter while participant startup is blocked', () => {
+    vi.useFakeTimers();
+    mockStudyConfig.uiConfig.nextOnEnter = true;
+    mockStudyConfig.uiConfig.timeoutReject = true;
+    const onNext = vi.fn();
+
+    const { getByRole } = render(
+      <StartupInteractionProvider value>
+        <NextButton
+          config={{
+            type: 'questionnaire',
+            response: [],
+            nextButtonDisableTime: 100,
+            nextButtonAutoAdvanceTime: 100,
+          }}
+          onNext={onNext}
+        />
+      </StartupInteractionProvider>,
     );
-    expect(html).toContain('Check Answer');
+    act(() => {
+      vi.advanceTimersByTime(500);
+      window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
+    });
+
+    expect(getByRole('button', { name: 'Next' }).hasAttribute('disabled')).toBe(true);
+    expect(onNext).not.toHaveBeenCalled();
+    expect(mockGoToNextStep).not.toHaveBeenCalled();
+    expect(mockNavigate).not.toHaveBeenCalled();
   });
 
   test('right-aligns the action group by default', () => {
-    const html = renderToStaticMarkup(<NextButton checkAnswer={null} onNext={vi.fn()} />);
+    const html = renderToStaticMarkup(<NextButton onNext={vi.fn()} />);
     expect(html).toContain('data-justify="flex-end"');
   });
 
@@ -206,7 +229,7 @@ describe('NextButton', () => {
       },
     };
 
-    const html = renderToStaticMarkup(<NextButton checkAnswer={null} onNext={vi.fn()} />);
+    const html = renderToStaticMarkup(<NextButton onNext={vi.fn()} />);
     expect(html).toContain(`data-justify="${justify}"`);
   });
 
@@ -223,7 +246,6 @@ describe('NextButton', () => {
         config={{
           type: 'questionnaire', response: [], nextButtonAlignment: 'center',
         }}
-        checkAnswer={null}
         onNext={vi.fn()}
       />,
     );
@@ -231,19 +253,18 @@ describe('NextButton', () => {
   });
 
   test.each(['sidebar', 'aboveStimulus', 'belowStimulus'] as const)(
-    'keeps Previous, Check Answer, and Next in order at %s',
+    'keeps Previous before Next at %s',
     (location) => {
       const html = renderToStaticMarkup(
         <NextButton
           config={{ type: 'questionnaire', response: [], previousButton: true }}
           location={location}
-          checkAnswer={<button type="button">Check Answer</button>}
           onNext={vi.fn()}
         />,
       );
 
-      expect(html.indexOf('Previous')).toBeLessThan(html.indexOf('Check Answer'));
-      expect(html.indexOf('Check Answer')).toBeLessThan(html.indexOf('Next'));
+      expect(html.indexOf('Previous')).toBeLessThan(html.indexOf('Next'));
+      expect(html).not.toContain('Check Answer');
     },
   );
 
@@ -255,7 +276,7 @@ describe('NextButton', () => {
       },
     };
     await act(async () => {
-      render(<NextButton checkAnswer={null} onNext={vi.fn()} />);
+      render(<NextButton onNext={vi.fn()} />);
     });
     expect(screen.getByRole('alert')).toBeDefined();
     expect(screen.getByText('Please wait')).toBeDefined();
@@ -263,7 +284,7 @@ describe('NextButton', () => {
 
   test('does not show "Please wait" alert when no enable time is configured', async () => {
     await act(async () => {
-      render(<NextButton checkAnswer={null} onNext={vi.fn()} />);
+      render(<NextButton onNext={vi.fn()} />);
     });
     expect(screen.queryByRole('alert')).toBeNull();
   });
@@ -277,7 +298,7 @@ describe('NextButton', () => {
       },
     };
     await act(async () => {
-      render(<NextButton checkAnswer={null} onNext={vi.fn()} />);
+      render(<NextButton onNext={vi.fn()} />);
     });
     expect(screen.getByText('Next button disables soon')).toBeDefined();
   });
@@ -292,7 +313,7 @@ describe('NextButton', () => {
       },
     };
     await act(async () => {
-      render(<NextButton checkAnswer={null} onNext={vi.fn()} />);
+      render(<NextButton onNext={vi.fn()} />);
     });
     // Advance past disableTime (100ms) and into the <10000ms window
     await act(async () => {
@@ -314,7 +335,7 @@ describe('NextButton', () => {
       },
     };
     await act(async () => {
-      render(<NextButton checkAnswer={null} onNext={vi.fn()} />);
+      render(<NextButton onNext={vi.fn()} />);
     });
     await act(async () => {
       vi.advanceTimersByTime(9500);
@@ -332,7 +353,7 @@ describe('NextButton', () => {
       },
     };
     await act(async () => {
-      render(<NextButton checkAnswer={null} onNext={onNext} />);
+      render(<NextButton onNext={onNext} />);
     });
     await act(async () => {
       window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
@@ -344,7 +365,7 @@ describe('NextButton', () => {
     const onNext = vi.fn();
     mockStudyConfig = { uiConfig: { ...mockStudyConfig.uiConfig, nextOnEnter: true } };
     await act(async () => {
-      render(<NextButton checkAnswer={null} onNext={onNext} />);
+      render(<NextButton onNext={onNext} />);
     });
     const textarea = document.createElement('textarea');
     document.body.appendChild(textarea);
@@ -360,7 +381,7 @@ describe('NextButton', () => {
     const onNext = vi.fn();
     mockStudyConfig = { uiConfig: { ...mockStudyConfig.uiConfig, nextOnEnter: true } };
     await act(async () => {
-      render(<NextButton checkAnswer={null} onNext={onNext} />);
+      render(<NextButton onNext={onNext} />);
     });
     const event = new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true });
     event.preventDefault();
@@ -371,7 +392,7 @@ describe('NextButton', () => {
   test('nextOnEnter: preserves the accessible name while showing the visual hint', async () => {
     mockStudyConfig = { uiConfig: { ...mockStudyConfig.uiConfig, nextOnEnter: true } };
     await act(async () => {
-      render(<NextButton checkAnswer={null} onNext={vi.fn()} />);
+      render(<NextButton onNext={vi.fn()} />);
     });
     const button = screen.getByRole('button', { name: 'Next' });
     expect(button.getAttribute('aria-label')).toBe('Next');
@@ -383,7 +404,7 @@ describe('NextButton', () => {
     mockStudyConfig = { uiConfig: { ...mockStudyConfig.uiConfig, nextOnEnter: true } };
     let container!: HTMLElement;
     await act(async () => {
-      ({ container } = render(<NextButton checkAnswer={null} onNext={onNext} />));
+      ({ container } = render(<NextButton onNext={onNext} />));
     });
     const button = container.querySelector('button')!;
     await act(async () => { fireEvent.keyDown(button, { key: 'Enter' }); });
@@ -395,26 +416,54 @@ describe('NextButton', () => {
     const onCheckAnswer = vi.fn();
     mockStudyConfig = { uiConfig: { ...mockStudyConfig.uiConfig, nextOnEnter: true } };
     await act(async () => {
-      render(<NextButton checkAnswer={null} onCheckAnswer={onCheckAnswer} onNext={onNext} />);
+      render(<NextButton onCheckAnswer={onCheckAnswer} onNext={onNext} />);
     });
     await act(async () => { fireEvent.keyDown(window, { key: 'Enter' }); });
     expect(onCheckAnswer).toHaveBeenCalledTimes(1);
     expect(onNext).not.toHaveBeenCalled();
   });
 
-  test('nextOnEnter: Enter runs onCheckAnswer even while the Next button is disabled', async () => {
+  test('clicking Next checks answers before navigating', async () => {
+    const onNext = vi.fn();
+    const onCheckAnswer = vi.fn();
+    const { container, rerender } = render(<NextButton onCheckAnswer={onCheckAnswer} onNext={onNext} />);
+    await act(async () => { fireEvent.click(container.querySelector('button')!); });
+    expect(onCheckAnswer).toHaveBeenCalledTimes(1);
+    expect(onNext).not.toHaveBeenCalled();
+    rerender(<NextButton onNext={onNext} />);
+    await act(async () => { fireEvent.click(container.querySelector('button')!); });
+    expect(onNext).toHaveBeenCalledTimes(1);
+  });
+
+  test('a separate Check Answer button grades while Next waits', async () => {
+    const onNext = vi.fn();
+    const onCheckAnswer = vi.fn();
+    mockStudyConfig = { uiConfig: { ...mockStudyConfig.uiConfig, nextOnEnter: true } };
+    const checkAnswer = <button type="button" onClick={onCheckAnswer}>Check Answer</button>;
+    const { container, rerender } = render(<NextButton disabled checkAnswer={checkAnswer} onCheckAnswer={onCheckAnswer} onNext={onNext} />);
+    await act(async () => { fireEvent.click(container.querySelector('button')!); });
+    await act(async () => { fireEvent.keyDown(window, { key: 'Enter' }); });
+    expect(onCheckAnswer).toHaveBeenCalledTimes(2);
+    expect(onNext).not.toHaveBeenCalled();
+    rerender(<NextButton checkAnswer={checkAnswer} onNext={onNext} />);
+    await act(async () => { fireEvent.click(container.querySelectorAll('button')[1]); });
+    expect(onNext).toHaveBeenCalledTimes(1);
+    expect(onCheckAnswer).toHaveBeenCalledTimes(2);
+  });
+
+  test('nextOnEnter: disabled Next prevents grading', async () => {
     const onNext = vi.fn();
     const onCheckAnswer = vi.fn();
     mockStudyConfig = { uiConfig: { ...mockStudyConfig.uiConfig, nextOnEnter: true } };
     await act(async () => {
-      render(<NextButton checkAnswer={null} onCheckAnswer={onCheckAnswer} onNext={onNext} disabled />);
+      render(<NextButton onCheckAnswer={onCheckAnswer} onNext={onNext} disabled />);
     });
     await act(async () => { fireEvent.keyDown(window, { key: 'Enter' }); });
-    expect(onCheckAnswer).toHaveBeenCalledTimes(1);
+    expect(onCheckAnswer).not.toHaveBeenCalled();
     expect(onNext).not.toHaveBeenCalled();
   });
 
-  test('nextOnEnter: the enable timer gates onNext but not onCheckAnswer', async () => {
+  test('nextOnEnter: the enable timer gates both grading and navigation', async () => {
     const onNext = vi.fn();
     const onCheckAnswer = vi.fn();
     mockStudyConfig = {
@@ -422,13 +471,13 @@ describe('NextButton', () => {
     };
     let rerender!: ReturnType<typeof render>['rerender'];
     await act(async () => {
-      ({ rerender } = render(<NextButton checkAnswer={null} onCheckAnswer={onCheckAnswer} onNext={onNext} />));
+      ({ rerender } = render(<NextButton onCheckAnswer={onCheckAnswer} onNext={onNext} />));
     });
     await act(async () => { fireEvent.keyDown(window, { key: 'Enter' }); });
-    expect(onCheckAnswer).toHaveBeenCalledTimes(1);
+    expect(onCheckAnswer).not.toHaveBeenCalled();
     expect(onNext).not.toHaveBeenCalled();
     await act(async () => {
-      rerender(<NextButton checkAnswer={null} onNext={onNext} />);
+      rerender(<NextButton onNext={onNext} />);
     });
     await act(async () => { fireEvent.keyDown(window, { key: 'Enter' }); });
     expect(onNext).not.toHaveBeenCalled();
@@ -448,7 +497,6 @@ describe('NextButton', () => {
       ({ rerender } = render(
         <NextButton
           config={config}
-          checkAnswer={null}
           onNext={vi.fn()}
         />,
       ));
@@ -467,7 +515,6 @@ describe('NextButton', () => {
       rerender(
         <NextButton
           config={config}
-          checkAnswer={null}
           onNext={vi.fn()}
         />,
       );
@@ -489,7 +536,7 @@ function AssetTrial({ config }: { config: ImageComponent }) {
   return (
     <>
       <ImageController currentConfig={config} />
-      <NextButton config={config} checkAnswer={null} onNext={goToNextStep} />
+      <NextButton config={config} onNext={goToNextStep} />
       <output aria-label="Current route">{location.pathname}</output>
     </>
   );

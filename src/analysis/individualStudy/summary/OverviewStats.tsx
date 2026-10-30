@@ -26,7 +26,7 @@ export function OverviewStats({
           <Text size="sm" c="dimmed">Completed</Text>
         </Flex>
         <Flex direction="column">
-          <Text size="xl" fw="bold" c="yellow">{overviewData.participantCounts.inProgress}</Text>
+          <Text size="xl" fw="bold" c="orange">{overviewData.participantCounts.inProgress}</Text>
           <Text size="sm" c="dimmed">In Progress</Text>
         </Flex>
         <Flex direction="column">

@@ -2,7 +2,7 @@ import {
   Alert, Button, Group, Kbd,
 } from '@mantine/core';
 import {
-  JSX, useEffect, useMemo, useRef, useState,
+  ReactNode, useEffect, useMemo, useRef, useState,
 } from 'react';
 import { IconInfoCircle, IconAlertTriangle } from '@tabler/icons-react';
 import { useNavigate } from 'react-router';
@@ -13,11 +13,14 @@ import { useStudyConfig } from '../store/hooks/useStudyConfig';
 import { useCurrentIdentifier } from '../routes/utils';
 import { PreviousButton } from './PreviousButton';
 import { getComponentContainerStyle } from '../utils/componentStyle';
+import classes from './response/css/ButtonsInput.module.css';
+
 import {
   DEFAULT_AUTO_ADVANCE_WARNING_MESSAGE,
   DEFAULT_AUTO_ADVANCE_WARNING_TIME,
   getAutoAdvanceWarning,
 } from './nextButtonTimeout';
+import { useStartupInteractionBlocked } from './StartupContext';
 
 const nextButtonJustify = {
   left: 'flex-start',
@@ -30,7 +33,7 @@ type Props = {
   disabled?: boolean;
   config?: IndividualComponent;
   location?: ResponseBlockLocation;
-  checkAnswer: JSX.Element | null;
+  checkAnswer?: ReactNode;
   onCheckAnswer?: () => void;
   onNext: () => void;
 };
@@ -48,6 +51,7 @@ export function NextButton({
   const studyConfig = useStudyConfig();
   const navigate = useNavigate();
   const identifier = useCurrentIdentifier();
+  const startupInteractionBlocked = useStartupInteractionBlocked();
 
   const nextButtonDisableTime = config?.nextButtonDisableTime ?? studyConfig.uiConfig.nextButtonDisableTime;
   const nextButtonEnableTime = config?.nextButtonEnableTime ?? studyConfig.uiConfig.nextButtonEnableTime ?? 0;
@@ -59,6 +63,11 @@ export function NextButton({
   const autoAdvanceTriggered = useRef(false);
   // Use the current identifier so nested function-sequence items reset their timer state.
   useEffect(() => {
+    if (startupInteractionBlocked) {
+      setTimer(undefined);
+      return undefined;
+    }
+
     autoAdvanceTriggered.current = false;
     const start = Date.now();
     setTimer(0);
@@ -68,25 +77,25 @@ export function NextButton({
     return () => {
       clearInterval(interval);
     };
-  }, [identifier]);
+  }, [identifier, startupInteractionBlocked]);
 
   useEffect(() => {
-    if (timer === undefined) {
+    if (startupInteractionBlocked || timer === undefined) {
       return;
     }
     if (nextButtonDisableTime && timer >= nextButtonDisableTime && studyConfig.uiConfig.timeoutReject) {
       navigate(`./../__timedOut${window.location.search}`);
     }
-  }, [nextButtonDisableTime, timer, navigate, studyConfig.uiConfig.timeoutReject]);
+  }, [nextButtonDisableTime, timer, navigate, startupInteractionBlocked, studyConfig.uiConfig.timeoutReject]);
 
   useEffect(() => {
-    if (isNextDisabled || timer === undefined || nextButtonAutoAdvanceTime === undefined || timer < nextButtonAutoAdvanceTime || autoAdvanceTriggered.current) {
+    if (startupInteractionBlocked || isNextDisabled || timer === undefined || nextButtonAutoAdvanceTime === undefined || timer < nextButtonAutoAdvanceTime || autoAdvanceTriggered.current) {
       return;
     }
 
     autoAdvanceTriggered.current = true;
     goToNextStep(false);
-  }, [goToNextStep, isNextDisabled, nextButtonAutoAdvanceTime, timer]);
+  }, [startupInteractionBlocked, goToNextStep, isNextDisabled, nextButtonAutoAdvanceTime, timer]);
 
   const buttonTimerSatisfied = useMemo(
     () => {
@@ -115,24 +124,27 @@ export function NextButton({
         return;
       }
 
-      if (onCheckAnswer) {
+      if (checkAnswer && onCheckAnswer && !isNextDisabled) {
         onCheckAnswer();
-        return;
-      }
-      if (!disabled && !isNextDisabled && buttonTimerSatisfied) {
-        onNext();
+      } else if (!disabled && !isNextDisabled && buttonTimerSatisfied) {
+        if (onCheckAnswer) {
+          onCheckAnswer();
+        } else {
+          onNext();
+        }
       }
     };
 
-    if (nextOnEnter) {
+    if (nextOnEnter && !startupInteractionBlocked) {
       window.addEventListener('keydown', handleKeyDown);
     }
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [disabled, isNextDisabled, buttonTimerSatisfied, onCheckAnswer, onNext, nextOnEnter]);
+  }, [startupInteractionBlocked, checkAnswer, disabled, isNextDisabled, buttonTimerSatisfied, onCheckAnswer, onNext, nextOnEnter]);
 
-  const nextButtonDisabled = disabled || isNextDisabled || !buttonTimerSatisfied;
+  const nextButtonDisabled = startupInteractionBlocked
+    || disabled || isNextDisabled || !buttonTimerSatisfied;
   const previousButtonText = config?.previousButtonText ?? studyConfig.uiConfig.previousButtonText ?? 'Previous';
   const nextButtonAlignment = config?.nextButtonAlignment ?? studyConfig.uiConfig.nextButtonAlignment ?? 'right';
   const componentWidth = config && getComponentContainerStyle(config.type, config.style);
@@ -157,11 +169,13 @@ export function NextButton({
         {checkAnswer}
         <Button
           type="submit"
+          className={classes.nextButton}
           disabled={nextButtonDisabled}
-          onClick={() => onNext()}
+          onClick={() => (checkAnswer ? onNext : (onCheckAnswer ?? onNext))()}
+          fw={700}
           px={location === 'sidebar' && checkAnswer ? 8 : undefined}
           aria-label={label}
-          rightSection={nextOnEnter && !onCheckAnswer ? (
+          rightSection={nextOnEnter && (!checkAnswer || !onCheckAnswer) ? (
             <Kbd
               size="xs"
               aria-hidden="true"
@@ -170,7 +184,8 @@ export function NextButton({
                 color: 'inherit',
                 boxShadow: 'none',
                 border: 'none',
-                fontSize: '11px',
+                marginTop: -4,
+                fontSize: '16px',
                 fontWeight: 600,
               }}
             >
@@ -179,10 +194,10 @@ export function NextButton({
           ) : undefined}
           styles={{
             inner: { alignItems: 'stretch' },
-            section: nextOnEnter && !onCheckAnswer ? {
+            section: nextOnEnter && (!checkAnswer || !onCheckAnswer) ? {
               alignItems: 'center',
               justifyContent: 'center',
-              padding: '0 10px',
+              padding: '0 8px',
               marginRight: -16,
               marginBlock: -1,
               borderLeft: '1px solid rgba(255, 255, 255, 0.25)',

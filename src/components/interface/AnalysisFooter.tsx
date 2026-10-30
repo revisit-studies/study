@@ -7,7 +7,7 @@ import { useStorageEngine } from '../../storage/storageEngineHooks';
 import { StorageEngine } from '../../storage/engines/types';
 import { ThinkAloudFooter } from '../../analysis/individualStudy/thinkAloud/ThinkAloudFooter';
 import { useCurrentIdentifier } from '../../routes/utils';
-import { useStoreActions, useStoreDispatch } from '../../store/store';
+import { useStoreSelector, useStoreActions, useStoreDispatch } from '../../store/store';
 
 async function getAllParticipantsNames(storageEngine: StorageEngine | undefined) {
   if (storageEngine) {
@@ -21,6 +21,7 @@ export function AnalysisFooter({ setHasAudio }: {setHasAudio: (b: boolean) => vo
 
   const { value: allParticipants } = useAsync(getAllParticipantsNames, [storageEngine]);
 
+  const answers = useStoreSelector((state) => state.answers);
   const identifier = useCurrentIdentifier();
   const [searchParams] = useSearchParams();
   const participantId = searchParams.get('participantId') || '';
@@ -34,9 +35,9 @@ export function AnalysisFooter({ setHasAudio }: {setHasAudio: (b: boolean) => vo
   } = useStoreActions();
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const saveProvenance = useCallback((prov: any) => storeDispatch(saveAnalysisState(prov)), [storeDispatch, saveAnalysisState]);
+  const saveProvenance = useCallback((prov: any) => storeDispatch(saveAnalysisState({ ...prov, identifier })), [identifier, storeDispatch, saveAnalysisState]);
 
   return (
-    <ThinkAloudFooter key={`${participantId}-${identifier}`} storageEngine={storageEngine} setHasAudio={setHasAudio} studyId={studyId || ''} currentTrial={identifier} isReplay visibleParticipants={allParticipants || []} rawTranscript={null} currentShownTranscription={null} width={3000} onTimeUpdate={() => {}} saveProvenance={saveProvenance} />
+    <ThinkAloudFooter replayAnswers={answers} key={`${participantId}-${identifier}`} storageEngine={storageEngine} setHasAudio={setHasAudio} studyId={studyId || ''} currentTrial={identifier} isReplay visibleParticipants={allParticipants || []} rawTranscript={null} currentShownTranscription={null} width={3000} onTimeUpdate={() => {}} saveProvenance={saveProvenance} />
   );
 }

@@ -1,0 +1,5 @@
+.env
+.env.old
+volumes/
+.supabase-version
+backups/

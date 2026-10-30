@@ -48,8 +48,8 @@ vi.mock('@mantine/core', () => {
   const Div = forwardRef<HTMLDivElement, { children?: ReactNode; style?: CSSProperties }>(function Div({ children, style }, ref) { // eslint-disable-line prefer-arrow-callback
     return <div ref={ref} style={style}>{children}</div>;
   });
-  function Span({ children }: { children?: ReactNode }) {
-    return <span>{children}</span>;
+  function Span({ children, size }: { children?: ReactNode; size?: string }) {
+    return <span data-size={size}>{children}</span>;
   }
   const Input = Object.assign(
     ({ children }: { children?: ReactNode }) => <div>{children}</div>,
@@ -80,6 +80,10 @@ vi.mock('@mantine/core', () => {
       </div>
     );
   }
+  const RadioCard = forwardRef<HTMLButtonElement, { children?: ReactNode; value?: string }>(
+    ({ children, value }, ref) => <button ref={ref} type="button" role="radio" data-value={value}>{children}</button>,
+  );
+  RadioCard.displayName = 'RadioCard';
   const Radio = Object.assign(
     ({ label, value, children }: { label?: ReactNode; value?: string; children?: ReactNode }) => (
       <div data-value={value}>
@@ -89,9 +93,7 @@ vi.mock('@mantine/core', () => {
     ),
     {
       Group: RadioGroup,
-      Card: ({ children, value }: { children?: ReactNode; value?: string }) => (
-        <button type="button" role="radio" data-value={value}>{children}</button>
-      ),
+      Card: RadioCard,
     },
   );
   const Checkbox = Object.assign(
@@ -125,8 +127,8 @@ vi.mock('@mantine/core', () => {
     Tooltip: ({ children, label }: { children?: ReactNode; label?: ReactNode }) => (
       <div title={String(label)}>{children}</div>
     ),
-    Alert: ({ children, title }: { children?: ReactNode; title?: ReactNode }) => (
-      <div data-alert>
+    Alert: ({ children, title, style }: { children?: ReactNode; title?: ReactNode; style?: CSSProperties }) => (
+      <div data-alert style={style}>
         <div data-title>{title}</div>
         {children}
       </div>
@@ -329,7 +331,8 @@ vi.mock('../../../utils/getSequenceFlatMap', () => ({
   getSequenceFlatMap: vi.fn(() => []),
 }));
 
-vi.mock('../customResponseModules', () => ({
+vi.mock('../customResponseModules', async (importOriginal) => ({
+  ...await importOriginal(),
   getCustomResponseModule: vi.fn(() => null),
   getCustomResponseModuleLoadError: vi.fn(() => null),
 }));
@@ -683,6 +686,27 @@ describe('CheckBoxInput', () => {
     // horizontal=true → label is the literal string 'Other'
     expect(html).toContain('Other');
   });
+
+  test('clears selected checkboxes and the dont-know answer', () => {
+    const onChange = vi.fn();
+    const onDontKnowChange = vi.fn();
+    const view = render(
+      <CheckBoxInput
+        response={{ ...base, withDontKnow: true }}
+        disabled
+        clearDisabled={false}
+        answer={{ value: ['A'], onChange }}
+        dontKnowCheckbox={{ checked: true, onChange: onDontKnowChange }}
+        index={1}
+        enumerateQuestions={false}
+      />,
+    );
+
+    fireEvent.click(view.getByRole('button', { name: 'Clear selection' }));
+    expect(onChange).toHaveBeenCalledWith([]);
+    expect(onDontKnowChange).toHaveBeenCalledWith(false);
+    cleanup();
+  });
 });
 
 // ── ButtonsInput ──────────────────────────────────────────────────────────────
@@ -712,6 +736,46 @@ describe('ButtonsInput', () => {
     expect(html).toContain('Yes');
     expect(html).toContain('No');
     expect(html).toContain('Maybe');
+  });
+
+  test('focuses and selects the first option when arrow navigation starts from the page', () => {
+    const onChange = vi.fn();
+    const { container } = render(
+      <ButtonsInput
+        response={base}
+        disabled={false}
+        answer={{ value: '', onChange }}
+        index={1}
+        enumerateQuestions={false}
+      />,
+    );
+
+    const firstOption = container.querySelector('[role="radio"]');
+    expect(document.activeElement).toBe(document.body);
+
+    fireEvent.keyDown(document.body, { key: 'ArrowRight', bubbles: true });
+
+    expect(document.activeElement).toBe(firstOption);
+    expect(onChange).toHaveBeenCalledWith('Yes', 'keyboard');
+  });
+
+  test('returns focus to the selected option without changing the answer', () => {
+    const onChange = vi.fn();
+    const { container } = render(
+      <ButtonsInput
+        response={base}
+        disabled={false}
+        answer={{ value: 'No', onChange }}
+        index={1}
+        enumerateQuestions={false}
+      />,
+    );
+
+    const selectedOption = container.querySelector('[role="radio"][data-value="No"]');
+    fireEvent.keyDown(document.body, { key: 'ArrowLeft', bubbles: true });
+
+    expect(document.activeElement).toBe(selectedOption);
+    expect(onChange).not.toHaveBeenCalled();
   });
 
   test('mapped key works when a rendered response card has focus', () => {
@@ -772,7 +836,7 @@ describe('ButtonsInput', () => {
           index={1}
           enumerateQuestions={false}
         />
-        <NextButton checkAnswer={null} onNext={onNext} />
+        <NextButton onNext={onNext} />
       </>,
     );
 
@@ -1281,6 +1345,69 @@ describe('FeedbackAlert', () => {
       />,
     );
     expect(html).not.toContain('review the help text');
+    expect(html).not.toContain('<br/>');
+  });
+
+  test.each([true, false])('uses explicit retry state %s for custom feedback', (retryAllowed) => {
+    const html = renderToStaticMarkup(
+      <FeedbackAlert
+        response={baseResponse}
+        correctAnswer={undefined}
+        alertConfig={{ q1: { ...baseAlertConfig.q1, message: 'Custom hint', retryAllowed } }}
+        identifier="trial1_0"
+        attemptsUsed={1}
+        trainingAttempts={2}
+      />,
+    );
+    expect(html.includes('review the help text')).toBe(retryAllowed);
+  });
+
+  test('hides the help text link when individual feedback is provided', () => {
+    const html = renderToStaticMarkup(
+      <FeedbackAlert
+        response={baseResponse}
+        correctAnswer={undefined}
+        alertConfig={{ q1: { ...baseAlertConfig.q1, retryAllowed: true, showHelpTextLink: false } }}
+        identifier="trial1_0"
+        attemptsUsed={1}
+        trainingAttempts={3}
+      />,
+    );
+    expect(html).not.toContain('review the help text');
+  });
+
+  test('renders an answer hint alongside its incorrect feedback', () => {
+    const html = renderToStaticMarkup(
+      <FeedbackAlert
+        response={baseResponse}
+        correctAnswer={undefined}
+        alertConfig={{ q1: { ...baseAlertConfig.q1, message: 'Not quite.', hint: 'Think about two groups of two.' } }}
+        identifier="trial1_0"
+        attemptsUsed={1}
+        trainingAttempts={3}
+      />,
+    );
+    expect(html).toContain('Not quite.');
+    expect(html).toContain('Think about two groups of two.');
+    expect(html).toContain('data-size="lg"');
+    expect((html.match(/data-size="md"/g) ?? [])).toHaveLength(2);
+    expect(html).toContain('data-size="md"');
+    expect(html).not.toContain('data-size="sm"');
+  });
+
+  test('sizes custom feedback alert vertically without changing its width', () => {
+    const html = renderToStaticMarkup(
+      <FeedbackAlert
+        response={baseResponse}
+        correctAnswer={undefined}
+        alertConfig={{ q1: { ...baseAlertConfig.q1, fitHeight: true } }}
+        identifier="trial1_0"
+        attemptsUsed={1}
+        trainingAttempts={3}
+      />,
+    );
+    expect(html).toContain('height:fit-content');
+    expect(html).not.toContain('width:fit-content');
   });
 
   test('shows correct answer when attemptsUsed >= trainingAttempts and correctAnswer provided', () => {
@@ -1660,3 +1787,5 @@ describe('ResponseSwitcher', () => {
     expect(html).toContain('I don&#x27;t know');
   });
 });
+
+vi.mock('../../../store/hooks/useGlobalStore', () => ({ useGlobalStore: () => ({}) }));

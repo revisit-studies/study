@@ -16,6 +16,7 @@ import { ErrorLoadingConfig } from './ErrorLoadingConfig';
 import { ReactMarkdownWrapper } from './ReactMarkdownWrapper';
 import { ParticipantStatusBadges } from '../analysis/interface/ParticipantStatusBadges';
 import { useStorageEngine } from '../storage/storageEngineHooks';
+import { startDesignerPreview } from '../store/hooks/useDesignerPreview';
 import { REVISIT_MODE } from '../storage/engines/types';
 import { getSequenceConditions } from '../utils/handleConditionLogic';
 import { useStudyRecordings } from '../utils/useStudyRecordings';
@@ -264,6 +265,7 @@ function ValidStudyCard({
       </Flex>
       )}
 
+      {/* Reload to keep each study launch isolated from the previous storage session. */}
       <Flex direction="row" align="end" gap="sm" mt="md" wrap="wrap">
         {conditions.length > 0 && (
         <MultiSelect
@@ -285,25 +287,31 @@ function ValidStudyCard({
           }}
         />
         )}
-        {canViewAnalytics && (
-        <Button
-          leftSection={<IconChartHistogram />}
-          style={{ marginLeft: 'auto' }}
-          variant="default"
-          component="a"
-          href={`${PREFIX}analysis/stats/${url}`}
-        >
-          Analyze & Manage Study
-        </Button>
-        )}
-        <Button
-          leftSection={<IconListCheck />}
-          ml={canViewAnalytics ? undefined : 'auto'}
-          component="a"
-          href={studyUrl}
-        >
-          Go to Study
-        </Button>
+        <Flex gap="sm" ml="auto" wrap="wrap" justify="flex-end" style={{ width: 'max-content', maxWidth: '100%' }}>
+          {canViewAnalytics && (
+          <Button
+            leftSection={<IconChartHistogram />}
+            variant="default"
+            onClick={() => window.location.assign(`${PREFIX}analysis/stats/${url}`)}
+          >
+            Analyze & Manage Study
+          </Button>
+          )}
+          <Button
+            variant="default"
+            component="a"
+            href={`${studyUrl}${studyUrl.includes('?') ? '&' : '?'}preview=true`}
+            onClick={() => startDesignerPreview(url)}
+          >
+            Preview
+          </Button>
+          <Button
+            leftSection={<IconListCheck />}
+            onClick={() => window.location.assign(studyUrl)}
+          >
+            Go to Study
+          </Button>
+        </Flex>
       </Flex>
     </Card>
   );

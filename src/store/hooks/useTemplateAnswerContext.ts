@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { useParams } from 'react-router';
+import { useGlobalStore } from './useGlobalStore';
 import { useFlatSequence, useStoreSelector } from '../store';
 import { useCurrentComponent, useCurrentStep } from '../../routes/utils';
 import { decryptIndex } from '../../utils/encryptDecryptIndex';
@@ -19,6 +20,7 @@ import { decryptIndex } from '../../utils/encryptDecryptIndex';
 // can fire a request for the wrong iteration. We surface that by returning `undefined` until
 // the dynamic component has settled.
 export function useTemplateAnswerContext() {
+  const store = useGlobalStore();
   const answers = useStoreSelector((state) => state.answers);
   const flatSequence = useFlatSequence();
   const currentStep = useCurrentStep();
@@ -29,8 +31,8 @@ export function useTemplateAnswerContext() {
     () => (currentComponent === '__dynamicLoading'
       ? undefined
       : {
-        answers, flatSequence, currentStep, currentComponent, funcIndex: decryptedFuncIndex,
+        globalVariables: store, answers, flatSequence, currentStep, currentComponent, funcIndex: decryptedFuncIndex,
       }),
-    [answers, flatSequence, currentStep, currentComponent, decryptedFuncIndex],
+    [store, answers, flatSequence, currentStep, currentComponent, decryptedFuncIndex],
   );
 }

@@ -33,7 +33,7 @@ jobs:
       - name: Build main deployment
         run: |
           if [ "$GITHUB_REPOSITORY" = "revisit-studies/study" ]; then
-            VITE_STORAGE_ENGINE=firebase yarn build
+            VITE_STORAGE_ENGINE=firebase VITE_REPO_URL=https://github.com/revisit-studies/study/tree/main/public/ yarn build
           else
             yarn build
           fi
@@ -54,6 +54,7 @@ jobs:
         run: yarn build
         env:
           VITE_BASE_PATH: "/${{ github.event.repository.name }}/supabase/"
+          VITE_REPO_URL: "https://github.com/revisit-studies/study/tree/main/public/"
           VITE_STORAGE_ENGINE: supabase
 
       - name: Deploy current-only main Supabase snapshot
@@ -78,7 +79,7 @@ jobs:
       - name: Build dev deployment
         run: |
           if [ "$GITHUB_REPOSITORY" = "revisit-studies/study" ]; then
-            VITE_STORAGE_ENGINE=firebase yarn build
+            VITE_STORAGE_ENGINE=firebase VITE_REPO_URL=https://github.com/revisit-studies/study/tree/dev/public/ yarn build
           else
             yarn build
           fi
@@ -99,6 +100,7 @@ jobs:
         run: yarn build
         env:
           VITE_BASE_PATH: "/${{ github.event.repository.name }}/dev-supabase/"
+          VITE_REPO_URL: "https://github.com/revisit-studies/study/tree/dev/public/"
           VITE_STORAGE_ENGINE: supabase
 
       - name: Deploy current-only dev Supabase snapshot

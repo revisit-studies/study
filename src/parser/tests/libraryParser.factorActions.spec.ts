@@ -5,7 +5,7 @@ import {
 import { generateSequenceArray } from '../../utils/handleRandomSequences';
 import { getSequenceFlatMap } from '../../utils/getSequenceFlatMap';
 import {
-  compileFactorBlocks, createFactorOrderContext, resolveFactorConditions, resolveOrderedFactorConditions,
+  compileFactorBlocks, createFactorOrderContext, materializeParticipantConfig, resolveFactorConditions, resolveOrderedFactorConditions,
 } from '../libraryParser';
 import { parseStudyConfig } from '../parser';
 import {
@@ -824,7 +824,7 @@ describe('factor sequence actions', () => {
 
   test('parses the factor-action demo', async () => {
     const config = readFileSync(
-      'public/demo-factors/config.json',
+      'public/test-factors/config.json',
       'utf8',
     );
 
@@ -835,7 +835,7 @@ describe('factor sequence actions', () => {
 
   test('parses the Markdown templating factors demo', async () => {
     const config = readFileSync(
-      'public/demo-markdown-factors/config.json',
+      'public/test-markdown-factors/config.json',
       'utf8',
     );
 
@@ -846,10 +846,13 @@ describe('factor sequence actions', () => {
     expect(result.errors).toEqual([]);
     expect(trialSequence.components).toHaveLength(4);
     expect(result.components['markdownFactorTrials__animal=%22cat%22__color=%22blue%22__factorTemplate'])
-      .toMatchObject({ description: 'Animal: cat; color: blue' });
+      .toMatchObject({
+        path: 'test-markdown-factors/assets/factor-template.md',
+        parameters: { animal: 'cat', color: 'blue' },
+      });
   });
 
-  test('uses subtract to produce 90 incongruent Stroop trials', async () => {
+  test('crosses five Stroop colors and assigns font size between participants', async () => {
     const config = readFileSync(
       'public/demo-stroop-factors/config.json',
       'utf8',
@@ -858,21 +861,21 @@ describe('factor sequence actions', () => {
     const result = await parseStudyConfig(config);
     const rootSequence = result.sequence as ComponentBlock;
     const trialSequence = rootSequence.components[1] as ComponentBlock;
-    const redWordBlueInkId = 'stroopTrials__word=%22RED%22__inkColor=%22BLUE%22__stroopTrial';
+    const redWordBlueInkId = 't__word=%22RED%22__inkColor=%22BLUE%22__stroopTrial';
 
     expect(result.errors).toEqual([]);
     expect(trialSequence).toMatchObject({
-      id: 'stroopTrials',
+      id: 't',
       order: 'random',
     });
-    expect(trialSequence.components).toHaveLength(90);
+    expect(trialSequence.components).toHaveLength(25);
     expect(trialSequence.components.filter((componentId) => {
       if (typeof componentId !== 'string' || !('parameters' in result.components[componentId])) {
         return false;
       }
       const { parameters } = result.components[componentId];
       return parameters?.word === parameters?.inkColor;
-    })).toEqual([]);
+    })).toHaveLength(5);
     expect(result.components[redWordBlueInkId]).toMatchObject({
       parameters: {
         word: 'RED',
@@ -883,11 +886,27 @@ describe('factor sequence actions', () => {
         answer: 'BLUE',
       }],
     });
+    const sequences = generateSequenceArray({
+      ...result,
+      uiConfig: { ...result.uiConfig, numSequences: 2 },
+    });
+    expect(sequences.map((sequence) => sequence.parameters?.fontSize)).toEqual(['24px', '48px']);
+    sequences.forEach((sequence) => {
+      const runtimeConfig = materializeParticipantConfig(result, sequence.parameters || {});
+      const trials = getSequenceFlatMap(sequence).filter((id) => id.startsWith('t__'));
+      expect(trials).toHaveLength(25);
+      trials.forEach((id) => {
+        expect(runtimeConfig.components[id]).toMatchObject({
+          type: 'markdown',
+          parameters: { fontSize: sequence.parameters?.fontSize },
+        });
+      });
+    });
   });
 
-  test('parses the factorized visualization guardrails demo', async () => {
+  test('parses the factorized visualization guardrails study', async () => {
     const config = readFileSync(
-      'public/demo-max-study2/config.json',
+      'public/test-max-study2/config.json',
       'utf8',
     );
 

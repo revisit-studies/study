@@ -18,6 +18,12 @@
     "studyEndMsg": "Thank you for completing the CALVI question bank."
   },
   "importedLibraries": ["calvi"],
+  "factors": {
+    "calviQuestion": [
+      "N1", "N2", "N3", "N4", "N5", "N6", "N7", "N8", "N9", "N10", "N11", "N12", "N13", "N14", "N15",
+      "T3", "T10", "T14", "T20", "T25", "T26", "T30", "T35", "T37", "T40", "T42", "T43", "T47", "T48", "T49"
+    ]
+  },
   "components": {
     "introduction": {
       "type": "markdown",
@@ -30,40 +36,11 @@
     "components": [
       "introduction",
       {
+        "type": "factor",
         "id": "calviMixedQuestions",
-        "order": "random",
-        "components": [
-          "$calvi.components.N1",
-          "$calvi.components.N2",
-          "$calvi.components.N3",
-          "$calvi.components.N4",
-          "$calvi.components.N5",
-          "$calvi.components.N6",
-          "$calvi.components.N7",
-          "$calvi.components.N8",
-          "$calvi.components.N9",
-          "$calvi.components.N10",
-          "$calvi.components.N11",
-          "$calvi.components.N12",
-          "$calvi.components.N13",
-          "$calvi.components.N14",
-          "$calvi.components.N15",
-          "$calvi.components.T3",
-          "$calvi.components.T10",
-          "$calvi.components.T14",
-          "$calvi.components.T20",
-          "$calvi.components.T25",
-          "$calvi.components.T26",
-          "$calvi.components.T30",
-          "$calvi.components.T35",
-          "$calvi.components.T37",
-          "$calvi.components.T40",
-          "$calvi.components.T42",
-          "$calvi.components.T43",
-          "$calvi.components.T47",
-          "$calvi.components.T48",
-          "$calvi.components.T49"
-        ]
+        "factor": "calviQuestion",
+        "components": "$calvi.components.{{calviQuestion}}",
+        "order": "random"
       }
     ]
   }

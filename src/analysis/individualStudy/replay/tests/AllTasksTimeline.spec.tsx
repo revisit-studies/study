@@ -255,6 +255,42 @@ describe('AllTasksTimeline', () => {
     expect(html).toContain('Response recorded; correctness not configured.');
   });
 
+  test.each([
+    [{ id: 'q1', acceptableAnswers: ['yes', 'maybe'] }, '[&quot;yes&quot;,&quot;maybe&quot;]'],
+    [{ id: 'q1', acceptableLow: 0, acceptableHigh: 5 }, '{&quot;acceptableLow&quot;:0,&quot;acceptableHigh&quot;:5}'],
+  ])('shows list-only and range-only answer rules in replay tooltips: %j', (rule, expected) => {
+    const participant = makeParticipant({
+      answers: { trial1_0: makeAnswer({ answer: { q1: 'yes' }, correctAnswer: [rule] }) },
+    });
+    const html = renderToStaticMarkup(
+      <AllTasksTimeline participantData={participant} width={600} studyId="test-study" studyConfig={emptyConfig} maxLength={undefined} />,
+    );
+
+    expect(html).toContain(expected);
+  });
+
+  test.each([true, false])('preserves an empty dynamic grading override in replay (saved=%s)', (hasSavedRules) => {
+    const answer = makeAnswer({ answer: { q1: 'B' }, correctAnswer: [] });
+    if (!hasSavedRules) delete (answer as Partial<StoredAnswer>).correctAnswer;
+    const config = makeStudyConfig({
+      components: {
+        trial1: {
+          type: 'questionnaire',
+          response: [{
+            id: 'q1', type: 'radio', prompt: '', options: ['A', 'B'],
+          }],
+          correctAnswer: [{ id: 'q1', answer: 'A' }],
+        },
+      },
+    });
+    const html = renderToStaticMarkup(
+      <AllTasksTimeline participantData={makeParticipant({ answers: { trial1_0: answer } })} width={600} studyId="test-study" studyConfig={config} maxLength={undefined} />,
+    );
+
+    expect(html.includes('Response recorded; correctness not configured.')).toBe(hasSavedRules);
+    expect(html.includes('icon-x')).toBe(!hasSavedRules);
+  });
+
   test('handles legacy answers without correctAnswer', () => {
     const legacyAnswer = makeAnswer({ answer: { q1: 'yes' } });
     delete (legacyAnswer as Partial<StoredAnswer>).correctAnswer;

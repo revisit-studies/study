@@ -1,7 +1,10 @@
 import {
-  useCallback, useContext, useEffect, useMemo, useRef, useState,
+  useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState,
 } from 'react';
+import { useComputedColorScheme } from '@mantine/core';
 import { useDispatch } from 'react-redux';
+import type { GlobalStoreValues } from '../parser/types';
+import { useGlobalStore, useGlobalStoreUpdaterRegistration } from '../store/hooks/useGlobalStore';
 import { useCurrentComponent, useCurrentIdentifier } from '../routes/utils';
 import { useStoreDispatch, useStoreActions, useStoreSelector } from '../store/store';
 import { ParticipantData, WebsiteComponent } from '../parser/types';
@@ -15,10 +18,28 @@ import { getStaticAssetByPath } from '../utils/getStaticAsset';
 import { buildIframeSrcDoc, getBaseHref } from '../utils/iframeSrcDoc';
 import { PREFIX as BASE_PREFIX } from '../utils/Prefix';
 import { ResourceNotFound } from '../ResourceNotFound';
+import { RestorationError } from '../components/interface/RestorationError';
+import { useTrialProvenance } from '../store/hooks/useTrialProvenance';
+import { RestorationWarning } from '../components/interface/RestorationWarning';
+import { responseValueKeys } from '../utils/responseVisibility';
 
 const PREFIX = '@REVISIT_COMMS';
 
 export function IframeController({ currentConfig, provState, answers }: { currentConfig: WebsiteComponent; provState?: unknown, answers: ParticipantData['answers'] }) {
+  const store = useGlobalStore();
+  const registerGlobalStoreUpdater = useGlobalStoreUpdaterRegistration();
+  const updaterCleanup = useRef<(() => void) | undefined>(undefined);
+  const pendingUpdate = useRef<{ id: string; resolve:(value: GlobalStoreValues) => void; reject: (error: Error) => void } | undefined>(undefined);
+  const documentId = useRef<string | undefined>(undefined);
+  const disposeUpdater = useCallback((message: string) => {
+    updaterCleanup.current?.();
+    updaterCleanup.current = undefined;
+    pendingUpdate.current?.reject(new Error(message));
+    pendingUpdate.current = undefined;
+  }, []);
+  useEffect(() => () => disposeUpdater('The website was closed before its global store update finished.'), [disposeUpdater]);
+  const studyColorMode = useComputedColorScheme('light');
+  const colorMode = currentConfig.colorMode ?? studyColorMode;
   const {
     setReactiveAnswers, updateProvenance, updateResponseBlockValidation,
   } = useStoreActions();
@@ -26,10 +47,18 @@ export function IframeController({ currentConfig, provState, answers }: { curren
   const dispatch = useDispatch();
   const identifier = useCurrentIdentifier();
   const isAnalysis = useIsAnalysis();
+  const provenance = useTrialProvenance('stimulus');
+  const [resumeStatus, setResumeStatus] = useState<'unknown' | 'pending' | 'ready' | 'unsupported' | 'error'>('unknown');
+  const resumeStatusRef = useRef(resumeStatus);
+  const resumeRequest = useRef<string>('');
+  const hostResponseKeys = useMemo(() => new Set((currentConfig.response ?? [])
+    .filter((response) => response.type !== 'reactive').flatMap(responseValueKeys)), [currentConfig.response]);
   const replay = useContext(ReplayContext);
   const initialReplayTime = useRef(replay?.seekTime ?? 0);
   const [hasReplayStarted, setHasReplayStarted] = useState(false);
   const stimulusValidation = useStoreSelector((state) => state.trialValidation[identifier]?.stimulus);
+  const [restoredAnswers] = useState(() => ({ ...answers[identifier]?.answer, ...stimulusValidation?.values }));
+  const hasSavedData = !!provenance || Object.keys(restoredAnswers).some((key) => !hostResponseKeys.has(key));
 
   useEffect(() => {
     if (replay && (replay.isPlaying || replay.seekTime !== initialReplayTime.current)) {
@@ -65,6 +94,7 @@ export function IframeController({ currentConfig, provState, answers }: { curren
   }, [currentConfig.templated, isExternal, templatedPath]);
 
   const ref = useRef<HTMLIFrameElement>(null);
+  const [frameDocument, setFrameDocument] = useState<Document | null>(null);
   const stimulusValidationRef = useRef(stimulusValidation);
 
   useEffect(() => {
@@ -81,9 +111,8 @@ export function IframeController({ currentConfig, provState, answers }: { curren
 
   const url = useMemo(() => {
     if (templatedPath === undefined) return undefined;
-    return templatedPath.startsWith('http')
-      ? templatedPath
-      : `${BASE_PREFIX}${templatedPath}?trialid=${currentComponent}&id=${iframeId}`;
+    if (templatedPath.startsWith('http')) return templatedPath;
+    return `${BASE_PREFIX}${templatedPath}?trialid=${currentComponent}&id=${iframeId}`;
   }, [templatedPath, currentComponent, iframeId]);
   // Templated stimuli are fetched without the query string, so the request is cacheable and isn't
   // busted by the per-mount iframe id.
@@ -105,10 +134,38 @@ export function IframeController({ currentConfig, provState, answers }: { curren
   }, [fetchUrl, templatedPath, isTemplated, currentConfig.parameters, iframeId, currentComponent]);
   const { status, value } = useAsyncResource<string | true>(requestKey, loadWebsite);
   const srcDoc = typeof value === 'string' ? value : undefined;
-  const { status: frameStatus, onReady, onError } = useAssetLoadStatus(requestKey);
+  const {
+    status: frameStatus, onLoading, onReady, onError,
+  } = useAssetLoadStatus(requestKey);
   const assetStatus = getAssetStatus(status, frameStatus);
 
-  useAssetStatus(assetStatus);
+  const applyColorMode = useCallback(() => {
+    // The iframe hint alone does not override an embedded page's own `light dark` choice.
+    // contentDocument is null for cross-origin pages; those retain the CSS hint below.
+    ref.current?.contentDocument?.documentElement?.style.setProperty('color-scheme', colorMode, 'important');
+  }, [colorMode]);
+
+  useLayoutEffect(applyColorMode, [applyColorMode, srcDoc, url]);
+
+  useLayoutEffect(() => {
+    if (!frameDocument || frameDocument !== ref.current?.contentDocument) return undefined;
+    const frameWindow = frameDocument.defaultView;
+    if (!frameWindow) return undefined;
+    const events = new frameWindow.AbortController();
+    // Internal navigation keeps the iframe URL prop and request key unchanged.
+    frameWindow.addEventListener('pagehide', () => {
+      disposeUpdater('The website navigated before its global store update finished.');
+      onLoading();
+    }, { signal: events.signal });
+    frameWindow.addEventListener('pageshow', () => {
+      applyColorMode();
+      onReady();
+    }, { signal: events.signal });
+    // Abort removes listeners safely even after the frame changes origin.
+    return () => events.abort();
+  }, [frameDocument, applyColorMode, onLoading, onReady, disposeUpdater]);
+
+  useAssetStatus(resumeStatus === 'pending' ? 'loading' : resumeStatus === 'error' ? 'error' : assetStatus);
 
   const sendMessage = useCallback(
     (tag: string, message: unknown) => {
@@ -131,6 +188,8 @@ export function IframeController({ currentConfig, provState, answers }: { curren
     }
   }, [provState, sendMessage, shouldSendProvenance]);
 
+  useEffect(() => { sendMessage('GLOBAL_STORE', store); }, [sendMessage, store]);
+
   useEffect(() => {
     if (answers) {
       sendMessage('ANSWERS', answers);
@@ -140,9 +199,45 @@ export function IframeController({ currentConfig, provState, answers }: { curren
   useEffect(() => {
     const handler = (e: MessageEvent) => {
       const { data } = e;
-      if (typeof data === 'object' && iframeId === data.iframeId) {
+      const isBootstrap = data?.type === `${PREFIX}/WINDOW_READY` && data.message?.protocolVersion === 1;
+      if (data && typeof data === 'object' && (iframeId === data.iframeId || isBootstrap) && e.source === ref.current?.contentWindow) {
+        if (!isBootstrap && data.requestId && data.requestId !== resumeRequest.current) return;
         switch (data.type) {
-          case `${PREFIX}/WINDOW_READY`:
+          case `${PREFIX}/WINDOW_READY`: {
+            const isNewDocument = documentId.current !== data.message?.documentId;
+            disposeUpdater('The website navigated before its global store update finished.');
+            documentId.current = data.message?.documentId;
+            if (data.message?.protocolVersion === 1) {
+              const requestId = `${iframeId}:${data.message.documentId}`;
+              const needsResume = resumeRequest.current !== requestId;
+              resumeRequest.current = requestId;
+              if (data.message.globalStoreUpdater && !isAnalysis) {
+                updaterCleanup.current = registerGlobalStoreUpdater(({ store: entry, answers: currentAnswers }) => new Promise((resolve, reject) => {
+                  const id = crypto.randomUUID();
+                  pendingUpdate.current = { id, resolve, reject };
+                  sendMessage('GLOBAL_STORE_UPDATE', {
+                    requestId: id, documentId: documentId.current, store: entry, answers: currentAnswers,
+                  });
+                }));
+              }
+              if (isNewDocument || needsResume) {
+                resumeStatusRef.current = 'pending';
+                setResumeStatus('pending');
+                sendMessage('RESUME', {
+                  documentId: data.message.documentId,
+                  protocolVersion: 1,
+                  requestId: resumeRequest.current,
+                  isAnalysis,
+                  answers: restoredAnswers,
+                  provenanceGraph: isAnalysis ? undefined : provenance,
+                });
+              }
+            } else if (isNewDocument) {
+              resumeRequest.current = '';
+              resumeStatusRef.current = 'unknown';
+              setResumeStatus('unknown');
+            }
+            sendMessage('GLOBAL_STORE', store);
             if (currentConfig.parameters) {
               sendMessage('STUDY_DATA', currentConfig.parameters);
             }
@@ -153,24 +248,62 @@ export function IframeController({ currentConfig, provState, answers }: { curren
               sendMessage('ANSWERS', answers);
             }
             break;
+          }
+          case `${PREFIX}/GLOBAL_STORE_UPDATER`:
+            if (data.message?.documentId === documentId.current && data.message.enabled === false) {
+              disposeUpdater('The global store updater was removed.');
+            }
+            break;
+          case `${PREFIX}/GLOBAL_STORE_RESULT`:
+            if (data.message?.documentId !== documentId.current || data.message?.requestId !== pendingUpdate.current?.id) return;
+            if (data.message.error) pendingUpdate.current?.reject(new Error(data.message.error));
+            else pendingUpdate.current?.resolve(data.message.value);
+            pendingUpdate.current = undefined;
+            break;
+          case `${PREFIX}/RESTORATION_CAPABILITY`:
+            if (data.message?.requestId !== resumeRequest.current || data.message?.protocolVersion !== 1) return;
+            if (data.message.supported === true) {
+              resumeStatusRef.current = 'pending';
+              setResumeStatus('pending');
+            }
+            if (data.message.supported === false) {
+              resumeStatusRef.current = 'unsupported';
+              setResumeStatus('unsupported');
+            }
+            break;
+          case `${PREFIX}/RESTORED`:
+            if (data.message?.requestId !== resumeRequest.current || data.message?.protocolVersion !== 1) return;
+            resumeStatusRef.current = 'ready';
+            setResumeStatus('ready');
+            break;
+          case `${PREFIX}/RESTORATION_ERROR`:
+            if (data.message?.requestId !== resumeRequest.current) return;
+            resumeStatusRef.current = 'error';
+            setResumeStatus('error');
+            break;
           case `${PREFIX}/READY`:
             break;
-          case `${PREFIX}/ANSWERS`:
-            if (isAnalysis) return;
+          case `${PREFIX}/ANSWERS`: {
+            if (isAnalysis || resumeStatusRef.current === 'pending' || resumeStatusRef.current === 'error') return;
+            const stimulusAnswers: ParticipantData['answers'][string]['answer'] = { ...data.message };
+            hostResponseKeys.forEach((key) => { delete stimulusAnswers[key]; });
             stimulusValidationRef.current = {
               valid: true,
-              values: data.message,
+              values: stimulusAnswers,
             };
-            storeDispatch(setReactiveAnswers(data.message));
+            storeDispatch(setReactiveAnswers(stimulusAnswers));
             storeDispatch(updateResponseBlockValidation({
               location: 'stimulus',
               identifier,
               status: true,
-              values: data.message,
+              values: stimulusAnswers,
             }));
             break;
+          }
           case `${PREFIX}/PROVENANCE`: {
-            if (isAnalysis) return;
+            if (isAnalysis || resumeStatusRef.current === 'pending' || resumeStatusRef.current === 'error') return;
+            // Legacy initialization may arrive before an asynchronous restoration handler registers.
+            if (provenance && data.message?.root !== provenance.root) return;
             storeDispatch(updateProvenance({
               location: 'stimulus',
               identifier,
@@ -187,7 +320,7 @@ export function IframeController({ currentConfig, provState, answers }: { curren
     window.addEventListener('message', handler);
 
     return () => window.removeEventListener('message', handler);
-  }, [storeDispatch, dispatch, iframeId, currentConfig, sendMessage, setReactiveAnswers, updateProvenance, updateResponseBlockValidation, identifier, isAnalysis, provState, answers, shouldSendProvenance]);
+  }, [store, registerGlobalStoreUpdater, disposeUpdater, storeDispatch, dispatch, iframeId, currentConfig, hostResponseKeys, sendMessage, setReactiveAnswers, updateProvenance, updateResponseBlockValidation, identifier, isAnalysis, provState, answers, shouldSendProvenance, provenance, restoredAnswers]);
 
   // While the path is templated inside a dynamic block, templatedPath is undefined until the
   // block's current iteration resolves — don't load an iframe built from the wrong iteration.
@@ -204,23 +337,40 @@ export function IframeController({ currentConfig, provState, answers }: { curren
   }
 
   return (
-    <iframe
-      key={requestKey}
-      ref={ref}
-      inert={isAnalysis}
-      aria-disabled={isAnalysis}
-      style={{
-        width: '100%',
-        flexGrow: 1,
-        border: 0,
-        colorScheme: currentConfig.colorMode ?? 'inherit',
-        // Keep transparent embedded pages readable when their scheme differs from the study.
-        backgroundColor: currentConfig.colorMode ? 'Canvas' : undefined,
-        pointerEvents: isAnalysis ? 'none' : undefined,
-      }}
-      {...(srcDoc !== undefined ? { srcDoc } : { src: url })}
-      onLoad={onReady}
-      onErrorCapture={onError}
-    />
+    <>
+      <RestorationWarning component={identifier} website visible={hasSavedData && resumeStatus === 'unsupported'} />
+      {resumeStatus === 'error' && (
+        <RestorationError onRetry={() => {
+          resumeStatusRef.current = 'pending';
+          setResumeStatus('pending');
+          sendMessage('RETRY_RESTORE', { requestId: resumeRequest.current });
+        }}
+        />
+      )}
+      <iframe
+        key={requestKey}
+        ref={ref}
+        inert={isAnalysis || resumeStatus === 'pending' || resumeStatus === 'error'}
+        aria-disabled={isAnalysis || resumeStatus === 'pending' || resumeStatus === 'error'}
+        style={{
+          width: '100%',
+          flexGrow: 1,
+          border: 0,
+          colorScheme: colorMode,
+          // Do not expose the document's automatic theme before onLoad applies the study scheme.
+          visibility: frameStatus === 'ready' ? undefined : 'hidden',
+          // Keep transparent embedded pages readable when their scheme differs from the study.
+          backgroundColor: currentConfig.colorMode ? 'Canvas' : undefined,
+          pointerEvents: isAnalysis ? 'none' : undefined,
+        }}
+        {...(srcDoc !== undefined ? { srcDoc } : { src: url })}
+        onLoad={() => {
+          applyColorMode();
+          setFrameDocument(ref.current?.contentDocument ?? null);
+          onReady();
+        }}
+        onErrorCapture={onError}
+      />
+    </>
   );
 }

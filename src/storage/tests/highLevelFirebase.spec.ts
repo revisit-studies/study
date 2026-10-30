@@ -2,15 +2,20 @@ import {
   beforeAll, beforeEach, afterAll, afterEach, describe, expect, test, vi,
 } from 'vitest';
 import { signInAnonymously, signOut } from '@firebase/auth';
-import { enableNetwork, Timestamp } from 'firebase/firestore';
+import {
+  enableNetwork, Timestamp, runTransaction, getCountFromServer, getDocs, getDoc, getDocsFromServer,
+} from 'firebase/firestore';
 import { type ParticipantMetadata, type StudyConfig } from '../../parser/types';
 import testConfigSimple from './testConfigSimple.json';
 import testConfigSimple2 from './testConfigSimple2.json';
+import { makeStoredAnswer } from '../../tests/utils';
 import { generateSequenceArray } from '../../utils/handleRandomSequences';
 import { hash } from '../engines/utils/storageEngineHelpers';
 import { type Sequence } from '../../store/types';
 import { FirebaseStorageEngine } from '../engines/FirebaseStorageEngine';
-import { type StorageEngine, type SequenceAssignment, type StoredUser } from '../engines/types';
+import {
+  type StorageEngine, getBetweenSubjectsCombinationKey, type SequenceAssignment, type StoredUser,
+} from '../engines/types';
 import { filterSequenceByCondition } from '../../utils/handleConditionLogic';
 
 type DocData = Record<string, string | number | boolean | null | object>;
@@ -19,6 +24,9 @@ const firestoreData: Record<string, DocData> = {};
 const SERVER_TS_SENTINEL = { __sentinel: 'serverTimestamp' };
 const DELETE_FIELD_SENTINEL = { __sentinel: 'deleteField' };
 const storageObjects: Record<string, string> = {};
+let failConfigActivation = false;
+let failSequenceReads = false;
+let failParticipantReads = false;
 const localStore: Record<string, string | number | object | null> = {};
 const authState: { currentUser: { email: string | null; uid: string } | null } = {
   currentUser: null,
@@ -32,6 +40,7 @@ vi.mock('firebase/app', () => ({
 vi.mock('@firebase/app-check', () => ({
   initializeAppCheck: vi.fn(),
   ReCaptchaV3Provider: vi.fn(),
+  ReCaptchaEnterpriseProvider: vi.fn(),
 }));
 
 vi.mock('@firebase/auth', () => ({
@@ -62,6 +71,8 @@ vi.mock('firebase/storage', () => {
       return { ref: refObj };
     }),
     getBlob: vi.fn(async (refObj: { path: string }) => {
+      if (failParticipantReads && refObj.path.endsWith('_participantData')) throw new Error('Participant storage unavailable');
+      if (failSequenceReads && refObj.path.endsWith('_sequenceArray')) throw new Error('Storage unavailable');
       const data = storageObjects[refObj.path];
       if (data !== undefined) {
         return new Blob([data], { type: 'application/json' });
@@ -113,6 +124,15 @@ vi.mock('localforage', () => ({
 
 // Complete in-memory Firestore mock — no emulator needed.
 vi.mock('firebase/firestore', () => {
+  type QueryConstraint = {
+    type: 'where' | 'limit' | 'orderBy';
+    field?: string;
+    operator?: string;
+    value?: unknown;
+    count?: number;
+    direction?: 'asc' | 'desc';
+  };
+
   function resolveSentinels(data: DocData): DocData {
     const now = Date.now();
     const result: DocData = {};
@@ -138,10 +158,19 @@ vi.mock('firebase/firestore', () => {
     return { _path: `${collPath}/${docId}`, id: docId };
   }
 
-  function mockSetDoc(docRef: { _path: string }, data: DocData, options?: { merge?: boolean }) {
+  function mockSetDoc(docRef: { _path: string }, data: DocData, options?: { merge?: boolean; mergeFields?: string[] }) {
+    if (failConfigActivation && docRef._path.endsWith('/configHash')) {
+      failConfigActivation = false;
+      throw new Error('Failed to activate study config');
+    }
     const resolved = resolveSentinels(data);
-    if (options?.merge) {
-      firestoreData[docRef._path] = { ...(firestoreData[docRef._path] ?? {}), ...resolved };
+    if (options?.merge || options?.mergeFields) {
+      const merged = { ...(firestoreData[docRef._path] ?? {}), ...resolved };
+      // A merging write also honours deleteField(), same as Firestore itself.
+      for (const [key, value] of Object.entries(merged)) {
+        if (value === DELETE_FIELD_SENTINEL) delete merged[key];
+      }
+      firestoreData[docRef._path] = merged;
     } else {
       firestoreData[docRef._path] = resolved;
     }
@@ -172,15 +201,64 @@ vi.mock('firebase/firestore', () => {
     return docs;
   }
 
-  function mockGetDocs(collRef: { _path: string }) {
-    const docs = getDocsInCollection(collRef._path);
+  function mockGetDocs(collRef: { _path: string; _constraints?: QueryConstraint[] }) {
+    let docs = getDocsInCollection(collRef._path);
+    (collRef._constraints ?? []).forEach((constraint) => {
+      if (constraint.type === 'where') {
+        docs = docs.filter((document) => {
+          const fieldValue = document.data()[constraint.field!];
+          if (constraint.operator === '==') return fieldValue === constraint.value;
+          if (constraint.operator === '<' || constraint.operator === '>=') {
+            const toComparableNumber = (value: unknown) => (
+              value
+              && typeof value === 'object'
+              && 'toMillis' in value
+              && typeof value.toMillis === 'function'
+                ? value.toMillis()
+                : Number(value)
+            );
+            const constraintValue = toComparableNumber(constraint.value);
+            const comparableFieldValue = toComparableNumber(fieldValue);
+            if (typeof fieldValue !== typeof constraint.value) return false;
+            return constraint.operator === '<'
+              ? comparableFieldValue < constraintValue
+              : comparableFieldValue >= constraintValue;
+          }
+          if (constraint.operator === '>') {
+            return fieldValue !== undefined
+              && fieldValue !== null
+              && String(fieldValue) > String(constraint.value);
+          }
+          return true;
+        });
+      } else if (constraint.type === 'orderBy') {
+        docs = [...docs].sort((a, b) => {
+          const aValue = a.data()[constraint.field!];
+          const bValue = b.data()[constraint.field!];
+          const toComparableNumber = (value: unknown) => (
+            value
+            && typeof value === 'object'
+            && 'toMillis' in value
+            && typeof value.toMillis === 'function'
+              ? value.toMillis()
+              : Number(value)
+          );
+          const typeComparison = typeof aValue === typeof bValue ? 0 : (typeof aValue === 'number' ? -1 : 1);
+          return (typeComparison || (toComparableNumber(aValue) - toComparableNumber(bValue)))
+            * (constraint.direction === 'desc' ? -1 : 1);
+        });
+      } else if (constraint.type === 'limit') {
+        docs = docs.slice(0, constraint.count);
+      }
+    });
     return Promise.resolve({
       docs,
       forEach: (cb: (d: { id: string; data: () => DocData }) => void) => docs.forEach(cb),
     });
   }
 
-  function mockUpdateDoc(docRef: { _path: string }, data: DocData) {
+  function mockUpdateDoc(docRef: { _path: string }, fields: DocData, fieldValue?: unknown) {
+    const data = fieldValue === undefined ? fields : { [String(fields.key)]: fieldValue };
     const existing = firestoreData[docRef._path];
     if (!existing) return Promise.reject(new Error(`No document to update: ${docRef._path}`));
     const now = Date.now();
@@ -215,21 +293,84 @@ vi.mock('firebase/firestore', () => {
     };
   }
 
+  async function mockRunTransaction<T>(
+    _firestore: unknown,
+    updateFunction: (transaction: {
+      get: (docRef: { _path: string; id?: string }) => Promise<unknown>;
+      set: (docRef: { _path: string }, data: DocData, options?: { merge?: boolean; mergeFields?: string[] }) => void;
+      update: (docRef: { _path: string }, data: DocData, value?: unknown) => void;
+      delete: (docRef: { _path: string }) => void;
+    }) => Promise<T>,
+  ): Promise<T> {
+    // Model optimistic retries, read-before-write ordering and all-or-nothing
+    // commit. Concurrent admissions must work without the browser lease.
+    for (let attempt = 0; attempt < 20; attempt += 1) {
+      const reads = new Map<string, string | undefined>();
+      const writes: Array<() => void> = [];
+      const transaction = {
+        get: async (ref: { _path: string; id?: string }) => {
+          if (writes.length) throw new Error('Transactions must read before writing');
+          reads.set(ref._path, JSON.stringify(firestoreData[ref._path]));
+          return mockGetDoc(ref);
+        },
+        set: (ref: { _path: string }, data: DocData, options?: { merge?: boolean; mergeFields?: string[] }) => {
+          writes.push(() => { mockSetDoc(ref, data, options); });
+        },
+        update: (ref: { _path: string }, data: DocData, value?: unknown) => {
+          writes.push(() => {
+            if (!firestoreData[ref._path]) throw new Error(`No document to update: ${ref._path}`);
+            mockUpdateDoc(ref, data, value);
+          });
+        },
+        delete: (ref: { _path: string }) => { writes.push(() => { delete firestoreData[ref._path]; }); },
+      };
+      // eslint-disable-next-line no-await-in-loop
+      const result = await updateFunction(transaction);
+      const conflict = [...reads].some(([key, snapshot]) => JSON.stringify(firestoreData[key]) !== snapshot);
+      if (!conflict) {
+        const before = structuredClone(firestoreData);
+        try {
+          writes.forEach((write) => write());
+        } catch (error) {
+          Object.keys(firestoreData).forEach((key) => delete firestoreData[key]);
+          Object.assign(firestoreData, before);
+          throw error;
+        }
+        return result;
+      }
+    }
+    throw new Error('Transaction contention exceeded test retry limit');
+  }
+
   class MockTimestamp {
     constructor(public seconds: number, public nanoseconds: number) { }
 
     toMillis() { return this.seconds * 1000 + Math.floor(this.nanoseconds / 1e6); }
+
+    static fromMillis(milliseconds: number) {
+      return new MockTimestamp(Math.floor(milliseconds / 1000), (milliseconds % 1000) * 1e6);
+    }
   }
 
   return {
+    query: vi.fn((parent, ...constraints) => ({ ...parent, _constraints: constraints })),
+    where: vi.fn((field, operator, value) => ({
+      type: 'where', field, operator, value,
+    })),
+    orderBy: vi.fn((field, direction) => ({ type: 'orderBy', field, direction })),
+    limit: vi.fn((count) => ({ type: 'limit', count })),
     collection: vi.fn(mockCollection),
     doc: vi.fn(mockDoc),
     setDoc: vi.fn(mockSetDoc),
     getDoc: vi.fn(mockGetDoc),
     getDocs: vi.fn(mockGetDocs),
+    getCountFromServer: vi.fn(async (reference) => { const snapshot = await mockGetDocs(reference); return { data: () => ({ count: snapshot.docs.length }) }; }),
+    getDocsFromServer: vi.fn(mockGetDocs),
+    FieldPath: class { constructor(public key: string) {} },
     updateDoc: vi.fn(mockUpdateDoc),
     onSnapshot: vi.fn(mockOnSnapshot),
     writeBatch: vi.fn(mockWriteBatch),
+    runTransaction: vi.fn(mockRunTransaction),
     deleteField: vi.fn(() => DELETE_FIELD_SENTINEL),
     serverTimestamp: vi.fn(() => SERVER_TS_SENTINEL),
     initializeFirestore: vi.fn(() => ({})),
@@ -348,6 +489,518 @@ describe.each([
     await storageEngine.__testingReset();
   });
 
+  test('rejects lowering stage or condition limits below assigned counts', async () => {
+    const config: StudyConfig = { ...configSimple, factors: { group: ['A', 'B'] }, betweenSubjects: ['group'] };
+    await storageEngine.setSequenceArray(generateSequenceArray(config));
+    const participant = await storageEngine.initializeParticipantSession({}, config, participantMetadata, 'assigned');
+    const assignment = await storageEngine.getSequenceAssignment(studyId, participant.participantId);
+    await expect(storageEngine.updateStage(studyId, 'DEFAULT', { maxParticipants: 0 })).rejects.toThrow(/already assigned/);
+    await expect(storageEngine.setStageDesiredParticipants(studyId, 'DEFAULT', assignment!.betweenSubjectsCombinationKey!, 0, {})).rejects.toThrow(/already assigned/);
+    await expect(storageEngine.setStageDesiredParticipants(studyId, 'DEFAULT', assignment!.betweenSubjectsCombinationKey!, 1, {})).resolves.toBeUndefined();
+  });
+
+  test('policy changes racing admission never lower the cap below committed reservations', async () => {
+    await storageEngine.setCurrentStage(studyId, 'LIMITED', '#00AAFF', 2);
+    const second = new FirebaseStorageEngine(true);
+    await second.connect();
+    await second.initializeStudyDb(studyId);
+    [storageEngine, second].forEach((engine) => {
+      // @ts-expect-error The database must protect capacity even when leases overlap.
+      engine._runWithLock = async (_key, operation) => operation();
+    });
+    await Promise.allSettled([
+      storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'first'),
+      second.initializeParticipantSession({}, configSimple, participantMetadata, 'second'),
+      storageEngine.updateStage(studyId, 'LIMITED', { maxParticipants: 1 }),
+    ]);
+    const active = (await storageEngine.getAllSequenceAssignments(studyId)).filter((assignment) => !assignment.rejected);
+    const stage = (await storageEngine.getStageData(studyId)).allStages.find((item) => item.stageName === 'LIMITED')!;
+    expect(active.length).toBeLessThanOrEqual(stage.maxParticipants!);
+  });
+
+  test('balances concurrent admissions across conditions without the browser lease', async () => {
+    const config: StudyConfig = { ...configSimple, factors: { group: ['A', 'B'] }, betweenSubjects: ['group'] };
+    await storageEngine.setSequenceArray(generateSequenceArray(config));
+    await storageEngine.setCurrentStage(studyId, 'LIMITED', '#00AAFF', 2);
+    const second = new FirebaseStorageEngine(true);
+    await second.connect();
+    await second.initializeStudyDb(studyId);
+    [storageEngine, second].forEach((engine) => {
+      // @ts-expect-error The transaction must protect the condition quota itself.
+      engine._runWithLock = async (_key, operation) => operation();
+    });
+    const participants = await Promise.all([
+      storageEngine.initializeParticipantSession({}, config, participantMetadata, 'first'),
+      second.initializeParticipantSession({}, config, participantMetadata, 'second'),
+    ]);
+    expect(new Set(participants.map((participant) => participant.sequence.parameters?.group)).size).toBe(2);
+  });
+
+  test('rejection and restoration update committed allocation counts', async () => {
+    await storageEngine.setCurrentStage(studyId, 'LIMITED', '#00AAFF', 2);
+    const participant = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'first');
+    await storageEngine.rejectParticipant(participant.participantId, 'Timed out');
+    expect(Object.values(firestoreData).filter((data) => data.count === 0 && data.combinationCounts)).toHaveLength(1);
+    await storageEngine.undoRejectParticipant(participant.participantId);
+    expect(Object.values(firestoreData).filter((data) => data.count === 1 && data.combinationCounts)).toHaveLength(1);
+  });
+
+  test('an initial upload failure frees its transactional reservation for a replacement', async () => {
+    await storageEngine.setCurrentStage(studyId, 'LIMITED', '#00AAFF', 1);
+    // @ts-expect-error Inject an upload failure after the Firestore reservation commits.
+    const write = vi.spyOn(storageEngine, '_pushToStorage');
+    write.mockRejectedValueOnce(new Error('upload failed'));
+    await expect(storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'failed')).rejects.toThrow('upload failed');
+    await expect(storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'replacement')).resolves.toBeDefined();
+    expect((await storageEngine.getAllSequenceAssignments(studyId)).filter((assignment) => !assignment.rejected)).toHaveLength(1);
+  });
+
+  test('a confirmation failure retains the uploaded participant reservation for retry', async () => {
+    await storageEngine.setCurrentStage(studyId, 'LIMITED', '#00AAFF', 1);
+    // @ts-expect-error Fail Firestore confirmation after the participant upload is acknowledged.
+    vi.spyOn(storageEngine, 'confirmParticipantReservation').mockRejectedValueOnce(new Error('confirmation unavailable'));
+    await expect(storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'retry')).rejects.toThrow('confirmation unavailable');
+    expect((await storageEngine.getSequenceAssignment(studyId, 'retry'))?.rejected).toBe(false);
+    expect((await storageEngine.getParticipantData('retry'))?.rejected).toBe(false);
+    await expect(storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'retry')).resolves.toBeDefined();
+    await expect(storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'replacement')).rejects.toThrow(/participant limit/);
+  });
+
+  test('reserves the final stage slot atomically without relying on the browser lease', async () => {
+    await storageEngine.setCurrentStage(studyId, 'LIMITED', '#00AAFF', 1);
+    const second = new FirebaseStorageEngine(true);
+    await second.connect();
+    await second.initializeStudyDb(studyId);
+    [storageEngine, second].forEach((engine) => {
+      // @ts-expect-error Bypass browser leases to exercise the Firestore transaction itself.
+      engine._runWithLock = async (_key, operation) => operation();
+    });
+    const results = await Promise.allSettled([
+      storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'first'),
+      second.initializeParticipantSession({}, configSimple, participantMetadata, 'second'),
+    ]);
+    expect(results.filter((result) => result.status === 'fulfilled')).toHaveLength(1);
+    expect((await storageEngine.getAllSequenceAssignments(studyId)).filter((assignment) => !assignment.rejected)).toHaveLength(1);
+    expect(Object.values(firestoreData).filter((data) => data.count === 1 && data.combinationCounts)).toHaveLength(1);
+  });
+
+  test('a slow initial upload does not block another participant from joining', async () => {
+    await storageEngine.setCurrentStage(studyId, 'LIMITED', '#00AAFF', 2);
+    const second = new FirebaseStorageEngine(true);
+    await second.connect();
+    await second.initializeStudyDb(studyId);
+    let release!: () => void;
+    let uploading!: () => void;
+    const uploadStarted = new Promise<void>((resolve) => { uploading = resolve; });
+    // @ts-expect-error Hold the first participant's upload while another joins.
+    const upload = storageEngine._pushToStorage.bind(storageEngine);
+    // @ts-expect-error Keep the real participant and admission locks enabled.
+    vi.spyOn(storageEngine, '_pushToStorage').mockImplementationOnce(async (path, type, data) => {
+      uploading();
+      await new Promise<void>((resolve) => { release = resolve; });
+      return upload(path, type, data);
+    });
+    const first = storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'slow');
+    await uploadStarted;
+    vi.useFakeTimers();
+    try {
+      const result = second.initializeParticipantSession({}, configSimple, participantMetadata, 'fast')
+        .then(() => 'joined', () => 'failed');
+      await vi.advanceTimersByTimeAsync(30_000);
+      const outcome = await result;
+      release();
+      await first;
+      expect(outcome).toBe('joined');
+      expect((await storageEngine.getAllSequenceAssignments(studyId)).filter((assignment) => !assignment.rejected)).toHaveLength(2);
+    } finally {
+      release();
+      await first;
+      vi.useRealTimers();
+    }
+  });
+
+  test('a delayed same-ID startup preserves answers saved by the first session', async () => {
+    const second = new FirebaseStorageEngine(true);
+    await second.connect();
+    await second.initializeStudyDb(studyId);
+    let releaseUpload!: () => void;
+    let uploading!: () => void;
+    const uploadStarted = new Promise<void>((resolve) => { uploading = resolve; });
+    // @ts-expect-error Pause the first record upload before another startup reads it.
+    const upload = storageEngine._pushToStorage.bind(storageEngine);
+    // @ts-expect-error Keep the actual locks enabled.
+    vi.spyOn(storageEngine, '_pushToStorage').mockImplementationOnce(async (path, type, data) => {
+      uploading();
+      await new Promise<void>((resolve) => { releaseUpload = resolve; });
+      return upload(path, type, data);
+    });
+    let resumeSecond!: () => void;
+    let secondWaiting!: () => void;
+    const secondPaused = new Promise<void>((resolve) => { secondWaiting = resolve; });
+    // @ts-expect-error Hold the second startup before its first lock acquisition.
+    const runWithLock = second._runWithLock.bind(second);
+    // @ts-expect-error Let the first session save an answer before the delayed startup continues.
+    vi.spyOn(second, '_runWithLock').mockImplementationOnce(async (key, operation) => {
+      secondWaiting();
+      await new Promise<void>((resolve) => { resumeSecond = resolve; });
+      return runWithLock(key, operation);
+    });
+    const first = storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'same');
+    await uploadStarted;
+    const retry = second.initializeParticipantSession({}, configSimple, participantMetadata, 'same');
+    await secondPaused;
+    releaseUpload();
+    await first;
+    const answers = { trial_0: makeStoredAnswer({ answer: { value: 'already saved' } }) };
+    await storageEngine.saveAnswers(answers);
+    await storageEngine.flushPendingParticipantData();
+    resumeSecond();
+    expect((await retry).answers).toEqual(answers);
+    expect((await storageEngine.getParticipantData('same'))?.answers).toEqual(answers);
+  });
+
+  test('concurrent starts for the same participant reuse one reservation', async () => {
+    await storageEngine.setCurrentStage(studyId, 'LIMITED', '#00AAFF', 1);
+    const second = new FirebaseStorageEngine(true);
+    await second.connect();
+    await second.initializeStudyDb(studyId);
+    [storageEngine, second].forEach((engine) => {
+      // @ts-expect-error Exercise idempotency without the browser lease.
+      engine._runWithLock = async (_key, operation) => operation();
+    });
+    const [first, retry] = await Promise.all([
+      storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'same'),
+      second.initializeParticipantSession({}, configSimple, participantMetadata, 'same'),
+    ]);
+    expect(retry.sequence).toEqual(first.sequence);
+    expect(retry.participantIndex).toBe(first.participantIndex);
+    expect(await storageEngine.getAllSequenceAssignments(studyId)).toHaveLength(1);
+  });
+
+  test.each([true, false])('a failed same-ID start preserves the other start (success first: %s)', async (successFirst) => {
+    await storageEngine.setCurrentStage(studyId, 'LIMITED', '#00AAFF', 1);
+    const second = new FirebaseStorageEngine(true);
+    await second.connect();
+    await second.initializeStudyDb(studyId);
+    [storageEngine, second].forEach((engine) => {
+      // @ts-expect-error Overlap starts without trusting browser leases.
+      engine._runWithLock = async (_key, operation) => operation();
+    });
+    let failUpload!: () => void;
+    let firstUploading!: () => void;
+    const firstStarted = new Promise<void>((resolve) => { firstUploading = resolve; });
+    // @ts-expect-error Fail the first upload only after the other client has joined.
+    vi.spyOn(storageEngine, '_pushToStorage').mockImplementationOnce(async () => {
+      firstUploading();
+      await new Promise<void>((resolve) => { failUpload = resolve; });
+      throw new Error('upload failed');
+    });
+    let finishSecond!: () => void;
+    let secondUploading!: () => void;
+    const secondStarted = new Promise<void>((resolve) => { secondUploading = resolve; });
+    // @ts-expect-error Control the second upload independently of the first.
+    const upload = second._pushToStorage.bind(second);
+    // @ts-expect-error Pause after the second reservation but before its upload.
+    vi.spyOn(second, '_pushToStorage').mockImplementationOnce(async (path, type, data) => {
+      secondUploading();
+      if (!successFirst) await new Promise<void>((resolve) => { finishSecond = resolve; });
+      return upload(path, type, data);
+    });
+    const first = storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'same');
+    const failed = expect(first).rejects.toThrow('upload failed');
+    await firstStarted;
+    const retry = second.initializeParticipantSession({}, configSimple, participantMetadata, 'same');
+    await secondStarted;
+    if (successFirst) await retry;
+    failUpload();
+    await failed;
+    if (!successFirst) finishSecond();
+    await retry;
+    expect((await storageEngine.getSequenceAssignment(studyId, 'same'))?.rejected).toBe(false);
+    expect((await second.getParticipantData('same'))?.rejected).toBe(false);
+    await expect(storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'replacement')).rejects.toThrow(/participant limit/i);
+  });
+
+  test('an incompatible same-ID start cannot release an existing reservation', async () => {
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'same');
+    // @ts-expect-error Exercise a caller already past the participant-blob lookup.
+    await expect(storageEngine._getSequence(undefined, await storageEngine.getModesAndStageData(studyId), configSimple2, 'different')).rejects.toThrow(/different study configuration/);
+    expect((await storageEngine.getSequenceAssignment(studyId, 'same'))?.rejected).toBe(false);
+  });
+
+  test('stage policy validates the requested study rather than the connected study', async () => {
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'first');
+    await storageEngine.setCurrentStage('other-study', 'DEFAULT');
+    await expect(storageEngine.updateStage('other-study', 'DEFAULT', { maxParticipants: 0 })).resolves.toBeUndefined();
+    expect((await storageEngine.getStageData('other-study')).allStages[0].maxParticipants).toBe(0);
+    await expect(storageEngine.updateStage(studyId, 'DEFAULT', { maxParticipants: 0 })).rejects.toThrow(/already assigned/);
+  });
+
+  test('admin restoration can exceed condition targets after config changes', async () => {
+    const original: StudyConfig = {
+      ...configSimple, uiConfig: { ...configSimple.uiConfig, numSequences: 4 }, factors: { group: ['A'] }, betweenSubjects: ['group'],
+    };
+    const appended: StudyConfig = { ...original, factors: { group: ['A', 'B'] } };
+    await storageEngine.saveConfig(original);
+    await storageEngine.setSequenceArray(generateSequenceArray(original));
+    await storageEngine.initializeParticipantSession({}, original, participantMetadata, 'rejected');
+    await storageEngine.rejectParticipant('rejected', 'test');
+    // Keep the rejected slot unclaimed while creating a different active assignment.
+    // @ts-expect-error Model a historical source whose place was already claimed.
+    await storageEngine._updateSequenceAssignmentFields('rejected', { claimed: true });
+    await storageEngine.initializeParticipantSession({}, original, participantMetadata, 'active');
+    // @ts-expect-error Make the rejected assignment restorable again.
+    await storageEngine._updateSequenceAssignmentFields('rejected', { claimed: false });
+    await storageEngine.saveConfig(appended);
+    await storageEngine.updateStage(studyId, 'DEFAULT', { maxParticipants: 2, participantAssignmentMode: 'even' });
+    // @ts-expect-error Check the transaction itself, independently of the shared precheck.
+    await storageEngine._undoRejectParticipantRealtime('rejected');
+    expect((await storageEngine.getSequenceAssignment(studyId, 'rejected'))?.rejected).toBe(false);
+    expect((await storageEngine.getAllSequenceAssignments(studyId)).filter((assignment) => !assignment.rejected)).toHaveLength(2);
+  });
+
+  test('an older config cannot overwrite conditions appended after its config save', async () => {
+    const original: StudyConfig = {
+      ...configSimple, uiConfig: { ...configSimple.uiConfig, numSequences: 4 }, factors: { group: ['A'] }, betweenSubjects: ['group'],
+    };
+    const appended: StudyConfig = { ...original, factors: { group: ['A', 'B'] } };
+    await storageEngine.saveConfig(original);
+    await storageEngine.setSequenceArray(generateSequenceArray(original));
+    await storageEngine.initializeParticipantSession({}, original, participantMetadata, 'first');
+    await storageEngine.saveConfig(appended);
+    // @ts-expect-error Simulate an older caller that has already finished saveConfig.
+    storageEngine.currentParticipantId = 'old-config';
+    // @ts-expect-error The allocation-stage registry still predates the appended config.
+    await expect(storageEngine._getSequence(undefined, await storageEngine.getModesAndStageData(studyId), original, await hash(JSON.stringify(original)))).rejects.toThrow(/condition/i);
+    expect((await storageEngine.getAllSequenceAssignments(studyId)).filter((assignment) => !assignment.rejected)).toHaveLength(1);
+  });
+
+  test('releases literal participant lock keys containing periods', async () => {
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'subject.1');
+    expect(Object.values(firestoreData).some((data) => Object.hasOwn(data, 'participant-subject.1'))).toBe(false);
+    await expect(storageEngine.updateParticipantMetadata(participantMetadata)).resolves.toBeUndefined();
+  });
+
+  test('a failed lock release preserves a successfully saved participant and its reservation', async () => {
+    const original = vi.mocked(runTransaction).getMockImplementation()!;
+    let failed = false;
+    vi.mocked(runTransaction).mockImplementation(async (db, callback) => original(db, async (transaction) => {
+      const wrapped = Object.create(transaction) as typeof transaction;
+      wrapped.update = ((...args: Parameters<typeof transaction.update>) => {
+        if (!failed && String((args[1] as unknown as { key?: string }).key).startsWith('participant-')) {
+          failed = true;
+          throw new Error('Simulated release failure');
+        }
+        return transaction.update(...args);
+      }) as typeof transaction.update;
+      return callback(wrapped);
+    }));
+    try {
+      const participant = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'saved');
+      expect(failed).toBe(true);
+      expect((await storageEngine.getSequenceAssignment(studyId, participant.participantId))?.rejected).toBe(false);
+      expect((await storageEngine.getParticipantData(participant.participantId))?.rejected).toBe(false);
+    } finally {
+      vi.mocked(runTransaction).mockImplementation(original);
+    }
+  });
+
+  test('completion winning after the timeout check remains completed and unrejected', async () => {
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'finishing');
+    // @ts-expect-error Inject completion after the UI/storage precheck but before the timeout transaction.
+    const read = storageEngine._getSequenceAssignment.bind(storageEngine);
+    // @ts-expect-error Exercise an overlapping writer independently of the browser lease.
+    vi.spyOn(storageEngine, '_getSequenceAssignment').mockImplementationOnce(async (participantId: string) => {
+      const previous = await read(participantId);
+      // @ts-expect-error Simulate completion from the participant's other session.
+      await storageEngine._completeCurrentParticipantRealtime();
+      return previous;
+    });
+    await storageEngine.timeoutParticipant('finishing');
+    const assignment = await storageEngine.getSequenceAssignment(studyId, 'finishing');
+    expect(assignment?.completed).not.toBeNull();
+    expect(assignment?.rejected).toBe(false);
+    expect((await storageEngine.getParticipantData('finishing'))?.rejected).toBe(false);
+  });
+
+  test('a completed participant cannot be timed out by an older admin snapshot', async () => {
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'finished');
+    await storageEngine.finalizeParticipant();
+    await storageEngine.timeoutParticipant('finished');
+    expect((await storageEngine.getSequenceAssignment(studyId, 'finished'))?.rejected).toBe(false);
+  });
+
+  test('concurrent preparation returns one saved array and reuses it during startup', async () => {
+    const configHash = await hash(JSON.stringify(configSimple));
+    const second = new FirebaseStorageEngine(true);
+    await second.connect();
+    await second.initializeStudyDb(studyId);
+    const canonical = generateSequenceArray(configSimple);
+    let release!: () => void;
+    let uploading!: () => void;
+    const started = new Promise<void>((resolve) => { uploading = resolve; });
+    // @ts-expect-error Pause publication while the other client observes the missing array.
+    const upload = storageEngine._pushToStorage.bind(storageEngine);
+    // @ts-expect-error Exercise the actual distributed lock.
+    vi.spyOn(storageEngine, '_pushToStorage').mockImplementationOnce(async (path, type, data) => {
+      uploading();
+      await new Promise<void>((resolve) => { release = resolve; });
+      return upload(path, type, data);
+    });
+    const first = storageEngine.getOrCreateSequenceArray(configHash, () => canonical);
+    await started;
+    let sawMissing!: () => void;
+    const missing = new Promise<void>((resolve) => { sawMissing = resolve; });
+    const read = second.getSequenceArray.bind(second);
+    vi.spyOn(second, 'getSequenceArray').mockImplementationOnce(async (version) => {
+      const result = await read(version);
+      expect(result).toBeNull();
+      sawMissing();
+      return result;
+    });
+    const competingGenerator = vi.fn(() => generateSequenceArray(configSimple2));
+    const retry = second.getOrCreateSequenceArray(configHash, competingGenerator);
+    await missing;
+    release();
+    expect(await first).toEqual(canonical);
+    const prepared = await retry;
+    expect(prepared).toEqual(canonical);
+    expect(competingGenerator).not.toHaveBeenCalled();
+    expect(await storageEngine.getSequenceArray(configHash)).toEqual(canonical);
+    const modesDocument = await second.getModes(studyId);
+    const readSpy = vi.spyOn(second, 'getSequenceArray');
+    readSpy.mockClear();
+    const session = await second.initializeParticipantSession({}, configSimple, participantMetadata, 'prepared', { modesDocument, sequenceArray: prepared });
+    expect(canonical).toContainEqual(session.sequence);
+    expect(readSpy).not.toHaveBeenCalled();
+  });
+
+  test.each([false, true])('failed sequence reads cannot replace published orders (locked recheck: %s)', async (lockedRecheck) => {
+    const configHash = await hash(JSON.stringify(configSimple));
+    const canonical = generateSequenceArray(configSimple);
+    await storageEngine.setSequenceArray(canonical, configHash);
+    if (lockedRecheck) vi.spyOn(storageEngine, 'getSequenceArray').mockResolvedValueOnce(null);
+    const generate = vi.fn(() => generateSequenceArray(configSimple2));
+    // @ts-expect-error Failed reads must never result in a replacement upload.
+    const upload = vi.spyOn(storageEngine, '_pushToStorage');
+    failSequenceReads = true;
+    try {
+      await expect(storageEngine.getOrCreateSequenceArray(configHash, generate)).rejects.toMatchObject({ message: 'Storage unavailable' });
+    } finally {
+      failSequenceReads = false;
+    }
+    expect(generate).not.toHaveBeenCalled();
+    expect(upload).not.toHaveBeenCalled();
+    expect(await storageEngine.getSequenceArray(configHash)).toEqual(canonical);
+  });
+
+  test('existing prepared arrays skip the publication lock and generation', async () => {
+    const configHash = await hash(JSON.stringify(configSimple));
+    const canonical = generateSequenceArray(configSimple);
+    await storageEngine.setSequenceArray(canonical, configHash);
+    const generate = vi.fn(() => generateSequenceArray(configSimple2));
+    // @ts-expect-error Existing arrays must take the normal read path without a lock.
+    const lock = vi.spyOn(storageEngine, '_runWithLock');
+    expect(await storageEngine.getOrCreateSequenceArray(configHash, generate)).toEqual(canonical);
+    expect(generate).not.toHaveBeenCalled();
+    expect(lock).not.toHaveBeenCalled();
+  });
+
+  test('failed publication releases the preparation lock for a retry', async () => {
+    const configHash = await hash(JSON.stringify(configSimple));
+    const canonical = generateSequenceArray(configSimple);
+    // @ts-expect-error A failed first upload must not leave the preparation lock held.
+    vi.spyOn(storageEngine, '_pushToStorage').mockRejectedValueOnce(new Error('upload failed'));
+    await expect(storageEngine.getOrCreateSequenceArray(configHash, () => canonical)).rejects.toThrow('upload failed');
+    await expect(storageEngine.getOrCreateSequenceArray(configHash, () => canonical)).resolves.toEqual(canonical);
+  });
+
+  test('a restored participant reloads past a cached rejection and saves answers', async () => {
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'restored-cache');
+    const admin = new FirebaseStorageEngine(true);
+    await admin.connect();
+    await admin.initializeStudyDb(studyId);
+    await admin.timeoutParticipant('restored-cache');
+    await storageEngine.saveAnswers({});
+    await storageEngine.flushPendingParticipantData();
+    expect(storageEngine.getCurrentParticipantDataSnapshot()?.rejected).not.toBe(false);
+    await admin.undoRejectParticipant('restored-cache');
+    const resumed = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'restored-cache');
+    expect(resumed.rejected).toBe(false);
+    const answers = { trial_0: makeStoredAnswer({ answer: { value: 'saved after restoration' } }) };
+    await storageEngine.saveAnswers(answers);
+    await storageEngine.flushPendingParticipantData();
+    expect((await storageEngine.getParticipantData('restored-cache'))?.answers).toEqual(answers);
+  });
+
+  test('admin restoration overrides limits while new admissions remain closed', async () => {
+    const config: StudyConfig = { ...configSimple, factors: { group: ['A'] }, betweenSubjects: ['group'] };
+    await storageEngine.saveConfig(config);
+    await storageEngine.setSequenceArray(generateSequenceArray(config));
+    await storageEngine.initializeParticipantSession({}, config, participantMetadata, 'restored');
+    const assignment = await storageEngine.getSequenceAssignment(studyId, 'restored');
+    await storageEngine.rejectParticipant('restored', 'test');
+    await storageEngine.setStageDesiredParticipants(studyId, 'DEFAULT', assignment!.betweenSubjectsCombinationKey!, 0, {});
+    await storageEngine.undoRejectParticipant('restored');
+    expect((await storageEngine.getParticipantData('restored'))?.rejected).toBe(false);
+    expect((await storageEngine.getSequenceAssignment(studyId, 'restored'))?.rejected).toBe(false);
+    expect((await storageEngine.getStageData(studyId)).allStages[0].maxParticipants).toBe(0);
+    await storageEngine.updateStage(studyId, 'DEFAULT', { color: '#123456' });
+    await expect(storageEngine.initializeParticipantSession({}, config, participantMetadata, 'blocked')).rejects.toThrow(/participant limit/);
+  });
+
+  test('a failed config upload leaves the previous condition definitions usable', async () => {
+    const original: StudyConfig = {
+      ...configSimple, uiConfig: { ...configSimple.uiConfig, numSequences: 4 }, factors: { group: ['A'] }, betweenSubjects: ['group'],
+    };
+    const appended: StudyConfig = { ...original, factors: { group: ['A', 'B'] } };
+    await storageEngine.saveConfig(original);
+    await storageEngine.saveConfig(original);
+    await storageEngine.setSequenceArray(generateSequenceArray(original));
+    await storageEngine.initializeParticipantSession({}, original, participantMetadata, 'first');
+    // @ts-expect-error Inject an upload failure after append-only validation.
+    vi.spyOn(storageEngine, '_pushToStorage').mockRejectedValueOnce(new Error('config upload failed'));
+    await expect(storageEngine.saveConfig(appended)).rejects.toThrow('config upload failed');
+    await expect(storageEngine.saveConfig(original)).resolves.toBeUndefined();
+    await expect(storageEngine.initializeParticipantSession({}, original, participantMetadata, 'second')).resolves.toBeDefined();
+    expect((await storageEngine.getStageData(studyId)).allStages[0].conditionKeys).toHaveLength(1);
+  });
+
+  test('failed config activation commits neither the definitions nor the active hash', async () => {
+    const original: StudyConfig = { ...configSimple, factors: { group: ['A'] }, betweenSubjects: ['group'] };
+    const appended: StudyConfig = { ...original, factors: { group: ['A', 'B'] } };
+    await storageEngine.saveConfig(original);
+    await storageEngine.setSequenceArray(generateSequenceArray(original));
+    await storageEngine.initializeParticipantSession({}, original, participantMetadata, 'first');
+    failConfigActivation = true;
+    await expect(storageEngine.saveConfig(appended)).rejects.toThrow('Failed to activate study config');
+    expect(await storageEngine.getCurrentConfigHash(studyId)).toBe(await hash(JSON.stringify(original)));
+    expect((await storageEngine.getStageData(studyId)).allStages[0].conditionKeys).toHaveLength(1);
+    await expect(storageEngine.saveConfig(original)).resolves.toBeUndefined();
+    await expect(storageEngine.initializeParticipantSession({}, original, participantMetadata, 'second')).resolves.toBeDefined();
+  });
+
+  test('a delayed old config cannot overwrite the current config prepared orders', async () => {
+    const original: StudyConfig = {
+      ...configSimple, uiConfig: { ...configSimple.uiConfig, numSequences: 4 }, factors: { group: ['A'] }, betweenSubjects: ['group'],
+    };
+    const appended: StudyConfig = { ...original, factors: { group: ['A', 'B'] } };
+    const oldHash = await hash(JSON.stringify(original));
+    const currentHash = await hash(JSON.stringify(appended));
+    await storageEngine.saveConfig(original);
+    const oldOrders = generateSequenceArray(original);
+    await storageEngine.saveConfig(appended);
+    const currentOrders = generateSequenceArray(appended);
+    await storageEngine.setSequenceArray(currentOrders, currentHash);
+    // Simulate the old startup finishing its upload last.
+    await storageEngine.setSequenceArray(oldOrders, oldHash);
+    expect(await storageEngine.getSequenceArray()).toEqual(currentOrders);
+    await storageEngine.updateStage(studyId, 'DEFAULT', { maxParticipants: 2 });
+    const first = await storageEngine.initializeParticipantSession({}, appended, participantMetadata, 'one');
+    const second = await storageEngine.initializeParticipantSession({}, appended, participantMetadata, 'two');
+    expect(new Set([first.sequence.parameters?.group, second.sequence.parameters?.group]).size).toBe(2);
+  });
+
   test('saveConfig and getAllConfigsFromHash work correctly', async () => {
     const configHash = await hash(JSON.stringify(configSimple));
     await storageEngine.saveConfig(configSimple);
@@ -398,6 +1051,454 @@ describe.each([
     expect(participantData!.metadata).toEqual(participantMetadata);
     expect(participantData!.rejected).toBe(false);
     expect(participantData!.participantTags).toEqual([]);
+  });
+
+  test('concurrent rejected-slot claims retry the next available vacancy', async () => {
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'original-a');
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'original-b');
+    // @ts-expect-error protected rejection boundary
+    await storageEngine._rejectParticipantRealtime('original-a');
+    // @ts-expect-error protected rejection boundary
+    await storageEngine._rejectParticipantRealtime('original-b');
+    const assignment = (await storageEngine.getAllSequenceAssignments(studyId))[0];
+    const allocate = (participantId: string) => (
+      // @ts-expect-error protected allocation boundary
+      storageEngine._allocateSequenceAssignment(participantId, {
+        ...assignment, participantId, rejected: false, claimed: false,
+      })
+    );
+    const allocations = await Promise.all([allocate('new-a'), allocate('new-b')]);
+    expect(allocations.map((allocation) => allocation.sequenceIndex).sort()).toEqual([0, 1]);
+  });
+
+  test('all rejected participants still preserve stage condition history', async () => {
+    const original: StudyConfig = { ...configSimple, factors: { group: ['A', 'B'] }, betweenSubjects: ['group'] };
+    const changed: StudyConfig = { ...original, factors: { group: ['C', 'D'] } };
+    await storageEngine.saveConfig(original);
+    await storageEngine.setSequenceArray(generateSequenceArray(original));
+    await storageEngine.setCurrentStage(studyId, 'HISTORY', '#00AAFF');
+    await storageEngine.initializeParticipantSession({}, original, participantMetadata, 'historical');
+    await storageEngine.rejectParticipant('historical', 'review');
+    await storageEngine.setCurrentStage(studyId, 'EMPTY', '#00AAFF');
+    await storageEngine.saveConfig(changed);
+    await storageEngine.setSequenceArray(generateSequenceArray(changed));
+    await storageEngine.setCurrentStage(studyId, 'HISTORY', '#00AAFF');
+    await storageEngine.saveConfig(changed);
+    await expect(storageEngine.initializeParticipantSession({}, changed, participantMetadata, 'blocked-change'))
+      .rejects.toThrow(/append|condition/i);
+  });
+
+  test('snapshot copies preserve returned allocator slots and high-water marks', async () => {
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'snapshot-seed');
+    firestoreData[`dev-${studyId}/sequenceAssignmentAllocator`] = {
+      nextSequenceIndex: 7, nextCreationIndex: 10, availableSequenceIndexes: [1, 3],
+    };
+    // @ts-expect-error Exercise the realtime portion used by snapshot creation and restoration.
+    await storageEngine._copyRealtimeData(`dev-${studyId}`, 'snapshot-copy');
+    expect(firestoreData['snapshot-copy/sequenceAssignmentAllocator']).toEqual({
+      nextSequenceIndex: 7, nextCreationIndex: 10, availableSequenceIndexes: [1, 3],
+    });
+    // @ts-expect-error Copy back to the live collection, as snapshot restoration does.
+    await storageEngine._copyRealtimeData('snapshot-copy', `dev-${studyId}`);
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'after-snapshot');
+    expect(await storageEngine.getSequenceAssignment(studyId, 'after-snapshot'))
+      .toMatchObject({ sequenceIndex: 1, creationIndex: 10 });
+  });
+
+  test.each(['download', 'json', 'payload'])('failed participant %s reads cannot release a live reservation', async (failure) => {
+    await storageEngine.setCurrentStage(studyId, 'READ-FAILURE', '#00AAFF', 1);
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'still-active');
+    await storageEngine.clearCurrentParticipantId();
+    const path = `dev-${studyId}/participants/still-active_participantData`;
+    const saved = storageObjects[path];
+    if (failure === 'download') failParticipantReads = true;
+    else storageObjects[path] = failure === 'json' ? '{broken' : '{}';
+    try {
+      await expect(storageEngine.rejectParticipant('still-active', 'review')).rejects.toBeDefined();
+    } finally {
+      failParticipantReads = false;
+      storageObjects[path] = saved;
+    }
+    expect((await storageEngine.getSequenceAssignment(studyId, 'still-active'))?.rejected).toBe(false);
+    expect((await storageEngine.getParticipantData('still-active'))?.rejected).toBe(false);
+    await expect(storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'replacement')).rejects.toThrow(/participant limit/);
+  });
+
+  test('an orphan recheck read failure leaves the assignment reserved', async () => {
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'recheck-active');
+    await storageEngine.clearCurrentParticipantId();
+    // @ts-expect-error Simulate an initially absent blob followed by a failing admission-lock recheck.
+    vi.spyOn(storageEngine, '_getFromStorage').mockResolvedValueOnce({});
+    failParticipantReads = true;
+    try {
+      await expect(storageEngine.rejectParticipant('recheck-active', 'review')).rejects.toMatchObject({ message: 'Participant storage unavailable' });
+    } finally {
+      failParticipantReads = false;
+    }
+    expect((await storageEngine.getSequenceAssignment(studyId, 'recheck-active'))?.rejected).toBe(false);
+    expect((await storageEngine.getParticipantData('recheck-active'))?.rejected).toBe(false);
+  });
+
+  test('manual edits discard obsolete conditions and preserve current defaults', async () => {
+    const original: StudyConfig = { ...configSimple, factors: { group: ['A', 'B'] }, betweenSubjects: ['group'] };
+    const changed: StudyConfig = { ...original, factors: { group: ['C', 'D'] } };
+    await storageEngine.saveConfig(original);
+    const [a, b, c, d] = ['A', 'B', 'C', 'D'].map((group) => getBetweenSubjectsCombinationKey({ group }, ['group']));
+    await storageEngine.setStageDesiredParticipants(studyId, 'DEFAULT', a, 5, { [a]: 5, [b]: 5 });
+    await storageEngine.saveConfig(changed);
+    // The UI can still hold the previous saved map after the config changes.
+    await storageEngine.setStageDesiredParticipants(studyId, 'DEFAULT', c, 6, { [a]: 5, [b]: 5 });
+    const stage = (await storageEngine.getStageData(studyId)).allStages[0];
+    expect(stage.maxParticipants).toBe(11);
+    expect(stage.manualDesiredParticipantsByCombination).toEqual({ [c]: 6, [d]: 5 });
+  });
+
+  test('manual edits refresh an empty reactivated stage while protecting enrolled stages', async () => {
+    const original: StudyConfig = { ...configSimple, factors: { group: ['A', 'B'] }, betweenSubjects: ['group'] };
+    const changed: StudyConfig = { ...original, factors: { group: ['C', 'D'] } };
+    const [a, b, c, d] = ['A', 'B', 'C', 'D'].map((group) => getBetweenSubjectsCombinationKey({ group }, ['group']));
+    await storageEngine.saveConfig(original);
+    await storageEngine.setStageDesiredParticipants(studyId, 'DEFAULT', a, 5, { [a]: 5, [b]: 5 });
+    await storageEngine.setCurrentStage(studyId, 'OTHER', '#00AAFF');
+    await storageEngine.saveConfig(changed);
+    await storageEngine.setCurrentStage(studyId, 'DEFAULT', '#00AAFF');
+    await storageEngine.saveConfig(changed);
+    await storageEngine.setStageDesiredParticipants(studyId, 'DEFAULT', c, 6, { [a]: 5, [b]: 5 });
+    const stage = (await storageEngine.getStageData(studyId)).allStages[0];
+    expect(stage).toMatchObject({ maxParticipants: 11, conditionKeys: [c, d], manualDesiredParticipantsByCombination: { [c]: 6, [d]: 5 } });
+    await expect(storageEngine.setStageDesiredParticipants(studyId, 'DEFAULT', a, 6, { [a]: 5, [b]: 5 })).rejects.toThrow(/no longer available/);
+    await storageEngine.setSequenceArray(generateSequenceArray(changed));
+    await storageEngine.initializeParticipantSession({}, changed, participantMetadata, 'enrolled');
+    await storageEngine.setCurrentStage(studyId, 'OTHER', '#00AAFF');
+    await storageEngine.saveConfig(original);
+    await expect(storageEngine.setStageDesiredParticipants(studyId, 'DEFAULT', a, 6, { [a]: 5, [b]: 5 })).rejects.toThrow(/removed or renamed/);
+    expect((await storageEngine.getStageData(studyId)).allStages[0]).toEqual(stage);
+  });
+
+  test('manual edits stop when the active config cannot be loaded', async () => {
+    const config: StudyConfig = { ...configSimple, factors: { group: ['A', 'B'] }, betweenSubjects: ['group'] };
+    await storageEngine.saveConfig(config);
+    const stage = (await storageEngine.getStageData(studyId)).allStages[0];
+    const a = getBetweenSubjectsCombinationKey({ group: 'A' }, ['group']);
+    // @ts-expect-error Do not fall back to stale keys if the authoritative config is unavailable.
+    vi.spyOn(storageEngine, '_getFromStorage').mockResolvedValueOnce({});
+    await expect(storageEngine.setStageDesiredParticipants(studyId, 'DEFAULT', a, 6, { [a]: 5 })).rejects.toThrow(/configuration could not be loaded/);
+    expect((await storageEngine.getStageData(studyId)).allStages[0]).toEqual(stage);
+  });
+
+  test('analysis receives the assignment start time even when the participant clock is wrong', async () => {
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'clock-skew');
+    const path = `dev-${studyId}/participants/clock-skew_participantData`;
+    const participant = JSON.parse(storageObjects[path]);
+    storageObjects[path] = JSON.stringify({ ...participant, createdTime: 1 });
+    const assignment = await storageEngine.getSequenceAssignment(studyId, 'clock-skew');
+    const analysis = (await storageEngine.getAllParticipantsData(studyId))[0];
+    expect(analysis.createdTime).toBe(1);
+    expect(analysis).toHaveProperty('assignmentCreatedTime', assignment!.createdTime);
+    expect(assignment!.createdTime).toBeGreaterThan(1);
+  });
+
+  test.each(['.', '..', '__pilot__', '界'.repeat(600), 'A/B'])('stage name %s uses a safe bounded Firestore ID', async (stageName) => {
+    await storageEngine.setCurrentStage(studyId, stageName, '#00AAFF', 1);
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'safe-stage');
+    const stageDocuments = Object.keys(firestoreData).filter((path) => path.startsWith(`dev-${studyId}/allocation/stages/`));
+    expect(stageDocuments.length).toBeGreaterThan(0);
+    stageDocuments.forEach((path) => {
+      const documentId = path.split('/').at(-1)!;
+      expect(['.', '..']).not.toContain(documentId);
+      expect(documentId).not.toMatch(/^__.*__$/);
+      expect(new TextEncoder().encode(documentId).length).toBeLessThanOrEqual(1500);
+    });
+    await expect(storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'blocked-stage')).rejects.toThrow(/participant limit/);
+  });
+
+  test('stage admission preserves bounded reads and zero-based allocator metadata', async () => {
+    const config: StudyConfig = { ...configSimple, factors: { version: ['A', 'B'] }, betweenSubjects: ['version'] };
+    await storageEngine.saveConfig(config);
+    const prepared = generateSequenceArray(config);
+    await storageEngine.setSequenceArray(prepared);
+    await storageEngine.setCurrentStage(studyId, 'BOUNDED', '#00AAFF', 10);
+    const first = await storageEngine.initializeParticipantSession({}, config, participantMetadata, 'stage-first');
+    expect(first.participantIndex).toBe(1);
+    expect((await storageEngine.getAllSequenceAssignments(studyId))[0]).toMatchObject({ creationIndex: 0, sequenceIndex: 0 });
+    const scans = vi.spyOn(storageEngine, 'getAllSequenceAssignments');
+    const serverScans = vi.mocked(getDocsFromServer);
+    serverScans.mockClear();
+    await storageEngine.saveConfig(config);
+    const second = await storageEngine.initializeParticipantSession({}, config, participantMetadata, 'stage-second', { modesDocument: await storageEngine.getModes(studyId), sequenceArray: prepared });
+    expect(second.participantIndex).toBe(2);
+    expect(scans).not.toHaveBeenCalled();
+    expect(serverScans).not.toHaveBeenCalled();
+    // @ts-expect-error Inspect the bounded allocation state without a history scan.
+    const state = await storageEngine.getStageAllocation('BOUNDED');
+    expect(state.count).toBe(2);
+    expect(Object.values(state.combinationCounts).sort()).toEqual([1, 1]);
+    expect(Object.values(state.rowCounts).reduce((total, count) => total + count, 0)).toBe(2);
+  });
+
+  test('fresh stage policy wins over prefetched startup settings', async () => {
+    await storageEngine.setCurrentStage(studyId, 'FRESH', '#00AAFF', 2);
+    const modesDocument = await storageEngine.getModes(studyId);
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'admitted');
+    await storageEngine.updateStage(studyId, 'FRESH', { maxParticipants: 1 });
+    await expect(storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'blocked', { modesDocument, sequenceArray }))
+      .rejects.toThrow(/participant limit/);
+  });
+
+  test('fresh participant startup does not scan all sequence assignments', async () => {
+    const scanSpy = vi.spyOn(storageEngine, 'getAllSequenceAssignments');
+    const countMock = vi.mocked(getCountFromServer);
+    const getDocsMock = vi.mocked(getDocs);
+    const transactionMock = vi.mocked(runTransaction);
+    countMock.mockClear();
+    getDocsMock.mockClear();
+    transactionMock.mockClear();
+
+    const participant = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
+    expect(scanSpy).not.toHaveBeenCalled();
+    expect(countMock).toHaveBeenCalledTimes(4);
+    expect(getDocsMock).toHaveBeenCalledTimes(2);
+    expect(transactionMock).toHaveBeenCalledTimes(8);
+
+    const getDocMock = vi.mocked(getDoc);
+    getDocMock.mockClear();
+    countMock.mockClear();
+    getDocsMock.mockClear();
+    transactionMock.mockClear();
+    await storageEngine.getParticipantCompletionStatus(participant.participantId);
+    expect(scanSpy).not.toHaveBeenCalled();
+    expect(getDocMock).toHaveBeenCalledTimes(1);
+    expect(countMock).not.toHaveBeenCalled();
+    expect(getDocsMock).not.toHaveBeenCalled();
+    expect(transactionMock).not.toHaveBeenCalled();
+  });
+
+  test('fresh participant startup with an initialized allocator skips legacy counts', async () => {
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'allocator-seed');
+    await storageEngine.clearCurrentParticipantId();
+
+    const scanSpy = vi.spyOn(storageEngine, 'getAllSequenceAssignments');
+    const countMock = vi.mocked(getCountFromServer);
+    const getDocsMock = vi.mocked(getDocs);
+    const transactionMock = vi.mocked(runTransaction);
+    countMock.mockClear();
+    getDocsMock.mockClear();
+    transactionMock.mockClear();
+
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'post-seed');
+
+    expect(scanSpy).not.toHaveBeenCalled();
+    expect(countMock).not.toHaveBeenCalled();
+    expect(getDocsMock).toHaveBeenCalledTimes(2);
+    expect(transactionMock).toHaveBeenCalledTimes(6);
+  });
+
+  test('returning legacy assignment derives its indexes without an assignment scan', async () => {
+    const createAssignment = (
+      storageEngine as unknown as {
+        _createSequenceAssignment: (
+          participantId: string,
+          assignment: SequenceAssignment,
+          withServerTimestamp: boolean,
+        ) => Promise<void>;
+      }
+    )._createSequenceAssignment.bind(storageEngine);
+    await createAssignment('legacy-returning', {
+      participantId: 'legacy-returning',
+      timestamp: 1,
+      rejected: false,
+      claimed: false,
+      completed: null,
+      createdTime: 1,
+      total: 0,
+      answered: [],
+      isDynamic: false,
+      stage: 'DEFAULT',
+    }, false);
+
+    const scanSpy = vi.spyOn(storageEngine, 'getAllSequenceAssignments');
+    const countMock = vi.mocked(getCountFromServer);
+    const getDocsMock = vi.mocked(getDocs);
+    const transactionMock = vi.mocked(runTransaction);
+    countMock.mockClear();
+    getDocsMock.mockClear();
+    transactionMock.mockClear();
+
+    const participant = await storageEngine.initializeParticipantSession(
+      {},
+      configSimple,
+      participantMetadata,
+      'legacy-returning',
+    );
+
+    expect(participant.participantIndex).toBe(1);
+    expect(scanSpy).not.toHaveBeenCalled();
+    expect(countMock).toHaveBeenCalledTimes(3);
+    expect(getDocsMock).not.toHaveBeenCalled();
+    expect(transactionMock).toHaveBeenCalledTimes(6);
+  });
+
+  test.each([false, true])('legacy mixed timestamps preserve the sequence slot (returning: %s)', async (returning) => {
+    sequenceArray = [sequenceArray[0], {
+      ...sequenceArray[0], components: [...sequenceArray[0].components].reverse(),
+    }];
+    await storageEngine.setSequenceArray(sequenceArray);
+    const assignment: SequenceAssignment = {
+      participantId: 'earlier',
+      timestamp: 1000,
+      createdTime: 1000,
+      rejected: false,
+      claimed: false,
+      completed: null,
+      total: 0,
+      answered: [],
+      isDynamic: false,
+      stage: 'DEFAULT',
+    };
+    const path = `dev-${studyId}/sequenceAssignment/sequenceAssignment`;
+    firestoreData[`${path}/earlier`] = {
+      ...assignment, timestamp: new Timestamp(1, 0), createdTime: new Timestamp(1, 0),
+    };
+    firestoreData[`${path}/legacy`] = {
+      ...assignment,
+      participantId: 'legacy',
+      timestamp: 2000,
+      createdTime: new Timestamp(2, 0),
+      rejected: !returning,
+    };
+
+    const participant = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, returning ? 'legacy' : 'replacement');
+
+    expect(participant.sequence).toEqual(sequenceArray[1]);
+    expect(participant.participantIndex).toBe(returning ? 2 : 3);
+  });
+
+  test('legacy rejected-slot selection compares numeric and Firestore timestamps chronologically', async () => {
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'seed');
+    await storageEngine.clearCurrentParticipantId();
+    const path = `dev-${studyId}/sequenceAssignment/sequenceAssignment`;
+    const assignment = firestoreData[`${path}/seed`];
+    firestoreData[`${path}/older`] = {
+      ...assignment, participantId: 'older', timestamp: new Timestamp(1, 0), rejected: true, sequenceIndex: 1,
+    };
+    firestoreData[`${path}/newer`] = {
+      ...assignment, participantId: 'newer', timestamp: 2000, rejected: true, sequenceIndex: 2,
+    };
+
+    const participant = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'replacement');
+
+    expect(participant.sequence).toEqual(sequenceArray[1]);
+    expect(firestoreData[`${path}/older`].claimed).toBe(true);
+    expect(firestoreData[`${path}/newer`].claimed).toBe(false);
+  });
+
+  test('rejecting a legacy replacement initializes the missing allocator', async () => {
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'original');
+    await storageEngine.rejectParticipant('original', 'test');
+    await storageEngine.clearCurrentParticipantId();
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'replacement');
+    delete firestoreData[`dev-${studyId}/sequenceAssignmentAllocator`];
+    const path = `dev-${studyId}/sequenceAssignment/sequenceAssignment`;
+    delete firestoreData[`${path}/original`].sequenceIndex;
+    delete firestoreData[`${path}/replacement`].sequenceIndex;
+    delete firestoreData[`${path}/original`].creationIndex;
+    delete firestoreData[`${path}/replacement`].creationIndex;
+
+    await storageEngine.rejectParticipant('replacement', 'test');
+
+    expect(firestoreData[`${path}/original`].claimed).toBe(false);
+    expect(firestoreData[`${path}/replacement`].rejected).toBe(true);
+    expect(firestoreData[`${path}/replacement`].reusableSequenceIndex).toBe(1);
+    expect(firestoreData[`dev-${studyId}/sequenceAssignmentAllocator`]).toEqual({
+      nextSequenceIndex: 2, nextCreationIndex: 2,
+    });
+  });
+
+  test('legacy rejected-slot reuse uses bounded counts instead of an assignment scan', async () => {
+    const createAssignment = (
+      storageEngine as unknown as {
+        _createSequenceAssignment: (
+          participantId: string,
+          assignment: SequenceAssignment,
+          withServerTimestamp: boolean,
+        ) => Promise<void>;
+      }
+    )._createSequenceAssignment.bind(storageEngine);
+    for (let index = 0; index < 5; index += 1) {
+      // Sequential writes intentionally build a deterministic legacy assignment history.
+      // eslint-disable-next-line no-await-in-loop
+      await createAssignment(`legacy-${index}`, {
+        participantId: `legacy-${index}`,
+        timestamp: index,
+        rejected: index === 1,
+        claimed: false,
+        completed: null,
+        createdTime: index,
+        total: 0,
+        answered: [],
+        isDynamic: false,
+        stage: 'DEFAULT',
+      }, false);
+    }
+
+    const scanSpy = vi.spyOn(storageEngine, 'getAllSequenceAssignments');
+    const countMock = vi.mocked(getCountFromServer);
+    countMock.mockClear();
+
+    const participant = await storageEngine.initializeParticipantSession(
+      {},
+      configSimple,
+      participantMetadata,
+      'legacy-replacement',
+    );
+
+    expect(participant.sequence).toEqual(sequenceArray[1]);
+    expect(scanSpy).not.toHaveBeenCalled();
+    expect(countMock).toHaveBeenCalledTimes(4);
+  });
+
+  test('rejected-slot reuse selects the earliest assignment timestamp', async () => {
+    const createAssignment = (
+      storageEngine as unknown as {
+        _createSequenceAssignment: (
+          participantId: string,
+          assignment: SequenceAssignment,
+          withServerTimestamp: boolean,
+        ) => Promise<void>;
+      }
+    )._createSequenceAssignment.bind(storageEngine);
+    const rejectedAssignment = (
+      participantId: string,
+      timestamp: number,
+      sequenceIndex: number,
+    ): SequenceAssignment => ({
+      participantId,
+      timestamp,
+      rejected: true,
+      claimed: false,
+      completed: null,
+      createdTime: timestamp,
+      total: 0,
+      answered: [],
+      isDynamic: false,
+      stage: 'DEFAULT',
+      sequenceIndex,
+      creationIndex: sequenceIndex,
+    });
+    await createAssignment('newer-rejected', rejectedAssignment('newer-rejected', 20, 1), false);
+    await createAssignment('older-rejected', rejectedAssignment('older-rejected', 10, 0), false);
+
+    const participant = await storageEngine.initializeParticipantSession(
+      {},
+      configSimple,
+      participantMetadata,
+      'ordered-replacement',
+    );
+    const assignments = await storageEngine.getAllSequenceAssignments(studyId);
+
+    expect(participant.sequence).toEqual(sequenceArray[0]);
+    expect(assignments.find(({ participantId }) => participantId === 'older-rejected')?.claimed).toBe(true);
+    expect(assignments.find(({ participantId }) => participantId === 'newer-rejected')?.claimed).toBe(false);
   });
 
   test('initializeParticipantSession sets conditions from searchParams condition', async () => {
@@ -473,14 +1574,36 @@ describe.each([
     }
   });
 
+  test('concurrent participant starts reserve unique sequence and creation indexes', async () => {
+    const engines = Array.from({ length: 12 }, () => new TestEngine(true));
+    await Promise.all(engines.map(async (engine) => {
+      await engine.connect();
+      await engine.initializeStudyDb(studyId);
+    }));
+
+    const sessions = await Promise.all(engines.map((engine, index) => (
+      engine.initializeParticipantSession(
+        {},
+        configSimple,
+        participantMetadata,
+        `concurrent-${index}`,
+      )
+    )));
+    const assignments = (await storageEngine.getAllSequenceAssignments(studyId))
+      .filter((assignment) => assignment.participantId.startsWith('concurrent-'));
+
+    expect(new Set(assignments.map((assignment) => assignment.sequenceIndex)).size).toBe(12);
+    expect(assignments.map((assignment) => assignment.sequenceIndex).sort((a, b) => a! - b!))
+      .toEqual(Array.from({ length: 12 }, (_, index) => index));
+    expect(new Set(sessions.map((session) => session.participantIndex)).size).toBe(12);
+    expect(sessions.map((session) => session.participantIndex).sort((a, b) => a - b))
+      .toEqual(Array.from({ length: 12 }, (_, index) => index + 1));
+  });
+
   test('initializeParticipantSession omits conditions field in sequence assignment when empty', async () => {
-    // @ts-expect-error accessing protected method for spying
-    const createSequenceAssignmentSpy = vi.spyOn(storageEngine, '_createSequenceAssignment');
-
-    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
-
-    const sequenceAssignmentPayload = (createSequenceAssignmentSpy.mock.calls[0] as DocData[])[1];
-    expect(Object.hasOwn(sequenceAssignmentPayload, 'conditions')).toBe(false);
+    const participant = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
+    const assignment = await storageEngine.getSequenceAssignment(studyId, participant.participantId);
+    expect(Object.hasOwn(assignment!, 'conditions')).toBe(false);
   });
 
   test('updateStudyCondition only updates conditions in development mode', async () => {
@@ -691,6 +1814,10 @@ describe.each([
     expect(sequenceAssignment4!.createdTime).toBeDefined();
     expect(sequenceAssignment4!.createdTime).toBeGreaterThanOrEqual(sequenceAssignment3!.createdTime);
     expect(sequenceAssignment4!.completed).toBeNull();
+    expect(new Set([
+      sequenceAssignment3!.sequenceIndex,
+      sequenceAssignment4!.sequenceIndex,
+    ]).size).toBe(2);
 
     sequenceAssignments = await storageEngine.getAllSequenceAssignments(studyId);
     expect(sequenceAssignments.find((assignment) => assignment.participantId === participantId1)).toBeDefined();
@@ -779,6 +1906,68 @@ describe.each([
   // setSequenceArray throws error if not connected — not applicable for Firebase:
   // studyCollection is always initialized in the constructor so _verifyStudyDatabase
   // never throws for a freshly constructed (but not yet connected) engine.
+
+  test('clearing live data resets participant allocation', async () => {
+    const first = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'before-clear');
+    expect(first.participantIndex).toBe(1);
+
+    expect((await storageEngine.removeSnapshotOrLive(studyId, studyId)).status).toBe('SUCCESS');
+    await storageEngine.setSequenceArray(sequenceArray);
+    const next = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'after-clear');
+
+    expect(next.participantIndex).toBe(1);
+    const assignments = await storageEngine.getAllSequenceAssignments(studyId);
+    expect(assignments).toHaveLength(1);
+    expect(assignments[0].sequenceIndex).toBe(0);
+  });
+
+  test('clearing live data allows the unchanged config to be saved again', async () => {
+    await storageEngine.saveConfig(configSimple);
+    const configHash = await hash(JSON.stringify(configSimple));
+
+    expect((await storageEngine.removeSnapshotOrLive(studyId, studyId)).status).toBe('SUCCESS');
+    await storageEngine.saveConfig(configSimple);
+
+    const configs = await storageEngine.getAllConfigsFromHash([configHash], studyId);
+    expect(configs[configHash]).toEqual(configSimple);
+  });
+
+  test.each([false, true])('restoring a snapshot resumes its allocation (legacy: %s)', async (legacy) => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date('2026-01-01T00:00:00Z'));
+    try {
+      await storageEngine.saveConfig(configSimple);
+      await storageEngine.setSequenceArray(sequenceArray);
+      // Older snapshots can contain offset indexes after live data was cleared.
+      if (legacy) {
+        firestoreData[`dev-${studyId}/sequenceAssignmentAllocator`] = {
+          nextSequenceIndex: 3, nextCreationIndex: 3,
+        };
+      }
+      for (let index = 0; index < 3; index += 1) {
+        // eslint-disable-next-line no-await-in-loop
+        await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, `snapshot-${index}`);
+      }
+      expect((await storageEngine.createSnapshot(studyId, false)).status).toBe('SUCCESS');
+      const [snapshotName] = Object.keys(await storageEngine.getSnapshots(studyId));
+      if (legacy) delete firestoreData[`${snapshotName}/sequenceAssignmentAllocator`];
+      expect(firestoreData[`${snapshotName}/sequenceAssignmentAllocator`]).toEqual(legacy ? undefined : {
+        nextSequenceIndex: 3, nextCreationIndex: 3,
+      });
+
+      await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'after-snapshot');
+      vi.setSystemTime(new Date('2026-01-01T00:00:01Z'));
+      expect((await storageEngine.restoreSnapshot(studyId, snapshotName)).status).toBe('SUCCESS');
+      const next = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'after-restore');
+
+      expect(next.participantIndex).toBe(legacy ? 7 : 4);
+      const assignments = await storageEngine.getAllSequenceAssignments(studyId);
+      expect(assignments).toHaveLength(4);
+      expect(assignments.find(({ participantId }) => participantId === 'after-restore')?.sequenceIndex).toBe(legacy ? 6 : 3);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
 
   test('createSnapshot, restoreSnapshot, renameSnapshot, removeSnapshotOrLive, getSnapshots work correctly', async () => {
     const actionResponse1 = await storageEngine.createSnapshot('non-existent', false);
@@ -967,6 +2156,83 @@ describe.each([
     await storageEngine._rejectParticipantRealtime(session.participantId);
     const all = await storageEngine.getAllSequenceAssignments(studyId);
     expect(all.find((a) => a.participantId === session.participantId)?.rejected).toBe(true);
+  });
+
+  test.each([false, true])('concurrent duplicate rejection reserves one vacancy (legacy: %s)', async (legacy) => {
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'original');
+    await storageEngine.flushPendingParticipantData();
+    await storageEngine.rejectParticipant('original', 'review');
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'replacement');
+    await storageEngine.flushPendingParticipantData();
+    if (legacy) {
+      const replacement = (await storageEngine.getAllSequenceAssignments(studyId))
+        .find((assignment) => assignment.participantId === 'replacement')!;
+      delete replacement.claimedParticipantId;
+      // @ts-expect-error protected storage boundary
+      await storageEngine._createSequenceAssignment('replacement', replacement, false);
+    }
+    await Promise.all([
+      storageEngine.rejectParticipant('replacement', 'review'),
+      storageEngine.rejectParticipant('replacement', 'review'),
+    ]);
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'next-a');
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'next-b');
+    const assignments = await storageEngine.getAllSequenceAssignments(studyId);
+    expect(assignments.find((assignment) => assignment.participantId === 'replacement')?.reusableSequenceIndex).toBe(1);
+    expect(assignments.find((assignment) => assignment.participantId === 'next-a')?.sequenceIndex).toBe(0);
+    expect(assignments.find((assignment) => assignment.participantId === 'next-b')?.sequenceIndex).toBe(1);
+  });
+
+  test('undo rejection returns an unused replacement slot exactly once', async () => {
+    const rows = [
+      { ...sequenceArray[0], parameters: { row: 'first' } },
+      { ...sequenceArray[0], parameters: { row: 'second' } },
+    ];
+    await storageEngine.setSequenceArray(rows);
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'original');
+    await storageEngine.rejectParticipant('original', 'review');
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'replacement');
+    await storageEngine.rejectParticipant('replacement', 'review');
+    await storageEngine.undoRejectParticipant('replacement');
+    await storageEngine.undoRejectParticipant('replacement');
+    const next = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'next');
+    expect(next.sequence.parameters?.row).toBe('second');
+    const following = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'following');
+    expect(following.sequence.parameters?.row).toBe('first');
+  });
+
+  test('restoration waits for source ownership and returns its unused allocator slot', async () => {
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'original');
+    await storageEngine.rejectParticipant('original', 'review');
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'replacement');
+    await storageEngine.rejectParticipant('replacement', 'review');
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'reuse-original');
+    await expect(storageEngine.undoRejectParticipant('replacement')).rejects.toThrow(/reassigned/);
+    await storageEngine.rejectParticipant('reuse-original', 'review');
+    await storageEngine.undoRejectParticipant('replacement');
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'reuse-again');
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'returned-slot');
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'fresh-slot');
+    const assignments = await storageEngine.getAllSequenceAssignments(studyId);
+    expect(assignments.find((assignment) => assignment.participantId === 'returned-slot'))
+      .toMatchObject({ sequenceIndex: 1, creationIndex: 4 });
+    expect(assignments.find((assignment) => assignment.participantId === 'fresh-slot'))
+      .toMatchObject({ sequenceIndex: 3, creationIndex: 5 });
+    const active = assignments.filter((assignment) => !assignment.rejected);
+    expect(new Set(active.map((assignment) => assignment.sequenceIndex)).size).toBe(active.length);
+  });
+
+  test('undo rejection does not return a replacement slot already claimed by another participant', async () => {
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'original');
+    await storageEngine.rejectParticipant('original', 'review');
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'replacement');
+    await storageEngine.rejectParticipant('replacement', 'review');
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'reuse-original');
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'reuse-replacement');
+    await expect(storageEngine.undoRejectParticipant('replacement')).rejects.toThrow(/reassigned/);
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'next');
+    const assignments = await storageEngine.getAllSequenceAssignments(studyId);
+    expect(assignments.find((assignment) => assignment.participantId === 'next')?.sequenceIndex).toBe(2);
   });
 
   // ── _undoRejectParticipantRealtime ───────────────────────────────────────────

@@ -1,6 +1,7 @@
 import {
   expect, test, beforeEach, describe, afterEach, vi,
 } from 'vitest';
+import { createClient } from '@supabase/supabase-js';
 import { ParticipantMetadata, StudyConfig } from '../../parser/types';
 import testConfigSimple from './testConfigSimple.json';
 import { generateSequenceArray } from '../../utils/handleRandomSequences';
@@ -29,7 +30,8 @@ vi.mock('@supabase/supabase-js', () => {
     if (col.includes('->')) {
       const arrowIdx = col.indexOf('->');
       const parent = col.slice(0, arrowIdx);
-      const child = col.slice(arrowIdx + 2);
+      // `data->>field` extracts the field as text, so drop the extra '>'.
+      const child = col.slice(arrowIdx + 2).replace(/^>/, '');
       const parentVal = obj[parent];
       return parentVal && typeof parentVal === 'object'
         ? (parentVal as RowData)[child]
@@ -40,34 +42,49 @@ vi.mock('@supabase/supabase-js', () => {
 
   function applyFilters(
     rows: Array<RowData>,
-    filters: Array<{ col: string; val: string | number | boolean | null; type: 'eq' | 'like' }>,
+    filters: Array<{ col: string; val: string | number | boolean | null; type: 'eq' | 'neq' | 'is' | 'like' | 'not' | 'lt' }>,
   ): Array<RowData> {
     return rows.filter((row) => filters.every(({ col, val, type }) => {
       const colVal = getFieldValue(row, col);
-      if (type === 'eq') return colVal === val;
+      // PostgREST compares filter values as text, so `data->>rejected` matches
+      // the string 'false' rather than the boolean.
+      if (type === 'eq') return String(colVal) === String(val);
+      if (type === 'neq') return String(colVal) !== String(val);
+      if (type === 'is') return (colVal ?? null) === val;
+      if (type === 'not') return colVal !== null && colVal !== undefined;
+      if (type === 'lt') return colVal !== undefined && colVal !== null && colVal < val!;
       return typeof colVal === 'string' && matchLike(colVal, String(val));
     }));
   }
 
   function makeQueryBuilder(getRows: () => Array<RowData>) {
-    let op: 'select' | 'upsert' | 'update' | 'delete' | null = null;
+    let op: 'select' | 'upsert' | 'insert' | 'update' | 'delete' | null = null;
     let payload: RowData | RowData[] | Partial<RowData> | null = null;
-    const filters: Array<{ col: string; val: string | number | boolean | null; type: 'eq' | 'like' }> = [];
+    const filters: Array<{ col: string; val: string | number | boolean | null; type: 'eq' | 'neq' | 'is' | 'like' | 'not' | 'lt' }> = [];
     let isSingle = false;
     let isMaybeSingle = false;
+    let requestedCount = false;
+    let headOnly = false;
+    let resultLimit: number | undefined;
 
     const qb = {
-      select(_fields?: string) { op = 'select'; return qb; },
+      select(_fields?: string, opts?: { count?: string; head?: boolean }) { if (op === null) op = 'select'; requestedCount = opts?.count === 'exact'; headOnly = opts?.head === true; return qb; },
       upsert(row: RowData | RowData[]) { op = 'upsert'; payload = row; return qb; },
+      insert(row: RowData | RowData[]) { op = 'insert'; payload = row; return qb; },
       update(obj: Partial<RowData>) { op = 'update'; payload = obj; return qb; },
       delete() { op = 'delete'; return qb; },
       eq(col: string, val: string | number | boolean | null) { filters.push({ col, val, type: 'eq' }); return qb; },
+      lt(col: string, val: string | number | boolean | null) { filters.push({ col, val, type: 'lt' }); return qb; },
+      neq(col: string, val: string | number | boolean | null) { filters.push({ col, val, type: 'neq' }); return qb; },
+      is(col: string, val: string | number | boolean | null) { filters.push({ col, val, type: 'is' }); return qb; },
       like(col: string, val: string) { filters.push({ col, val, type: 'like' }); return qb; },
-      limit(_count: number) { return qb; },
+      not(col: string, _operator: string, val: string | number | boolean | null) { filters.push({ col, val, type: 'not' }); return qb; },
+      order(_col: string, _options?: { ascending?: boolean }) { return qb; },
+      limit(count: number) { resultLimit = count; return qb; },
       single() { isSingle = true; return qb; },
       maybeSingle() { isMaybeSingle = true; return qb; },
       then(
-        resolve: (val: { data: RowData | RowData[] | null; error: { message: string; code?: string } | null }) => void,
+        resolve: (val: { data: RowData | RowData[] | null; error: { message: string; code?: string } | null; count?: number | null }) => void,
         reject?: (err: Error) => void,
       ) {
         Promise.resolve().then(() => {
@@ -80,7 +97,13 @@ vi.mock('@supabase/supabase-js', () => {
             return;
           }
           if (op === 'select') {
-            const matched = applyFilters(rows, filters);
+            let matched = applyFilters(rows, filters);
+            const count = requestedCount ? matched.length : null;
+            if (resultLimit !== undefined) matched = matched.slice(0, resultLimit);
+            if (headOnly) {
+              resolve({ data: null, error: null, count });
+              return;
+            }
             // Return deep copies so later mutations to revisitRows don't alias into returned data
             if (isSingle || isMaybeSingle) {
               if (matched.length > 1 || (isSingle && matched.length === 0)) {
@@ -88,10 +111,10 @@ vi.mock('@supabase/supabase-js', () => {
               } else if (matched.length === 0) {
                 resolve({ data: null, error: null });
               } else {
-                resolve({ data: JSON.parse(JSON.stringify(matched[0])), error: null });
+                resolve({ data: JSON.parse(JSON.stringify(matched[0])), error: null, count });
               }
             } else {
-              resolve({ data: JSON.parse(JSON.stringify(matched)), error: null });
+              resolve({ data: JSON.parse(JSON.stringify(matched)), error: null, count });
             }
           } else if (op === 'upsert') {
             const toUpsert = (Array.isArray(payload)
@@ -114,6 +137,26 @@ vi.mock('@supabase/supabase-js', () => {
               }
             });
             resolve({ data: toUpsert, error: null });
+          } else if (op === 'insert') {
+            const toInsert = (Array.isArray(payload) ? payload : [payload]) as Array<RowData>;
+            const conflict = toInsert.find((row) => rows.some(
+              (existing) => existing.studyId === row.studyId && existing.docId === row.docId,
+            ));
+            if (conflict) {
+              resolve({ data: null, error: { message: 'duplicate key value', code: '23505' } });
+              return;
+            }
+            const inserted = toInsert.map((row) => ({
+              ...row,
+              createdAt: (row.createdAt as string | undefined) ?? new Date().toISOString(),
+            }));
+            rows.push(...inserted);
+            resolve({
+              data: isSingle
+                ? JSON.parse(JSON.stringify(inserted[0]))
+                : JSON.parse(JSON.stringify(inserted)),
+              error: null,
+            });
           } else if (op === 'update') {
             const matched = applyFilters(rows, filters);
             matched.forEach((row) => Object.assign(row, payload as RowData));
@@ -136,7 +179,7 @@ vi.mock('@supabase/supabase-js', () => {
 
   return {
     AuthError: class AuthError extends Error { },
-    createClient: () => ({
+    createClient: vi.fn(() => ({
       from: (_table: string) => makeQueryBuilder(() => revisitRows),
       schema: (schemaName: string) => ({
         from: (_table: string) => makeQueryBuilder(() => {
@@ -152,7 +195,7 @@ vi.mock('@supabase/supabase-js', () => {
             if (path in storageFiles) {
               return { data: storageFiles[path], error: null };
             }
-            return { data: null, error: { message: 'Object not found' } };
+            return { data: null, error: { message: 'Object not found', status: 400, statusCode: '404' } };
           },
           upload: async (path: string, data: Blob | Buffer | string | object, _opts?: object) => {
             let text: string;
@@ -203,7 +246,7 @@ vi.mock('@supabase/supabase-js', () => {
         signOut: async () => ({ error: null }),
         signInWithOAuth: async () => ({ error: null }),
       },
-    }),
+    })),
   };
 });
 
@@ -282,6 +325,26 @@ describe.each([
     const storedBlob = await storageEngine._getFromStorage('testBlob', 'blob');
     expect(storedBlob).toBeDefined();
     expect(storedBlob).toBeInstanceOf(Object);
+  });
+
+  test('mutable storage reads bypass caches while preserving SDK authorization and other requests', async () => {
+    const clientFetch = vi.mocked(createClient).mock.calls.at(-1)?.[2]?.global?.fetch;
+    expect(clientFetch).toBeDefined();
+    const fetch = vi.fn().mockResolvedValue(new Response('{}'));
+    vi.stubGlobal('fetch', fetch);
+    try {
+      const init = { headers: { Authorization: 'Bearer test', apikey: 'test-key' } };
+      await clientFetch!('https://storage.example/storage/v1/object/revisit/study/provenance/p_trial', init);
+      const request = fetch.mock.calls[0][0] as Request;
+      expect(new URL(request.url).searchParams.has('__revisit_fresh')).toBe(true);
+      expect(request.headers.get('Authorization')).toBe('Bearer test');
+      expect(request.headers.get('apikey')).toBe('test-key');
+      expect(fetch.mock.calls[0][1]).toEqual({ cache: 'no-store' });
+      await clientFetch!('https://storage.example/rest/v1/revisit', init);
+      expect(fetch).toHaveBeenLastCalledWith('https://storage.example/rest/v1/revisit', init);
+    } finally {
+      vi.unstubAllGlobals();
+    }
   });
 
   test('_verifyStudyDatabase throws error if not initialized', async () => {
@@ -365,6 +428,19 @@ describe.each([
     expect(updatedModes.dataSharingEnabled).toBe(false);
     expect(updatedModes.dataCollectionEnabled).toBe(false);
     expect(updatedModes.developmentModeEnabled).toBe(true);
+  });
+
+  test('keeps both a mode change and a stage edit that overlap', async () => {
+    await storageEngine.setCurrentStage(studyId, 'Pilot');
+
+    await Promise.all([
+      storageEngine.updateStage(studyId, 'Pilot', { maxParticipants: 7 }),
+      storageEngine.setMode(studyId, 'dataCollectionEnabled', false),
+    ]);
+
+    expect((await storageEngine.getModes(studyId)).dataCollectionEnabled).toBe(false);
+    expect((await storageEngine.getStageData(studyId)).allStages)
+      .toContainEqual(expect.objectContaining({ stageName: 'Pilot', maxParticipants: 7 }));
   });
 
   test('stores a study-scoped disconnect setting after administrator verification', async () => {

@@ -25,7 +25,10 @@ import { youtubeReadableDuration } from '../../../utils/humanReadableDuration';
 import { getSequenceFlatMap } from '../../../utils/getSequenceFlatMap';
 import { MetaCell } from './MetaCell';
 import { componentAnswersAreCorrect } from '../../../utils/componentCorrectness';
+import { hasResponseScorer } from '../../../utils/correctAnswer';
 import { studyComponentToIndividualComponent } from '../../../utils/handleComponentInheritance';
+import { DISTINCT_COLOR_PALETTE } from '../../../utils/colors';
+import { ParticipantTimeoutModal } from '../ParticipantTimeoutModal';
 
 function formatDate(date: Date): JSX.Element {
   if (date.valueOf() === 0 || Number.isNaN(date.valueOf())) {
@@ -37,6 +40,7 @@ function formatDate(date: Date): JSX.Element {
 
 export function TableView({
   visibleParticipants,
+  participantsForTimeout,
   studyConfig,
   allConfigs,
   refresh,
@@ -46,6 +50,7 @@ export function TableView({
   onSelectionChange,
 }: {
   visibleParticipants: ParticipantDataWithStatus[];
+  participantsForTimeout: ParticipantDataWithStatus[];
   studyConfig: StudyConfig;
   allConfigs: Record<string, StudyConfig>;
   refresh: () => Promise<ParticipantDataWithStatus[]>;
@@ -141,7 +146,7 @@ export function TableView({
               </Badge>
             );
           }
-          const stageColor = stageColors[stageName] || '#F05A30';
+          const stageColor = stageColors[stageName] || DISTINCT_COLOR_PALETTE[0];
           return (
             <Badge
               color={stageColor}
@@ -217,14 +222,23 @@ export function TableView({
       },
       {
         accessorFn: (row: ParticipantDataWithStatus) => Object.values(row.answers)
-          .filter((answer) => (answer.correctAnswer?.length ?? 0) > 0 && answer.endTime > 0)
-          .map((answer) => {
+          .filter((answer) => answer.endTime > 0)
+          .flatMap((answer) => {
             const participantConfig = row.participantConfigHash ? allConfigs[row.participantConfigHash] : studyConfig;
-            if (!participantConfig) return null;
+            if (!participantConfig) {
+              return answer.correctAnswer?.length || Object.keys(answer.checkAnswer?.scores ?? {}).length ? [null] : [];
+            }
             const componentConfig = participantConfig.components[answer.componentName];
             const component = componentConfig ? studyComponentToIndividualComponent(componentConfig, participantConfig) : undefined;
+            const hasSavedScores = Object.keys(answer.checkAnswer?.scores ?? {}).length > 0;
+            if (!answer.correctAnswer?.length && !component?.response?.some(hasResponseScorer) && !hasSavedScores) return [];
 
-            return componentAnswersAreCorrect(answer.answer, answer.correctAnswer, component?.response);
+            return [componentAnswersAreCorrect(
+              answer.answer,
+              answer.correctAnswer,
+              component?.response,
+              answer.checkAnswer,
+            )];
           }),
         header: 'Correct Answers',
         size: 160,
@@ -334,8 +348,8 @@ export function TableView({
             { value: 'uniform', label: 'Uniform' },
           ]}
         />
-        <Text size="xs" c="dimmed">Long gaps in Time mode are marked //</Text>
         <ParticipantRejectModal selectedParticipants={selectedParticipants} refresh={handleRefresh} />
+        <ParticipantTimeoutModal participants={participantsForTimeout} refresh={handleRefresh} />
       </Flex>
     ),
   });

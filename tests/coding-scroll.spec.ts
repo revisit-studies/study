@@ -5,10 +5,16 @@ import type { Locator } from '@playwright/test';
 const config = {
   $schema: 'https://raw.githubusercontent.com/revisit-studies/study/v2.4.3/src/parser/StudyConfigSchema.json',
   studyMetadata: {
-    title: 'Coding scroll test', version: 'test', authors: ['Test'], date: '2026-09-30',
-    description: 'Coding layout regression fixture', organizations: ['Test'],
+    title: 'Coding scroll test',
+    version: 'test',
+    authors: ['Test'],
+    date: '2026-09-30',
+    description: 'Coding layout regression fixture',
+    organizations: ['Test'],
   },
-  uiConfig: { logoPath: 'revisitAssets/revisitLogoSquare.svg', contactEmail: 'test@example.com', withProgressBar: false, withSidebar: false, recordAudio: true },
+  uiConfig: {
+    logoPath: 'revisitAssets/revisitLogoSquare.svg', contactEmail: 'test@example.com', withProgressBar: false, withSidebar: false, recordAudio: true,
+  },
   components: { task: { type: 'markdown', path: 'coding-scroll/task.md', response: [] } },
   sequence: { order: 'fixed', components: ['task'] },
 };
@@ -38,14 +44,17 @@ for (const warning of [false, true]) {
       const response = await route.fetch();
       const source = await response.text();
       // Preserve other storage exports used when CI merges the PR with dev.
-      const body = source.replace(/export(?=\s+async function initializeStorageEngine\b)/, '')
-        + "\nexport { initializeStorageEngine } from '/tests/fixtures/codingStorage.ts';";
+      const body = `${source.replace(/export(?=\s+async function initializeStorageEngine\b)/, '')
+      }\nexport { initializeStorageEngine } from '/tests/fixtures/codingStorage.ts';`;
       await route.fulfill({ response, body });
     });
-    await page.route('**/global.json', (route) => route.fulfill({ json: {
-      $schema: 'https://raw.githubusercontent.com/revisit-studies/study/v2.4.3/src/parser/GlobalConfigSchema.json',
-      configsList: ['coding-scroll'], configs: { 'coding-scroll': { path: 'coding-scroll/config.json' } },
-    } }));
+    await page.route('**/global.json', (route) => route.fulfill({
+      json: {
+        $schema: 'https://raw.githubusercontent.com/revisit-studies/study/v2.4.3/src/parser/GlobalConfigSchema.json',
+        configsList: ['coding-scroll'],
+        configs: { 'coding-scroll': { path: 'coding-scroll/config.json' } },
+      },
+    }));
     await page.route('**/coding-scroll/config.json', (route) => route.fulfill({ json: config }));
     await page.route('**/coding-scroll/audio.wav', (route) => route.fulfill({ contentType: 'audio/wav', body: silentAudio() }));
     await page.goto(`/analysis/stats/coding-scroll/tagging/task_1?participantId=coding-participant${warning ? '&warning=1' : ''}`);

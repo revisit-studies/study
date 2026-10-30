@@ -1,11 +1,13 @@
 import {
-  Suspense, useEffect, useMemo, useRef, useState,
+  Suspense, useEffect, useMemo, useRef,
 } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router';
 import {
   Box, Center, Loader, Text, Title,
 } from '@mantine/core';
 import { IconPlugConnectedX } from '@tabler/icons-react';
+import { resolveGlobalStoreResponses } from '../utils/globalStore';
+import { useGlobalStore } from '../store/hooks/useGlobalStore';
 import { ResponseBlock } from '../components/response/ResponseBlock';
 import { IframeController } from './IframeController';
 import { ImageController } from './ImageController';
@@ -40,10 +42,15 @@ import { getComponentContainerStyle } from '../utils/componentStyle';
 import { compileTemplate } from '../utils/handlebars';
 import { generateStimulusErrorMessage } from '../components/response/stimulusErrors';
 import { getStimulusProvenanceState, getStimulusShowErrorsFromState } from '../components/response/stimulusProvenance';
+import { useStartupInteractionBlocked } from '../components/StartupContext';
 
 // current active stimuli presented to the user
 export function ComponentController() {
   // Get the config for the current step
+  const globalStore = useGlobalStore();
+  const completed = useStoreSelector((state) => state.completed);
+  const globalStoreSubmitting = useStoreSelector((state) => state.globalStoreSubmitting);
+  const globalStoreError = useStoreSelector((state) => state.globalStoreError);
   const studyConfig = useStudyConfig();
   const currentStep = useCurrentStep();
   const currentComponent = useCurrentComponent();
@@ -73,6 +80,7 @@ export function ComponentController() {
   const currentStimulusSubmitAttempted = useStoreSelector((state) => state.stimulusSubmitAttempted[currentIdentifier]);
   const sequence = useStoreSelector((state) => state.sequence);
   const modes = useStoreSelector((state) => state.modes);
+  const startupInteractionBlocked = useStartupInteractionBlocked();
 
   const [searchParams] = useSearchParams();
 
@@ -82,11 +90,21 @@ export function ComponentController() {
   // Disable browser back button from all stimuli
   useDisableBrowserBack();
 
+  useEffect(() => {
+    if (startupInteractionBlocked || !storageEngine) {
+      return undefined;
+    }
+
+    return storageEngine.subscribeToCurrentParticipantRejection(() => {
+      navigate(`./../__timedOut${window.location.search}`);
+    });
+  }, [navigate, startupInteractionBlocked, storageEngine]);
+
   // Check if we have issues connecting to the database, if so show alert modal
   const storeDispatch = useStoreDispatch();
   const { setAlertModal } = useStoreActions();
   useEffect(() => {
-    if (configuredStorageEngine && storageEngine !== configuredStorageEngine) return;
+    if (startupInteractionBlocked || (configuredStorageEngine && storageEngine !== configuredStorageEngine)) return;
     const configuredEngineName = import.meta.env.VITE_STORAGE_ENGINE;
     const activeStorageEngine = storageEngine?.getEngine();
     if (!configuredEngineName || activeStorageEngine === configuredEngineName) {
@@ -106,40 +124,24 @@ export function ComponentController() {
         title: 'Failed to connect to the storage engine',
       }));
     }
-  }, [configuredStorageEngine, setAlertModal, storageEngine, storeDispatch]);
+  }, [configuredStorageEngine, setAlertModal, startupInteractionBlocked, storageEngine, storeDispatch]);
 
   // Find current block, if it has an ID, add it as a participant tag
-  const [blockForStep, setBlockForStep] = useState<string[]>([]);
   const prevBlockForStepRef = useRef<string[]>([]);
   useEffect(() => {
-    if (isAnalysis) {
+    if (startupInteractionBlocked || isAnalysis || !storageEngine) {
       return;
     }
-    async function updateBlockForStep() {
-      // Get all nested block IDs
-      const blockIds = findBlockForStep(sequence, currentStep)
-        ?.map((block) => block.currentBlock.id)
-        .filter((blockId) => blockId !== undefined) as string[] | undefined || [];
-      setBlockForStep(blockIds);
+    const blockForStep = findBlockForStep(sequence, currentStep)
+      ?.map((block) => block.currentBlock.id)
+      .filter((blockId): blockId is string => blockId !== undefined) ?? [];
+
+    const hasChanged = JSON.stringify(prevBlockForStepRef.current) !== JSON.stringify(blockForStep);
+    if (hasChanged && blockForStep.length > 0) {
+      storageEngine.addParticipantTags(blockForStep);
     }
-
-    async function addParticipantTag() {
-      const prevBlockForStep = prevBlockForStepRef.current;
-
-      // Check if blockForStep has actually changed
-      const hasChanged = JSON.stringify(prevBlockForStep) !== JSON.stringify(blockForStep);
-
-      if (hasChanged && blockForStep.length > 0 && storageEngine) {
-        await storageEngine.addParticipantTags(blockForStep);
-      }
-
-      // Update the ref with the current value
-      prevBlockForStepRef.current = blockForStep;
-    }
-
-    updateBlockForStep().then(addParticipantTag);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentStep, storageEngine, sequence]);
+    prevBlockForStepRef.current = blockForStep;
+  }, [currentStep, startupInteractionBlocked, storageEngine, sequence, isAnalysis]);
 
   const currentConfig = useMemo(() => {
     const toReturn = currentComponent && currentComponent !== 'end' && !currentComponent.startsWith('__') && studyComponentToIndividualComponent(stepConfig, studyConfig) as IndividualComponent;
@@ -149,6 +151,7 @@ export function ComponentController() {
 
       return {
         ...toReturn,
+        response: resolveGlobalStoreResponses(toReturn.response ?? [], globalStore),
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         parameters: funcParams || (toReturn as any).parameters || {},
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -156,7 +159,7 @@ export function ComponentController() {
       };
     }
     return toReturn as unknown as IndividualComponent;
-  }, [answers, currentComponent, currentIdentifier, stepConfig, studyConfig]);
+  }, [answers, currentComponent, currentIdentifier, stepConfig, studyConfig, globalStore]);
   const hasAnalysisStimulusProvenance = useMemo(
     () => analysisStimulusProvState !== undefined,
     [analysisStimulusProvState],
@@ -225,7 +228,7 @@ export function ComponentController() {
 
   // Automatically forward a user to their last completed trial if they are returning to the study
   useEffect(() => {
-    if (status && status.endTime > 0 && !isAnalysis && !modes.developmentModeEnabled && currentComponent !== 'end' && !currentComponent.startsWith('__') && typeof currentStep === 'number') {
+    if (!startupInteractionBlocked && !studyConfig.globalVariables && status && status.endTime > 0 && !isAnalysis && !modes.developmentModeEnabled && currentComponent !== 'end' && !currentComponent.startsWith('__') && typeof currentStep === 'number') {
       let lastAnsweredTrialOrder = '0';
       Object.values(answers).forEach((a) => {
         if (a.endTime > 0) {
@@ -240,13 +243,13 @@ export function ComponentController() {
         navigate(`/${studyId}/${encryptIndex(indexNumber)}${funcIndexNumber !== undefined ? `/${encryptIndex(funcIndexNumber)}` : ''}${window.location.search}`);
       }
     }
-  }, [answers, currentComponent, currentStep, funcIndex, isAnalysis, modes.developmentModeEnabled, navigate, status, studyId]);
+  }, [startupInteractionBlocked, studyConfig.globalVariables, answers, currentComponent, currentStep, funcIndex, isAnalysis, modes.developmentModeEnabled, navigate, status, studyId]);
 
   const templateData = useMemo(
     () => ({
-      answers, flatSequence, currentStep, currentComponent, funcIndex: funcIndex ? decryptIndex(funcIndex) : undefined,
+      globalVariables: globalStore, answers, flatSequence, currentStep, currentComponent, funcIndex: funcIndex ? decryptIndex(funcIndex) : undefined,
     }),
-    [answers, flatSequence, currentStep, currentComponent, funcIndex],
+    [globalStore, answers, flatSequence, currentStep, currentComponent, funcIndex],
   );
 
   const instruction = useMemo(
@@ -256,7 +259,7 @@ export function ComponentController() {
 
   // We're not using hooks below here, so we can return early if we're at the end of the study.
   // This avoids issues with the component config being undefined for the end of the study.
-  if (currentComponent === 'end') {
+  if (currentComponent === 'end' || (completed && !isAnalysis)) {
     return <StudyEnd />;
   }
 
@@ -278,7 +281,7 @@ export function ComponentController() {
     return <ResourceNotFound email={studyConfig.uiConfig.contactEmail} />;
   }
 
-  if (!storageEngine?.isConnected()) {
+  if (!startupInteractionBlocked && !storageEngine?.isConnected()) {
     return (
       <Center style={{ height: '80vh', flexDirection: 'column', textAlign: 'center' }}>
         <IconPlugConnectedX size={48} stroke={1.5} color="var(--mantine-color-orange-text)" />
@@ -288,7 +291,7 @@ export function ComponentController() {
     );
   }
 
-  if (participantId && storePartId !== participantId) {
+  if (!startupInteractionBlocked && participantId && storePartId !== participantId) {
     return (
       <Center style={{ height: '80vh' }}>
         <Loader />
@@ -309,6 +312,7 @@ export function ComponentController() {
 
   return (
     <>
+      {globalStoreError && <Text role="alert" c="red">{globalStoreError}</Text>}
       {instructionLocation === 'aboveStimulus' && <ReactMarkdownWrapper text={instruction} />}
       <ResponseBlock
         key={`${currentStep}-above-response-block`}
@@ -317,6 +321,7 @@ export function ComponentController() {
         location="aboveStimulus"
       />
       <Box
+        inert={!!globalStoreSubmitting && !isAnalysis}
         id={currentComponent}
         className={`stimulus ${currentConfig.type}`}
         style={stimulusContainerStyle}

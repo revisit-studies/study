@@ -1,12 +1,13 @@
 import { forwardRef, ReactNode } from 'react';
 import {
-  render, act, cleanup, waitFor,
+  render, act, cleanup, waitFor, fireEvent,
 } from '@testing-library/react';
 import {
   describe, expect, test, vi,
   beforeEach, afterEach,
 } from 'vitest';
 import { StepRenderer } from '../StepRenderer';
+import { KeyMapper } from '../response/KeyMapper';
 import { shouldConfirmTabClose } from '../../utils/closeTabConfirmation';
 import { LocalStorageEngine } from '../../storage/engines/LocalStorageEngine';
 import { StorageObject, StorageObjectType } from '../../storage/engines/types';
@@ -14,6 +15,8 @@ import { ParticipantData } from '../../storage/types';
 import { StoredAnswer } from '../../store/types';
 import type { UseGamepadOptions } from '../../store/hooks/useGamepad';
 import type { WindowEventsRef } from '../../store/hooks/useWindowEvents';
+
+vi.mock('../../store/hooks/useTrialProvenance', () => ({ TrialProvenanceBoundary: ({ children }: { children: ReactNode }) => children }));
 
 // ── mocks ─────────────────────────────────────────────────────────────────────
 
@@ -34,6 +37,8 @@ const pdfExportMocks = vi.hoisted(() => ({
   waitForNextPaint: vi.fn((): Promise<void> => Promise.resolve()),
 }));
 let mockShowTitleBar = true;
+let mockShowStudyBrowser = false;
+let mockDevelopmentModeEnabled = false;
 let mockStorageEngine: Pick<LocalStorageEngine, 'subscribeToParticipantDataWriteErrors'> = {
   subscribeToParticipantDataWriteErrors: mockSubscribeToParticipantDataWriteErrors,
 };
@@ -87,6 +92,7 @@ vi.mock('../interface/AppHeader', () => ({
   }) => (
     <button
       type="button"
+      data-testid="app-header"
       disabled={isExportingPdf}
       onClick={() => { onExportPdf?.(); }}
     >
@@ -181,8 +187,8 @@ vi.mock('../../store/hooks/useReplay', () => ({
 
 vi.mock('../../store/store', () => ({
   useStoreSelector: (selector: (s: Record<string, unknown>) => unknown) => selector({
-    showStudyBrowser: false,
-    modes: { developmentModeEnabled: false, dataCollectionEnabled: true },
+    showStudyBrowser: mockShowStudyBrowser,
+    modes: { developmentModeEnabled: mockDevelopmentModeEnabled, dataCollectionEnabled: true },
     completed: false,
     analysisHasScreenRecording: false,
     analysisCanPlayScreenRecording: false,
@@ -241,6 +247,7 @@ vi.mock('react-router', () => ({
 }));
 
 vi.mock('@mantine/core', () => ({
+  useComputedColorScheme: () => 'light',
   ActionIcon: ({
     'aria-label': ariaLabel, children,
   }: { 'aria-label'?: string; children: ReactNode }) => (
@@ -301,6 +308,8 @@ describe('StepRenderer', () => {
     pdfExportMocks.showNotification.mockClear();
     pdfExportMocks.waitForNextPaint.mockReset().mockResolvedValue(undefined);
     mockShowTitleBar = true;
+    mockShowStudyBrowser = false;
+    mockDevelopmentModeEnabled = false;
     mockStorageEngine = {
       subscribeToParticipantDataWriteErrors: mockSubscribeToParticipantDataWriteErrors,
     };
@@ -418,6 +427,22 @@ describe('StepRenderer', () => {
   test('renders the app shell', async () => {
     const { getByTestId } = await act(async () => render(<StepRenderer />));
     expect(getByTestId('app-shell')).toBeDefined();
+  });
+
+  test('places the header and main content before the study browser in reading order', async () => {
+    mockShowStudyBrowser = true;
+    mockDevelopmentModeEnabled = true;
+    const { container } = await act(async () => render(<StepRenderer />));
+    const header = container.querySelector('[data-testid="app-header"]');
+    const aside = container.querySelector('[data-testid="app-aside"]');
+    const main = container.querySelector('main');
+    const orderedElements = Array.from(container.querySelectorAll('*'));
+
+    expect(header).not.toBeNull();
+    expect(aside).not.toBeNull();
+    expect(main).not.toBeNull();
+    expect(orderedElements.indexOf(header!)).toBeLessThan(orderedElements.indexOf(main!));
+    expect(orderedElements.indexOf(main!)).toBeLessThan(orderedElements.indexOf(aside!));
   });
 
   test('renders outlet (study content area)', async () => {
@@ -556,6 +581,30 @@ describe('StepRenderer', () => {
     const { unmount } = await act(async () => render(<StepRenderer />));
     // Unmount triggers the useEffect cleanup which removes all event listeners
     expect(() => act(() => { unmount(); })).not.toThrow();
+  });
+
+  test('records mapped arrows from focused response cards and removes the recorder on unmount', async () => {
+    const onSelect = vi.fn();
+    const { getByRole, unmount } = await act(async () => render(
+      <>
+        <StepRenderer />
+        <KeyMapper options={[{ label: 'Down', value: 'down', key: 'ArrowDown' }]} onSelect={onSelect} />
+        <button type="button" role="radio" aria-checked="false">Left</button>
+      </>,
+    ));
+    const card = getByRole('radio', { name: 'Left' });
+    card.focus();
+    fireEvent.keyDown(card, { key: 'ArrowDown' });
+
+    expect(onSelect).toHaveBeenCalledExactlyOnceWith('down', 'keyboard');
+    const events = gamepadMocks.events!.current;
+    expect(events.filter((event) => event[1] === 'keydown')).toEqual([
+      [expect.any(Number), 'keydown', 'ArrowDown'],
+    ]);
+
+    unmount();
+    fireEvent.keyDown(document.body, { key: 'ArrowDown' });
+    expect(events.filter((event) => event[1] === 'keydown')).toHaveLength(1);
   });
 
   test('beforeunload listener added when shouldConfirmClose is true', async () => {

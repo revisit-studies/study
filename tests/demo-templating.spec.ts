@@ -36,6 +36,19 @@ test('Test Handlebars templating in instructions, path, help text, and response 
   await frame.getByRole('button', { name: 'Ottawa' }).click();
   await nextClick(page);
 
+  await expect(page.getByRole('heading', { name: 'Markdown global variables' })).toBeVisible();
+  await expect(page.getByText('Markdown content reads the shared budget directly: 100.')).toBeVisible();
+  await nextClick(page);
+  await expect(page.getByText('React content budget: 90')).toBeVisible();
+  await page.getByRole('button', { name: 'Spend 15 in React' }).click();
+  await expect(page.getByText('React selected spending: 15')).toBeVisible();
+  await nextClick(page);
+  await expect(frame.getByText('Templated HTML budget: 75')).toBeVisible();
+  await expect(frame.getByText('HTML content budget: 75')).toBeVisible();
+  await frame.getByRole('button', { name: 'Spend 20 in HTML' }).click();
+  await nextClick(page);
+  await expect(page.getByText('Remaining budget: 55. Participant label: Ready.')).toBeVisible();
+
   // summary: absolute answer lookups compared against each component's correctAnswer
   await expect(page.getByRole('row', { name: /France\s+Paris\s+Paris\s+✅/ })).toBeVisible();
   await expect(page.getByRole('row', { name: /Canada\s+Ottawa\s+Ottawa\s+✅/ })).toBeVisible();

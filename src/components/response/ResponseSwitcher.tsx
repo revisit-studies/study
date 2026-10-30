@@ -42,6 +42,7 @@ import { CustomResponseField } from '../../store/types';
 import { compileTemplate } from '../../utils/handlebars';
 import { useTemplateAnswerContext } from '../../store/hooks/useTemplateAnswerContext';
 import { OptionTextTemplateContext } from './OptionLabel';
+import { AnswerStatus } from '../../utils/correctAnswer';
 
 export function ResponseSwitcher({
   response,
@@ -55,8 +56,10 @@ export function ResponseSwitcher({
   disabled,
   isDelayedDisabled = false,
   field,
+  validationContext,
   customError,
   errors,
+  matrixRowFeedback,
 }: {
   response: Response;
   form: GetInputPropsReturnType;
@@ -69,8 +72,10 @@ export function ResponseSwitcher({
   disabled?: boolean;
   isDelayedDisabled?: boolean;
   field?: CustomResponseField;
+  validationContext?: StoredAnswer['answer'];
   customError?: string | null;
   errors?: boolean;
+  matrixRowFeedback?: Record<string, AnswerStatus>;
 }) {
   const studyConfig = useStudyConfig();
   const isAnalysis = useIsAnalysis();
@@ -173,11 +178,19 @@ export function ResponseSwitcher({
   const responseStyle = useMemo(() => response.style || {}, [response.style]);
   const responseDividers = useMemo(() => response.withDivider ?? config?.responseDividers ?? studyConfig.uiConfig.responseDividers, [response, config, studyConfig]);
   const customResponseValue = useMemo<JsonValue | null>(() => (ans.value ?? null) as JsonValue | null, [ans.value]);
-  const validationValues = useMemo(() => ({
-    [response.id]: ans.value,
-    [`${response.id}-dontKnow`]: dontKnowChecked,
-    [`${response.id}-other`]: otherValue.value,
-  }), [response.id, ans.value, dontKnowChecked, otherValue.value]);
+  const validationValues = useMemo(() => {
+    const values = { ...validationContext, [response.id]: ans.value };
+    const responseIds = new Set(config.response?.map((item) => item.id) ?? []);
+    const dontKnowKey = `${response.id}-dontKnow`;
+    if (usesStandaloneDontKnow && !responseIds.has(dontKnowKey)) {
+      values[dontKnowKey] = dontKnowChecked;
+    }
+    const otherKey = `${response.id}-other`;
+    if ((response.type === 'radio' || response.type === 'checkbox') && response.withOther && !responseIds.has(otherKey)) {
+      values[otherKey] = otherValue.value;
+    }
+    return values;
+  }, [validationContext, response, ans.value, usesStandaloneDontKnow, dontKnowChecked, otherValue.value, config.response]);
   const templateData = useTemplateAnswerContext();
   const errorOptions = useMemo(() => {
     if (response.type === 'dropdown') {
@@ -383,6 +396,7 @@ export function ResponseSwitcher({
       <CheckBoxInput
         response={withTemplatedFields(response)}
         disabled={isDisabled || dontKnowChecked}
+        clearDisabled={isDisabled}
         answer={ans as { value: string[] }}
         error={responseError}
         index={index}
@@ -418,6 +432,7 @@ export function ResponseSwitcher({
         error={responseError}
         index={index}
         enumerateQuestions={enumerateQuestions}
+        rowFeedback={matrixRowFeedback}
       />
       )}
       {response.type === 'buttons' && (

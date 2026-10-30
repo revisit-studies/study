@@ -1,55 +1,246 @@
 import { parse as hjsonParse } from 'hjson';
+import sha256 from 'crypto-js/sha256';
 import localforage from 'localforage';
+import { v4 as uuidv4 } from 'uuid';
 import { initializeApp } from 'firebase/app';
 import {
-  deleteObject,
-  getBlob,
-  getDownloadURL,
-  getStorage,
-  ref,
-  uploadBytes,
-  listAll,
-  FirebaseStorage,
-  updateMetadata,
+  deleteObject, getBlob, getDownloadURL, getStorage, ref, uploadBytes, listAll, FirebaseStorage, updateMetadata,
 } from 'firebase/storage';
 import {
-  CollectionReference,
-  DocumentData,
-  Firestore,
-  Timestamp,
-  collection,
-  deleteField,
-  doc,
-  enableNetwork,
-  getDoc,
-  getDocs,
-  initializeFirestore,
-  onSnapshot,
-  serverTimestamp,
-  setDoc,
-  updateDoc,
-  writeBatch,
+  CollectionReference, DocumentData, Firestore, FieldPath, Transaction, Timestamp, collection, deleteField, doc, enableNetwork, getDoc, getDocs, getDocsFromServer, initializeFirestore, onSnapshot, runTransaction, serverTimestamp, setDoc, updateDoc, getCountFromServer, limit, orderBy, query, where,
 } from 'firebase/firestore';
-import { ReCaptchaV3Provider, initializeAppCheck } from '@firebase/app-check';
+import { ReCaptchaV3Provider, ReCaptchaEnterpriseProvider, initializeAppCheck } from '@firebase/app-check';
 import {
   browserPopupRedirectResolver, getAuth, GoogleAuthProvider, onAuthStateChanged, signInAnonymously, signInWithPopup, signOut,
 } from '@firebase/auth';
+import { isParticipantData, rebuildSequenceAllocator, retrySequenceAllocation } from './utils/storageEngineHelpers';
 import {
-  CloudStorageEngine,
-  REVISIT_MODE,
-  StorageObjectType,
-  StorageObject,
-  UserManagementData,
-  SequenceAssignment,
-  SnapshotDocContent,
-  StoredUser,
-  cleanupModes,
+  StageAllocation, CloudStorageEngine, REVISIT_MODE, StorageObjectType, StorageObject, UserManagementData, SequenceAssignment, SnapshotDocContent, StoredUser, cleanupModes, ModesAndStageData, StageInfo, StageUpdates, StageData, applyStageUpdates, StageCapacityExceededError, StageNoAvailableConditionsError, StageOnlyDisabledConditionsHaveCapacityError, getBetweenSubjectsCombinationKey, getConfigConditionKeys, getDesiredParticipantCountsByCombination, getLeastServedSequence, getStageParticipantCounts, isSequenceEnabledForStage, assertAppendOnlyConditions, validateStageParticipantLimits, SequenceAssignmentAllocation, SequenceAllocator,
 } from './types';
 import { EditedText, TaglessEditedText } from '../../analysis/individualStudy/thinkAloud/types';
+import { DISTINCT_COLOR_PALETTE } from '../../utils/colors';
+import { StudyConfig } from '../../parser/types';
+import { Sequence } from '../../store/types';
+import { ParticipantData } from '../types';
 import { SnapshotParticipantCounts } from './utils/snapshotParticipantCounts';
+import { fetchFreshStorageObject } from './utils/fetchFreshStorageObject';
+
+type AllocationState = {
+  revision: number;
+  nextCreationIndex: number;
+  assignments: SequenceAssignment[];
+  allocator: SequenceAllocator;
+  hasAllocator: boolean;
+};
 
 export class FirebaseStorageEngine extends CloudStorageEngine {
-  private RECAPTCHAV3TOKEN = import.meta.env.VITE_RECAPTCHAV3TOKEN;
+  protected override hasAtomicSequenceReservation = true;
+
+  private assignmentReference(participantId: string) {
+    return doc(collection(doc(this.studyCollection, 'sequenceAssignment'), 'sequenceAssignment'), participantId);
+  }
+
+  private stageAllocationReference(stage: string, studyCollection = this.studyCollection) {
+    return doc(collection(doc(studyCollection, 'allocation'), 'stages'), sha256(stage).toString());
+  }
+
+  private async readAllocation(transaction: Transaction, studyCollection = this.studyCollection): Promise<AllocationState> {
+    const revision = await transaction.get(doc(studyCollection, 'allocation'));
+    const allocator = await transaction.get(doc(studyCollection, 'sequenceAssignmentAllocator'));
+    // Every reservation/rejection/restoration writes this revision in its transaction.
+    // A concurrent assignment change invalidates the query below and retries the
+    // transaction. This lets the existing assignment collection remain authoritative
+    // without trusting browser clocks or querying a collection through Transaction.get.
+    const snapshot = await getDocsFromServer(collection(doc(studyCollection, 'sequenceAssignment'), 'sequenceAssignment'));
+    const assignments = snapshot.docs.map((item) => {
+      const data = item.data();
+      return {
+        ...data,
+        timestamp: data.timestamp instanceof Timestamp ? data.timestamp.toMillis() : data.timestamp,
+        createdTime: data.createdTime instanceof Timestamp ? data.createdTime.toMillis() : data.createdTime,
+        completed: data.completed instanceof Timestamp ? data.completed.toMillis() : data.completed,
+      } as SequenceAssignment;
+    }).sort((a, b) => a.timestamp - b.timestamp);
+    return {
+      revision: revision.data()?.revision ?? 0,
+      nextCreationIndex: Math.max((allocator.data() as SequenceAllocator | undefined)?.nextCreationIndex ?? 0, rebuildSequenceAllocator(assignments).nextCreationIndex),
+      allocator: (allocator.data() as SequenceAllocator | undefined) ?? rebuildSequenceAllocator(assignments),
+      hasAllocator: allocator.exists(),
+      assignments,
+    };
+  }
+
+  private writeAllocation(transaction: Transaction, state: AllocationState, stage: string, conditionKeys?: string[], studyCollection = this.studyCollection) {
+    transaction.set(doc(studyCollection, 'allocation'), {
+      revision: state.revision + 1,
+      nextCreationIndex: state.nextCreationIndex,
+    });
+    if (state.hasAllocator) transaction.set(doc(studyCollection, 'sequenceAssignmentAllocator'), { ...state.allocator, nextCreationIndex: state.nextCreationIndex });
+    const rowCounts: Record<string, number> = {};
+    const counts: Record<string, number> = {};
+    state.assignments.filter((assignment) => assignment.stage === stage && !assignment.rejected).forEach((assignment) => {
+      if (assignment.sequenceKey) rowCounts[assignment.sequenceKey] = (rowCounts[assignment.sequenceKey] || 0) + 1;
+      const key = assignment.betweenSubjectsCombinationKey;
+      if (key !== undefined) counts[key] = (counts[key] || 0) + 1;
+    });
+    transaction.set(this.stageAllocationReference(stage, studyCollection), {
+      count: getStageParticipantCounts(state.assignments)[stage] || 0,
+      combinationCounts: counts,
+      rowCounts,
+      ...(conditionKeys === undefined ? {} : { conditionKeys }),
+    }, { mergeFields: ['count', 'combinationCounts', 'rowCounts', ...(conditionKeys === undefined ? [] : ['conditionKeys'])] });
+  }
+
+  protected override async _getSequence(conditions: string[] | undefined, bootstrapData: ModesAndStageData, config: StudyConfig, participantConfigHash: string) {
+    if (!bootstrapData.modes.dataCollectionEnabled) return super._getSequence(conditions, bootstrapData, config, participantConfigHash);
+    const sequences = bootstrapData.sequenceArray ?? await this.getSequenceArray(await this._getCurrentConfigHash() ? participantConfigHash : undefined);
+    if (!sequences?.length) throw new Error('Latin square not initialized');
+    const participantId = this.currentParticipantId!;
+    const conditionKeys = getConfigConditionKeys(config);
+    const betweenSubjects = config.betweenSubjects || [];
+    const reservationToken = uuidv4();
+    const assignments = collection(doc(this.studyCollection, 'sequenceAssignment'), 'sequenceAssignment');
+    const allocatorReference = doc(this.studyCollection, 'sequenceAssignmentAllocator');
+    const existing = await this._getSequenceAssignment(participantId);
+    if (existing && !existing.rejected && !existing.initialization) {
+      const allocation = await this._allocateSequenceAssignment(participantId, existing);
+      const prefix = `${participantConfigHash}:`;
+      const currentRow = existing.sequenceKey?.startsWith(prefix) ? sequences[Number(existing.sequenceKey.slice(prefix.length))]
+        : existing.sequenceKey === undefined ? sequences[allocation.sequenceIndex % sequences.length] : undefined;
+      if (!currentRow) throw new Error('The unfinished reservation uses a different study configuration. Please contact the study administrator.');
+      return { currentRow, creationIndex: allocation.creationIndex + 1, stage: existing.stage };
+    }
+    return retrySequenceAllocation(async () => {
+      const { stageData } = await this.getModesAndStageData(this.studyId!);
+      await this.getStageAllocation(stageData.currentStage.stageName, conditionKeys);
+      const allocatorSnapshot = await getDoc(allocatorReference);
+      const seed = allocatorSnapshot.exists() ? allocatorSnapshot.data() as SequenceAllocator : await this.getSequenceAllocatorSeed(assignments);
+      const candidates = await Promise.all([0, Timestamp.fromMillis(0)].map((threshold) => getDocs(query(
+        assignments,
+        where('rejected', '==', true),
+        where('claimed', '==', false),
+        where('timestamp', '>=', threshold),
+        orderBy('timestamp', 'asc'),
+        limit(2),
+      ))));
+      const candidate = candidates.flatMap((snapshot) => snapshot.docs).filter((item) => item.id !== participantId).sort((a, b) => {
+        const left = a.data().timestamp; const right = b.data().timestamp;
+        return (left instanceof Timestamp ? left.toMillis() : left) - (right instanceof Timestamp ? right.toMillis() : right);
+      })[0];
+      const sourceData = candidate?.data() as SequenceAssignment | undefined;
+      const legacyIndex = sourceData && sourceData.sequenceIndex === undefined && sourceData.reusableSequenceIndex === undefined
+        ? await this.getLegacySequenceIndex(assignments, sourceData.timestamp) : undefined;
+      return runTransaction(this.firestore, async (transaction) => {
+        const revision = await transaction.get(doc(this.studyCollection, 'allocation'));
+        const modesReference = doc(this.studyCollection, 'modes');
+        const modes = (await transaction.get(modesReference)).data();
+        if (!modes?.dataCollectionEnabled) throw new Error('Study settings changed while joining. Please reload.');
+        const stages = modes.stage as StageData;
+        const stage = stages.allStages.find((item) => item.stageName === stages.currentStage.stageName)!;
+        const own = (await transaction.get(this.assignmentReference(participantId))).data() as SequenceAssignment | undefined;
+        const allocator = ((await transaction.get(allocatorReference)).data() ?? seed) as SequenceAllocator;
+        const stageSnapshot = await transaction.get(this.stageAllocationReference(stage.stageName));
+        const source = candidate ? (await transaction.get(this.assignmentReference(candidate.id))).data() as SequenceAssignment | undefined : undefined;
+        if (!stageSnapshot.exists()) return null;
+        const state = { rowCounts: {}, ...stageSnapshot.data() } as StageAllocation;
+        if (own && !own.rejected) {
+          const prefix = `${participantConfigHash}:`;
+          const row = own.sequenceKey?.startsWith(prefix) ? sequences[Number(own.sequenceKey.slice(prefix.length))]
+            : own.sequenceKey === undefined && own.sequenceIndex !== undefined ? sequences[own.sequenceIndex % sequences.length] : undefined;
+          if (!row || own.creationIndex === undefined) throw new Error('The unfinished reservation uses a different study configuration. Please contact the study administrator.');
+          if (own.initialization && !own.initialization.complete) transaction.update(this.assignmentReference(participantId), { initialization: { pending: [...own.initialization.pending, reservationToken], complete: false } });
+          return {
+            currentRow: row, creationIndex: own.creationIndex + 1, stage: own.stage, reservationToken,
+          };
+        }
+        if (stage.conditionKeys?.length && JSON.stringify(stage.conditionKeys) !== JSON.stringify(conditionKeys) && await this.hasStageAssignments(stage.stageName)) assertAppendOnlyConditions(stage.conditionKeys || [], conditionKeys);
+        if (stage.maxParticipants !== undefined && state.count >= stage.maxParticipants) throw new StageCapacityExceededError(stage.stageName);
+        const enabled = sequences.filter((row) => isSequenceEnabledForStage(row, stage, betweenSubjects));
+        if (!enabled.length) throw new StageNoAvailableConditionsError(stage.stageName);
+        const targets = getDesiredParticipantCountsByCombination(stage, sequences, betweenSubjects);
+        const hasCapacity = (row: Sequence) => !targets || (state.combinationCounts[getBetweenSubjectsCombinationKey(row.parameters, betweenSubjects)] || 0) < targets[getBetweenSubjectsCombinationKey(row.parameters, betweenSubjects)];
+        const eligible = enabled.filter(hasCapacity);
+        if (!eligible.length) {
+          if (sequences.some((row) => !isSequenceEnabledForStage(row, stage, betweenSubjects) && hasCapacity(row))) throw new StageOnlyDisabledConditionsHaveCapacityError(stage.stageName);
+          throw new StageCapacityExceededError(stage.stageName);
+        }
+        if (candidate && (!source?.rejected || source.claimed)) return null;
+        const sequenceIndex = source ? source.reusableSequenceIndex ?? source.sequenceIndex ?? legacyIndex : allocator.availableSequenceIndexes?.[0] ?? allocator.nextSequenceIndex;
+        if (sequenceIndex === undefined) throw new Error('Unable to determine sequence assignment index');
+        const rowCounts = new Map(sequences.map((row, index) => [row, state.rowCounts[`${participantConfigHash}:${index}`] || 0]));
+        const row = betweenSubjects.length ? getLeastServedSequence(eligible, state.combinationCounts, targets, betweenSubjects, state.count, rowCounts) : eligible[sequenceIndex % eligible.length];
+        const key = getBetweenSubjectsCombinationKey(row.parameters, betweenSubjects);
+        const sequenceKey = `${participantConfigHash}:${sequences.indexOf(row)}`;
+        const assignment: SequenceAssignment = {
+          participantId,
+          timestamp: Date.now(),
+          createdTime: Date.now(),
+          rejected: false,
+          claimed: false,
+          completed: null,
+          total: 0,
+          answered: [],
+          isDynamic: false,
+          stage: stage.stageName,
+          ...(conditions ? { conditions } : {}),
+          ...(source && candidate ? { claimedParticipantId: candidate.id } : {}),
+          betweenSubjectsCombinationKey: key,
+          sequenceKey,
+          sequenceIndex,
+          creationIndex: allocator.nextCreationIndex,
+          initialization: { pending: [reservationToken], complete: false },
+        };
+        if (source && candidate) transaction.update(this.assignmentReference(candidate.id), { claimed: true, sequenceIndex });
+        transaction.set(this.assignmentReference(participantId), { ...assignment, timestamp: source ? source.timestamp : serverTimestamp(), createdTime: serverTimestamp() });
+        transaction.set(allocatorReference, {
+          ...allocator,
+          ...(allocator.availableSequenceIndexes ? { availableSequenceIndexes: source ? allocator.availableSequenceIndexes : allocator.availableSequenceIndexes.slice(1) } : {}),
+          nextSequenceIndex: source || allocator.availableSequenceIndexes?.length ? allocator.nextSequenceIndex : allocator.nextSequenceIndex + 1,
+          nextCreationIndex: allocator.nextCreationIndex + 1,
+        });
+        transaction.set(this.stageAllocationReference(stage.stageName), {
+          ...stageSnapshot.data(),
+          count: state.count + 1,
+          combinationCounts: { ...state.combinationCounts, [key]: (state.combinationCounts[key] || 0) + 1 },
+          rowCounts: { ...state.rowCounts, [sequenceKey]: (state.rowCounts[sequenceKey] || 0) + 1 },
+          conditionKeys,
+        });
+        transaction.set(doc(this.studyCollection, 'allocation'), { revision: (revision.data()?.revision || 0) + 1, nextCreationIndex: allocator.nextCreationIndex + 1 });
+        transaction.set(modesReference, { stage: { ...stages, allStages: stages.allStages.map((item) => (item.stageName === stage.stageName ? { ...item, conditionKeys } : item)) } }, { merge: true });
+        return {
+          currentRow: row, creationIndex: allocator.nextCreationIndex + 1, stage: stage.stageName, reservationToken,
+        };
+      });
+    });
+  }
+
+  protected override async confirmParticipantReservation(participant: ParticipantData, reservationToken?: string, fromCache = false) {
+    return runTransaction(this.firestore, async (transaction) => {
+      const reference = this.assignmentReference(participant.participantId);
+      const assignment = (await transaction.get(reference)).data() as SequenceAssignment | undefined;
+      if (!assignment?.initialization) return true;
+      if (assignment.creationIndex === undefined || assignment.creationIndex + 1 !== participant.participantIndex) return false;
+      if (assignment.initialization.complete) return true;
+      if (fromCache) return false; // A cached first write does not prove that its upload succeeded.
+      if (assignment.rejected || (reservationToken && !assignment.initialization.pending.includes(reservationToken))) return false;
+      transaction.update(reference, { initialization: { pending: [], complete: true } });
+      return true;
+    });
+  }
+
+  protected override async releaseInitialSequenceAssignment(reservation?: { creationIndex: number; reservationToken?: string }) {
+    // A failed transaction created no reservation. A failed upload may only remove
+    // its own pending attempt, never a concurrent upload or a confirmed session.
+    if (!reservation?.reservationToken || !this.currentParticipantId) return;
+    try {
+      await this.rejectAssignment(this.currentParticipantId, false, {
+        creationIndex: reservation.creationIndex,
+        reservationToken: reservation.reservationToken,
+      });
+    } catch (error) {
+      console.warn('Error releasing the sequence assignment of a failed participant initialization:', error);
+    }
+  }
 
   private firestore: Firestore;
 
@@ -92,15 +283,18 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
     }
     try {
       initializeAppCheck(firebaseApp, {
-        provider: new ReCaptchaV3Provider(this.RECAPTCHAV3TOKEN),
-        isTokenAutoRefreshEnabled: false,
+        // Opt in separately so existing deployments keep their v3 provider and key.
+        provider: import.meta.env.VITE_RECAPTCHA_ENTERPRISE_SITE_KEY
+          ? new ReCaptchaEnterpriseProvider(import.meta.env.VITE_RECAPTCHA_ENTERPRISE_SITE_KEY)
+          : new ReCaptchaV3Provider(import.meta.env.VITE_RECAPTCHAV3TOKEN),
+        isTokenAutoRefreshEnabled: true,
       });
     } catch {
       console.warn('Failed to initialize Firebase App Check');
     }
   }
 
-  protected async _getFromStorage<T extends StorageObjectType>(prefix: string, type: T, studyId?: string) {
+  protected async _getFromStorage<T extends StorageObjectType>(prefix: string, type: T, studyId?: string, strict = false, fresh = false) {
     const storageRef = ref(
       this.storage,
       `${this.collectionPrefix}${studyId || this.studyId}/${prefix}_${type}`,
@@ -108,10 +302,20 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
 
     let storageObj: StorageObject<T> = {} as StorageObject<T>;
     try {
-      const blob = await getBlob(storageRef);
+      let blob: Blob;
+      if (fresh) {
+        const response = await fetchFreshStorageObject(await getDownloadURL(storageRef));
+        if (!response.ok) throw Object.assign(new Error('Failed to read current participant history.'), { code: response.status === 404 ? 'storage/object-not-found' : 'storage/download-failed' });
+        blob = await response.blob();
+      } else {
+        blob = await getBlob(storageRef);
+      }
       const fullProvStr = await blob.text();
       storageObj = JSON.parse(fullProvStr);
-    } catch {
+      if (type === 'participantData' && !isParticipantData(storageObj)) throw new Error('Invalid participant data');
+    } catch (error) {
+      // Only confirmed absence may trigger replacement, orphan cleanup, or a legacy fallback.
+      if ((strict || type === 'sequenceArray' || type === 'participantData') && (error as { code?: string } | null)?.code !== 'storage/object-not-found') throw error;
       console.warn(
         `${prefix} does not have ${type} for ${this.collectionPrefix}${this.studyId}.`,
       );
@@ -263,8 +467,18 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
       participantId,
     );
 
-    const toUpload = withServerTimestamp ? { ...sequenceAssignment, timestamp: serverTimestamp() } : sequenceAssignment;
-    await setDoc(participantSequenceAssignmentDoc, { ...toUpload, createdTime: serverTimestamp() });
+    await runTransaction(this.firestore, async (transaction) => {
+      const state = await this.readAllocation(transaction);
+      const assignment = { ...sequenceAssignment };
+      transaction.set(participantSequenceAssignmentDoc, {
+        ...assignment,
+        ...(withServerTimestamp ? { timestamp: serverTimestamp() } : {}),
+        createdTime: serverTimestamp(),
+      });
+      state.assignments = state.assignments.filter((item) => item.participantId !== participantId).concat(assignment);
+      state.nextCreationIndex += 1;
+      this.writeAllocation(transaction, state, assignment.stage);
+    });
   }
 
   protected async _updateSequenceAssignmentFields(participantId: string, updatedFields: Partial<SequenceAssignment>) {
@@ -290,6 +504,21 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
       return;
     }
 
+    const changesAllocation = ['rejected', 'claimed', 'betweenSubjectsCombinationKey', 'sequenceKey', 'stage', 'timestamp']
+      .some((field) => Object.hasOwn(updatedFields, field));
+    if (changesAllocation) {
+      await runTransaction(this.firestore, async (transaction) => {
+        const state = await this.readAllocation(transaction);
+        const assignment = state.assignments.find((item) => item.participantId === participantId);
+        if (!assignment) throw new Error('Participant sequence assignment not found');
+        const previousStage = assignment.stage;
+        Object.assign(assignment, updatedFields);
+        transaction.update(participantSequenceAssignmentDoc, firebaseUpdatedFields);
+        this.writeAllocation(transaction, state, assignment.stage);
+        if (previousStage !== assignment.stage) this.writeAllocation(transaction, state, previousStage);
+      });
+      return;
+    }
     await updateDoc(participantSequenceAssignmentDoc, firebaseUpdatedFields);
   }
 
@@ -322,6 +551,62 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
     } as SequenceAssignment;
   }
 
+  protected async _runWithLock<T>(lockKey: string, operation: () => Promise<T>) {
+    if (this.studyId === undefined) {
+      throw new Error('Study ID is not set');
+    }
+
+    const lockDocument = doc(this.studyCollection, 'locks');
+    const token = uuidv4();
+    const expiresInMs = 60_000;
+    const acquireLock = async (attempt: number): Promise<void> => {
+      const now = Date.now();
+      try {
+        await runTransaction(this.firestore, async (transaction) => {
+          const snapshot = await transaction.get(lockDocument);
+          const existingLock = snapshot.data()?.[lockKey] as {
+            token?: string;
+            expiresAt?: number;
+          } | undefined;
+          if (existingLock?.expiresAt && existingLock.expiresAt > now) {
+            throw new Error('Study lock is held');
+          }
+
+          transaction.set(lockDocument, {
+            [lockKey]: { token, expiresAt: now + expiresInMs },
+          }, { merge: true });
+        });
+      } catch (error) {
+        if (!(error instanceof Error) || error.message !== 'Study lock is held') {
+          throw error;
+        }
+        if (attempt >= 299) {
+          throw new Error('Timed out while waiting for a study update to finish');
+        }
+        await new Promise<void>((resolve) => {
+          setTimeout(resolve, 100);
+        });
+        await acquireLock(attempt + 1);
+      }
+    };
+
+    await acquireLock(0);
+
+    try {
+      return await operation();
+    } finally {
+      await runTransaction(this.firestore, async (transaction) => {
+        const snapshot = await transaction.get(lockDocument);
+        const existingLock = snapshot.data()?.[lockKey] as { token?: string } | undefined;
+        if (existingLock?.token === token) {
+          transaction.update(lockDocument, new FieldPath(lockKey), deleteField());
+        }
+      }).catch((error) => {
+        console.warn('Failed to release study update lock:', error);
+      });
+    }
+  }
+
   protected async _completeCurrentParticipantRealtime() {
     await this.verifyStudyDatabase();
     if (!this.currentParticipantId) {
@@ -340,126 +625,79 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
       sequenceAssignmentCollection,
       this.currentParticipantId,
     );
-    await updateDoc(participantSequenceAssignmentDoc, { completed: serverTimestamp() });
+    await runTransaction(this.firestore, async (transaction) => {
+      const assignment = await transaction.get(participantSequenceAssignmentDoc);
+      if (assignment.data()?.rejected) throw new Error('This participant has been timed out or rejected');
+      transaction.update(participantSequenceAssignmentDoc, { completed: serverTimestamp() });
+    });
   }
 
-  protected async _rejectParticipantRealtime(participantId: string) {
-    await this.verifyStudyDatabase();
-    if (!this.studyId) {
-      throw new Error('Study ID is not set');
-    }
+  protected async _rejectParticipantRealtime(participantId: string, onlyIncomplete = false) {
+    return this.rejectAssignment(participantId, onlyIncomplete);
+  }
 
-    const studyCollection = collection(
-      this.firestore,
-      `${this.collectionPrefix}${this.studyId}`,
-    );
-
-    // set sequence assignment to empty string, keep the timestamp
-    const sequenceAssignmentDoc = doc(studyCollection, 'sequenceAssignment');
-    const sequenceAssignmentCollection = collection(
-      sequenceAssignmentDoc,
-      'sequenceAssignment',
-    );
-    const sequenceAssignmentSnapshot = await getDocs(sequenceAssignmentCollection);
-    const participantSequenceAssignmentSnapshot = sequenceAssignmentSnapshot.docs.find((docSnapshot) => docSnapshot.id === participantId);
-    if (!participantSequenceAssignmentSnapshot) {
-      throw new Error('Failed to retrieve sequence assignment for current participant');
-    }
-
-    const participantSequenceAssignment = participantSequenceAssignmentSnapshot.data() as SequenceAssignment;
-    const toMillis = (value: unknown) => {
-      if (value instanceof Timestamp) {
-        return value.toMillis();
+  private async rejectAssignment(participantId: string, onlyIncomplete: boolean, failedInitialization?: { creationIndex: number; reservationToken: string }) {
+    if (!this.studyId) throw new Error('Study ID is not set');
+    return runTransaction(this.firestore, async (transaction) => {
+      const state = await this.readAllocation(transaction);
+      const assignment = state.assignments.find((item) => item.participantId === participantId);
+      if (!assignment) throw new Error('Failed to retrieve sequence assignment for current participant');
+      const current = await transaction.get(this.assignmentReference(participantId));
+      const currentAssignment = current.data() as SequenceAssignment;
+      if (failedInitialization) {
+        const { initialization } = currentAssignment;
+        if (currentAssignment.creationIndex === undefined || currentAssignment.creationIndex + 1 !== failedInitialization.creationIndex
+          || !initialization || initialization.complete
+          || !initialization.pending.includes(failedInitialization.reservationToken)) return false;
+        const pending = initialization.pending.filter((token) => token !== failedInitialization.reservationToken);
+        if (pending.length) {
+          transaction.update(this.assignmentReference(participantId), { initialization: { pending, complete: false } });
+          return false;
+        }
       }
-      if (typeof value === 'number') {
-        return value;
+      if (onlyIncomplete && currentAssignment.completed !== null) return false;
+      if (assignment.rejected) return true;
+      const source = assignment.claimedParticipantId
+        ? state.assignments.find((item) => item.participantId === assignment.claimedParticipantId)
+        : state.assignments.find((item) => item.claimed && item.timestamp === assignment.timestamp);
+      if (source) {
+        state.hasAllocator = true;
+        assignment.reusableSequenceIndex = state.allocator.nextSequenceIndex;
+        state.allocator.nextSequenceIndex += 1;
+        source.claimed = false;
+        transaction.update(this.assignmentReference(source.participantId), { claimed: false, rejected: true });
       }
-      return Number(value);
-    };
-    const claimedSequenceAssignmentSnapshot = participantSequenceAssignment.claimedParticipantId
-      ? sequenceAssignmentSnapshot.docs.find(
-        (docSnapshot) => docSnapshot.id === participantSequenceAssignment.claimedParticipantId,
-      )
-      : (() => {
-        const participantTimestamp = toMillis(participantSequenceAssignment.timestamp);
-        return sequenceAssignmentSnapshot.docs.find((docSnapshot) => {
-          const docData = docSnapshot.data() as SequenceAssignment;
-          return docData.claimed && toMillis(docData.timestamp) === participantTimestamp;
-        });
-      })();
-
-    if (claimedSequenceAssignmentSnapshot) {
-      const claimedSequenceAssignmentDoc = doc(sequenceAssignmentCollection, claimedSequenceAssignmentSnapshot.id);
-      await updateDoc(claimedSequenceAssignmentDoc, { claimed: false, rejected: true });
-    }
-
-    const participantSequenceAssignmentDoc = doc(
-      sequenceAssignmentCollection,
-      participantId,
-    );
-    await updateDoc(participantSequenceAssignmentDoc, {
-      rejected: true,
-      timestamp: new Date().getTime(),
+      assignment.rejected = true;
+      assignment.timestamp = Date.now();
+      transaction.update(this.assignmentReference(participantId), { rejected: true, timestamp: assignment.timestamp, ...(assignment.reusableSequenceIndex === undefined ? {} : { reusableSequenceIndex: assignment.reusableSequenceIndex }) });
+      this.writeAllocation(transaction, state, assignment.stage);
+      return true;
     });
   }
 
   protected async _undoRejectParticipantRealtime(participantId: string) {
-    await this.verifyStudyDatabase();
-    if (!this.studyId) {
-      throw new Error('Study ID is not set');
-    }
-
-    const studyCollection = collection(
-      this.firestore,
-      `${this.collectionPrefix}${this.studyId}`,
-    );
-
-    const sequenceAssignmentDoc = doc(studyCollection, 'sequenceAssignment');
-    const sequenceAssignmentCollection = collection(
-      sequenceAssignmentDoc,
-      'sequenceAssignment',
-    );
-    const participantSequenceAssignmentDoc = doc(
-      sequenceAssignmentCollection,
-      participantId,
-    );
-    const participantSequenceAssignmentSnapshot = await getDoc(participantSequenceAssignmentDoc);
-    if (!participantSequenceAssignmentSnapshot.exists()) {
-      throw new Error('Failed to retrieve sequence assignment for current participant');
-    }
-
-    const participantSequenceAssignment = participantSequenceAssignmentSnapshot.data() as SequenceAssignment;
-    const toMillis = (value: unknown) => {
-      if (value instanceof Timestamp) {
-        return value.toMillis();
+    if (!this.studyId) throw new Error('Study ID is not set');
+    await runTransaction(this.firestore, async (transaction) => {
+      const state = await this.readAllocation(transaction);
+      const assignment = state.assignments.find((item) => item.participantId === participantId);
+      if (!assignment) throw new Error('Failed to retrieve sequence assignment for current participant');
+      if (!assignment.rejected) return;
+      if (assignment.claimed) throw new Error('Cannot undo rejection after the participant slot has been reassigned');
+      const source = state.assignments.find((item) => item.participantId === assignment.claimedParticipantId);
+      if (source?.claimed) throw new Error('Cannot restore a participant whose original slot has been reassigned');
+      if (source) {
+        source.claimed = true;
+        transaction.update(this.assignmentReference(source.participantId), { claimed: true });
+        assignment.timestamp = source.timestamp;
       }
-      if (typeof value === 'number') {
-        return value;
+      assignment.rejected = false;
+      if (assignment.reusableSequenceIndex !== undefined) {
+        state.allocator.availableSequenceIndexes = [...new Set([...(state.allocator.availableSequenceIndexes || []), assignment.reusableSequenceIndex])].sort((a, b) => a - b);
+        delete assignment.reusableSequenceIndex;
       }
-      return Number(value);
-    };
-    let restoredTimestamp: number | undefined;
-    if (participantSequenceAssignment.claimedParticipantId) {
-      const claimedSequenceAssignmentDoc = doc(
-        sequenceAssignmentCollection,
-        participantSequenceAssignment.claimedParticipantId,
-      );
-      const claimedSequenceAssignmentSnapshot = await getDoc(claimedSequenceAssignmentDoc);
-      if (!claimedSequenceAssignmentSnapshot.exists()) {
-        throw new Error('Failed to retrieve claimed sequence assignment for current participant');
-      }
-
-      const claimedSequenceAssignment = claimedSequenceAssignmentSnapshot.data() as SequenceAssignment;
-      restoredTimestamp = toMillis(claimedSequenceAssignment.timestamp);
-      await updateDoc(claimedSequenceAssignmentDoc, { claimed: true, rejected: true });
-    }
-
-    await updateDoc(
-      participantSequenceAssignmentDoc,
-      restoredTimestamp === undefined
-        ? { rejected: false }
-        : { rejected: false, timestamp: restoredTimestamp },
-    );
+      transaction.update(this.assignmentReference(participantId), { rejected: false, timestamp: assignment.timestamp, reusableSequenceIndex: deleteField() });
+      this.writeAllocation(transaction, state, assignment.stage);
+    });
   }
 
   protected async _claimSequenceAssignment(participantId: string) {
@@ -481,7 +719,13 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
       participantId,
     );
 
-    await updateDoc(participantSequenceAssignmentDoc, { claimed: true });
+    await runTransaction(this.firestore, async (transaction) => {
+      const state = await this.readAllocation(transaction);
+      transaction.update(participantSequenceAssignmentDoc, { claimed: true });
+      transaction.set(doc(this.studyCollection, 'allocation'), {
+        revision: state.revision + 1, nextCreationIndex: state.nextCreationIndex,
+      });
+    });
   }
 
   async initializeAnonymousAuth() {
@@ -582,7 +826,7 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
     return defaultModes;
   }
 
-  async setMode(studyId: string, mode: REVISIT_MODE, value: boolean) {
+  protected async _setMode(studyId: string, mode: REVISIT_MODE, value: boolean) {
     const revisitModesDoc = doc(
       this.firestore,
       `${this.collectionPrefix}${studyId}`,
@@ -592,13 +836,76 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
     return await setDoc(revisitModesDoc, { [mode]: value }, { merge: true });
   }
 
+  private async updateModesAtomically(studyId: string, update: (modes: Record<string, unknown>) => Record<string, unknown> | Promise<Record<string, unknown>>, configHash?: string) {
+    const studyCollection = collection(this.firestore, `${this.collectionPrefix}${studyId}`);
+    const reference = doc(studyCollection, 'modes');
+    await runTransaction(this.firestore, async (transaction) => {
+      const state = await this.readAllocation(transaction, studyCollection);
+      const current = (await transaction.get(reference)).data() || {
+        dataCollectionEnabled: true, developmentModeEnabled: true, dataSharingEnabled: true,
+      };
+      const next = await update(current);
+      const stageData = next.stage as StageData | undefined;
+      const previous = current.stage as StageData | undefined;
+      const stageStates = stageData ? await Promise.all(stageData.allStages.map((stage) => (
+        transaction.get(this.stageAllocationReference(stage.stageName, studyCollection))
+      ))) : [];
+      previous?.allStages.forEach((stage) => {
+        if (state.assignments.some((assignment) => assignment.stage === stage.stageName)
+          && !stageData?.allStages.some((candidate) => candidate.stageName === stage.stageName)) {
+          throw new Error('A stage with assignments cannot be removed');
+        }
+      });
+      stageData?.allStages.forEach((stage, index) => {
+        validateStageParticipantLimits(stage, state.assignments, previous?.allStages.find((item) => item.stageName === stage.stageName));
+        if (state.assignments.some((assignment) => assignment.stage === stage.stageName)) {
+          const knownKeys = previous?.allStages.find((item) => item.stageName === stage.stageName)?.conditionKeys || [];
+          assertAppendOnlyConditions([...knownKeys, ...(stageStates[index].data()?.conditionKeys || [])], stage.conditionKeys || []);
+        }
+      });
+      transaction.set(reference, next, { merge: true });
+      if (configHash !== undefined) transaction.set(doc(studyCollection, 'configHash'), { configHash });
+    });
+  }
+
+  protected override async activateConfig(configHash: string, keys: string[]) {
+    await this.updateModesAtomically(this.studyId!, (modes) => {
+      const data = modes.stage as StageData;
+      return { ...modes, stage: applyStageUpdates(data, data.currentStage.stageName, { conditionKeys: keys }) };
+    }, configHash);
+  }
+
+  protected override async changeStagePolicy(studyId: string, stageName: string, update: (stage: StageInfo) => StageUpdates | Promise<StageUpdates>) {
+    await this.updateModesAtomically(studyId, async (modes) => {
+      const data = modes.stage as StageData | undefined;
+      const stage = data?.allStages.find((item) => item.stageName === stageName);
+      if (!stage || !data) throw new Error(`Stage ${stageName} not found`);
+      return { ...modes, stage: applyStageUpdates(data, stageName, await update(stage)) };
+    });
+  }
+
+  protected override async updateStageUnlocked(studyId: string, stageName: string, updates: StageUpdates) {
+    await this.changeStagePolicy(studyId, stageName, () => updates);
+  }
+
+  override async setCurrentStage(studyId: string, stageName: string, color = DISTINCT_COLOR_PALETTE[0], maxParticipants?: number) {
+    await this.updateModesAtomically(studyId, (modes) => {
+      const stage = modes.stage as StageData | undefined;
+      const allStages = stage?.allStages || [{ stageName: 'DEFAULT', color: DISTINCT_COLOR_PALETTE[0] }];
+      return {
+        ...modes,
+        stage: {
+          currentStage: { stageName, color },
+          allStages: allStages.some((item) => item.stageName === stageName) ? allStages : [
+            ...allStages, { stageName, color, ...(maxParticipants === undefined ? {} : { maxParticipants }) },
+          ],
+        },
+      };
+    });
+  }
+
   protected async _setModesDocument(studyId: string, modesDocument: Record<string, unknown>): Promise<void> {
-    const revisitModesDoc = doc(
-      this.firestore,
-      `${this.collectionPrefix}${studyId}`,
-      'modes',
-    );
-    await setDoc(revisitModesDoc, modesDocument, { merge: true });
+    await this.updateModesAtomically(studyId, (current) => ({ ...current, ...modesDocument }));
   }
 
   async getStudyHiddenFromLandingPage(studyId: string): Promise<boolean> {
@@ -732,79 +1039,52 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
     }
   }
 
-  protected async _copyRealtimeData(
-    sourceCollectionName: string,
-    targetCollectionName: string,
-  ) {
-    const sourceCollectionRef = collection(
-      this.firestore,
-      sourceCollectionName,
-    );
-    const sourceSequenceAssignmentDocRef = doc(
-      sourceCollectionRef,
-      'sequenceAssignment',
-    );
-    const sourceSequenceAssignmentCollectionRef = collection(
-      sourceSequenceAssignmentDocRef,
-      'sequenceAssignment',
-    );
-
-    const targetCollectionRef = collection(
-      this.firestore,
-      targetCollectionName,
-    );
-    const targetSequenceAssignmentDocRef = doc(
-      targetCollectionRef,
-      'sequenceAssignment',
-    );
-    await setDoc(targetSequenceAssignmentDocRef, {});
-    const targetSequenceAssignmentCollectionRef = collection(
-      targetSequenceAssignmentDocRef,
-      'sequenceAssignment',
-    );
-
-    const sourceSnapshot = await getDocs(sourceSequenceAssignmentCollectionRef);
-
-    const batch = writeBatch(this.firestore);
-
-    sourceSnapshot.docs.forEach((docSnapshot) => {
-      const targetDocRef = doc(
-        targetSequenceAssignmentCollectionRef,
-        docSnapshot.id,
-      );
-
-      batch.set(targetDocRef, docSnapshot.data());
+  protected async _copyRealtimeData(sourceCollectionName: string, targetCollectionName: string) {
+    const source = collection(this.firestore, sourceCollectionName);
+    const target = collection(this.firestore, targetCollectionName);
+    await runTransaction(this.firestore, async (transaction) => {
+      const sourceState = await this.readAllocation(transaction, source);
+      const targetState = await this.readAllocation(transaction, target);
+      const assignments = new Map(targetState.assignments.map((assignment) => [assignment.participantId, assignment]));
+      sourceState.assignments.forEach((assignment) => assignments.set(assignment.participantId, assignment));
+      targetState.assignments = [...assignments.values()];
+      const rebuilt = rebuildSequenceAllocator(targetState.assignments);
+      const occupied = new Set(targetState.assignments.filter((assignment) => !assignment.claimed).map((assignment) => (assignment.rejected ? assignment.reusableSequenceIndex ?? assignment.sequenceIndex : assignment.sequenceIndex)));
+      targetState.allocator = {
+        nextSequenceIndex: Math.max(sourceState.allocator.nextSequenceIndex, targetState.allocator.nextSequenceIndex, rebuilt.nextSequenceIndex),
+        nextCreationIndex: Math.max(sourceState.allocator.nextCreationIndex, targetState.allocator.nextCreationIndex, rebuilt.nextCreationIndex),
+        ...(sourceState.allocator.availableSequenceIndexes || targetState.allocator.availableSequenceIndexes ? {
+          availableSequenceIndexes: [...new Set([...(sourceState.allocator.availableSequenceIndexes || []), ...(targetState.allocator.availableSequenceIndexes || [])])].filter((index) => !occupied.has(index)).sort((a, b) => a - b),
+        } : {}),
+      };
+      targetState.hasAllocator = true;
+      targetState.nextCreationIndex = targetState.allocator.nextCreationIndex;
+      const targetAssignments = collection(doc(target, 'sequenceAssignment'), 'sequenceAssignment');
+      transaction.set(doc(target, 'sequenceAssignment'), {});
+      sourceState.assignments.forEach((assignment) => {
+        transaction.set(doc(targetAssignments, assignment.participantId), assignment);
+      });
+      [...new Set(targetState.assignments.map((assignment) => assignment.stage))].forEach((stage) => {
+        this.writeAllocation(transaction, targetState, stage, undefined, target);
+      });
     });
-
-    await batch.commit();
   }
 
   protected async _deleteRealtimeData(sourceCollectionName: string) {
-    const sourceCollectionRef = collection(
-      this.firestore,
-      sourceCollectionName,
-    );
-    const sourceSequenceAssignmentDocRef = doc(
-      sourceCollectionRef,
-      'sequenceAssignment',
-    );
-    const sourceSequenceAssignmentCollectionRef = collection(
-      sourceSequenceAssignmentDocRef,
-      'sequenceAssignment',
-    );
-
-    const collectionSnapshot = await getDocs(
-      sourceSequenceAssignmentCollectionRef,
-    );
-
-    const batch = writeBatch(this.firestore);
-    collectionSnapshot.forEach((docSnapshot) => {
-      const docRef = doc(sourceSequenceAssignmentCollectionRef, docSnapshot.id);
-      batch.delete(docRef);
+    const source = collection(this.firestore, sourceCollectionName);
+    await runTransaction(this.firestore, async (transaction) => {
+      const state = await this.readAllocation(transaction, source);
+      const stages = [...new Set(state.assignments.map((assignment) => assignment.stage))];
+      const assignments = collection(doc(source, 'sequenceAssignment'), 'sequenceAssignment');
+      state.assignments.forEach((assignment) => transaction.delete(doc(assignments, assignment.participantId)));
+      transaction.delete(doc(source, 'sequenceAssignment'));
+      state.assignments = [];
+      state.nextCreationIndex = 0;
+      state.allocator = { nextCreationIndex: 0, nextSequenceIndex: 0 };
+      stages.forEach((stage) => this.writeAllocation(transaction, state, stage, undefined, source));
+      transaction.delete(doc(source, 'sequenceAssignmentAllocator'));
+      transaction.delete(doc(source, 'configHash'));
     });
-    batch.delete(sourceSequenceAssignmentDocRef);
-
-    await batch.commit();
   }
 
   // Function to add collection name to metadata
@@ -1046,5 +1326,220 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
     const taglessTranscript = editedText.map((line) => ({ ...line, selectedTags: line.selectedTags.filter((tag) => tag !== undefined) })) as TaglessEditedText[];
 
     return this._pushToStorage(`audio/transcriptAndTags/${authEmail}/${participantId}/${task}`, 'editedText', taglessTranscript);
+  }
+
+  private async getSequenceAllocatorSeed(sequenceAssignments: CollectionReference<DocumentData>): Promise<SequenceAllocator> {
+    const [totalAssignments, claimedAssignments] = await Promise.all([
+      getCountFromServer(sequenceAssignments),
+      getCountFromServer(query(sequenceAssignments, where('claimed', '==', true))),
+    ]);
+    return {
+      nextSequenceIndex: totalAssignments.data().count - claimedAssignments.data().count,
+      nextCreationIndex: totalAssignments.data().count,
+    };
+  }
+
+  private async getLegacySequenceIndex(sequenceAssignments: CollectionReference<DocumentData>, timestamp: number | Timestamp) {
+    const milliseconds = timestamp instanceof Timestamp ? timestamp.toMillis() : timestamp;
+    // Legacy records contain both numeric milliseconds and Firestore timestamps.
+    const counts = await Promise.all([milliseconds, Timestamp.fromMillis(milliseconds)].map((threshold) => (
+      getCountFromServer(query(
+        sequenceAssignments,
+        where('rejected', '==', false),
+        where('timestamp', '<', threshold),
+      ))
+    )));
+    return counts.reduce((total, count) => total + count.data().count, 0);
+  }
+
+  protected async _allocateSequenceAssignment(
+    participantId: string,
+    sequenceAssignment: SequenceAssignment,
+  ): Promise<SequenceAssignmentAllocation> {
+    return retrySequenceAllocation(() => this.tryAllocateSequenceAssignment(participantId, sequenceAssignment));
+  }
+
+  private async tryAllocateSequenceAssignment(
+    participantId: string,
+    sequenceAssignment: SequenceAssignment,
+  ): Promise<SequenceAssignmentAllocation | null> {
+    await this.verifyStudyDatabase();
+    if (this.studyId === undefined) {
+      throw new Error('Study ID is not set');
+    }
+
+    const sequenceAssignmentDoc = doc(this.studyCollection, 'sequenceAssignment');
+    const sequenceAssignmentCollection = collection(
+      sequenceAssignmentDoc,
+      'sequenceAssignment',
+    );
+    const participantSequenceAssignmentDoc = doc(sequenceAssignmentCollection, participantId);
+    const allocatorDoc = doc(this.studyCollection, 'sequenceAssignmentAllocator');
+
+    const [existingAssignmentSnapshot, existingAllocatorSnapshot] = await Promise.all([
+      getDoc(participantSequenceAssignmentDoc),
+      getDoc(allocatorDoc),
+    ]);
+    const existingAssignment = existingAssignmentSnapshot.exists()
+      ? existingAssignmentSnapshot.data() as SequenceAssignment
+      : null;
+    if (existingAssignment) {
+      if (
+        existingAssignment.sequenceIndex !== undefined
+        && existingAssignment.creationIndex !== undefined
+      ) {
+        return {
+          sequenceIndex: existingAssignment.sequenceIndex,
+          creationIndex: existingAssignment.creationIndex,
+        };
+      }
+
+      const [sequenceIndex, creationCount] = await Promise.all([
+        this.getLegacySequenceIndex(sequenceAssignmentCollection, existingAssignment.timestamp),
+        getCountFromServer(query(
+          sequenceAssignmentCollection,
+          where('createdTime', '<', existingAssignment.createdTime),
+        )),
+      ]);
+      return {
+        sequenceIndex,
+        creationIndex: creationCount.data().count,
+      };
+    }
+
+    const allocatorSeedPromise = existingAllocatorSnapshot.exists()
+      ? Promise.resolve(existingAllocatorSnapshot.data() as SequenceAllocator)
+      : this.getSequenceAllocatorSeed(sequenceAssignmentCollection);
+    const [allocatorSeed, reusableSnapshots] = await Promise.all([
+      allocatorSeedPromise,
+      Promise.all([0, Timestamp.fromMillis(0)].map((threshold) => getDocs(query(
+        sequenceAssignmentCollection,
+        where('rejected', '==', true),
+        where('claimed', '==', false),
+        where('timestamp', '>=', threshold),
+        orderBy('timestamp', 'asc'),
+        limit(1),
+      )))),
+    ]);
+    const reusableDocument = reusableSnapshots.flatMap((snapshot) => snapshot.docs).sort((a, b) => {
+      const aTimestamp = a.data().timestamp;
+      const bTimestamp = b.data().timestamp;
+      return (aTimestamp instanceof Timestamp ? aTimestamp.toMillis() : aTimestamp)
+        - (bTimestamp instanceof Timestamp ? bTimestamp.toMillis() : bTimestamp);
+    })[0];
+    const reusableData = reusableDocument?.data() as SequenceAssignment | undefined;
+    let legacyReusableIndex: number | undefined;
+    if (
+      reusableData
+      && reusableData.reusableSequenceIndex === undefined
+      && reusableData.sequenceIndex === undefined
+    ) {
+      legacyReusableIndex = await this.getLegacySequenceIndex(
+        sequenceAssignmentCollection,
+        reusableData.timestamp,
+      );
+    }
+
+    return runTransaction(this.firestore, async (transaction) => {
+      const [currentAssignmentSnapshot, allocatorSnapshot, reusableAssignmentSnapshot] = await Promise.all([
+        transaction.get(participantSequenceAssignmentDoc),
+        transaction.get(allocatorDoc),
+        reusableDocument ? transaction.get(doc(sequenceAssignmentCollection, reusableDocument.id)) : null,
+      ]);
+
+      if (currentAssignmentSnapshot.exists()) {
+        const currentAssignment = currentAssignmentSnapshot.data() as SequenceAssignment;
+        if (
+          currentAssignment.sequenceIndex === undefined
+          || currentAssignment.creationIndex === undefined
+        ) {
+          throw new Error('Existing sequence assignment is missing allocator metadata');
+        }
+        return {
+          sequenceIndex: currentAssignment.sequenceIndex,
+          creationIndex: currentAssignment.creationIndex,
+        };
+      }
+
+      const allocator = allocatorSnapshot.exists()
+        ? allocatorSnapshot.data() as typeof allocatorSeed
+        : allocatorSeed;
+      const reusableAssignment = reusableAssignmentSnapshot?.exists()
+        ? reusableAssignmentSnapshot.data() as SequenceAssignment
+        : undefined;
+      const canReuse = reusableAssignment?.rejected && !reusableAssignment.claimed;
+      if (reusableDocument && !canReuse) {
+        // Another start claimed our candidate; select the next vacancy before reserving a fresh slot.
+        return null;
+      }
+      const sequenceIndex = canReuse
+        ? reusableAssignment.reusableSequenceIndex
+          ?? reusableAssignment.sequenceIndex
+          ?? legacyReusableIndex
+        : allocator.availableSequenceIndexes?.[0] ?? allocator.nextSequenceIndex;
+      if (sequenceIndex === undefined || sequenceIndex < 0) {
+        throw new Error('Unable to determine sequence assignment index');
+      }
+      const creationIndex = allocator.nextCreationIndex;
+
+      if (canReuse && reusableDocument) {
+        transaction.update(doc(sequenceAssignmentCollection, reusableDocument.id), {
+          claimed: true,
+          sequenceIndex,
+        });
+      }
+      transaction.set(participantSequenceAssignmentDoc, {
+        ...sequenceAssignment,
+        ...(canReuse && reusableDocument ? {
+          timestamp: reusableAssignment.timestamp,
+          claimedParticipantId: reusableDocument.id,
+        } : { timestamp: serverTimestamp() }),
+        createdTime: serverTimestamp(),
+        sequenceIndex,
+        creationIndex,
+      });
+      transaction.set(allocatorDoc, {
+        ...allocator,
+        ...(allocator.availableSequenceIndexes ? {
+          availableSequenceIndexes: canReuse
+            ? allocator.availableSequenceIndexes
+            : allocator.availableSequenceIndexes.slice(1),
+        } : {}),
+        nextSequenceIndex: canReuse || allocator.availableSequenceIndexes?.length
+          ? allocator.nextSequenceIndex
+          : allocator.nextSequenceIndex + 1,
+        nextCreationIndex: allocator.nextCreationIndex + 1,
+      });
+
+      return { sequenceIndex, creationIndex };
+    });
+  }
+
+  protected override async hasStageAssignments(stage: string): Promise<boolean> {
+    const assignments = collection(doc(this.studyCollection, 'sequenceAssignment'), 'sequenceAssignment');
+    const result = await getCountFromServer(query(assignments, where('stage', '==', stage)));
+    return result.data().count > 0;
+  }
+
+  protected override async getStageAllocation(stage: string, conditionKeys: string[] = []): Promise<StageAllocation> {
+    const reference = this.stageAllocationReference(stage);
+    const existing = await getDoc(reference);
+    if (existing.exists()) return { rowCounts: {}, ...existing.data() } as StageAllocation;
+    const assignments = collection(doc(this.studyCollection, 'sequenceAssignment'), 'sequenceAssignment');
+    const counts = await Promise.all([undefined, ...conditionKeys].map((key) => getCountFromServer(query(
+      assignments,
+      where('stage', '==', stage),
+      where('rejected', '==', false),
+      ...(key === undefined ? [] : [where('betweenSubjectsCombinationKey', '==', key)]),
+    ))));
+    const initial = {
+      count: counts[0].data().count, combinationCounts: Object.fromEntries(conditionKeys.map((key, index) => [key, counts[index + 1].data().count])), rowCounts: {}, conditionKeys,
+    };
+    return runTransaction(this.firestore, async (transaction) => {
+      const current = await transaction.get(reference);
+      if (current.exists()) return { rowCounts: {}, ...current.data() } as StageAllocation;
+      transaction.set(reference, initial);
+      return initial;
+    });
   }
 }

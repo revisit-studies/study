@@ -29,6 +29,7 @@ export function Scatter({
   params,
   data,
   brushedPoints,
+  initializeBrush = false,
 }:
     {
         brushedPoints: string[],
@@ -37,7 +38,8 @@ export function Scatter({
         setFilteredTable: (c: ColumnTable | null) => void,
         brushState: BrushState,
         setBrushedSpace: (brush: [[number | null, number | null], [number | null, number | null]], xScale: any, yScale: any, selType: 'drag' | 'handle' | 'clear' | null, ids?: string[]) => void,
-        brushType: BrushNames
+        brushType: BrushNames,
+        initializeBrush?: boolean
     }) {
   const [resizeRef, { height: originalHeight, width: originalWidth }] = useResizeObserver();
   const scatterRef = useRef<SVGSVGElement | null>(null);
@@ -100,8 +102,9 @@ export function Scatter({
     return d3.scaleLinear([height + margin.top, margin.top]).domain([yMin - range / 10, yMax + range / 10]).nice();
   }, [height, yMax, yMin]);
 
-  // create brushes
-  const clearCallback = useMemo(() => {
+  const clearCallback = useRef<() => void>(() => {});
+  // Programmatic moves restore saved bounds; sourceEvent guards exclude them from recording.
+  const initializeBrushes = useCallback(() => {
     if (!xScale || !yScale) {
       return () => null;
     }
@@ -123,10 +126,16 @@ export function Scatter({
         d3.select(brushYRef.current!).call(brushY);
         d3.select(brushXRef.current!).call(brushX);
 
-        if (!brushState.hasBrush) {
+        if (brushState.hasBrush) {
+          d3.select(brushYRef.current!).call(brushY.move, [brushState.y1, brushState.y2]);
+          d3.select(brushXRef.current!).call(brushX.move, [brushState.x1, brushState.x2]);
+        } else if (initializeBrush) {
           d3.select(brushYRef.current!).call(brushY.move, [yScale(yMax), yScale(yMin)]);
           d3.select(brushXRef.current!).call(brushX.move, [xScale(new Date('2015-01-02')), xScale(new Date('2015-12-31'))]);
-          setBrushedSpace([[xScale(new Date('2015-01-02')), yScale(yMax)], [xScale(new Date('2015-12-31')), yScale(yMin)]], xScale, yScale, 'drag');
+          setBrushedSpace([[xScale(new Date('2015-01-02')), yScale(yMax)], [xScale(new Date('2015-12-31')), yScale(yMin)]], xScale, yScale, null);
+        } else {
+          d3.select(brushYRef.current!).call(brushY.move, null);
+          d3.select(brushXRef.current!).call(brushX.move, null);
         }
       }
 
@@ -148,7 +157,8 @@ export function Scatter({
         }
       });
 
-      d3.select(scatterRef.current! as unknown as SVGGElement).call(brush);
+      d3.select(scatterRef.current! as unknown as SVGGElement).call(brush)
+        .call(brush.move, brushState.hasBrush ? [[brushState.x1, brushState.y1], [brushState.x2, brushState.y2]] : null);
 
       return () => {
         d3.select(scatterRef.current! as unknown as SVGGElement).call(brush.move, null);
@@ -156,7 +166,7 @@ export function Scatter({
       };
     }
     if (brushType === 'Slider Selection') {
-      if (!brushState.hasBrush) {
+      if (!brushState.hasBrush && initializeBrush) {
         setBrushedSpace([[xScale(xMin), yScale(yMax)], [xScale(xMax), yScale(yMin)]], xScale, yScale, null);
       }
 
@@ -167,9 +177,15 @@ export function Scatter({
     }
 
     return () => null;
-  }, [brushState.hasBrush, brushType, brushXRef, brushYRef, height, ref, setBrushedSpace, setFilteredTable, width, xMax, xMin, xScale, yMax, yMin, yScale]);
+  }, [brushState.hasBrush, brushState.x1, brushState.x2, brushState.y1, brushState.y2, brushType, brushXRef, brushYRef, height, initializeBrush, ref, setBrushedSpace, setFilteredTable, width, xMax, xMin, xScale, yMax, yMin, yScale]);
 
-  const brushedSet = useMemo(() => (brushedPoints.length === 0 ? null : new Set(brushedPoints)), [brushedPoints]);
+  useEffect(() => {
+    clearCallback.current = initializeBrushes();
+    const targets = [scatterRef.current, brushXRef.current, brushYRef.current];
+    return () => { targets.forEach((element) => d3.select(element).on('.brush', null)); };
+  }, [initializeBrushes]);
+
+  const brushedSet = useMemo(() => (brushState.hasBrush ? new Set(brushedPoints) : null), [brushState.hasBrush, brushedPoints]);
 
   const circles = useMemo(() => {
     if (!xScale || !yScale) {
@@ -203,7 +219,7 @@ export function Scatter({
           disabled={brushedPoints.length === 0}
           onClick={() => {
             setFilteredTable(null);
-            clearCallback?.();
+            clearCallback.current();
           }}
         >
           Clear Selection

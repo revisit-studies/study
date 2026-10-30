@@ -77,6 +77,10 @@ type SkipConditionWithExtents = {
 };
 
 function _findBlockForStep(sequence: Sequence, pathOrStep: string | number, distance: number): (SkipConditionWithExtents[]) | number {
+  if (isDynamicBlock(sequence) || isFactorBlock(sequence)) {
+    return pathOrStep === distance || pathOrStep === sequence.orderPath
+      ? [{ currentBlock: sequence, firstIndex: distance, lastIndex: distance }] : 1;
+  }
   let componentsSeen = 0;
   for (let i = 0; i < sequence.components.length; i += 1) {
     const component = sequence.components[i];
@@ -118,6 +122,7 @@ function _findIndexOfBlock(sequence: Sequence, to: string, distance: number): { 
   if (sequence.id === to) {
     return { found: true, distance };
   }
+  if (isDynamicBlock(sequence) || isFactorBlock(sequence)) return { found: false, distance: 1 };
   let componentsSeen = 0;
   for (let i = 0; i < sequence.components.length; i += 1) {
     const component = sequence.components[i];

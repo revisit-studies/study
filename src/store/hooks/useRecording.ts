@@ -1,6 +1,7 @@
 import {
   createContext, useCallback, useContext, useEffect, useLayoutEffect, useRef, useState,
 } from 'react';
+import { useTrialAssetIdentifier } from './useTrialAssetIdentifier';
 import { useStudyConfig } from './useStudyConfig';
 import { useCurrentComponent, useCurrentIdentifier } from '../../routes/utils';
 import { useStorageEngine } from '../../storage/storageEngineHooks';
@@ -13,6 +14,7 @@ import {
   shouldMonitorMutedAudio,
   SPEECH_DETECTION_HOLD_MS,
 } from '../../utils/recordingWarnings';
+import { useStartupInteractionBlocked } from '../../components/StartupContext';
 import { useStoreSelector } from '../store';
 
 const SCREEN_PERMISSION_COMPONENT = '$screen-recording.components.screenRecordingPermission';
@@ -69,16 +71,22 @@ export function useRecording() {
   const webcamMediaRecorder = useRef<MediaRecorder | null>(null);
   const isStoppingCapture = useRef(false);
   const captureAttempt = useRef(0);
+  const audioCaptureAttempt = useRef(0);
   const isStartingCapture = useRef(false);
   const isMounted = useRef(true);
 
   const currentTrialName = useRef<string | null>(null);
+  const assetIdentifier = useTrialAssetIdentifier();
   const identifier = useCurrentIdentifier();
   const status = useStoredAnswer();
   const isAnalysis = useIsAnalysis();
+  const startupInteractionBlocked = useStartupInteractionBlocked();
 
   const { storageEngine } = useStorageEngine();
   const { dataCollectionEnabled } = useStoreSelector((state) => state.modes);
+  const completed = useStoreSelector((state) => state.completed);
+  const completedRef = useRef(completed);
+  completedRef.current = completed;
 
   const currentComponent = useCurrentComponent();
 
@@ -105,6 +113,7 @@ export function useRecording() {
   // Stop all persistent media capture streams.
   const stopScreenCapture = useCallback(() => {
     captureAttempt.current += 1;
+    audioCaptureAttempt.current += 1;
     isStartingCapture.current = false;
     if (isStoppingCapture.current) {
       return;
@@ -149,6 +158,13 @@ export function useRecording() {
     }, 0);
   }, []);
 
+  useEffect(() => {
+    if (completed) {
+      stopScreenCapture();
+      currentTrialName.current = null;
+    }
+  }, [completed, stopScreenCapture]);
+
   const attachSaveHandler = useCallback((
     recorder: MediaRecorder,
     saveBlob: ((blob: Blob, trialName: string) => Promise<void>) | undefined,
@@ -181,7 +197,7 @@ export function useRecording() {
     const wantsAudio = currentComponentHasAudioRecording;
     const wantsWebcam = currentComponentHasWebcamRecording;
 
-    if (!dataCollectionEnabled || !(wantsScreen || wantsAudio || wantsWebcam)) {
+    if (completedRef.current || !dataCollectionEnabled || !(wantsScreen || wantsAudio || wantsWebcam)) {
       return;
     }
     if ((wantsScreen && !screenMediaStream.current)
@@ -270,6 +286,7 @@ export function useRecording() {
   }, []);
 
   const stopAudioRecording = useCallback(() => {
+    audioCaptureAttempt.current += 1;
     setIsScreenRecording(false);
     setScreenWithAudioRecording(false);
     setIsAudioRecording(false);
@@ -308,13 +325,19 @@ export function useRecording() {
   ]);
 
   const startAudioRecording = useCallback((trialName: string) => {
-    if (!dataCollectionEnabled) {
+    if (completedRef.current || !dataCollectionEnabled) {
       return;
     }
+    audioCaptureAttempt.current += 1;
+    const attempt = audioCaptureAttempt.current;
 
     navigator.mediaDevices.getUserMedia({
       audio: true,
     }).then((s) => {
+      if (completedRef.current || !isMounted.current || attempt !== audioCaptureAttempt.current) {
+        stopMediaTracks(s);
+        return;
+      }
       audioMediaStream.current = s;
       const analysisTrack = s.getAudioTracks()[0]?.clone();
       if (analysisTrack) {
@@ -353,6 +376,7 @@ export function useRecording() {
       setAudioRecordingError(null);
       setIsAudioRecording(true);
     }).catch((err) => {
+      if (completedRef.current || !isMounted.current || attempt !== audioCaptureAttempt.current) return;
       console.error('Error accessing microphone:', err);
       setAudioRecordingError('Microphone permission denied');
       setIsAudioRecording(false);
@@ -361,15 +385,15 @@ export function useRecording() {
 
   // For study with just audio recording
   useEffect(() => {
-    if (!studyConfig || studyHasScreenRecording || studyHasWebcamRecording || !studyHasAudioRecording || !storageEngine || (status && status.endTime > 0) || isAnalysis) {
-      return;
+    if (startupInteractionBlocked || completed || !studyConfig || studyHasScreenRecording || studyHasWebcamRecording || !studyHasAudioRecording || !storageEngine || (status && status.endTime > 0 && !studyConfig.globalVariables) || isAnalysis) {
+      return undefined;
     }
 
     // Always stop recording when navigating to a trial without audio recording
     if (!currentComponentHasAudioRecording && audioMediaRecorder.current) {
       stopAudioRecording();
       currentTrialName.current = null;
-      return;
+      return undefined;
     }
 
     if (audioMediaRecorder.current) {
@@ -377,17 +401,22 @@ export function useRecording() {
       currentTrialName.current = null;
     }
 
-    if (currentComponent !== 'end' && currentTrialName.current !== identifier && (currentComponentHasAudioRecording)) {
+    if (assetIdentifier && currentComponent !== 'end' && currentTrialName.current !== identifier && (currentComponentHasAudioRecording)) {
       currentTrialName.current = identifier;
-      startAudioRecording(identifier);
+      startAudioRecording(assetIdentifier);
+      return () => {
+        stopAudioRecording();
+        currentTrialName.current = null;
+      };
     }
+    return undefined;
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentComponent, identifier, currentComponentHasAudioRecording]);
+  }, [startupInteractionBlocked, assetIdentifier, currentComponent, identifier, currentComponentHasAudioRecording, completed]);
 
   // For studies with screen or webcam recording.
   useEffect(() => {
-    if (!studyConfig || !(studyHasScreenRecording || studyHasWebcamRecording) || !storageEngine || (status && status.endTime > 0) || isAnalysis) {
+    if (startupInteractionBlocked || completed || !studyConfig || !(studyHasScreenRecording || studyHasWebcamRecording) || !storageEngine || (status && status.endTime > 0 && !studyConfig.globalVariables) || isAnalysis) {
       return;
     }
 
@@ -396,9 +425,9 @@ export function useRecording() {
       currentTrialName.current = null;
     }
 
-    if (currentComponent !== 'end' && isMediaCapturing && currentTrialName.current !== identifier && (currentComponentHasAudioRecording || currentComponentHasScreenRecording || currentComponentHasWebcamRecording)) {
+    if (assetIdentifier && currentComponent !== 'end' && isMediaCapturing && currentTrialName.current !== identifier && (currentComponentHasAudioRecording || currentComponentHasScreenRecording || currentComponentHasWebcamRecording)) {
       currentTrialName.current = identifier;
-      startScreenRecording(identifier);
+      startScreenRecording(assetIdentifier);
     }
 
     if (currentComponent === 'end') {
@@ -406,7 +435,7 @@ export function useRecording() {
     }
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentComponent, identifier, currentComponentHasAudioRecording, currentComponentHasScreenRecording, currentComponentHasWebcamRecording, isMediaCapturing]);
+  }, [startupInteractionBlocked, assetIdentifier, currentComponent, identifier, currentComponentHasAudioRecording, currentComponentHasScreenRecording, currentComponentHasWebcamRecording, isMediaCapturing, completed]);
 
   // Start persistent capture. Per-trial recording begins in the navigation effect above.
   const startMediaCapture = useCallback(async ({
@@ -418,7 +447,7 @@ export function useRecording() {
     includeAudio: boolean;
     includeWebcam: boolean;
   }) => {
-    if (!dataCollectionEnabled) {
+    if (completedRef.current || !dataCollectionEnabled) {
       return;
     }
 
@@ -433,7 +462,7 @@ export function useRecording() {
     let webcamStream: MediaStream | null = null;
     let micStream: MediaStream | null = null;
 
-    const isCurrentAttempt = () => isMounted.current && captureAttempt.current === attempt;
+    const isCurrentAttempt = () => !completedRef.current && isMounted.current && captureAttempt.current === attempt;
     const hasLiveTracks = (stream: MediaStream | null) => !!stream
       && stream.getTracks().length > 0
       && stream.getTracks().every((track) => track.readyState !== 'ended');

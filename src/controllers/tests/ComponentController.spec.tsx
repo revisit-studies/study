@@ -17,6 +17,7 @@ import type {
   VideoComponent,
 } from '../../parser/types';
 import type { StoreState } from '../../store/types';
+import { StartupInteractionProvider } from '../../components/StartupContext';
 import { ComponentController } from '../ComponentController';
 import { ErrorBoundary } from '../ErrorBoundary';
 import { ImageController } from '../ImageController';
@@ -32,6 +33,7 @@ import { findBlockForStep } from '../../utils/getSequenceFlatMap';
 import { useIsAnalysis } from '../../store/hooks/useIsAnalysis';
 import { useRecordingConfig } from '../../store/hooks/useRecordingConfig';
 import { makeStoredAnswer, makeStorageEngine } from '../../tests/utils';
+import * as templateHelpers from '../../utils/handlebars';
 
 // ── mutable state ────────────────────────────────────────────────────────────
 
@@ -47,7 +49,14 @@ let mockStoreActions = {
   setAnalysisCanPlayScreenRecording: vi.fn(),
 };
 
+vi.mock('../../components/interface/RestorationError', () => ({ RestorationError: () => <div>Restoration error</div> }));
+
+vi.mock('../../components/interface/RestorationWarning', () => ({ RestorationWarning: () => null }));
+
 // ── mocks ────────────────────────────────────────────────────────────────────
+
+// Stimulus discovery imports every editor; these host tests do not exercise the drawing engine.
+vi.mock('../../public/libraries/drawing/assets/DrawingEditor', () => ({ default: () => null }));
 
 vi.mock('@mantine/core', () => ({
   Image: ({ src, onLoad, onError }: { src?: string; onLoad?: () => void; onError?: () => void }) => (
@@ -482,11 +491,20 @@ describe('VideoController', () => {
     expect(container.textContent).toContain('test@test.com');
   });
 
-  test('renders video element for a valid YouTube URL', async () => {
+  test('renders an embed container for a valid YouTube URL', async () => {
     vi.spyOn(window, 'requestAnimationFrame').mockImplementation(() => 0);
     const youtubeConfig: VideoComponent = { type: 'video', path: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', response: [] };
     const { container } = render(<VideoController currentConfig={youtubeConfig} />);
-    await waitFor(() => expect(container.querySelector('video')).toBeTruthy());
+    await waitFor(() => expect(container.querySelector('[data-plyr-provider="youtube"]')).toBeTruthy());
+    expect(container.querySelector('[data-plyr-embed-id]')?.getAttribute('data-plyr-embed-id')).toBe(youtubeConfig.path);
+  });
+
+  test('renders an embed container for a valid Vimeo URL', async () => {
+    vi.spyOn(window, 'requestAnimationFrame').mockImplementation(() => 0);
+    const vimeoConfig: VideoComponent = { type: 'video', path: 'https://vimeo.com/863362136', response: [] };
+    const { container } = render(<VideoController currentConfig={vimeoConfig} />);
+    await waitFor(() => expect(container.querySelector('[data-plyr-provider="vimeo"]')).toBeTruthy());
+    expect(container.querySelector('[data-plyr-embed-id]')?.getAttribute('data-plyr-embed-id')).toBe(vimeoConfig.path);
   });
 
   test('dispatches store action when forceCompletion is true', async () => {
@@ -498,6 +516,28 @@ describe('VideoController', () => {
     };
     render(<VideoController currentConfig={forceConfig} />);
     await waitFor(() => expect(mockDispatch).toHaveBeenCalled());
+  });
+
+  test('clears force-completion validation when a video fails to load', async () => {
+    vi.mocked(getStaticAssetByPath).mockResolvedValueOnce('video-data');
+    const { container } = render(<VideoController currentConfig={{ ...videoConfig, forceCompletion: true }} />);
+    await waitFor(() => expect(container.querySelector('video')).toBeTruthy());
+    expect(mockStoreActions.updateResponseBlockValidation).toHaveBeenLastCalledWith(expect.objectContaining({ status: false }));
+
+    fireEvent.error(container.querySelector('video')!);
+
+    await waitFor(() => expect(container.textContent).toContain('ResourceNotFound'));
+    expect(mockStoreActions.setAssetStatus).toHaveBeenLastCalledWith({ identifier: 'trial1_0', status: 'missing' });
+    expect(mockStoreActions.updateResponseBlockValidation).toHaveBeenLastCalledWith(expect.objectContaining({ status: true, values: {} }));
+  });
+
+  test('clears force-completion validation when a video file is missing', async () => {
+    vi.mocked(getStaticAssetByPath).mockResolvedValueOnce(undefined);
+    const { container } = render(<VideoController currentConfig={{ ...videoConfig, forceCompletion: true }} />);
+
+    await waitFor(() => expect(container.textContent).toContain('ResourceNotFound'));
+    expect(mockStoreActions.setAssetStatus).toHaveBeenLastCalledWith({ identifier: 'trial1_0', status: 'missing' });
+    expect(mockStoreActions.updateResponseBlockValidation).toHaveBeenLastCalledWith(expect.objectContaining({ status: true, values: {} }));
   });
 
   test('renders LoadingOverlay while loading for a local path', () => {
@@ -521,6 +561,14 @@ describe('VideoController', () => {
 // ── ComponentController ───────────────────────────────────────────────────────
 
 describe('ComponentController', () => {
+  test('instruction templates receive the globalVariables namespace', () => {
+    const compile = vi.spyOn(templateHelpers, 'compileTemplate');
+    renderToStaticMarkup(<ComponentController />);
+    expect(compile).toHaveBeenCalledWith(expect.any(String), expect.any(Object), expect.objectContaining({
+      data: expect.objectContaining({ globalVariables: {} }),
+    }));
+    compile.mockRestore();
+  });
   beforeEach(() => {
     vi.mocked(useCurrentComponent).mockReturnValue('end');
   });
@@ -638,6 +686,45 @@ describe('ComponentController — effect coverage (render-based)', () => {
     );
   });
 
+  test('subscribes to participant rejection only after startup is ready', async () => {
+    const subscribe = vi.fn(() => vi.fn());
+    vi.mocked(useStorageEngine).mockReturnValue({
+      storageEngine: makeStorageEngine({ subscribeToCurrentParticipantRejection: subscribe }),
+      setStorageEngine: vi.fn(),
+    });
+    const { rerender } = render(
+      <StartupInteractionProvider value><ComponentController /></StartupInteractionProvider>,
+    );
+    expect(subscribe).not.toHaveBeenCalled();
+    rerender(<StartupInteractionProvider value={false}><ComponentController /></StartupInteractionProvider>);
+    await waitFor(() => expect(subscribe).toHaveBeenCalled());
+  });
+
+  test('loads stimulus assets during preview before the storage engine connects', async () => {
+    vi.mocked(useCurrentComponent).mockReturnValue('testTrial');
+    const state = makeStableState();
+    vi.mocked(useStoreSelector).mockImplementation((selector) => selector(state));
+    vi.mocked(useStorageEngine).mockReturnValue({ storageEngine: undefined, setStorageEngine: vi.fn() });
+    vi.mocked(getStaticAssetByPath).mockResolvedValue('Preview stimulus');
+    const { getByText } = render(
+      <StartupInteractionProvider value><ComponentController /></StartupInteractionProvider>,
+    );
+    await waitFor(() => expect(getByText('Preview stimulus')).toBeDefined());
+    expect(getStaticAssetByPath).toHaveBeenCalled();
+  });
+
+  test('renders preview stimuli before the URL participant has been restored', () => {
+    vi.mocked(useCurrentComponent).mockReturnValue('testTrial');
+    vi.mocked(useSearchParams).mockReturnValueOnce([
+      new URLSearchParams('participantId=other-pid'), vi.fn(),
+    ]);
+    const html = renderToStaticMarkup(
+      <StartupInteractionProvider value><ComponentController /></StartupInteractionProvider>,
+    );
+    expect(html).toContain('ResponseBlock');
+    expect(html).not.toContain('Loader');
+  });
+
   test('shows localStorage fallback warning when cloud engine falls back in development', async () => {
     vi.stubEnv('VITE_STORAGE_ENGINE', 'firebase');
     vi.stubEnv('PROD', false);
@@ -700,7 +787,7 @@ describe('ComponentController — effect coverage (render-based)', () => {
     await waitFor(() => expect(vi.mocked(findBlockForStep)).toHaveBeenCalled());
   });
 
-  test('addParticipantTags called when blockForStep becomes non-empty', async () => {
+  test('records block tags on the first mount and after a trial remount', async () => {
     const addTagsSpy = vi.fn().mockResolvedValue(undefined);
     vi.mocked(useStorageEngine).mockReturnValue({
       storageEngine: makeStorageEngine({ addParticipantTags: addTagsSpy }),
@@ -714,14 +801,13 @@ describe('ComponentController — effect coverage (render-based)', () => {
       lastIndex: 0,
     }]);
 
-    const { rerender } = render(<ComponentController />);
-    // Wait for first effect run to call findBlockForStep and update blockForStep state
-    await waitFor(() => expect(vi.mocked(findBlockForStep)).toHaveBeenCalled());
+    const view = render(<ComponentController />);
+    await waitFor(() => expect(addTagsSpy).toHaveBeenCalledWith(['blockA']));
+    view.unmount();
 
-    // Trigger effect re-run by changing currentStep; now blockForStep=['blockA'] in closure
+    addTagsSpy.mockClear();
     vi.mocked(useCurrentStep).mockReturnValue(1);
-    rerender(<ComponentController />);
-
+    render(<ComponentController />);
     await waitFor(() => expect(addTagsSpy).toHaveBeenCalledWith(['blockA']));
   });
 
@@ -1022,3 +1108,5 @@ describe('VegaController — signal and event coverage', () => {
     expect(vi.mocked(fakeView.signal).mock.calls.some(([signalName]) => signalName === 'tooltip')).toBe(false);
   });
 });
+
+vi.mock('../../store/hooks/useGlobalStore', () => ({ useGlobalStore: () => ({}), useGlobalStoreUpdaterRegistration: () => () => () => undefined }));

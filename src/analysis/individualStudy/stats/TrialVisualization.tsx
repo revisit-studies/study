@@ -8,9 +8,9 @@ import { studyComponentToIndividualComponent } from '../../../utils/handleCompon
 import { ResponseVisualization } from './ResponseVisualization';
 
 export function TrialVisualization({
-  participantData, studyConfig, trialId,
+  participantData, studyConfig, allConfigs, trialId,
 }: {
-  participantData: ParticipantData[]; studyConfig: StudyConfig, trialId?: string;
+  participantData: ParticipantData[]; studyConfig: StudyConfig; allConfigs?: Record<string, StudyConfig>; trialId?: string;
 }) {
   const trialConfig = trialId && trialId !== 'end' && studyComponentToIndividualComponent(studyConfig.components[trialId], studyConfig);
 
@@ -28,6 +28,7 @@ export function TrialVisualization({
           participantData={participantData}
           trialId={trialId}
           trialConfig={trialConfig}
+          allConfigs={allConfigs}
         />
       ))}
     </Flex>

@@ -185,3 +185,5 @@ describe('HelpModal', () => {
     expect(screen.getByTestId('markdown').textContent).toBe('component help');
   });
 });
+
+vi.mock('../../../store/hooks/useGlobalStore', () => ({ useGlobalStore: () => ({}), useGlobalStoreUpdaterRegistration: () => () => () => undefined }));

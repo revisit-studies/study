@@ -1,3 +1,5 @@
+import type { GlobalStoreGraph } from '../../store/globalStoreProvenance';
+import { getActiveGlobalStoreSubmissions } from '../../store/globalStoreProvenance';
 import type { ParticipantData, SkipConditions, StudyConfig } from '../../parser/types';
 import type { Sequence, StoredAnswer } from '../../store/types';
 import { findBlockForStep, getSequenceFlatMap } from '../../utils/getSequenceFlatMap';
@@ -59,6 +61,8 @@ function formatTarget(target: string) {
 export function formatSkipConditionSummary(condition: SkipConditions[number]) {
   const target = formatTarget(condition.to);
 
+  if (condition.check === 'globalVariable') return `If store.${condition.variable} ${condition.comparison} ${JSON.stringify(condition.value)}, skip to ${target}.`;
+
   if (condition.check === 'response') {
     const comparison = condition.comparison === 'equal' ? 'equals' : 'does not equal';
     return `If ${formatReference(condition.name)}.${condition.responseId} ${comparison} ${formatValue(condition.value)}, skip to ${target}.`;
@@ -78,6 +82,7 @@ export function formatSkipConditionSummary(condition: SkipConditions[number]) {
 }
 
 function shouldShowSkipConditionForBlock(condition: SkipConditions[number], sequence: Sequence) {
+  if (condition.check === 'globalVariable') return true;
   if (condition.check === 'block') {
     return getSequenceFlatMap(sequence).length > 0;
   }
@@ -118,6 +123,7 @@ function getAnswersForSkipEvaluation(participantAnswers: ParticipantData['answer
       acc[key] = {
         answer: responseObj.answer,
         timedOut: false,
+        store: responseObj.globalStoreEntry,
       };
     }
     return acc;
@@ -128,11 +134,13 @@ export function getSkippedTrialOrders(
   sequence: Sequence,
   participantAnswers: ParticipantData['answers'],
   studyConfig: StudyConfig,
+  globalGraph?: GlobalStoreGraph,
 ) {
+  const accepted = getActiveGlobalStoreSubmissions(globalGraph);
   const skippedTrialOrders = new Set<number>();
   const flatSequence = getSequenceFlatMap(sequence);
 
-  getCompletedTopLevelAnswers(participantAnswers).forEach(({ step }) => {
+  getCompletedTopLevelAnswers(participantAnswers).forEach(({ step, identifier }) => {
     const blocksForStep = findBlockForStep(sequence, step);
     if (!blocksForStep) {
       return;
@@ -149,6 +157,7 @@ export function getSkippedTrialOrders(
       condition,
       answersForSkipEvaluation,
       studyConfig,
+      accepted.find((entry) => entry.submission.answer.identifier === identifier)?.values,
     ));
 
     if (!triggeredCondition) {
