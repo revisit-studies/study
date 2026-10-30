@@ -1,0 +1,72 @@
+{
+  "$schema": "../../src/parser/StudyConfigSchema.json",
+  "studyMetadata": {
+    "title": "Stroop Test in HTML with Factors",
+    "version": "pilot",
+    "authors": ["The reVISit Team"],
+    "date": "2026-08-20",
+    "description": "An HTML Stroop test that crosses five color words with two congruence levels to generate 10 trials.",
+    "organizations": ["University of Utah", "WPI", "University of Toronto"]
+  },
+  "uiConfig": {
+    "contactEmail": "contact@revisit.dev",
+    "helpTextPath": "demo-stroop-html-factors/assets/introduction.md",
+    "logoPath": "revisitAssets/revisitLogoSquare.svg",
+    "withProgressBar": true,
+    "autoDownloadStudy": false,
+    "withSidebar": false,
+    "windowEventDebounceTime": 200
+  },
+  "factors": {
+    "color": ["RED", "YELLOW", "GREEN", "BLUE", "BLACK"],
+    "congruence": ["neutral", "incongruent"],
+    "stroopConditions": {
+      "action": "cross",
+      "factors": ["color", "congruence"]
+    }
+  },
+  "baseComponents": {
+    "stroopTrial": {
+      "type": "website",
+      "path": "demo-stroop-html-factors/assets/trial.html",
+      "nextButtonLocation": "belowStimulus",
+      "response": [
+        {
+          "id": "response",
+          "prompt": "Report the word's ink color, not the color named by the word. Use the buttons or the corresponding number key.",
+          "secondaryText": "Keyboard shortcuts: 1-5",
+          "type": "buttons",
+          "options": [
+            {"label": "1. RED", "value": "RED", "key": "1"},
+            {"label": "2. YELLOW", "value": "YELLOW", "key": "2"},
+            {"label": "3. GREEN", "value": "GREEN", "key": "3"},
+            {"label": "4. BLUE", "value": "BLUE", "key": "4"},
+            {"label": "5. BLACK", "value": "BLACK", "key": "5"}
+          ],
+          "location": "belowStimulus",
+          "required": true
+        }
+      ]
+    }
+  },
+  "components": {
+    "introduction": {
+      "type": "markdown",
+      "path": "demo-stroop-html-factors/assets/introduction.md",
+      "response": []
+    }
+  },
+  "sequence": {
+    "order": "fixed",
+    "components": [
+      "introduction",
+      {
+        "type": "factor",
+        "id": "stroopTrials",
+        "factor": "stroopConditions",
+        "components": "stroopTrial",
+        "order": "random"
+      }
+    ]
+  }
+}

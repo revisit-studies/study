@@ -1,0 +1,1 @@
+import{o as e,r as t}from"./rolldown-runtime-C0FnF6B9.js";import{t as n}from"./jsx-runtime-BdxMnOeJ.js";var r=t({Slices:()=>a}),i=e(n(),1);function a({arcs:e}){return(0,i.jsx)(`g`,{children:e.map((e,t)=>(0,i.jsx)(`path`,{d:e(),fill:`transparent`,stroke:`currentColor`},t))})}export{r as n,a as t};

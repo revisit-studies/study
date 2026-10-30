@@ -1,0 +1,123 @@
+{
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.4.3/src/parser/StudyConfigSchema.json",
+  "studyMetadata": {
+    "title": "Templating Data with Handlebars",
+    "version": "pilot",
+    "authors": ["The reVISit Team"],
+    "date": "2026-08-20",
+    "description": "A demo of using Handlebars {{variable}} templating (and the lookupAnswersRel/lookupAnswers helpers for referencing other trials' answers) in instructions, paths, markdown/help-text content, and response text, showcased through a repeated capital-cities quiz.",
+    "organizations": ["University of Utah", "WPI"]
+  },
+  "uiConfig": {
+    "contactEmail": "contact@revisit.dev",
+    "helpTextPath": "demo-templating/assets/introduction.md",
+    "logoPath": "revisitAssets/revisitLogoSquare.svg",
+    "withProgressBar": true,
+    "autoDownloadStudy": false,
+    "withSidebar": true,
+    "windowEventDebounceTime": 200
+  },
+  "baseComponents": {
+    "quizQuestion": {
+      "type": "markdown",
+      "instruction": "Which city is the capital of {{country}}?{{#if (lookupAnswersRel -1 'capital-answer')}} (Last time, you answered \"{{lookupAnswersRel -1 'capital-answer'}}\".){{/if}}",
+      "path": "demo-templating/assets/{{hintFile}}.md",
+      "helpTextPath": "demo-templating/assets/quiz-help.md",
+      "response": [
+        {
+          "id": "capital-answer",
+          "prompt": "Enter the capital of {{country}}:",
+          "secondaryText": "{{country}} is a country in {{continent}}",
+          "infoText": "This trial's parameters: country={{country}}, continent={{continent}}.{{#if (lookupAnswersRel -1 'capital-answer')}} Previous answer: {{lookupAnswersRel -1 'capital-answer'}}.{{/if}}",
+          "location": "belowStimulus",
+          "type": "shortText"
+        }
+      ]
+    }
+  },
+  "components": {
+    "introduction": {
+      "type": "markdown",
+      "path": "demo-templating/assets/introduction.md",
+      "response": []
+    },
+    "quiz-1": {
+      "baseComponent": "quizQuestion",
+      "description": "Capital quiz trial for France.",
+      "parameters": {
+        "country": "France",
+        "continent": "Europe",
+        "hintFile": "hint-europe",
+        "funFact": "the Eiffel Tower",
+        "hintLevel": "direct"
+      }
+    },
+    "quiz-2": {
+      "baseComponent": "quizQuestion",
+      "description": "Capital quiz trial for Germany.",
+      "parameters": {
+        "country": "Germany",
+        "continent": "Europe",
+        "hintFile": "hint-europe",
+        "funFact": "Oktoberfest",
+        "hintLevel": "misleading"
+      }
+    },
+    "quiz-3": {
+      "baseComponent": "quizQuestion",
+      "description": "Capital quiz trial for Japan.",
+      "parameters": {
+        "country": "Japan",
+        "continent": "Asia",
+        "hintFile": "hint-asia",
+        "funFact": "cherry blossom season",
+        "hintLevel": "misleading"
+      }
+    },
+    "quiz-4": {
+      "baseComponent": "quizQuestion",
+      "description": "Capital quiz trial for India.",
+      "parameters": {
+        "country": "India",
+        "continent": "Asia",
+        "hintFile": "hint-asia",
+        "funFact": "its colorful festivals",
+        "hintLevel": "obscure"
+      }
+    },
+    "quiz-5": {
+      "baseComponent": "quizQuestion",
+      "description": "Capital quiz trial for Brazil.",
+      "parameters": {
+        "country": "Brazil",
+        "continent": "Americas",
+        "hintFile": "hint-americas",
+        "funFact": "the Amazon rainforest",
+        "hintLevel": "obscure"
+      }
+    },
+    "quiz-6": {
+      "baseComponent": "quizQuestion",
+      "description": "Capital quiz trial for Canada.",
+      "parameters": {
+        "country": "Canada",
+        "continent": "Americas",
+        "hintFile": "hint-americas",
+        "funFact": "maple syrup",
+        "hintLevel": "obscure"
+      }
+    }
+  },
+  "sequence": {
+    "order": "fixed",
+    "components": [
+      "introduction",
+      "quiz-1",
+      "quiz-2",
+      "quiz-3",
+      "quiz-4",
+      "quiz-5",
+      "quiz-6"
+    ]
+  }
+}
