@@ -37,6 +37,7 @@ test('canceling an earlier edit preserves progress and confirmation starts a rep
   await nextClick(page);
   await expectBudget(page, 50);
   await page.getByRole('button', { name: 'Previous', exact: true }).click();
+  await expectBudget(page, 70);
   await page.getByRole('button', { name: 'Previous', exact: true }).click();
   await expectBudget(page, 100);
   await submitFormPurchase(page, 10);
