@@ -861,6 +861,7 @@ describe.each([
       expect((await storageEngine.getSequenceAssignment(studyId, 'retrying'))?.autoTimedOutAt).toBeUndefined();
       vi.setSystemTime(new Date('2026-10-30T12:04:00Z'));
       await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'after-deadline');
+      await storageEngine.releaseExpiredAssignments();
       expect((await storageEngine.getSequenceAssignment(studyId, 'retrying'))?.autoTimedOutAt).toBeDefined();
     } finally {
       vi.useRealTimers();
@@ -2266,19 +2267,26 @@ describe.each([
   async function interleaveWithAssignmentWrite(
     shouldPause: (participantId: string, data: Record<string, unknown>) => boolean,
     competingWrite: () => Promise<unknown>,
+    competingSession: SupabaseStorageEngine,
   ) {
     const engineInternals = storageEngine as unknown as {
       updateSequenceAssignmentRow: (participantId: string, data: Record<string, unknown>, operation: string) => Promise<void>;
     };
     const originalWrite = engineInternals.updateSequenceAssignmentRow.bind(storageEngine);
+    let attemptedLock!: () => void;
+    const lockAttempted = new Promise<void>((resolve) => { attemptedLock = resolve; });
+    // @ts-expect-error Observe the competing writer reaching the participant lock.
+    const runWithLock = competingSession._runWithLock.bind(competingSession);
+    // @ts-expect-error Observe acquisition without replacing the actual mutex.
+    vi.spyOn(competingSession, '_runWithLock').mockImplementation((key, operation) => {
+      if (key.startsWith('participant-')) attemptedLock();
+      return runWithLock(key, operation);
+    });
     let competing: Promise<unknown> | undefined;
     vi.spyOn(engineInternals, 'updateSequenceAssignmentRow').mockImplementation(async (participantId, data, operation) => {
       if (!competing && shouldPause(participantId, data)) {
         competing = competingWrite();
-        await Promise.race([
-          competing,
-          new Promise<void>((resolve) => { setTimeout(resolve, 300); }),
-        ]);
+        await lockAttempted;
       }
       await originalWrite(participantId, data, operation);
     });
@@ -2575,6 +2583,7 @@ describe.each([
       (participantId, data) => participantId === session.participantId && Array.isArray(data.conditions),
       // @ts-expect-error protected
       () => adminSession._markSequenceAssignmentTimedOut(session.participantId, Date.now()),
+      adminSession,
     );
 
     await storageEngine.updateStudyCondition('color');
@@ -2584,6 +2593,26 @@ describe.each([
       .find((candidate) => candidate.participantId === session.participantId);
     expect(assignment?.conditions).toEqual(['color']);
     expect(assignment?.autoTimedOutAt).toBeDefined();
+  });
+
+  test('progress preserves a concurrent timeout without taking the stage lock', async () => {
+    const session = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
+    const adminSession = await makeSecondSession();
+    const getCompeting = await interleaveWithAssignmentWrite(
+      (participantId, data) => participantId === session.participantId && data.total === 99,
+      // @ts-expect-error Exercise the timeout from a separate session.
+      () => adminSession._markSequenceAssignmentTimedOut(session.participantId, Date.now()),
+      adminSession,
+    );
+    // @ts-expect-error Observe locking on the progress writer, not the timeout writer.
+    const locks = vi.spyOn(storageEngine, '_runWithLock');
+    await storageEngine.updateProgressData({ total: 99, answered: ['intro'], isDynamic: false });
+    await getCompeting();
+    const assignment = await storageEngine.getSequenceAssignment(studyId, session.participantId);
+    expect(assignment).toMatchObject({ total: 99, answered: ['intro'] });
+    expect(assignment?.autoTimedOutAt).toBeDefined();
+    expect(locks).toHaveBeenCalledWith(`participant-${session.participantId}`, expect.any(Function));
+    expect(locks).not.toHaveBeenCalledWith(expect.stringMatching(/^stage-allocation-/), expect.any(Function));
   });
 
   // ── Legacy replacement fallback ──────────────────────────────────────────────
@@ -2608,6 +2637,89 @@ describe.each([
     expect(laterAssignment?.claimed).toBe(false);
   });
 
+  test.each(['early finish', 'recovered renewal', 'lost ownership'])('lock refresh handles %s', async (scenario) => {
+    vi.useFakeTimers();
+    try {
+      let finish!: (value: string) => void;
+      let started!: () => void;
+      const ready = new Promise<void>((resolve) => { started = resolve; });
+      // @ts-expect-error Exercise the distributed lock boundary.
+      const pending = storageEngine._runWithLock('review', () => {
+        started();
+        return new Promise<string>((resolve) => { finish = resolve; });
+      });
+      await ready;
+      if (scenario === 'lost ownership') {
+        revisitRows.find((row) => row.docId === 'lock_review')!.data = { token: 'another-owner', expiresAt: Date.now() + 60_000 };
+      } else {
+        supabaseFailureState.failNextUpdate = true;
+      }
+      await vi.advanceTimersByTimeAsync(20_000);
+      if (scenario === 'recovered renewal') await vi.advanceTimersByTimeAsync(20_000);
+      const result = scenario === 'lost ownership'
+        ? expect(pending).rejects.toThrow('Study update lock was lost')
+        : expect(pending).resolves.toBe('saved');
+      finish('saved');
+      await result;
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  test('admission continues after restoring an unkeyed legacy row with timeout disabled', async () => {
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'legacy-restored');
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'expired');
+    await storageEngine.rejectParticipant('legacy-restored', 'test');
+    // @ts-expect-error Simulate an assignment written before order keys existed.
+    await storageEngine._updateSequenceAssignmentFields('legacy-restored', { sequenceKey: undefined, sequenceIndex: undefined });
+    // @ts-expect-error Exercise the timeout operation without a wall-clock wait.
+    await storageEngine._markSequenceAssignmentTimedOut('expired', Date.now());
+    await storageEngine.undoRejectParticipant('legacy-restored');
+    const history = vi.spyOn(storageEngine, 'getAllSequenceAssignments');
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'newcomer');
+    const bootstrapReads = history.mock.calls.length;
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'next-newcomer');
+    expect(history).toHaveBeenCalledTimes(bootstrapReads);
+    expect(await storageEngine.getSequenceAssignment(studyId, 'legacy-restored')).toMatchObject({ rejected: false });
+  });
+
+  test('rejecting a restored timed-out replacement does not release its source twice', async () => {
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'source');
+    await storageEngine.rejectParticipant('source', 'test');
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'replacement');
+    // @ts-expect-error Exercise the timeout operation without a wall-clock wait.
+    await storageEngine._markSequenceAssignmentTimedOut('replacement', Date.now());
+    await storageEngine.rejectParticipant('replacement', 'test');
+    expect(await storageEngine.getSequenceAssignment(studyId, 'source')).toMatchObject({ claimed: true });
+    await storageEngine.undoRejectParticipant('replacement');
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'newcomer');
+    await storageEngine.rejectParticipant('replacement', 'test again');
+    expect(await storageEngine.getSequenceAssignment(studyId, 'source')).toMatchObject({ claimed: true });
+    expect((await storageEngine.getSequenceAssignment(studyId, 'newcomer'))?.claimedParticipantId).not.toBe('source');
+  });
+
+  test('an expired enabled condition is released when only a disabled condition has room', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    try {
+      vi.setSystemTime(new Date('2026-01-01T00:00:00Z'));
+      const config: StudyConfig = { ...configSimple, factors: { group: ['A', 'B'] }, betweenSubjects: ['group'] };
+      await storageEngine.saveConfig(config);
+      await storageEngine.setSequenceArray(generateSequenceArray(config));
+      const [a, b] = ['A', 'B'].map((group) => getBetweenSubjectsCombinationKey({ group }, ['group']));
+      await storageEngine.setStageDesiredParticipants(studyId, 'DEFAULT', a, 1, { [a]: 1, [b]: 1 });
+      await storageEngine.setStageCombinationEnabled(studyId, 'DEFAULT', b, false);
+      await storageEngine.setAutoTimeoutMinutes(studyId, 1);
+      await storageEngine.initializeParticipantSession({}, config, participantMetadata, 'expired');
+      await storageEngine.releaseExpiredAssignments();
+      vi.setSystemTime(new Date('2026-01-01T00:02:00Z'));
+      await storageEngine.initializeParticipantSession({}, config, participantMetadata, 'newcomer');
+      expect((await storageEngine.getSequenceAssignment(studyId, 'expired'))?.autoTimedOutAt).toBeDefined();
+      expect((await storageEngine.getSequenceAssignment(studyId, 'newcomer'))?.betweenSubjectsCombinationKey).toBe(a);
+      await storageEngine.releaseExpiredAssignments();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
   test('restoring a rejected, timed-out participant succeeds after a newcomer reuses their slot', async () => {
     await storageEngine.setCurrentStage(studyId, 'LIMITED', '#ff0000', 1);
     await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'timed-out');

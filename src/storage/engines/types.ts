@@ -438,9 +438,6 @@ export function getStageAllocationFromAssignments(all: SequenceAssignment[], sta
   const assignments = all.filter((assignment) => assignment.stage === stage && consumesCapacity(assignment));
   const combinationCounts: Record<string, number> = {};
   const rowCounts: Record<string, number> = {};
-  if (sequenceRows && all.some((assignment) => assignment.stage === stage && assignment.autoTimedOutAt !== undefined)) {
-    assertAutoTimeoutStageSupported(all, stage);
-  }
   assignments.forEach((assignment) => {
     if (assignment.betweenSubjectsCombinationKey) combinationCounts[assignment.betweenSubjectsCombinationKey] = (combinationCounts[assignment.betweenSubjectsCombinationKey] || 0) + 1;
     const sequenceKey = assignment.sequenceKey || (sequenceRows && assignment.sequenceIndex !== undefined
@@ -1450,11 +1447,12 @@ export abstract class StorageEngine {
    * the stage counts with the write, and a timeout only ever frees capacity.
    * Sweeps in this session run one at a time, so a call made during a sweep
    * gets its own pass, with current settings, once that sweep finishes.
+   * Resolves to the number of participants released, at most `limit`.
    */
-  async releaseExpiredAssignments(): Promise<void> {
+  async releaseExpiredAssignments(limit = Infinity): Promise<number> {
     const studyId = this.studyId!;
-    const sweep = this.timeoutSweeps.then(() => this.timeoutExpiredAssignments(studyId));
-    this.timeoutSweeps = sweep.catch(() => undefined);
+    const sweep = this.timeoutSweeps.then(() => this.timeoutExpiredAssignments(studyId, limit));
+    this.timeoutSweeps = sweep.then(() => undefined, () => undefined);
     return sweep;
   }
 
@@ -1479,10 +1477,10 @@ export abstract class StorageEngine {
     };
   }
 
-  private async timeoutExpiredAssignments(studyId: string): Promise<void> {
+  private async timeoutExpiredAssignments(studyId: string, limit: number): Promise<number> {
     const { timeoutMinutes, stage } = await this.readTimeoutSettings(studyId);
     if (timeoutMinutes === undefined) {
-      return;
+      return 0;
     }
 
     const assignments = await this._getTimeoutCandidates(stage);
@@ -1502,19 +1500,40 @@ export abstract class StorageEngine {
 
     // Each engine rechecks eligibility in the same operation that writes, so a
     // participant who finished or was rejected in the meantime keeps their slot.
+    // Stop at the first failed mutation; a later sweep retries the rest.
+    let released = 0;
     for (const assignment of expiredAssignments) {
-      // Settings changes hold the admission-policy lock, so recheck them under it:
-      // a timeout cannot land after a designer disables, changes, or moves it.
-      // Stop at the first failed mutation; a later sweep retries the rest.
+      if (released >= limit) break;
+      // Concurrent sweeps share a backlog, so skip rows already settled before
+      // paying for the timeout write's locks.
       // eslint-disable-next-line no-await-in-loop
-      const applied = await this._runWithLock(ADMISSION_POLICY_LOCK_KEY, async () => {
-        const current = await this.readTimeoutSettings(studyId);
-        if (this.studyId !== studyId || current.timeoutMinutes !== timeoutMinutes || current.stage !== stage) return false;
-        await this._markSequenceAssignmentTimedOut(assignment.participantId, serverNow, deadline);
-        return true;
-      });
-      if (!applied) return;
+      const latest = await this._getSequenceAssignment(assignment.participantId);
+      if (latest && consumesCapacity(latest) && latest.completed === null && latest.stage === stage) {
+        // eslint-disable-next-line no-await-in-loop
+        const result = await this.releaseExpiredAssignment(studyId, assignment.participantId, serverNow, deadline, { timeoutMinutes, stage });
+        if (result === 'stopped') break;
+        if (result === 'released') released += 1;
+      }
     }
+    return released;
+  }
+
+  // Times out one expired assignment. Settings changes hold the admission-policy
+  // lock, so recheck them under it: a timeout cannot land after a designer
+  // disables, changes, or moves it. Engines whose timeout write rechecks the
+  // settings itself override this.
+  protected async releaseExpiredAssignment(
+    studyId: string,
+    participantId: string,
+    serverNow: number,
+    deadline: number,
+    settings: { timeoutMinutes: number; stage: string },
+  ): Promise<'released' | 'skipped' | 'stopped'> {
+    return this._runWithLock(ADMISSION_POLICY_LOCK_KEY, async () => {
+      const current = await this.readTimeoutSettings(studyId);
+      if (this.studyId !== studyId || current.timeoutMinutes !== settings.timeoutMinutes || current.stage !== settings.stage) return 'stopped';
+      return await this._markSequenceAssignmentTimedOut(participantId, serverNow, deadline) ? 'released' : 'skipped';
+    });
   }
 
   // Patches an assignment without erasing a completion, rejection, or timeout
@@ -1715,20 +1734,25 @@ export abstract class StorageEngine {
     const admit = () => (this.hasAtomicSequenceReservation
       ? this._runWithLock(`initialize-participant-${this.currentParticipantId}`, initializeParticipant)
       : this._runWithLock(ADMISSION_POLICY_LOCK_KEY, initializeParticipant));
-    let initializedParticipant: ParticipantData;
-    try {
-      initializedParticipant = await admit();
-    } catch (error) {
-      if (!(error instanceof StageCapacityExceededError)) throw error;
-      // Expired participants are released lazily, so the stage may only be full
-      // of them. Release them and retry once before turning this participant away.
+    let initializedParticipant: ParticipantData | undefined;
+    while (!initializedParticipant) {
       try {
-        await this.releaseExpiredAssignments();
-      } catch (sweepError) {
-        console.warn('Failed to release expired participant allocations:', sweepError);
-        throw error;
+        // eslint-disable-next-line no-await-in-loop
+        initializedParticipant = await admit();
+      } catch (error) {
+        if (!(error instanceof StageCapacityExceededError || error instanceof StageOnlyDisabledConditionsHaveCapacityError)) throw error;
+        // Expired participants are released lazily, so the stage may only be full
+        // of them. Release one at a time and retry, so this participant waits only
+        // as long as needed, and turn them away once nothing more can be released.
+        let released = 0;
+        try {
+          // eslint-disable-next-line no-await-in-loop
+          released = await this.releaseExpiredAssignments(1);
+        } catch (sweepError) {
+          console.warn('Failed to release expired participant allocations:', sweepError);
+        }
+        if (released === 0) throw error;
       }
-      initializedParticipant = await admit();
     }
 
     // Release other expired participants without delaying this one.

@@ -1492,8 +1492,8 @@ describe.each([
     const scans = vi.spyOn(storageEngine, 'getAllSequenceAssignments');
     await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'new-participant');
     await storageEngine.releaseExpiredAssignments();
-    // Admission rebuilds a missing legacy allocation before the sweep needs it.
-    expect(historyReads).not.toHaveBeenCalled();
+    // A missing legacy allocation is bootstrapped once and then cached.
+    expect(historyReads).toHaveBeenCalledTimes(legacy ? 1 : 0);
     expect(scans).not.toHaveBeenCalled();
     const assignments = await storageEngine.getAllSequenceAssignments(studyId);
     expect(assignments.filter((assignment) => assignment.autoTimedOutAt !== undefined)).toHaveLength(3);
@@ -1502,8 +1502,96 @@ describe.each([
     expect(allocation.count).toBe(1);
     expect(Object.values(allocation.rowCounts).reduce((total, count) => total + count, 0)).toBe(1);
     expect(Object.values(allocation.combinationCounts).reduce((total, count) => total + count, 0)).toBe(1);
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'later-participant');
+    await storageEngine.releaseExpiredAssignments();
+    expect(historyReads).toHaveBeenCalledTimes(legacy ? 1 : 0);
   });
 
+  test.each(['early finish', 'recovered renewal', 'lost ownership'])('lock refresh handles %s', async (scenario) => {
+    vi.useFakeTimers();
+    try {
+      let finish!: (value: string) => void;
+      let started!: () => void;
+      const ready = new Promise<void>((resolve) => { started = resolve; });
+      // @ts-expect-error Exercise the distributed lock boundary.
+      const pending = storageEngine._runWithLock('review', () => {
+        started();
+        return new Promise<string>((resolve) => { finish = resolve; });
+      });
+      await ready;
+      if (scenario === 'lost ownership') {
+        firestoreData[`dev-${studyId}/locks`].review = { token: 'another-owner', expiresAt: Date.now() + 60_000 };
+      } else {
+        vi.mocked(runTransaction).mockRejectedValueOnce(new Error('temporary network failure'));
+      }
+      await vi.advanceTimersByTimeAsync(20_000);
+      if (scenario === 'recovered renewal') await vi.advanceTimersByTimeAsync(20_000);
+      const result = scenario === 'lost ownership'
+        ? expect(pending).rejects.toThrow('Study update lock was lost')
+        : expect(pending).resolves.toBe('saved');
+      finish('saved');
+      await result;
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  test('admission continues after restoring an unkeyed legacy row with timeout disabled', async () => {
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'legacy-restored');
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'expired');
+    await storageEngine.rejectParticipant('legacy-restored', 'test');
+    // @ts-expect-error Simulate an assignment written before order keys existed.
+    await storageEngine._updateSequenceAssignmentFields('legacy-restored', { sequenceKey: undefined, sequenceIndex: undefined });
+    // @ts-expect-error Exercise the timeout operation without a wall-clock wait.
+    await storageEngine._markSequenceAssignmentTimedOut('expired', Date.now());
+    await storageEngine.undoRejectParticipant('legacy-restored');
+    const history = vi.spyOn(storageEngine, 'getAllSequenceAssignments');
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'newcomer');
+    const bootstrapReads = history.mock.calls.length;
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'next-newcomer');
+    expect(history).toHaveBeenCalledTimes(bootstrapReads);
+    expect(await storageEngine.getSequenceAssignment(studyId, 'legacy-restored')).toMatchObject({ rejected: false });
+  });
+
+  test('rejecting a restored timed-out replacement does not release its source twice', async () => {
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'source');
+    await storageEngine.rejectParticipant('source', 'test');
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'replacement');
+    // @ts-expect-error Exercise the timeout operation without a wall-clock wait.
+    await storageEngine._markSequenceAssignmentTimedOut('replacement', Date.now());
+    await storageEngine.rejectParticipant('replacement', 'test');
+    expect(await storageEngine.getSequenceAssignment(studyId, 'source')).toMatchObject({ claimed: true });
+    await storageEngine.undoRejectParticipant('replacement');
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'newcomer');
+    await storageEngine.rejectParticipant('replacement', 'test again');
+    expect(await storageEngine.getSequenceAssignment(studyId, 'source')).toMatchObject({ claimed: true });
+    expect((await storageEngine.getSequenceAssignment(studyId, 'newcomer'))?.claimedParticipantId).not.toBe('source');
+  });
+
+  test('an expired enabled condition is released when only a disabled condition has room', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    try {
+      // @ts-expect-error Use the trusted backend clock boundary in the Firebase fake.
+      vi.spyOn(storageEngine, '_getServerTimeMs').mockImplementation(async () => Date.now());
+      vi.setSystemTime(new Date('2026-01-01T00:00:00Z'));
+      const config: StudyConfig = { ...configSimple, factors: { group: ['A', 'B'] }, betweenSubjects: ['group'] };
+      await storageEngine.saveConfig(config);
+      await storageEngine.setSequenceArray(generateSequenceArray(config));
+      const [a, b] = ['A', 'B'].map((group) => getBetweenSubjectsCombinationKey({ group }, ['group']));
+      await storageEngine.setStageDesiredParticipants(studyId, 'DEFAULT', a, 1, { [a]: 1, [b]: 1 });
+      await storageEngine.setStageCombinationEnabled(studyId, 'DEFAULT', b, false);
+      await storageEngine.setAutoTimeoutMinutes(studyId, 1);
+      await storageEngine.initializeParticipantSession({}, config, participantMetadata, 'expired');
+      await storageEngine.releaseExpiredAssignments();
+      vi.setSystemTime(new Date('2026-01-01T00:02:00Z'));
+      await storageEngine.initializeParticipantSession({}, config, participantMetadata, 'newcomer');
+      expect((await storageEngine.getSequenceAssignment(studyId, 'expired'))?.autoTimedOutAt).toBeDefined();
+      expect((await storageEngine.getSequenceAssignment(studyId, 'newcomer'))?.betweenSubjectsCombinationKey).toBe(a);
+      await storageEngine.releaseExpiredAssignments();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
   test('restoring a rejected, timed-out participant succeeds after a newcomer reuses their slot', async () => {
     await storageEngine.setCurrentStage(studyId, 'LIMITED', '#ff0000', 1);
     await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'timed-out');

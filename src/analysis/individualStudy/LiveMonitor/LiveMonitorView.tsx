@@ -176,18 +176,6 @@ export function LiveMonitorView({
     };
   }, [firebaseStoreageEngine, studyId]);
 
-  // Release expired participants when the monitor opens, so their status is
-  // current even if nobody new has joined the study.
-  useEffect(() => {
-    if (!storageEngine || !studyId) return;
-    const releaseExpiredAssignments = async () => {
-      await storageEngine.initializeStudyDb(studyId);
-      await storageEngine.releaseExpiredAssignments();
-    };
-    releaseExpiredAssignments()
-      .catch((error) => console.warn('Failed to release expired participant allocations:', error));
-  }, [storageEngine, studyId]);
-
   // Monitor browser online/offline status
   useEffect(() => {
     const handleOnline = () => {

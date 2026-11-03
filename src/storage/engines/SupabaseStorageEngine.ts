@@ -313,6 +313,7 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
     const lockDocumentId = `lock_${lockKey}`;
     const token = uuidv4();
     const expiresInMs = 60_000;
+    let lockExpiresAt = 0;
     const acquireLock = async (attempt: number): Promise<void> => {
       const now = Date.now();
       const { data: existingLockRow, error: readError } = await this.supabase
@@ -339,6 +340,7 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
             data: { token, expiresAt: now + expiresInMs },
           });
         if (!createError) {
+          lockExpiresAt = now + expiresInMs;
           return;
         }
         if (createError.code !== '23505') {
@@ -356,6 +358,7 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
           throw new Error('Failed to acquire expired study update lock');
         }
         if ((updatedLockRows?.length ?? 0) === 1) {
+          lockExpiresAt = now + expiresInMs;
           return;
         }
       }
@@ -372,17 +375,23 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
     await acquireLock(0);
 
     let lockRefreshError: unknown;
+    let lockLost = false;
     const refreshLock = async () => {
+      const now = Date.now();
       const { data, error } = await this.supabase
         .from('revisit')
-        .update({ data: { token, expiresAt: Date.now() + expiresInMs } })
+        .update({ data: { token, expiresAt: now + expiresInMs } })
         .eq('studyId', studyId)
         .eq('docId', lockDocumentId)
         .eq('data->>token', token)
         .select('docId');
-      if (error || (data?.length ?? 0) !== 1) {
-        throw error || new Error('Study update lock was lost');
+      if (error) throw error;
+      if ((data?.length ?? 0) !== 1) {
+        lockLost = true;
+        throw new Error('Study update lock was lost');
       }
+      lockExpiresAt = now + expiresInMs;
+      lockRefreshError = undefined;
     };
     const refreshTimer = setInterval(() => {
       refreshLock().catch((error: unknown) => {
@@ -392,8 +401,10 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
 
     try {
       const result = await operation();
-      if (lockRefreshError) {
-        throw lockRefreshError;
+      // A transient refresh failure does not undo a successful operation while
+      // our last acknowledged lease is still valid. Confirmed loss still fails.
+      if (lockLost || Date.now() >= lockExpiresAt) {
+        throw lockRefreshError || new Error('Study update lock was lost');
       }
       return result;
     } finally {
@@ -461,7 +472,7 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
 
     if (onlyIncomplete && (data.data.completed !== null || data.data.autoTimedOutAt !== undefined)) return false;
     if (data.data.rejected) return true;
-    const reusableSequenceIndex = data.data.claimedParticipantId
+    const reusableSequenceIndex = data.data.autoTimedOutAt === undefined && data.data.claimedParticipantId
       ? (await this.reserveSequenceAllocator(await this.getOrCreateSequenceAllocator(), undefined, false)).sequenceIndex : undefined;
     // Update the sequence assignment for the participant to mark it as rejected
     await this.updateSequenceAssignmentRow(
@@ -471,6 +482,9 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
       },
       'reject',
     );
+
+    // A timeout already released capacity; keep its source slot ownership intact.
+    if (data.data.autoTimedOutAt !== undefined) return true;
 
     const claimedParticipantId = data.data.claimedParticipantId as string | undefined;
     if (claimedParticipantId) {
@@ -1794,7 +1808,7 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
   // need a bootstrap after a timeout has released an order from this stage,
   // which keeps ordinary legacy recruitment bounded.
   private async hasUnknownLegacyRows(current: SupabaseStageAllocation, stage: string, sequenceRows?: SequenceRowContext) {
-    if (!sequenceRows || Object.values(current.rowCounts).reduce((total, count) => total + count, 0) === current.count) return false;
+    if (!sequenceRows || current.hasUnkeyedAssignments || Object.values(current.rowCounts).reduce((total, count) => total + count, 0) === current.count) return false;
     const timeouts = await this.supabase.from('revisit').select('docId', { count: 'exact', head: true })
       .eq('studyId', `${this.collectionPrefix}${this.studyId}`).like('docId', 'sequenceAssignment_%')
       .eq('data->>stage', stage)
@@ -1815,9 +1829,12 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
       if (legacyRows) {
         // Stage writers hold this lock, so bootstrap unknown legacy occupancy
         // before choosing new orders, without changing returning participants.
+        const assignments = await this.getAllSequenceAssignments(this.studyId!);
         rebuilt = {
           ...current,
-          ...getStageAllocationFromAssignments(await this.getAllSequenceAssignments(this.studyId!), stage, sequenceRows),
+          ...getStageAllocationFromAssignments(assignments, stage, sequenceRows),
+          hasUnkeyedAssignments: assignments.some((assignment) => assignment.stage === stage && consumesCapacity(assignment)
+            && !assignment.sequenceKey && assignment.sequenceIndex === undefined),
           needsRebuild: false,
           version: current.version + 1,
         };
@@ -1898,6 +1915,7 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
           // eslint-disable-next-line no-await-in-loop
           const result = await this.supabase.from('revisit').update({
             data: {
+              ...current,
               ...(invalidateBeforeWrite ? { needsRebuild: false } : {}),
               count: Math.max(0, current.count + Number(Boolean(after)) - Number(Boolean(before))),
               combinationCounts,
@@ -1933,4 +1951,4 @@ type SupabaseSequenceAllocator = SequenceAllocator & {
 };
 
 // Uncertain timeout writes leave durable invalidation for the next reader to rebuild.
-type SupabaseStageAllocation = StageAllocation & { version: number; needsRebuild?: boolean };
+type SupabaseStageAllocation = StageAllocation & { version: number; needsRebuild?: boolean; hasUnkeyedAssignments?: boolean };

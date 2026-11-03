@@ -767,6 +767,8 @@ test('legacy row occupancy uses saved indices after an earlier assignment is rej
   expect(getStageAllocationFromAssignments(assignments, 'LEGACY', { configHash: 'config', sequenceCount: 2 }))
     .toMatchObject({ count: 1, rowCounts: { 'config:1': 1 } });
   delete assignments[1].sequenceIndex;
-  expect(() => getStageAllocationFromAssignments(assignments, 'LEGACY', { configHash: 'config', sequenceCount: 2 }))
-    .toThrow('Create and activate a new stage');
+  // Unknown order remains usable with timeout disabled; settings validation owns
+  // the fresh-stage restriction when enabling auto-timeout.
+  expect(getStageAllocationFromAssignments(assignments, 'LEGACY', { configHash: 'config', sequenceCount: 2 }))
+    .toMatchObject({ count: 1, rowCounts: {} });
 });
