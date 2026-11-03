@@ -3551,3 +3551,29 @@ describe('standalone correct-answer acceptance rules', () => {
     }));
   });
 });
+
+test.each([['date', '11/02/2026'], ['time', '12:30']])('followup: validates materialized %s defaults', async (type, value) => {
+  const config = JSON.parse(readFileSync('public/demo-stroop-factors/config.json', 'utf8'));
+  config.factors = { visit: [value] };
+  config.betweenSubjects = [];
+  config.baseComponents = {
+    task: {
+      type: 'questionnaire',
+      response: [{
+        id: 'visit', type, prompt: 'Visit', default: '{{visit}}',
+      }],
+    },
+  };
+  config.components = {};
+  config.sequence = {
+    order: 'fixed',
+    components: [{
+      type: 'factor', id: 'visits', factor: 'visit', components: 'task',
+    }],
+  };
+  const parsed = await parseStudyConfig(JSON.stringify(config));
+  expect(Object.values(parsed.components)[0].response?.[0]).toMatchObject({ default: value });
+  expect(parsed.errors).toEqual([]);
+  config.factors.visit = ['invalid'];
+  expect((await parseStudyConfig(JSON.stringify(config))).errors).not.toEqual([]);
+});

@@ -525,6 +525,7 @@ export function ResponseBlock({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [matrixAnswers, rankingAnswers]);
 
+  const validationIsValid = answerValidator.isValid() || bypassValidationForFailedTraining;
   useEffect(() => {
     if (isAnalysis) return;
     const interactionSource = lastInteractionSourceRef.current;
@@ -540,13 +541,13 @@ export function ResponseBlock({
       updateResponseBlockValidation({
         location,
         identifier,
-        status: answerValidator.isValid() || bypassValidationForFailedTraining,
+        status: validationIsValid,
         replaceValues: true,
         values: structuredClone(answerValidator.values),
       }),
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [answerValidator.values, bypassValidationForFailedTraining, identifier, location, storeDispatch, updateResponseBlockValidation]);
+  }, [answerValidator.values, validationIsValid, identifier, location, storeDispatch, updateResponseBlockValidation]);
   useEffect(() => {
     if (isAnalysis || !liveErrors || hasRecordedShowErrorsRef.current) {
       return;
@@ -558,12 +559,12 @@ export function ResponseBlock({
       updateResponseBlockValidation({
         location,
         identifier,
-        status: answerValidator.isValid() || bypassValidationForFailedTraining,
+        status: validationIsValid,
         replaceValues: true,
         values: structuredClone(answerValidator.values),
       }),
     );
-  }, [actions, answerValidator, bypassValidationForFailedTraining, identifier, isAnalysis, liveErrors, location, storeDispatch, trrack, updateResponseBlockValidation]);
+  }, [actions, answerValidator, validationIsValid, identifier, isAnalysis, liveErrors, location, storeDispatch, trrack, updateResponseBlockValidation]);
   const matrixRowFeedback = useMemo(() => Object.fromEntries(allResponsesWithDefaults.flatMap((response) => {
     if (response.type !== 'matrix-checkbox' || !checkedAnswerValues || !checkAnswerResponses || !Object.hasOwn(checkAnswerResponses, response.id)) return [];
     if (checkAnswerScores?.[response.id] !== undefined || hasResponseScorer(response)) return [];

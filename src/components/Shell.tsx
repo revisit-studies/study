@@ -503,7 +503,7 @@ function StudyShell({ globalConfig }: { globalConfig: GlobalConfig }) {
         const activeHash = await activeHashPromise;
         const sequenceArray = await storageEngine.getOrCreateSequenceArray(
           activeHash,
-          () => generateSequenceArray(activeConfig, activeConfig.warnings),
+          () => generateSequenceArray(activeConfig),
         );
         if (!isCurrentStartup()) return;
 
@@ -687,7 +687,7 @@ function StudyShell({ globalConfig }: { globalConfig: GlobalConfig }) {
 
         try {
           // Preserve the existing disconnected-storage and participant alert recovery paths.
-          const generatedSequences = await generateSequenceArray(activeConfig, activeConfig.warnings);
+          const generatedSequences = await generateSequenceArray(activeConfig);
 
           const matchingSequence = generatedSequences[0];
           const fallbackSequence = filterSequenceByCondition(

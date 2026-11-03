@@ -195,7 +195,8 @@ function sampleFactorConditions(
   samplingStrategy: 'withoutReplacement' | 'withReplacement',
   context?: FactorOrderContext,
 ): FactorCondition[] {
-  const existing = context?.sampledConditions.get(factorName);
+  const cacheKey = JSON.stringify([factorName, conditions, numSamples, samplingStrategy]);
+  const existing = context?.sampledConditions.get(cacheKey);
   if (existing) {
     return existing;
   }
@@ -205,7 +206,7 @@ function sampleFactorConditions(
       conditions[Math.floor(Math.random() * conditions.length)]
     ))
     : shuffleValues(conditions).slice(0, numSamples);
-  context?.sampledConditions.set(factorName, selected);
+  context?.sampledConditions.set(cacheKey, selected);
   return selected;
 }
 

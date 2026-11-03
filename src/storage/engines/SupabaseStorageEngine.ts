@@ -21,6 +21,8 @@ function parseSupabaseTimestamp(timestamp: string): number {
 class TimeoutNotAppliedError extends Error {}
 
 export class SupabaseStorageEngine extends CloudStorageEngine {
+  private readonly heldLocks = new Map<string, string>();
+
   private supabase = createClient(import.meta.env.VITE_SUPABASE_URL, import.meta.env.VITE_SUPABASE_ANON_KEY, {
     global: {
       fetch: (input, init) => {
@@ -242,12 +244,22 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
     const createdAt = previous?.rejected && !sequenceAssignment.rejected
       ? await this.getServerTimestamp() : undefined;
     await this.changeStageCounts(previous, sequenceAssignment, async () => {
-      const { error } = await this.supabase.from('revisit').upsert({
+      const admissionToken = this.heldLocks.get('participant-assignment');
+      const row = {
         studyId: `${this.collectionPrefix}${this.studyId}`,
         docId: `sequenceAssignment_${participantId}`,
         data: { ...sequenceAssignment, withServerTimestamp },
         ...(createdAt === undefined ? {} : { createdAt }),
-      });
+      };
+      const { error } = admissionToken
+        ? await this.supabase.rpc('revisit_reserve_assignment', {
+          p_study_id: row.studyId,
+          p_participant_id: participantId,
+          p_assignment: row.data,
+          p_token: admissionToken,
+          p_created_at: createdAt ?? null,
+        })
+        : await this.supabase.from('revisit').upsert(row);
       if (error) throw new Error(`Failed to create sequence assignment for participant ${participantId}`);
     });
   }
@@ -413,6 +425,7 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
       });
     }, expiresInMs / 3);
 
+    this.heldLocks.set(lockKey, token);
     try {
       if (performance.now() >= lockExpiresAt) throw new Error('Study update lock expired before the operation started');
       const result = await operation();
@@ -423,6 +436,7 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
       }
       return result;
     } finally {
+      if (this.heldLocks.get(lockKey) === token) this.heldLocks.delete(lockKey);
       clearInterval(refreshTimer);
       const { error } = await this.supabase
         .from('revisit')
@@ -1707,7 +1721,7 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
       reusableSequenceIndex = await this.getLegacySequenceIndex(reusableTimestamp);
     }
 
-    if (reusableRow && reusableAssignment && reusableSequenceIndex !== undefined) {
+    if (reusableRow && reusableAssignment && reusableSequenceIndex !== undefined && !this.heldLocks.has('participant-assignment')) {
       const { data: claimedRows, error: claimError } = await this.supabase
         .from('revisit')
         .update({

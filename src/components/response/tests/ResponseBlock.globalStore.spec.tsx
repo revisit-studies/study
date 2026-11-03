@@ -23,6 +23,7 @@ vi.mock('../../../routes/utils', () => ({
 }));
 vi.mock('react-router', () => ({ useParams: () => ({}), useNavigate: () => vi.fn(), useSearchParams: () => [new URLSearchParams()] }));
 vi.mock('../../../store/hooks/useIsAnalysis', () => ({ useIsAnalysis: () => false }));
+vi.mock('../customResponseModules', () => ({ getCustomResponseModule: () => null, getCustomResponseModuleLoadError: () => null, getResponseCodeModule: () => ({ validate: (value: unknown, values: Record<string, unknown>) => (Number(value) <= Number(values.limit) ? null : 'Too large') }) }));
 vi.mock('../../NextButton', () => ({ NextButton: ({ checkAnswer }: { checkAnswer: ReactNode }) => checkAnswer }));
 afterEach(() => {
   cleanup();
@@ -100,4 +101,47 @@ test.each(['unsubmitted', 'accepted'])('Check Answer persists grading progress f
   expect(store.store.getState().globalStoreGraph?.current).toBe(graph?.current);
   expect(store.store.getState().globalVariables).toEqual({ budget: 100 });
   expect(saveAnswers.mock.lastCall?.[0]).toMatchObject({ purchase_0: { answer: expectedAnswer, checkAnswer: { checkedAnswers: { cost: 20 } } } });
+});
+
+test('followup: correcting another location refreshes dependent validity', async () => {
+  vi.stubGlobal('matchMedia', vi.fn(() => ({ matches: false, addEventListener: vi.fn(), removeEventListener: vi.fn() })));
+  vi.stubGlobal('ResizeObserver', class {
+    observe() {}
+
+    unobserve() {}
+
+    disconnect() {}
+  });
+  const component: IndividualComponent = {
+    type: 'questionnaire',
+    response: [
+      {
+        id: 'amount', type: 'numerical', prompt: 'Amount', location: 'aboveStimulus', default: 5, path: 'probe.response.ts',
+      },
+      {
+        id: 'limit', type: 'numerical', prompt: 'Limit', location: 'belowStimulus', default: 3,
+      },
+    ],
+  };
+  const config = makeStudyConfig({ globalVariables: { budget: 100 }, components: { purchase: component } });
+  const context = await studyStoreCreator('study', config, {
+    order: 'fixed', orderPath: 'root', components: ['purchase', 'end'], skip: [],
+  }, {
+    userAgent: '', resolution: {}, language: '', ip: null,
+  }, {}, { dataCollectionEnabled: true, developmentModeEnabled: true, dataSharingEnabled: false }, 'p', false, false);
+  render(
+    <Provider store={context.store}>
+      <StudyStoreContext.Provider value={context}>
+        <MantineProvider>
+          <WindowEventsContext.Provider value={{ current: [] }}>
+            <ResponseBlock config={component} location="aboveStimulus" />
+            <ResponseBlock config={component} location="belowStimulus" />
+          </WindowEventsContext.Provider>
+        </MantineProvider>
+      </StudyStoreContext.Provider>
+    </Provider>,
+  );
+  expect(context.store.getState().trialValidation.purchase_0.aboveStimulus.valid).toBe(false);
+  fireEvent.change(screen.getByRole('textbox', { name: /Limit/ }), { target: { value: '10' } });
+  await waitFor(() => expect(context.store.getState().trialValidation.purchase_0.aboveStimulus.valid).toBe(true));
 });
