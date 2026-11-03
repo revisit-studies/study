@@ -10,7 +10,7 @@ import { afterEach, expect, test } from 'vitest';
 import { loadEnv } from 'vite';
 import { parse } from 'yaml';
 
-type Step = { name?: string; uses?: string; run?: string; env?: Record<string, string>; with?: Record<string, string> };
+type Step = { name?: string; if?: string; uses?: string; run?: string; env?: Record<string, string>; with?: Record<string, string> };
 const root = fileURLToPath(new URL('../../../', import.meta.url));
 const workflow = parse(readFileSync(resolve(root, '.github/workflows/deploy_website.yaml'), 'utf8')) as { jobs: Record<string, { steps: Step[] }> };
 const temporaryDirectories: string[] = [];
@@ -55,6 +55,45 @@ test.each(['deploy-main', 'deploy-dev', 'pr-deploy'])('release regression: %s ho
     });
     expect(readFileSync(output, 'utf8')).toBe(engine || loadEnv('production', root).VITE_STORAGE_ENGINE);
   }
+});
+
+test.each(['deploy-main', 'deploy-dev', 'pr-deploy'])('%s supplies the Enterprise key only to official builds', (job) => {
+  const directory = temporaryDirectory();
+  const yarn = resolve(directory, 'yarn');
+  // Preserve explicit empty overrides, as Vite does for environment variables.
+  // eslint-disable-next-line no-template-curly-in-string -- These are shell parameter expansions.
+  writeFileSync(yarn, '#!/bin/sh\nprintf "%s" "${VITE_RECAPTCHA_ENTERPRISE_SITE_KEY-$TEST_DOTENV_ENTERPRISE_KEY}" > "$TEST_BUILD_KEY"\n');
+  chmodSync(yarn, 0o755);
+  const { steps } = workflow.jobs[job];
+  const stepName = {
+    'deploy-main': 'Build main deployment', 'deploy-dev': 'Build dev deployment', 'pr-deploy': 'Build PR deployment',
+  }[job];
+  const forkStep = steps.find(({ name }) => name === stepName)!;
+  const officialStep = job === 'pr-deploy'
+    ? steps.find(({ name }) => name === 'Build with github environment variables')! : forkStep;
+  if (job === 'pr-deploy') expect(officialStep.if).toContain("github.repository == 'revisit-studies/study'");
+  const build = (step: Step, repository: string, enterpriseKey?: string) => {
+    const environment = { ...process.env };
+    delete environment.VITE_RECAPTCHA_ENTERPRISE_SITE_KEY;
+    if (enterpriseKey !== undefined) environment.VITE_RECAPTCHA_ENTERPRISE_SITE_KEY = enterpriseKey;
+    const output = resolve(directory, 'enterprise-key');
+    execFileSync('bash', ['-e', '-c', expand(step.run!, 'firebase')], {
+      cwd: root,
+      env: {
+        ...environment,
+        ...Object.fromEntries(Object.entries(step.env ?? {}).map(([key, value]) => [key, expand(value, 'firebase')])),
+        PATH: `${directory}:${process.env.PATH}`,
+        GITHUB_REPOSITORY: repository,
+        TEST_BUILD_KEY: output,
+        TEST_DOTENV_ENTERPRISE_KEY: loadEnv('production', root).VITE_RECAPTCHA_ENTERPRISE_SITE_KEY,
+      },
+    });
+    return readFileSync(output, 'utf8');
+  };
+  expect(build(officialStep, 'revisit-studies/study')).toBe('6LeksfUtAAAAADwbkOg-HyN8ZkMD04uIbJvrSWeX');
+  expect(build(forkStep, 'researcher/research-study')).toBe('');
+  expect(build(forkStep, 'researcher/research-study', '')).toBe('');
+  expect(build(forkStep, 'researcher/research-study', 'fork-enterprise-key')).toBe('fork-enterprise-key');
 });
 
 test('release regression: a downstream repository can publish without an existing gh-pages branch', () => {
