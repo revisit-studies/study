@@ -3,6 +3,7 @@ import {
   afterEach,
   vi,
 } from 'vitest';
+import isEqual from 'lodash.isequal';
 import { ParticipantMetadata, StudyConfig } from '../../parser/types';
 import testConfigSimple from './testConfigSimple.json';
 import testConfigSimple2 from './testConfigSimple2.json';
@@ -83,6 +84,11 @@ vi.mock('@supabase/supabase-js', () => {
   ): Array<RowData> {
     return rows.filter((row) => filters.every(({ col, val, type }) => {
       const colVal = getFieldValue(row, col);
+      if (col.startsWith('data->') && !col.startsWith('data->>')) {
+        const jsonVal = JSON.parse(String(val));
+        if (type === 'eq') return isEqual(colVal, jsonVal);
+        if (type === 'neq') return !isEqual(colVal, jsonVal);
+      }
       // PostgREST compares filter values as text, so `data->>rejected` matches
       // the string 'false' rather than the boolean.
       if (type === 'eq') return col === 'data' ? JSON.stringify(colVal) === val : String(colVal) === String(val);
@@ -2677,6 +2683,35 @@ describe.each([
     await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'third');
     await expect(storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'fourth'))
       .rejects.toThrow(/participant limit/);
+  });
+
+  test('stage allocation initializes and rebuilds nonzero condition counts', async () => {
+    const config: StudyConfig = { ...configSimple, factors: { group: ['A', 'B'] }, betweenSubjects: ['group'] };
+    await storageEngine.saveConfig(config);
+    await storageEngine.setSequenceArray(generateSequenceArray(config));
+    await storageEngine.setCurrentStage(studyId, 'RECOUNT', '#00AAFF', 5);
+    await storageEngine.initializeParticipantSession({}, config, participantMetadata, 'counted-a');
+    await storageEngine.initializeParticipantSession({}, config, participantMetadata, 'counted-b');
+    const keys = ['A', 'B'].map((group) => getBetweenSubjectsCombinationKey({ group }, ['group']));
+    const allocationIndex = revisitRows.findIndex((row) => row.studyId === `dev-${studyId}` && row.docId === 'stageAllocation_RECOUNT');
+    const [original] = revisitRows.splice(allocationIndex, 1);
+    // @ts-expect-error Inspect initialization from existing assignment history.
+    const initialized = await storageEngine.getStageAllocation('RECOUNT', keys);
+    expect(initialized.count).toBe(2);
+    expect(initialized.combinationCounts).toEqual(Object.fromEntries(keys.map((key) => [key, 1])));
+
+    const row = revisitRows.find((item) => item.studyId === `dev-${studyId}` && item.docId === 'stageAllocation_RECOUNT')!;
+    row.data = {
+      ...original.data as object,
+      count: 0,
+      combinationCounts: Object.fromEntries(keys.map((key) => [key, 0])),
+      needsRebuild: true,
+    };
+    // @ts-expect-error Inspect aggregate recovery of condition and sequence-row counts.
+    const rebuilt = await storageEngine.getStageAllocation('RECOUNT', keys);
+    expect(rebuilt.count).toBe(2);
+    expect(rebuilt.combinationCounts).toEqual(initialized.combinationCounts);
+    expect(Object.values(rebuilt.rowCounts).sort()).toEqual([1, 1]);
   });
 
   test('reading stage counts takes the stage lock only when they need a rebuild', async () => {
