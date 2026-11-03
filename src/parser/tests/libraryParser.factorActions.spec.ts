@@ -732,6 +732,39 @@ describe('factor sequence actions', () => {
     expect(typeof component.path).toBe('string');
   });
 
+  test.each([
+    { factor: { values: ['A', 'B', 'C'], order: 'random' as const, numSamples: 2 }, expected: [] },
+    { factor: { values: ['A', 'B', 'C'], order: 'random' as const, numSamples: 1 }, expected: ['Zip factor `knownZip` received inputs with different lengths (1, 2); stopping after the shortest input'] },
+  ])('reports only real post-sampling length mismatches for $factor.numSamples ordered values', async ({ factor, expected }) => {
+    const config = factorConfig();
+    config.baseComponents!.trial = { type: 'questionnaire', response: [] };
+    config.factors!.ordered = factor;
+    config.sequence = {
+      type: 'factor', id: 'knownZip', factor: { action: 'zip', factors: ['ordered', 'b'] }, components: 'trial',
+    };
+    const parsed = await parseStudyConfig(JSON.stringify(config));
+    expect(parsed.errors).toEqual([]);
+    expect(parsed.warnings.filter((warning) => warning.category === 'sequence-validation').map((warning) => warning.message)).toEqual(expected);
+  });
+
+  test('reports zip mismatch through nested sampling and repetition before sequence preparation', async () => {
+    const config = factorConfig();
+    config.baseComponents!.trial = { type: 'questionnaire', response: [] };
+    config.factors!.sampled = {
+      action: 'sample', factors: ['a'], numSamples: 2, samplingStrategy: 'withoutReplacement',
+    };
+    config.factors!.repeated = { action: 'repeat', factors: ['sampled'], numRepeats: 2 };
+    config.sequence = {
+      type: 'factor', id: 'nestedZip', factor: { action: 'zip', factors: ['repeated', 'b'] }, components: 'trial',
+    };
+    const parsed = await parseStudyConfig(JSON.stringify(config));
+    expect(parsed.errors).toEqual([]);
+    expect(parsed.warnings.map((warning) => warning.message)).toContain('Zip factor `nestedZip` received inputs with different lengths (4, 2); stopping after the shortest input');
+    const savedConfig = JSON.stringify(parsed);
+    generateSequenceArray(parsed);
+    expect(JSON.stringify(parsed)).toBe(savedConfig);
+  });
+
   test('checks zip lengths after sampling rather than against the full input pool', () => {
     const config = factorConfig();
     config.factors!.sampledA = {
@@ -770,12 +803,11 @@ describe('factor sequence actions', () => {
     }, config, errors, warnings);
 
     expect(errors).toEqual([]);
-    expect(warnings).toEqual([]);
+    const expectedWarning = 'Zip factor `runtimeZip` received inputs with different lengths (2, 1); stopping after the shortest input';
+    expect(warnings.map((warning) => warning.message)).toContain(expectedWarning);
     const sequences = generateSequenceArray({ ...config, ...compiled }, warnings);
     expect(getSequenceFlatMap(sequences[0])).toHaveLength(2);
-    expect(warnings.map((warning) => warning.message)).toContain(
-      'Zip factor `runtimeZip` received inputs with different lengths (2, 1); stopping after the shortest input',
-    );
+    expect(warnings.map((warning) => warning.message)).toContain(expectedWarning);
   });
 
   test('surfaces warnings when runtime zip inputs become unequal', () => {
@@ -797,7 +829,7 @@ describe('factor sequence actions', () => {
     const warnings: ParserErrorWarning[] = [];
     const compiled = compileFactorBlocks(config.sequence, config, errors, warnings);
     expect(errors).toEqual([]);
-    expect(warnings).toEqual([]);
+    expect(warnings.map((warning) => warning.message)).toContain('Zip factor `runtimeZipSampled` received inputs with different lengths (1, 2); stopping after the shortest input');
 
     const sequences = generateSequenceArray({
       ...config,
@@ -1019,6 +1051,7 @@ describe('factor sequence actions', () => {
     });
 
     expect(result.errors).toEqual([]);
+    expect(result.warnings.filter((warning) => warning.message.includes('different lengths'))).toEqual([]);
     expect(sequences).toHaveLength(12);
     sequences.forEach((sequence) => {
       const taskParameters = getSequenceFlatMap(sequence).flatMap((componentId) => {

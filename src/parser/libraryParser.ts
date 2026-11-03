@@ -157,6 +157,9 @@ type MaterializedFactorCondition = Record<string, FactorObjectValue>;
 type FactorParameterNames = Record<string, string>;
 type FactorResolution = {
   conditions: FactorCondition[];
+  // Materialization retains all possible values. Track the selected count for
+  // diagnostics; null means runtime filtering makes that count unpredictable.
+  runtimeCount?: number | null;
   numSamples?: number;
   samplingStrategy?: 'withoutReplacement' | 'withReplacement';
   parameterNames?: FactorParameterNames;
@@ -455,6 +458,19 @@ function crossFactorConditions(
   ), [{}]);
 }
 
+function warnZipLengths(
+  lengths: number[],
+  factorName: string,
+  warnings: ParserErrorWarning[],
+) {
+  if (new Set(lengths).size > 1) {
+    addFactorWarning(
+      warnings,
+      `Zip factor \`${factorName}\` received inputs with different lengths (${lengths.join(', ')}); stopping after the shortest input`,
+    );
+  }
+}
+
 function zipFactorConditions(
   conditionSets: FactorCondition[][],
   factorName: string,
@@ -462,12 +478,7 @@ function zipFactorConditions(
   warnings: ParserErrorWarning[],
 ): FactorCondition[] {
   const lengths = conditionSets.map((conditions) => conditions.length);
-  if (new Set(lengths).size > 1) {
-    addFactorWarning(
-      warnings,
-      `Zip factor \`${factorName}\` received inputs with different lengths (${lengths.join(', ')}); stopping after the shortest input`,
-    );
-  }
+  warnZipLengths(lengths, factorName, warnings);
 
   const length = lengths.length > 0 ? Math.min(...lengths) : 0;
   return Array.from({ length }, (_, index) => (
@@ -518,6 +529,10 @@ function filterFactorConditionsByAssignment(
       materialized[name] === undefined || isEqual(materialized[name], value)
     ));
   });
+}
+
+function getFactorRuntimeCount(resolution: FactorResolution) {
+  return resolution.runtimeCount === undefined ? resolution.conditions.length : resolution.runtimeCount;
 }
 
 function resolveFactor(
@@ -578,6 +593,7 @@ function resolveFactor(
           ? { ...value }
           : { [factorName]: value }
       )),
+      runtimeCount: Math.min(eligibleValues.length, factor.numSamples ?? eligibleValues.length),
       hasRuntimeOrder: (
         (factor.order !== undefined && factor.order !== 'fixed')
         || factor.numSamples !== undefined
@@ -648,12 +664,16 @@ function resolveFactor(
       ));
     };
 
+    const conditions = resolution.conditions.filter((sourceCondition) => (
+      factor.action === 'keep'
+        ? matchesSelection(sourceCondition)
+        : !matchesSelection(sourceCondition)
+    ));
+    const completeInputs = getFactorRuntimeCount(resolution) === resolution.conditions.length
+      && (!itemResolution || getFactorRuntimeCount(itemResolution) === itemResolution.conditions.length);
     return {
-      conditions: resolution.conditions.filter((sourceCondition) => (
-        factor.action === 'keep'
-          ? matchesSelection(sourceCondition)
-          : !matchesSelection(sourceCondition)
-      )),
+      conditions,
+      runtimeCount: completeInputs ? conditions.length : null,
       parameterNames: resolution.parameterNames,
       hasRuntimeOrder: resolution.hasRuntimeOrder || itemResolution?.hasRuntimeOrder,
       hasRuntimeSample: resolution.hasRuntimeSample
@@ -720,6 +740,9 @@ function resolveFactor(
   ));
 
   const conditionSets = resolutions.map((resolution) => resolution.conditions);
+  const counts = resolutions.map(getFactorRuntimeCount);
+  const runtimeCounts = counts.every((count): count is number => count !== null) ? counts : null;
+  const concatenatedCount = runtimeCounts?.reduce((total, count) => total + count, 0) ?? null;
   const hasRuntimeOrder = resolutions.some((resolution) => resolution.hasRuntimeOrder);
   const hasRuntimeSample = resolutions.some((resolution) => (
     resolution.hasRuntimeSample || resolution.numSamples !== undefined
@@ -731,16 +754,21 @@ function resolveFactor(
   if (action === 'cross') {
     return {
       conditions: crossFactorConditions(conditionSets),
+      runtimeCount: runtimeCounts?.reduce((total, count) => total * count, 1) ?? null,
       parameterNames,
       hasRuntimeOrder,
       hasRuntimeSample,
     };
   }
   if (action === 'zip') {
+    if (mode === 'materialize' && runtimeCounts && (hasRuntimeOrder || hasRuntimeSample)) {
+      warnZipLengths(runtimeCounts, factorName, warnings);
+    }
     return {
       conditions: mode === 'materialize' && (hasRuntimeOrder || hasRuntimeSample)
         ? crossFactorConditions(conditionSets)
         : zipFactorConditions(conditionSets, factorName, errors, warnings),
+      runtimeCount: runtimeCounts ? Math.min(...runtimeCounts) : null,
       parameterNames,
       hasRuntimeOrder,
       hasRuntimeSample,
@@ -750,7 +778,7 @@ function resolveFactor(
   const conditions = conditionSets.flat();
   if (action === 'concat') {
     return {
-      conditions, parameterNames, hasRuntimeOrder, hasRuntimeSample,
+      conditions, runtimeCount: concatenatedCount, parameterNames, hasRuntimeOrder, hasRuntimeSample,
     };
   }
   if (factor.action === 'repeat') {
@@ -760,6 +788,7 @@ function resolveFactor(
     }
     return {
       conditions: Array.from({ length: factor.numRepeats }, () => conditions).flat(),
+      runtimeCount: concatenatedCount === null ? null : concatenatedCount * factor.numRepeats,
       parameterNames,
       hasRuntimeOrder,
       hasRuntimeSample,
@@ -825,8 +854,11 @@ function resolveFactor(
       hasRuntimeOrder,
     };
   }
+  const runtimeCount = factor.samplingStrategy === 'withReplacement'
+    ? factor.numSamples : concatenatedCount;
   return {
     conditions,
+    runtimeCount: runtimeCount === null ? null : Math.min(factor.numSamples, runtimeCount),
     numSamples: factor.numSamples,
     samplingStrategy: factor.samplingStrategy,
     parameterNames,
