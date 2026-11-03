@@ -305,6 +305,7 @@ function verifyDateTimeResponseConstraints(
   componentPath: string,
   component: Partial<IndividualComponent>,
   errors: ParserErrorWarning[],
+  allowTemplates = false,
 ) {
   component.response?.forEach((response, index) => {
     if (response.type !== 'date' && response.type !== 'time') {
@@ -328,6 +329,7 @@ function verifyDateTimeResponseConstraints(
         return;
       }
 
+      if (allowTemplates && /{{[^}]+}}/.test(value)) return;
       if (!isValidValue(value)) {
         errors.push({
           message: `${response.type} ${field} must be a valid ${expectedFormat} value`,
@@ -522,7 +524,7 @@ function verifyStudyConfig(studyConfig: StudyConfig, importedLibrariesData: Reco
   Object.entries(studyConfig.baseComponents ?? {}).forEach(([componentName, component]) => {
     verifyCorrectAnswers(`/baseComponents/${componentName}`, component, errors);
     verifyTextResponseConstraints(`/baseComponents/${componentName}`, component, errors, warnings);
-    verifyDateTimeResponseConstraints(`/baseComponents/${componentName}`, component, errors);
+    verifyDateTimeResponseConstraints(`/baseComponents/${componentName}`, component, errors, true);
     verifyDropdownResponseConstraints(`/baseComponents/${componentName}`, component, errors);
     verifyKeyMappings(`/baseComponents/${componentName}`, component, errors, []);
   });

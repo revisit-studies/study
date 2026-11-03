@@ -1092,3 +1092,30 @@ describe('release regressions: factor allocation', () => {
     expect(errors).toContainEqual(expect.objectContaining({ message: expect.stringMatching(/order/) }));
   });
 });
+
+test('followup: sampled aliases retain trials for every between-subject assignment', async () => {
+  const config = factorConfig();
+  config.uiConfig.numSequences = 4;
+  config.baseComponents = { trial: { type: 'questionnaire', response: [] } };
+  config.factors = {
+    values: ['a', 'b'],
+    first: ['a', 'b'],
+    second: ['a', 'b'],
+    sample: {
+      action: 'sample', factors: ['values'], numSamples: 1, samplingStrategy: 'withoutReplacement',
+    },
+    pair: { action: 'cross', factors: ['sample', 'sample'], as: ['first', 'second'] },
+  };
+  config.betweenSubjects = ['first', 'second'];
+  config.sequence = {
+    order: 'fixed',
+    components: [{
+      type: 'factor', id: 'pairs', factor: 'pair', components: 'trial',
+    }],
+  };
+  const parsed = await parseStudyConfig(JSON.stringify(config));
+  expect(parsed.errors).toEqual([]);
+  const sequences = generateSequenceArray(parsed);
+  expect(sequences).toHaveLength(4);
+  sequences.forEach((sequence) => expect(getSequenceFlatMap(sequence).filter((id) => id !== 'end')).toHaveLength(1));
+});

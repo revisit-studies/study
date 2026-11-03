@@ -12,6 +12,7 @@ import {
   getShellUiState, getStartupErrorMessage, Shell, StudyLoadingOverlay,
 } from '../Shell';
 import type { ParsedConfig, StudyConfig } from '../../parser/types';
+import { generateSequenceArray } from '../../utils/handleRandomSequences';
 import { getStudyConfig, resolveConfigKey } from '../../utils/fetchConfig';
 import { makeGlobalConfig, makeStudyConfig } from '../../tests/utils';
 import { studyStoreCreator } from '../../store/store';
@@ -962,4 +963,22 @@ describe('Shell', () => {
       expect.any(Error),
     );
   });
+});
+
+test('followup: runtime sequence warnings cannot mutate the saved config', async () => {
+  const config = { ...mockActiveConfig, warnings: [] };
+  vi.mocked(getStudyConfig).mockResolvedValue(config);
+  const engine = makeStartupEngine();
+  engine.getOrCreateSequenceArray.mockImplementation(async (_hash, generate) => generate());
+  mockStorageEngine = engine;
+  const generate = vi.mocked(generateSequenceArray).mockImplementationOnce((_config, warnings = []) => {
+    warnings.push({
+      message: 'runtime warning', instancePath: '/factors/', params: {}, category: 'sequence-validation',
+    });
+    return [];
+  });
+  render(<Shell globalConfig={globalConfig} />);
+  await waitFor(() => expect(engine.initializeParticipantSession).toHaveBeenCalled());
+  expect(config.warnings).toEqual([]);
+  generate.mockRestore();
 });

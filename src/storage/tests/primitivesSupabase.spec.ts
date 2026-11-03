@@ -193,6 +193,13 @@ vi.mock('@supabase/supabase-js', () => {
   return {
     AuthError: class AuthError extends Error { },
     createClient: vi.fn(() => ({
+      rpc: async (_name: string, args: { p_study_id: string; p_participant_id: string; p_assignment: RowData; p_token: string; p_created_at: string | null }) => {
+        const lock = revisitRows.find((row) => row.studyId === args.p_study_id && row.docId === 'lock_participant-assignment')?.data as RowData | undefined;
+        if (lock?.token !== args.p_token || Number(lock?.expiresAt) <= Date.now()) return { error: { message: 'Admission lease expired' } };
+        return makeQueryBuilder(() => revisitRows).upsert({
+          studyId: args.p_study_id, docId: `sequenceAssignment_${args.p_participant_id}`, data: args.p_assignment, ...(args.p_created_at ? { createdAt: args.p_created_at } : {}),
+        });
+      },
       from: (_table: string) => makeQueryBuilder(() => revisitRows),
       schema: (schemaName: string) => ({
         from: (_table: string) => makeQueryBuilder(() => {

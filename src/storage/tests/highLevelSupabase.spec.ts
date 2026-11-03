@@ -290,6 +290,13 @@ vi.mock('@supabase/supabase-js', () => {
   return {
     AuthError: class AuthError extends Error { },
     createClient: () => ({
+      rpc: async (_name: string, args: { p_study_id: string; p_participant_id: string; p_assignment: RowData; p_token: string; p_created_at: string | null }) => {
+        const lock = revisitRows.find((row) => row.studyId === args.p_study_id && row.docId === 'lock_participant-assignment')?.data as RowData | undefined;
+        if (lock?.token !== args.p_token || Number(lock?.expiresAt) <= Date.now()) return { error: { message: 'Admission lease expired' } };
+        return makeQueryBuilder(() => revisitRows).upsert({
+          studyId: args.p_study_id, docId: `sequenceAssignment_${args.p_participant_id}`, data: args.p_assignment, ...(args.p_created_at ? { createdAt: args.p_created_at } : {}),
+        });
+      },
       from: (_table: string) => makeQueryBuilder(() => revisitRows),
       schema: (schemaName: string) => ({
         from: (_table: string) => makeQueryBuilder(() => {
@@ -2374,6 +2381,36 @@ describe.each([
     const allocation = await retry.getStageAllocation('LIMITED');
     expect(allocation.count).toBe(2);
     expect(allocation.rowCounts['new-row']).toBe(1);
+  });
+
+  test('followup: an expired admission cannot reserve after another participant fills the stage', async () => {
+    await storageEngine.setCurrentStage(studyId, 'LIMITED', '#ff0000', 1);
+    const second = await makeSecondSession();
+    vi.useFakeTimers();
+    let resume!: () => void;
+    let paused!: () => void;
+    const ready = new Promise<void>((resolve) => { paused = resolve; });
+    const internals = storageEngine as unknown as { getStageAllocation: (...args: unknown[]) => Promise<unknown>; _getServerTimeMs: () => Promise<number> };
+    const read = internals.getStageAllocation.bind(storageEngine);
+    let reads = 0;
+    vi.spyOn(internals, 'getStageAllocation').mockImplementation(async (...args) => {
+      const snapshot = await read(...args);
+      reads += 1;
+      if (reads === 2) { paused(); await new Promise<void>((resolve) => { resume = resolve; }); }
+      return snapshot;
+    });
+    try {
+      const first = storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'suspended').catch((error: unknown) => error);
+      await ready;
+      const clock = vi.spyOn(internals, '_getServerTimeMs').mockRejectedValue(new Error('Suspended browser'));
+      await vi.advanceTimersByTimeAsync(61_000);
+      await second.initializeParticipantSession({}, configSimple, participantMetadata, 'winner');
+      clock.mockRestore();
+      resume();
+      await first;
+      const assignments = await second.getAllSequenceAssignments(studyId);
+      expect(assignments.filter((assignment) => !assignment.rejected && assignment.autoTimedOutAt === undefined)).toHaveLength(1);
+    } finally { resume?.(); vi.useRealTimers(); }
   });
 
   test('release regression: rejection rollback does not inflate cached stage capacity', async () => {

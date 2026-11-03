@@ -109,6 +109,8 @@ names: run only one copy per Docker host, or deliberately isolate it.
    ```sh
    docker exec -i supabase-db psql -U supabase_admin \
      -v ON_ERROR_STOP=1 < "$revisit_support/revisit.sql"
+   docker exec -i supabase-db psql -U supabase_admin \
+     -v ON_ERROR_STOP=1 < "$revisit_support/admission-fence.sql"
    ```
 
    `psql` uses the container's `PGDATABASE`, which upstream sets from
@@ -227,3 +229,15 @@ It uses real password Auth locally to check the retained account and protected
 JSON/CSV export UI. The application's GitHub sign-in button still requires a
 separate real-provider smoke test after deployment; this local test does not
 claim external OAuth or SMTP delivery coverage.
+
+
+## Admission lease migration (hosted and self-hosted)
+
+Before deploying this client version, apply `admission-fence.sql` to the application
+Postgres database (hosted users can use the SQL editor). It adds the invoker-rights
+`revisit_reserve_assignment` function, which locks and validates the admission lease
+and commits the assignment in one transaction. Existing table permissions and RLS
+remain authoritative. Upgrade all recruitment clients; older clients do not use
+this fence. New clients fail admission if the function is absent rather than
+falling back to an unfenced write. Apply this additive migration before the client
+update; it can remain installed when rolling the client back.
