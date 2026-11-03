@@ -1514,10 +1514,8 @@ describe.each([
     await second.connect();
     await second.initializeStudyDb(studyId);
     // The backend clock stays correct while the second browser's wall clock is fast.
-    // @ts-expect-error Mock only the server-clock boundary, not the lock.
-    vi.spyOn(storageEngine, '_getServerTimeMs').mockImplementation(async () => new Date().getTime());
-    // @ts-expect-error Mock only the server-clock boundary, not the lock.
-    vi.spyOn(second, '_getServerTimeMs').mockImplementation(async () => new Date().getTime());
+    vi.spyOn(storageEngine as unknown as { _getServerTimeMs: () => Promise<number> }, '_getServerTimeMs').mockImplementation(async () => new Date().getTime());
+    vi.spyOn(second as unknown as { _getServerTimeMs: () => Promise<number> }, '_getServerTimeMs').mockImplementation(async () => new Date().getTime());
     try {
       // @ts-expect-error Exercise the provider's actual distributed lock.
       const first = storageEngine._runWithLock('clock-skew', async () => {
