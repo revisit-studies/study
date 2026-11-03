@@ -842,6 +842,7 @@ describe.each([
       const retried = await storageEngine.getSequenceAssignment(studyId, 'retrying');
       expect(retried?.createdTime).toBe(Date.now());
       await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'newcomer');
+      await storageEngine.releaseExpiredAssignments();
       expect((await storageEngine.getSequenceAssignment(studyId, 'retrying'))?.autoTimedOutAt).toBeUndefined();
       vi.setSystemTime(new Date('2026-10-30T12:04:00Z'));
       await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'after-deadline');
@@ -2411,7 +2412,9 @@ describe.each([
     await storageEngine.saveConfig({ ...configSimple, studyMetadata: { ...configSimple.studyMetadata, title: 'Updated title' } });
     await storageEngine.saveConfig(configSimple);
     await storageEngine.setSequenceArray(generateSequenceArray(configSimple));
-    await expect(storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'blocked-newcomer')).rejects.toThrow('Create and activate a new stage');
+    // The newcomer is admitted, but the sweep refuses to time out the legacy row.
+    await expect(storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'newcomer')).resolves.toMatchObject({ participantId: 'newcomer' });
+    await expect(storageEngine.releaseExpiredAssignments()).rejects.toThrow('Create and activate a new stage');
     expect((await storageEngine.getSequenceAssignment(studyId, existing.participantId))?.autoTimedOutAt).toBeUndefined();
     await expect(storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, existing.participantId)).resolves.toMatchObject({ participantId: existing.participantId });
     await storageEngine.setAutoTimeoutMinutes(studyId, undefined);
@@ -2504,6 +2507,7 @@ describe.each([
     await storageEngine.setAutoTimeoutMinutes(studyId, 1);
     supabaseOperations.length = 0;
     await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'replacement');
+    await storageEngine.releaseExpiredAssignments();
     const recounts = supabaseOperations.filter((operation) => operation.headOnly
       && operation.filters.some((filter) => filter.col === 'data->sequenceKey'));
     expect(recounts).toHaveLength(0);
@@ -2587,6 +2591,96 @@ describe.each([
     const laterAssignment = assignments.find((assignment) => assignment.participantId === later.participantId);
     expect(laterAssignment?.rejected).toBe(false);
     expect(laterAssignment?.claimed).toBe(false);
+  });
+
+  test('restoring a rejected, timed-out participant succeeds after a newcomer reuses their slot', async () => {
+    await storageEngine.setCurrentStage(studyId, 'LIMITED', '#ff0000', 1);
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'timed-out');
+    // @ts-expect-error protected
+    await storageEngine._markSequenceAssignmentTimedOut('timed-out', Date.now());
+    await storageEngine.rejectParticipant('timed-out', 'test');
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'replacement');
+    expect((await storageEngine.getSequenceAssignment(studyId, 'replacement'))?.claimedParticipantId).toBe('timed-out');
+
+    await storageEngine.undoRejectParticipant('timed-out');
+    const restored = await storageEngine.getSequenceAssignment(studyId, 'timed-out');
+    expect(restored).toMatchObject({ rejected: false, claimed: true });
+    expect(restored?.autoTimedOutAt).toBeDefined();
+    expect((await storageEngine.getAllParticipantsData(studyId)).find((participant) => participant.participantId === 'timed-out')?.rejected).toBe(false);
+    // @ts-expect-error protected
+    expect((await storageEngine.getStageAllocation('LIMITED')).count).toBe(1);
+
+    // Releasing the replacement's slot does not revive the restored participant's.
+    await storageEngine.rejectParticipant('replacement', 'test');
+    expect(await storageEngine.getSequenceAssignment(studyId, 'timed-out')).toMatchObject({ rejected: false, claimed: false });
+    // @ts-expect-error protected
+    expect((await storageEngine.getStageAllocation('LIMITED')).count).toBe(0);
+  });
+
+  test('the timeout sweep reads only unfinished assignments that hold a slot in the current stage', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    try {
+      vi.setSystemTime(new Date('2026-10-30T12:00:00Z'));
+      await storageEngine.setCurrentStage(studyId, 'OTHER', '#00AAFF');
+      await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'other-stage');
+      await storageEngine.setCurrentStage(studyId, 'SWEEP', '#00AAFF');
+      await storageEngine.setAutoTimeoutMinutes(studyId, 1);
+      await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'finished');
+      await storageEngine.finalizeParticipant();
+      await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'rejected');
+      await storageEngine.rejectParticipant('rejected', 'test');
+      await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'abandoned');
+      // @ts-expect-error protected
+      expect((await storageEngine._getTimeoutCandidates('SWEEP')).map((assignment) => assignment.participantId)).toEqual(['abandoned']);
+
+      vi.setSystemTime(new Date('2026-10-30T12:02:00Z'));
+      const scans = vi.spyOn(storageEngine, 'getAllSequenceAssignments');
+      await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'newcomer');
+      await storageEngine.releaseExpiredAssignments();
+      expect(scans).not.toHaveBeenCalled();
+      expect((await storageEngine.getSequenceAssignment(studyId, 'abandoned'))?.autoTimedOutAt).toBeDefined();
+      expect((await storageEngine.getSequenceAssignment(studyId, 'other-stage'))?.autoTimedOutAt).toBeUndefined();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  test('concurrent server clock reads from parallel timeout sweeps both succeed', async () => {
+    // @ts-expect-error protected
+    const reads = await Promise.all([storageEngine._getServerTimeMs(), storageEngine._getServerTimeMs()]);
+    expect(reads.every(Number.isFinite)).toBe(true);
+    expect(revisitRows.filter((row) => String(row.docId).startsWith('serverTime'))).toHaveLength(0);
+  });
+
+  test('a disabled participant limit admits past the saved maximum until it is re-enabled', async () => {
+    await storageEngine.setCurrentStage(studyId, 'LIMITED', '#00AAFF', 1);
+    await storageEngine.updateStage(studyId, 'LIMITED', { participantLimitEnabled: false });
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'first');
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'second');
+
+    await storageEngine.updateStage(studyId, 'LIMITED', { maxParticipants: 3, participantLimitEnabled: true });
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'third');
+    await expect(storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'fourth'))
+      .rejects.toThrow(/participant limit/);
+  });
+
+  test('reading stage counts takes the stage lock only when they need a rebuild', async () => {
+    await storageEngine.setCurrentStage(studyId, 'LOCKS', '#00AAFF', 5);
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'counted');
+    await storageEngine.releaseExpiredAssignments();
+    // @ts-expect-error protected
+    const locks = vi.spyOn(storageEngine, '_runWithLock');
+    // @ts-expect-error protected
+    expect((await storageEngine.getStageAllocation('LOCKS')).count).toBe(1);
+    expect(locks).not.toHaveBeenCalled();
+
+    // An interrupted write leaves the counts marked for a rebuild.
+    const row = revisitRows.find((item) => item.studyId === `dev-${studyId}` && item.docId === 'stageAllocation_LOCKS')!;
+    Object.assign(row.data as RowData, { count: 0, needsRebuild: true });
+    // @ts-expect-error protected
+    expect((await storageEngine.getStageAllocation('LOCKS')).count).toBe(1);
+    expect(locks).toHaveBeenCalledWith('stage-allocation-LOCKS', expect.any(Function));
+    expect((row.data as RowData).needsRebuild).toBe(false);
   });
 
   test('rejecting a legacy replacement without claimedParticipantId still releases its source', async () => {

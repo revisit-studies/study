@@ -259,6 +259,23 @@ describe('LiveMonitorView', () => {
     // With a valid listener returning a function, status becomes 'connected' → icon-wifi shown
     expect(container.textContent).toContain('icon-wifi');
   });
+
+  test('releases expired participants when the monitor opens', async () => {
+    const mockEngine = {
+      initializeStudyDb: vi.fn().mockResolvedValue(undefined),
+      releaseExpiredAssignments: vi.fn().mockResolvedValue(undefined),
+      getAllSequenceAssignments: vi.fn().mockResolvedValue([]),
+    };
+    await act(async () => render(
+      <LiveMonitorView
+        {...baseProps}
+        storageEngine={makeStorageEngine(mockEngine)}
+        studyId="test-study"
+      />,
+    ));
+    expect(mockEngine.initializeStudyDb).toHaveBeenCalledWith('test-study');
+    expect(mockEngine.releaseExpiredAssignments).toHaveBeenCalledTimes(1);
+  });
 });
 
 // ── ParticipantSection ────────────────────────────────────────────────────────

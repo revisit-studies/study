@@ -931,7 +931,9 @@ describe.each([
     await storageEngine.saveConfig({ ...configSimple, studyMetadata: { ...configSimple.studyMetadata, title: 'Updated title' } });
     await storageEngine.saveConfig(configSimple);
     await storageEngine.setSequenceArray(generateSequenceArray(configSimple));
-    await expect(storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'blocked-newcomer')).rejects.toThrow('Create and activate a new stage');
+    // The newcomer is admitted, but the sweep refuses to time out the legacy row.
+    await expect(storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'newcomer')).resolves.toMatchObject({ participantId: 'newcomer' });
+    await expect(storageEngine.releaseExpiredAssignments()).rejects.toThrow('Create and activate a new stage');
     expect((await storageEngine.getSequenceAssignment(studyId, existing.participantId))?.autoTimedOutAt).toBeUndefined();
     await expect(storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, existing.participantId)).resolves.toMatchObject({ participantId: existing.participantId });
     await storageEngine.setAutoTimeoutMinutes(studyId, undefined);
@@ -1464,6 +1466,7 @@ describe.each([
       return mark(...args);
     });
     await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'sweeping');
+    await storageEngine.releaseExpiredAssignments();
     const assignment = (await storageEngine.getAllSequenceAssignments(studyId)).find((item) => item.participantId === first.participantId);
     expect(assignment?.autoTimedOutAt).toBeUndefined();
   });
@@ -1486,15 +1489,12 @@ describe.each([
     vi.spyOn(storageEngine, '_getServerTimeMs').mockResolvedValue(serverNow);
     const historyReads = vi.mocked(getDocsFromServer);
     historyReads.mockClear();
+    const scans = vi.spyOn(storageEngine, 'getAllSequenceAssignments');
     await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'new-participant');
-    expect(historyReads).toHaveBeenCalledTimes(legacy ? 1 : 0);
-    if (legacy) {
-      expect(historyReads.mock.calls[0][0]).toMatchObject({
-        _constraints: expect.arrayContaining([{
-          type: 'where', field: 'stage', operator: '==', value: 'LIMITED',
-        }]),
-      });
-    }
+    await storageEngine.releaseExpiredAssignments();
+    // Admission rebuilds a missing legacy allocation before the sweep needs it.
+    expect(historyReads).not.toHaveBeenCalled();
+    expect(scans).not.toHaveBeenCalled();
     const assignments = await storageEngine.getAllSequenceAssignments(studyId);
     expect(assignments.filter((assignment) => assignment.autoTimedOutAt !== undefined)).toHaveLength(3);
     // @ts-expect-error Inspect persisted allocation counts.
@@ -1502,6 +1502,65 @@ describe.each([
     expect(allocation.count).toBe(1);
     expect(Object.values(allocation.rowCounts).reduce((total, count) => total + count, 0)).toBe(1);
     expect(Object.values(allocation.combinationCounts).reduce((total, count) => total + count, 0)).toBe(1);
+  });
+
+  test('restoring a rejected, timed-out participant succeeds after a newcomer reuses their slot', async () => {
+    await storageEngine.setCurrentStage(studyId, 'LIMITED', '#ff0000', 1);
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'timed-out');
+    // @ts-expect-error protected
+    await storageEngine._markSequenceAssignmentTimedOut('timed-out', Date.now());
+    await storageEngine.rejectParticipant('timed-out', 'test');
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'replacement');
+    expect((await storageEngine.getSequenceAssignment(studyId, 'replacement'))?.claimedParticipantId).toBe('timed-out');
+
+    await storageEngine.undoRejectParticipant('timed-out');
+    const restored = await storageEngine.getSequenceAssignment(studyId, 'timed-out');
+    expect(restored).toMatchObject({ rejected: false, claimed: true });
+    expect(restored?.autoTimedOutAt).toBeDefined();
+    expect((await storageEngine.getAllParticipantsData(studyId)).find((participant) => participant.participantId === 'timed-out')?.rejected).toBe(false);
+    // @ts-expect-error protected
+    expect((await storageEngine.getStageAllocation('LIMITED')).count).toBe(1);
+
+    // Releasing the replacement's slot does not revive the restored participant's.
+    await storageEngine.rejectParticipant('replacement', 'test');
+    expect(await storageEngine.getSequenceAssignment(studyId, 'timed-out')).toMatchObject({ rejected: false, claimed: false });
+    // @ts-expect-error protected
+    expect((await storageEngine.getStageAllocation('LIMITED')).count).toBe(0);
+  });
+
+  test('a disabled participant limit admits past the saved maximum until it is re-enabled', async () => {
+    await storageEngine.setCurrentStage(studyId, 'LIMITED', '#00AAFF', 1);
+    await storageEngine.updateStage(studyId, 'LIMITED', { participantLimitEnabled: false });
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'first');
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'second');
+
+    await storageEngine.updateStage(studyId, 'LIMITED', { maxParticipants: 3, participantLimitEnabled: true });
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'third');
+    await expect(storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'fourth'))
+      .rejects.toThrow(/participant limit/);
+  });
+
+  test('progress updates do not take the participant lock', async () => {
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'progressing');
+    await storageEngine.releaseExpiredAssignments();
+    // @ts-expect-error protected
+    const locks = vi.spyOn(storageEngine, '_runWithLock');
+    await storageEngine.updateProgressData({ total: 3, answered: ['testComponent_0'], isDynamic: false }, 'progressing');
+    expect(locks).not.toHaveBeenCalled();
+    expect(await storageEngine.getSequenceAssignment(studyId, 'progressing')).toMatchObject({ total: 3, answered: ['testComponent_0'] });
+  });
+
+  test('mode toggles other than enabling data collection skip the history read', async () => {
+    const historyReads = vi.mocked(getDocsFromServer);
+    historyReads.mockClear();
+    await storageEngine.setMode(studyId, 'developmentModeEnabled', false);
+    await storageEngine.setMode(studyId, 'dataCollectionEnabled', false);
+    expect(historyReads).not.toHaveBeenCalled();
+    expect(await storageEngine.getModes(studyId)).toMatchObject({ developmentModeEnabled: false, dataCollectionEnabled: false });
+
+    await storageEngine.setMode(studyId, 'dataCollectionEnabled', true);
+    expect(historyReads).toHaveBeenCalled();
+    expect((await storageEngine.getModes(studyId)).dataCollectionEnabled).toBe(true);
   });
 
   test('concurrent automatic timeouts release an allocation only once', async () => {

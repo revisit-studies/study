@@ -7,7 +7,7 @@ import {
   deleteObject, getBlob, getDownloadURL, getStorage, ref, uploadBytes, listAll, FirebaseStorage, updateMetadata,
 } from 'firebase/storage';
 import {
-  CollectionReference, DocumentData, Firestore, FieldPath, Transaction, Timestamp, collection, deleteField, doc, enableNetwork, getDoc, getDocs, getDocsFromServer, initializeFirestore, onSnapshot, runTransaction, serverTimestamp, setDoc, updateDoc, getCountFromServer, limit, orderBy, query, where,
+  CollectionReference, DocumentData, Firestore, FieldPath, Query, Transaction, Timestamp, collection, deleteField, doc, enableNetwork, getDoc, getDocs, getDocsFromServer, initializeFirestore, onSnapshot, runTransaction, serverTimestamp, setDoc, updateDoc, getCountFromServer, limit, orderBy, query, where,
 } from 'firebase/firestore';
 import { ReCaptchaV3Provider, ReCaptchaEnterpriseProvider, initializeAppCheck } from '@firebase/app-check';
 import {
@@ -408,7 +408,22 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
       'sequenceAssignment',
     );
 
-    const sequenceAssignments = await getDocs(sequenceAssignmentCollection);
+    return this.readSequenceAssignments(sequenceAssignmentCollection);
+  }
+
+  protected async _getTimeoutCandidates(stage: string) {
+    // Equality filters only: Firestore serves these by merging single-field
+    // indexes, so existing deployments need no new composite index.
+    return this.readSequenceAssignments(query(
+      collection(doc(this.studyCollection, 'sequenceAssignment'), 'sequenceAssignment'),
+      where('stage', '==', stage),
+      where('rejected', '==', false),
+      where('completed', '==', null),
+    ));
+  }
+
+  private async readSequenceAssignments(source: Query<DocumentData>) {
+    const sequenceAssignments = await getDocs(source);
     return sequenceAssignments.docs
       .map((d) => d.data())
       .map((data) => ({
@@ -532,6 +547,12 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
       return;
     }
     await updateDoc(participantSequenceAssignmentDoc, firebaseUpdatedFields);
+  }
+
+  // Firestore merges field updates and runs allocation changes in a
+  // transaction, so a patch cannot erase a concurrent write without the lock.
+  protected override async patchSequenceAssignment(participantId: string, updatedFields: Partial<SequenceAssignment>) {
+    await this._updateSequenceAssignmentFields(participantId, updatedFields);
   }
 
   protected async _getSequenceAssignment(participantId: string) {
@@ -722,6 +743,12 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
       const assignment = state.assignments.find((item) => item.participantId === participantId);
       if (!assignment) throw new Error('Failed to retrieve sequence assignment for current participant');
       if (!assignment.rejected) return;
+      if (assignment.autoTimedOutAt !== undefined) {
+        // A timed-out participant holds no slot, so restoring one leaves slot
+        // ownership, including any replacement reusing theirs, untouched.
+        transaction.update(this.assignmentReference(participantId), { rejected: false });
+        return;
+      }
       if (assignment.claimed) throw new Error('Cannot undo rejection after the participant slot has been reassigned');
       const modes = (await transaction.get(doc(this.studyCollection, 'modes'))).data() as RuntimeStudySettings | undefined;
       assertAutoTimeoutRestoreSupported(assignment, modes);
@@ -937,7 +964,13 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
   }
 
   protected async _setMode(studyId: string, mode: REVISIT_MODE, value: boolean) {
-    await this._updateModesFields(studyId, { [mode]: value });
+    // Only enabling data collection can start auto-timeouts, which needs the
+    // assignment history to validate. Other toggles are single-field merges.
+    if (mode === 'dataCollectionEnabled' && value) {
+      await this._updateModesFields(studyId, { [mode]: value });
+      return;
+    }
+    await setDoc(doc(this.firestore, `${this.collectionPrefix}${studyId}`, 'modes'), { [mode]: value }, { merge: true });
   }
 
   private async updateModesAtomically(studyId: string, update: (modes: Record<string, unknown>) => Record<string, unknown> | Promise<Record<string, unknown>>, configHash?: string) {

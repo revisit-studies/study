@@ -86,6 +86,11 @@ export class LocalStorageEngine extends StorageEngine {
     return Object.values(sequenceAssignments).sort((a, b) => a.timestamp - b.timestamp);
   }
 
+  // Local assignments are already in memory, so the base sweep's filter suffices.
+  protected async _getTimeoutCandidates() {
+    return this.getAllSequenceAssignments(this.studyId!);
+  }
+
   public async getSequenceAssignment(studyId: string, participantId: string) {
     const key = `${this.collectionPrefix}${studyId}/sequenceAssignment`;
     const assignments = await this.studyDatabase.getItem<Record<string, SequenceAssignment>>(key);
@@ -329,7 +334,12 @@ export class LocalStorageEngine extends StorageEngine {
       const sequenceAssignments = await this.studyDatabase.getItem<Record<string, SequenceAssignment>>(sequenceAssignmentPath) || {};
 
       const participantSequenceAssignment = sequenceAssignments[participantId];
-      if (participantSequenceAssignment) {
+      if (participantSequenceAssignment?.autoTimedOutAt !== undefined) {
+        // A timed-out participant holds no slot, so restoring one leaves slot
+        // ownership, including any replacement reusing theirs, untouched.
+        sequenceAssignments[participantId] = { ...participantSequenceAssignment, rejected: false };
+        await this.studyDatabase.setItem(sequenceAssignmentPath, sequenceAssignments);
+      } else if (participantSequenceAssignment) {
         const updatedParticipantSequenceAssignment = {
           ...participantSequenceAssignment,
           rejected: false,

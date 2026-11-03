@@ -358,7 +358,9 @@ describe.each([
     await storageEngine.saveConfig({ ...configSimple, studyMetadata: { ...configSimple.studyMetadata, title: 'Updated title' } });
     await storageEngine.saveConfig(configSimple);
     await storageEngine.setSequenceArray(generateSequenceArray(configSimple));
-    await expect(storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'blocked-newcomer')).rejects.toThrow('Create and activate a new stage');
+    // The newcomer is admitted, but the sweep refuses to time out the legacy row.
+    await expect(storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'newcomer')).resolves.toMatchObject({ participantId: 'newcomer' });
+    await expect(storageEngine.releaseExpiredAssignments()).rejects.toThrow('Create and activate a new stage');
     expect((await storageEngine.getSequenceAssignment(studyId, existing.participantId))?.autoTimedOutAt).toBeUndefined();
     await expect(storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, existing.participantId)).resolves.toMatchObject({ participantId: existing.participantId });
     await storageEngine.setAutoTimeoutMinutes(studyId, undefined);
@@ -1143,6 +1145,82 @@ describe.each([
     }
   });
 
+  test('a newcomer is admitted without waiting for the background timeout sweep', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    try {
+      vi.setSystemTime(new Date('2026-01-01T00:00:00.000Z'));
+      await storageEngine.setAutoTimeoutMinutes(studyId, 1);
+      await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'abandoned');
+      vi.setSystemTime(new Date('2026-01-01T00:02:00.000Z'));
+      let releaseTimeout!: () => void;
+      const timeoutHeld = new Promise<void>((resolve) => { releaseTimeout = resolve; });
+      // @ts-expect-error protected
+      const mark = storageEngine._markSequenceAssignmentTimedOut.bind(storageEngine);
+      // @ts-expect-error protected
+      vi.spyOn(storageEngine, '_markSequenceAssignmentTimedOut').mockImplementationOnce(async (...args: [string, number, number?]) => {
+        await timeoutHeld;
+        return mark(...args);
+      });
+
+      await expect(storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'newcomer'))
+        .resolves.toMatchObject({ participantId: 'newcomer' });
+      expect((await storageEngine.getSequenceAssignment(studyId, 'abandoned'))?.autoTimedOutAt).toBeUndefined();
+
+      releaseTimeout();
+      await storageEngine.releaseExpiredAssignments();
+      expect((await storageEngine.getSequenceAssignment(studyId, 'abandoned'))?.autoTimedOutAt).toBeDefined();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  test('a failed fallback sweep still reports the stage as full', async () => {
+    await storageEngine.setCurrentStage(studyId, 'LIMITED', '#ff0000', 1);
+    await storageEngine.setAutoTimeoutMinutes(studyId, 1);
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'occupying');
+    await storageEngine.releaseExpiredAssignments();
+    // @ts-expect-error protected
+    vi.spyOn(storageEngine, '_getTimeoutCandidates').mockRejectedValue(new Error('backend unavailable'));
+    await expect(storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'turned-away'))
+      .rejects.toThrow(/participant limit/);
+  });
+
+  test('a disabled participant limit admits past the saved maximum until it is re-enabled', async () => {
+    await storageEngine.setCurrentStage(studyId, 'LIMITED', '#00AAFF', 1);
+    await storageEngine.updateStage(studyId, 'LIMITED', { participantLimitEnabled: false });
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'first');
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'second');
+
+    await storageEngine.updateStage(studyId, 'LIMITED', { maxParticipants: 3, participantLimitEnabled: true });
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'third');
+    await expect(storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'fourth'))
+      .rejects.toThrow(/participant limit/);
+  });
+
+  test('restoring a rejected, timed-out participant succeeds after a newcomer reuses their slot', async () => {
+    await storageEngine.setCurrentStage(studyId, 'LIMITED', '#ff0000', 1);
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'timed-out');
+    // @ts-expect-error protected
+    await storageEngine._markSequenceAssignmentTimedOut('timed-out', Date.now());
+    await storageEngine.rejectParticipant('timed-out', 'test');
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'replacement');
+    expect((await storageEngine.getSequenceAssignment(studyId, 'replacement'))?.claimedParticipantId).toBe('timed-out');
+
+    await storageEngine.undoRejectParticipant('timed-out');
+    const restored = await storageEngine.getSequenceAssignment(studyId, 'timed-out');
+    expect(restored).toMatchObject({ rejected: false, claimed: true });
+    expect(restored?.autoTimedOutAt).toBeDefined();
+    expect((await storageEngine.getAllParticipantsData(studyId)).find((participant) => participant.participantId === 'timed-out')?.rejected).toBe(false);
+    // @ts-expect-error protected
+    expect((await storageEngine.getStageAllocation('LIMITED')).count).toBe(1);
+
+    // Releasing the replacement's slot does not revive the restored participant's.
+    await storageEngine.rejectParticipant('replacement', 'test');
+    expect(await storageEngine.getSequenceAssignment(studyId, 'timed-out')).toMatchObject({ rejected: false, claimed: false });
+    // @ts-expect-error protected
+    expect((await storageEngine.getStageAllocation('LIMITED')).count).toBe(0);
+  });
+
   test('a participant who finishes after timing out is completed late and does not retake a slot', async () => {
     vi.useFakeTimers();
     try {
@@ -1186,6 +1264,7 @@ describe.each([
       vi.setSystemTime(new Date('2026-01-01T01:00:00.000Z'));
       await storageEngine.clearCurrentParticipantId();
       await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
+      await storageEngine.releaseExpiredAssignments();
       expect(serverTimeSpy).toHaveBeenCalled();
 
       const assignments = await storageEngine.getAllSequenceAssignments(studyId);

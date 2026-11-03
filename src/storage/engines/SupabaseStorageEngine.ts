@@ -169,6 +169,16 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
   }
 
   public async getAllSequenceAssignments(studyId: string) {
+    return this.readSequenceAssignments(studyId);
+  }
+
+  protected async _getTimeoutCandidates(stage: string) {
+    return this.readSequenceAssignments(this.studyId!, stage);
+  }
+
+  // Reads every assignment, or with `stage` only that stage's unfinished
+  // assignments that still hold a slot.
+  private async readSequenceAssignments(studyId: string, stage?: string) {
     const assignments: SequenceAssignment[] = [];
     let afterDocId: string | undefined;
     // Use the last returned ID rather than a fixed offset or page length: the
@@ -178,6 +188,10 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
         .eq('studyId', `${this.collectionPrefix}${studyId}`).like('docId', 'sequenceAssignment_%')
         .order('docId', { ascending: true })
         .limit(1000);
+      if (stage !== undefined) {
+        request = request.eq('data->stage', stage).eq('data->>rejected', 'false')
+          .is('data->>completed', null).is('data->>autoTimedOutAt', null);
+      }
       if (afterDocId !== undefined) request = request.gt('docId', afterDocId);
       // eslint-disable-next-line no-await-in-loop
       const { data, error } = await request;
@@ -558,6 +572,12 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
     }
 
     if (!data.data.rejected) return;
+    if (data.data.autoTimedOutAt !== undefined) {
+      // A timed-out participant holds no slot, so restoring one leaves slot
+      // ownership, including any replacement reusing theirs, untouched.
+      await this.updateSequenceAssignmentRow(participantId, { ...data.data, rejected: false }, 'restore');
+      return;
+    }
     const claimedParticipantId = data.data.claimedParticipantId as string | undefined;
     let restoredTimestamp = data.data.withServerTimestamp
       ? parseSupabaseTimestamp(data.createdAt)
@@ -644,23 +664,20 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
     if (!this.studyId) {
       throw new Error('Study ID is not set');
     }
-    // `createdAt` is filled in by the database, so re-creating a throwaway row
-    // reads back the server's clock. Callers hold the participant-assignment
-    // lock, so only one session touches this row at a time.
+    // `createdAt` is filled in by the database, so a throwaway row reads back
+    // the server's clock. Each read uses its own row because timeout sweeps run
+    // outside the admission lock and can read the clock concurrently.
     const studyId = `${this.collectionPrefix}${this.studyId}`;
-    await this.supabase
-      .from('revisit')
-      .delete()
-      .eq('studyId', studyId)
-      .eq('docId', 'serverTime');
+    const docId = `serverTime_${uuidv4()}`;
     const { data, error } = await this.supabase
       .from('revisit')
-      .insert({ studyId, docId: 'serverTime', data: {} })
+      .insert({ studyId, docId, data: {} })
       .select('createdAt')
       .single();
     if (error || !data?.createdAt) {
       throw new Error('Failed to read the server clock');
     }
+    await this.supabase.from('revisit').delete().eq('studyId', studyId).eq('docId', docId);
     // Preserve the SQL timestamp's timezone-free representation when writing it
     // back to createdAt; a browser-local Date conversion would shift its value.
     return data.createdAt;
@@ -1755,29 +1772,42 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
   }
 
   protected override async getStageAllocation(stage: string, conditionKeys: string[] = [], sequenceRows?: SequenceRowContext): Promise<StageAllocation> {
+    // A plain read needs no lock: counts only change under the stage lock with a
+    // version check, so an unlocked read can at most lag a release still in
+    // flight. Creating or rebuilding the counts writes, so only that takes the lock.
+    const current = await this.fetchStageAllocation(stage);
+    if (current && !current.needsRebuild && !await this.hasUnknownLegacyRows(current, stage, sequenceRows)) return current;
     return this._runWithLock(`stage-allocation-${stage}`, () => this.readStageAllocation(stage, conditionKeys, sequenceRows));
+  }
+
+  private async fetchStageAllocation(stage: string): Promise<SupabaseStageAllocation | undefined> {
+    const { data, error } = await this.supabase.from('revisit').select('data')
+      .eq('studyId', `${this.collectionPrefix}${this.studyId}`).eq('docId', `stageAllocation_${encodeURIComponent(stage)}`)
+      .maybeSingle();
+    if (error) throw new Error('Failed to read stage allocation');
+    return data?.data as SupabaseStageAllocation | undefined;
+  }
+
+  // Legacy rows lack order keys, so their row counts are unknown. They only
+  // need a bootstrap after a timeout has released an order from this stage,
+  // which keeps ordinary legacy recruitment bounded.
+  private async hasUnknownLegacyRows(current: SupabaseStageAllocation, stage: string, sequenceRows?: SequenceRowContext) {
+    if (!sequenceRows || Object.values(current.rowCounts).reduce((total, count) => total + count, 0) === current.count) return false;
+    const timeouts = await this.supabase.from('revisit').select('docId', { count: 'exact', head: true })
+      .eq('studyId', `${this.collectionPrefix}${this.studyId}`).like('docId', 'sequenceAssignment_%')
+      .eq('data->stage', stage)
+      .not('data->>autoTimedOutAt', 'is', null);
+    if (timeouts.error) throw new Error('Failed to check stage timeouts');
+    return (timeouts.count ?? 0) > 0;
   }
 
   // Callers hold the stage lock, including while a timeout writes its assignment.
   private async readStageAllocation(stage: string, conditionKeys: string[] = [], sequenceRows?: SequenceRowContext): Promise<SupabaseStageAllocation> {
     const studyId = `${this.collectionPrefix}${this.studyId}`;
     const docId = `stageAllocation_${encodeURIComponent(stage)}`;
-    const { data, error } = await this.supabase.from('revisit').select('data').eq('studyId', studyId).eq('docId', docId)
-      .maybeSingle();
-    if (error) throw new Error('Failed to read stage allocation');
-    if (data) {
-      const current = data.data as SupabaseStageAllocation;
-      let legacyRows = !!sequenceRows && Object.values(current.rowCounts).reduce((total, count) => total + count, 0) !== current.count;
-      if (legacyRows) {
-        // Keep ordinary legacy recruitment bounded. A row bootstrap is needed
-        // only after a timeout has released an order from this stage.
-        const timeouts = await this.supabase.from('revisit').select('docId', { count: 'exact', head: true })
-          .eq('studyId', studyId).like('docId', 'sequenceAssignment_%')
-          .eq('data->stage', stage)
-          .not('data->>autoTimedOutAt', 'is', null);
-        if (timeouts.error) throw new Error('Failed to check stage timeouts');
-        legacyRows = (timeouts.count ?? 0) > 0;
-      }
+    const current = await this.fetchStageAllocation(stage);
+    if (current) {
+      const legacyRows = await this.hasUnknownLegacyRows(current, stage, sequenceRows);
       if (!current.needsRebuild && !legacyRows) return current;
       let rebuilt: SupabaseStageAllocation;
       if (legacyRows) {

@@ -565,6 +565,11 @@ export abstract class StorageEngine {
   // Reads one participant's assignment without loading every participant in the study.
   public abstract getSequenceAssignment(studyId: string, participantId: string): Promise<SequenceAssignment | null>;
 
+  // Reads at least every unfinished, unrejected assignment in the stage, so the
+  // timeout sweep that runs on each admission does not load the full history.
+  // Engines may return extra rows when their backend cannot filter them out.
+  protected abstract _getTimeoutCandidates(stage: string): Promise<SequenceAssignment[]>;
+
   // Creates a sequence assignment for the given participantId and sequenceAssignment. Cloud storage engines should use the realtime database to create the sequence assignment and should use the server to prevent race conditions (i.e. using server timestamps).
   protected abstract _createSequenceAssignment(participantId: string, sequenceAssignment: SequenceAssignment, withServerTimestamp: boolean): Promise<void>;
 
@@ -1429,12 +1434,30 @@ export abstract class StorageEngine {
       ? getLeastServedSequence(eligible, state.combinationCounts, targets, betweenSubjects, state.count, rowCounts)
       : eligible[allocation.sequenceIndex % eligible.length]);
     if (!balancedRow) {
-      await this.updateSequenceAssignmentFieldsLocked(this.currentParticipantId, {
+      await this.patchSequenceAssignment(this.currentParticipantId, {
         sequenceKey: `${participantConfigHash}:${sequences.indexOf(currentRow)}`,
         betweenSubjectsCombinationKey: getBetweenSubjectsCombinationKey(currentRow.parameters, betweenSubjects),
       });
     }
     return { currentRow, creationIndex: allocation.creationIndex + 1 };
+  }
+
+  private timeoutSweep?: Promise<void>;
+
+  /**
+   * Times out expired assignments in the current stage. This is safe outside the
+   * admission lock: each engine rechecks eligibility and moves the stage counts
+   * with the write, and a timeout only ever frees capacity. Calls made while a
+   * sweep is running in this session share it.
+   */
+  async releaseExpiredAssignments(settings?: ModesAndStageData): Promise<void> {
+    if (!this.timeoutSweep) {
+      this.timeoutSweep = (async () => {
+        const { modes, stageData } = settings ?? await this.getModesAndStageData(this.studyId!);
+        await this.timeoutExpiredAssignments(modes, stageData.currentStage.stageName);
+      })().finally(() => { this.timeoutSweep = undefined; });
+    }
+    return this.timeoutSweep;
   }
 
   private async timeoutExpiredAssignments(modes: StudyModes, stage: string): Promise<void> {
@@ -1443,7 +1466,7 @@ export abstract class StorageEngine {
       return;
     }
 
-    const assignments = await this.getAllSequenceAssignments(this.studyId!);
+    const assignments = await this._getTimeoutCandidates(stage);
     assertAutoTimeoutStageSupported(assignments, stage);
 
     // `createdTime` is written by the backend in the cloud engines, so the
@@ -1461,18 +1484,18 @@ export abstract class StorageEngine {
     // Each engine rechecks eligibility in the same operation that writes, so a
     // participant who finished or was rejected in the meantime keeps their slot.
     for (const assignment of expiredAssignments) {
-      // Process serially so a failed mutation prevents any subsequent capacity
-      // calculation from using an uncertain allocation state.
+      // Stop at the first failed mutation; a later sweep retries the rest.
       // eslint-disable-next-line no-await-in-loop
       await this._markSequenceAssignmentTimedOut(assignment.participantId, serverNow, deadline);
     }
   }
 
-  // Patches an assignment while holding its participant lock. Some engines
-  // rewrite the whole record, so an unlocked patch could erase a completion,
-  // rejection, or timeout written in the meantime. Callers that already hold
-  // the participant lock call `_updateSequenceAssignmentFields` directly.
-  private async updateSequenceAssignmentFieldsLocked(
+  // Patches an assignment without erasing a completion, rejection, or timeout
+  // written concurrently. Some engines rewrite the whole record, so by default
+  // the patch holds the participant lock; engines whose field updates are
+  // atomic override this. Callers that already hold the participant lock call
+  // `_updateSequenceAssignmentFields` directly.
+  protected async patchSequenceAssignment(
     participantId: string,
     updatedFields: Partial<SequenceAssignment>,
   ) {
@@ -1572,6 +1595,7 @@ export abstract class StorageEngine {
       return participant;
     }
 
+    let sweepSettings: ModesAndStageData | undefined;
     const initializeParticipant = async (): Promise<ParticipantData> => {
       // Another session may have completed initialization while this session waited
       // for the lock, so always read the participant record again inside it.
@@ -1592,7 +1616,7 @@ export abstract class StorageEngine {
 
       const { modes, stageData } = await this.getModesAndStageData(this.studyId!, this.cloudEngine ? undefined : bootstrapData?.modesDocument);
       const currentStage = stageData.currentStage.stageName;
-      await this.timeoutExpiredAssignments(modes, currentStage);
+      sweepSettings = { modes, stageData };
       const currentStageInfo = stageData.allStages.find((stage) => stage.stageName === currentStage);
       if (!this.hasAtomicSequenceReservation && modes.dataCollectionEnabled && (!existingReservation || existingReservation.rejected) && currentStageInfo && isStageParticipantLimitEnabled(currentStageInfo)) {
         const stageParticipantCounts = await this.getStageAllocation(currentStage, getConfigConditionKeys(config));
@@ -1661,9 +1685,30 @@ export abstract class StorageEngine {
     // Atomic reservation engines own admission in the database transaction.
     // Serialize starts for the same participant without blocking other participants
     // on a slow upload. Admission itself remains transactional.
-    const initializedParticipant = this.hasAtomicSequenceReservation
-      ? await this._runWithLock(`initialize-participant-${this.currentParticipantId}`, initializeParticipant)
-      : await this._runWithLock(ADMISSION_POLICY_LOCK_KEY, initializeParticipant);
+    const admit = () => (this.hasAtomicSequenceReservation
+      ? this._runWithLock(`initialize-participant-${this.currentParticipantId}`, initializeParticipant)
+      : this._runWithLock(ADMISSION_POLICY_LOCK_KEY, initializeParticipant));
+    let initializedParticipant: ParticipantData;
+    try {
+      initializedParticipant = await admit();
+    } catch (error) {
+      if (!(error instanceof StageCapacityExceededError)) throw error;
+      // Expired participants are released lazily, so the stage may only be full
+      // of them. Release them and retry once before turning this participant away.
+      try {
+        await this.releaseExpiredAssignments();
+      } catch (sweepError) {
+        console.warn('Failed to release expired participant allocations:', sweepError);
+        throw error;
+      }
+      initializedParticipant = await admit();
+    }
+
+    // Release other expired participants without delaying this one.
+    if (sweepSettings) {
+      this.releaseExpiredAssignments(sweepSettings)
+        .catch((sweepError) => console.warn('Failed to release expired participant allocations:', sweepError));
+    }
 
     this.participantData = initializedParticipant;
     return initializedParticipant;
@@ -1853,7 +1898,7 @@ export abstract class StorageEngine {
       throw new Error('Participant not initialized');
     }
 
-    await this.updateSequenceAssignmentFieldsLocked(
+    await this.patchSequenceAssignment(
       this.currentParticipantId,
       { conditions: this.participantData.conditions },
     );
@@ -2003,7 +2048,9 @@ export abstract class StorageEngine {
     // to coordinate rejected-slot ownership with new admissions.
     return await this._runWithLock(ADMISSION_POLICY_LOCK_KEY, () => this._runWithLock(`participant-${participantId}`, async () => {
       const assignment = await this._getSequenceAssignment(participantId);
-      if (assignment?.claimed) {
+      // A timed-out participant holds no slot, so a replacement reusing theirs
+      // does not prevent restoring them.
+      if (assignment?.claimed && assignment.autoTimedOutAt === undefined) {
         throw new Error('Cannot undo rejection after the participant slot has been reassigned');
       }
 
@@ -2158,17 +2205,14 @@ export abstract class StorageEngine {
     this.pendingProgressDataWrite = progressDataWrite;
 
     try {
-      await this._runWithLock(`participant-${targetParticipantId}`, async () => {
-        const existingAssignment = await this._getSequenceAssignment(targetParticipantId);
-
-        if (existingAssignment) {
-          await this._updateSequenceAssignmentFields(targetParticipantId, {
-            total: progressData.total,
-            answered: progressData.answered,
-            isDynamic: progressData.isDynamic,
-          });
-        }
-      });
+      const existingAssignment = await this._getSequenceAssignment(targetParticipantId);
+      if (existingAssignment) {
+        await this.patchSequenceAssignment(targetParticipantId, {
+          total: progressData.total,
+          answered: progressData.answered,
+          isDynamic: progressData.isDynamic,
+        });
+      }
 
       if (this.pendingProgressDataWrite === progressDataWrite) {
         this.pendingProgressDataWrite = undefined;

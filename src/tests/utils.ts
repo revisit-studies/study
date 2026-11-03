@@ -86,6 +86,8 @@ class TestStorageEngine extends StorageEngine {
 
   protected _getServerTimeMs = vi.fn(async () => Date.now());
 
+  protected _getTimeoutCandidates = vi.fn(async () => []);
+
   protected async _runWithLock<T>(_lockKey: string, operation: () => Promise<T>) {
     return await operation();
   }
