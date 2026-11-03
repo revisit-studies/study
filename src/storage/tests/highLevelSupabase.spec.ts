@@ -847,8 +847,7 @@ describe.each([
       vi.setSystemTime(new Date('2026-10-30T12:00:00Z'));
       await storageEngine.setCurrentStage(studyId, 'RETRY', '#00AAFF', 2);
       await storageEngine.setAutoTimeoutMinutes(studyId, 1);
-      // @ts-expect-error Fail the first participant upload after reservation.
-      vi.spyOn(storageEngine, '_pushToStorage').mockRejectedValueOnce(new Error('upload failed'));
+      vi.spyOn(storageEngine as unknown as { _pushToStorage: typeof storageEngine['_pushToStorage'] }, '_pushToStorage').mockRejectedValueOnce(new Error('upload failed'));
       await expect(storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'retrying')).rejects.toThrow('upload failed');
       const failed = await storageEngine.getSequenceAssignment(studyId, 'retrying');
       expect(failed?.rejected).toBe(true);
@@ -2277,8 +2276,7 @@ describe.each([
     const lockAttempted = new Promise<void>((resolve) => { attemptedLock = resolve; });
     // @ts-expect-error Observe the competing writer reaching the participant lock.
     const runWithLock = competingSession._runWithLock.bind(competingSession);
-    // @ts-expect-error Observe acquisition without replacing the actual mutex.
-    vi.spyOn(competingSession, '_runWithLock').mockImplementation((key, operation) => {
+    vi.spyOn(competingSession as unknown as { _runWithLock: typeof competingSession['_runWithLock'] }, '_runWithLock').mockImplementation((key, operation) => {
       if (key.startsWith('participant-')) attemptedLock();
       return runWithLock(key, operation);
     });
@@ -2375,8 +2373,7 @@ describe.each([
     await storageEngine._createSequenceAssignment('legacy-rollback', assignment);
     // @ts-expect-error Inject a failure after the realtime write has committed.
     const reject = storageEngine._rejectParticipantRealtime.bind(storageEngine);
-    // @ts-expect-error Inspect lock ownership at the existing rollback boundary.
-    vi.spyOn(storageEngine, '_rejectParticipantRealtime').mockImplementationOnce(async (...args: [string, boolean?]) => {
+    vi.spyOn(storageEngine as unknown as { _rejectParticipantRealtime: typeof storageEngine['_rejectParticipantRealtime'] }, '_rejectParticipantRealtime').mockImplementationOnce(async (...args: [string, boolean?]) => {
       await reject(...args);
       const lock = revisitRows.find((row) => row.studyId === `dev-${studyId}` && row.docId === 'lock_participant-assignment');
       expect(lock?.data).toMatchObject({ token: expect.any(String) });
@@ -2401,8 +2398,7 @@ describe.each([
     await storageEngine._createSequenceAssignment('legacy-restored', assignment);
     await storageEngine.rejectParticipant('legacy-restored', 'review');
     await storageEngine.setAutoTimeoutMinutes(studyId, 1);
-    // @ts-expect-error Verify rejection is checked before rewriting saved answers.
-    const upload = vi.spyOn(storageEngine, '_pushToStorage');
+    const upload = vi.spyOn(storageEngine as unknown as { _pushToStorage: typeof storageEngine['_pushToStorage'] }, '_pushToStorage');
     await expect(storageEngine.undoRejectParticipant('legacy-restored')).rejects.toThrow('Create and activate a new stage');
     expect(upload).not.toHaveBeenCalled();
     expect((await storageEngine.getSequenceAssignment(studyId, 'legacy-restored'))?.rejected).toBe(true);
@@ -2604,8 +2600,7 @@ describe.each([
       () => adminSession._markSequenceAssignmentTimedOut(session.participantId, Date.now()),
       adminSession,
     );
-    // @ts-expect-error Observe locking on the progress writer, not the timeout writer.
-    const locks = vi.spyOn(storageEngine, '_runWithLock');
+    const locks = vi.spyOn(storageEngine as unknown as { _runWithLock: typeof storageEngine['_runWithLock'] }, '_runWithLock');
     await storageEngine.updateProgressData({ total: 99, answered: ['intro'], isDynamic: false });
     await getCompeting();
     const assignment = await storageEngine.getSequenceAssignment(studyId, session.participantId);
@@ -2795,8 +2790,7 @@ describe.each([
     await storageEngine.setCurrentStage(studyId, 'LOCKS', '#00AAFF', 5);
     await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'counted');
     await storageEngine.releaseExpiredAssignments();
-    // @ts-expect-error protected
-    const locks = vi.spyOn(storageEngine, '_runWithLock');
+    const locks = vi.spyOn(storageEngine as unknown as { _runWithLock: typeof storageEngine['_runWithLock'] }, '_runWithLock');
     // @ts-expect-error protected
     expect((await storageEngine.getStageAllocation('LOCKS')).count).toBe(1);
     expect(locks).not.toHaveBeenCalled();

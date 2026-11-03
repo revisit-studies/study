@@ -324,8 +324,7 @@ describe.each([
     await storageEngine._createSequenceAssignment('legacy-restored', assignment);
     await storageEngine.rejectParticipant('legacy-restored', 'review');
     await storageEngine.setAutoTimeoutMinutes(studyId, 1);
-    // @ts-expect-error Verify rejection is checked before rewriting saved answers.
-    const upload = vi.spyOn(storageEngine, '_pushToStorage');
+    const upload = vi.spyOn(storageEngine as unknown as { _pushToStorage: typeof storageEngine['_pushToStorage'] }, '_pushToStorage');
     await expect(storageEngine.undoRejectParticipant('legacy-restored')).rejects.toThrow('Create and activate a new stage');
     expect(upload).not.toHaveBeenCalled();
     expect((await storageEngine.getSequenceAssignment(studyId, 'legacy-restored'))?.rejected).toBe(true);
@@ -413,8 +412,7 @@ describe.each([
     await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'auto-expired');
     // @ts-expect-error protected upload boundary
     const upload = storageEngine._pushToStorage.bind(storageEngine);
-    // @ts-expect-error Simulate the automatic sweep while the manual upload is in flight.
-    vi.spyOn(storageEngine, '_pushToStorage').mockImplementationOnce(async (path, type, data) => {
+    vi.spyOn(storageEngine as unknown as { _pushToStorage: typeof storageEngine['_pushToStorage'] }, '_pushToStorage').mockImplementationOnce(async (path, type, data) => {
       // @ts-expect-error protected backend mutation
       await storageEngine._markSequenceAssignmentTimedOut('auto-expired', Date.now());
       return upload(path, type, data);
@@ -1157,8 +1155,7 @@ describe.each([
       const timeoutHeld = new Promise<void>((resolve) => { releaseTimeout = resolve; });
       // @ts-expect-error protected
       const mark = storageEngine._markSequenceAssignmentTimedOut.bind(storageEngine);
-      // @ts-expect-error protected
-      vi.spyOn(storageEngine, '_markSequenceAssignmentTimedOut').mockImplementationOnce(async (...args: [string, number, number?]) => {
+      vi.spyOn(storageEngine as unknown as { _markSequenceAssignmentTimedOut: typeof storageEngine['_markSequenceAssignmentTimedOut'] }, '_markSequenceAssignmentTimedOut').mockImplementationOnce(async (...args: [string, number, number?]) => {
         await timeoutHeld;
         return mark(...args);
       });
@@ -1222,8 +1219,7 @@ describe.each([
       const events: string[] = [];
       // @ts-expect-error protected
       const mark = storageEngine._markSequenceAssignmentTimedOut.bind(storageEngine);
-      // @ts-expect-error protected
-      vi.spyOn(storageEngine, '_markSequenceAssignmentTimedOut').mockImplementationOnce(async (...args: [string, number, number?]) => {
+      vi.spyOn(storageEngine as unknown as { _markSequenceAssignmentTimedOut: typeof storageEngine['_markSequenceAssignmentTimedOut'] }, '_markSequenceAssignmentTimedOut').mockImplementationOnce(async (...args: [string, number, number?]) => {
         disabling = storageEngine.setAutoTimeoutMinutes(studyId, undefined).then(() => { events.push('disabled'); });
         await timeoutHeld;
         const result = await mark(...args);
@@ -1255,8 +1251,7 @@ describe.each([
 
   test('a sweep requested during another sweep gets its own pass', async () => {
     await storageEngine.setAutoTimeoutMinutes(studyId, 1);
-    // @ts-expect-error protected
-    const candidates = vi.spyOn(storageEngine, '_getTimeoutCandidates');
+    const candidates = vi.spyOn(storageEngine as unknown as { _getTimeoutCandidates: typeof storageEngine['_getTimeoutCandidates'] }, '_getTimeoutCandidates');
     await Promise.all([storageEngine.releaseExpiredAssignments(), storageEngine.releaseExpiredAssignments()]);
     expect(candidates).toHaveBeenCalledTimes(2);
   });
@@ -1266,8 +1261,7 @@ describe.each([
     await storageEngine.setAutoTimeoutMinutes(studyId, 1);
     await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'occupying');
     await storageEngine.releaseExpiredAssignments();
-    // @ts-expect-error protected
-    vi.spyOn(storageEngine, '_getTimeoutCandidates').mockRejectedValue(new Error('backend unavailable'));
+    vi.spyOn(storageEngine as unknown as { _getTimeoutCandidates: typeof storageEngine['_getTimeoutCandidates'] }, '_getTimeoutCandidates').mockRejectedValue(new Error('backend unavailable'));
     await expect(storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'turned-away'))
       .rejects.toThrow(/participant limit/);
   });

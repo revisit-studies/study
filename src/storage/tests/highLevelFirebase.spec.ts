@@ -896,8 +896,7 @@ describe.each([
     await storageEngine._createSequenceAssignment('legacy-restored', assignment);
     await storageEngine.rejectParticipant('legacy-restored', 'review');
     await storageEngine.setAutoTimeoutMinutes(studyId, 1);
-    // @ts-expect-error Verify rejection is checked before rewriting saved answers.
-    const upload = vi.spyOn(storageEngine, '_pushToStorage');
+    const upload = vi.spyOn(storageEngine as unknown as { _pushToStorage: typeof storageEngine['_pushToStorage'] }, '_pushToStorage');
     await expect(storageEngine.undoRejectParticipant('legacy-restored')).rejects.toThrow('Create and activate a new stage');
     expect(upload).not.toHaveBeenCalled();
     expect((await storageEngine.getSequenceAssignment(studyId, 'legacy-restored'))?.rejected).toBe(true);
@@ -925,8 +924,7 @@ describe.each([
     await storageEngine.setAutoTimeoutMinutes(studyId, undefined);
     await storageEngine.setMode(studyId, 'dataCollectionEnabled', true);
     firestoreData[`dev-${studyId}/modes`].autoTimeoutMinutes = 1;
-    // @ts-expect-error Mock the backend clock, not the participant clock.
-    vi.spyOn(storageEngine, '_getServerTimeMs').mockResolvedValue(Date.now());
+    vi.spyOn(storageEngine as unknown as { _getServerTimeMs: typeof storageEngine['_getServerTimeMs'] }, '_getServerTimeMs').mockResolvedValue(Date.now());
     // Shell activates the deployed config before resuming saved participants.
     await storageEngine.saveConfig({ ...configSimple, studyMetadata: { ...configSimple.studyMetadata, title: 'Updated title' } });
     await storageEngine.saveConfig(configSimple);
@@ -1015,8 +1013,7 @@ describe.each([
     await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'auto-expired');
     // @ts-expect-error protected upload boundary
     const upload = storageEngine._pushToStorage.bind(storageEngine);
-    // @ts-expect-error Simulate the automatic sweep while the manual upload is in flight.
-    vi.spyOn(storageEngine, '_pushToStorage').mockImplementationOnce(async (path, type, data) => {
+    vi.spyOn(storageEngine as unknown as { _pushToStorage: typeof storageEngine['_pushToStorage'] }, '_pushToStorage').mockImplementationOnce(async (path, type, data) => {
       // @ts-expect-error protected backend mutation
       await storageEngine._markSequenceAssignmentTimedOut('auto-expired', Date.now());
       return upload(path, type, data);
@@ -1450,14 +1447,12 @@ describe.each([
     const path = Object.keys(firestoreData).find((key) => key.endsWith(`/sequenceAssignment/${first.participantId}`))!;
     firestoreData[path].createdTime = Timestamp.fromMillis(Date.now() - 120_000);
     await storageEngine.setAutoTimeoutMinutes(studyId, 1);
-    // @ts-expect-error Mock the trusted backend clock at the external boundary.
-    vi.spyOn(storageEngine, '_getServerTimeMs').mockResolvedValue(Date.now());
+    vi.spyOn(storageEngine as unknown as { _getServerTimeMs: typeof storageEngine['_getServerTimeMs'] }, '_getServerTimeMs').mockResolvedValue(Date.now());
     // A failed initial upload can release the old reservation, then a retry
     // replaces it at the same document ID after the sweep selected it.
     // @ts-expect-error protected test seam
     const mark = storageEngine._markSequenceAssignmentTimedOut.bind(storageEngine);
-    // @ts-expect-error protected test seam
-    vi.spyOn(storageEngine, '_markSequenceAssignmentTimedOut').mockImplementationOnce(async (...args: [string, number, number?]) => {
+    vi.spyOn(storageEngine as unknown as { _markSequenceAssignmentTimedOut: typeof storageEngine['_markSequenceAssignmentTimedOut'] }, '_markSequenceAssignmentTimedOut').mockImplementationOnce(async (...args: [string, number, number?]) => {
       firestoreData[path] = {
         ...firestoreData[path],
         createdTime: Timestamp.fromMillis(Date.now()),
@@ -1485,8 +1480,7 @@ describe.each([
       if (legacy && path.includes('/allocation/stages/')) delete firestoreData[path];
     });
     await storageEngine.setAutoTimeoutMinutes(studyId, 1);
-    // @ts-expect-error Mock only the external backend clock.
-    vi.spyOn(storageEngine, '_getServerTimeMs').mockResolvedValue(serverNow);
+    vi.spyOn(storageEngine as unknown as { _getServerTimeMs: typeof storageEngine['_getServerTimeMs'] }, '_getServerTimeMs').mockResolvedValue(serverNow);
     const historyReads = vi.mocked(getDocsFromServer);
     historyReads.mockClear();
     const scans = vi.spyOn(storageEngine, 'getAllSequenceAssignments');
@@ -1571,8 +1565,7 @@ describe.each([
   test('an expired enabled condition is released when only a disabled condition has room', async () => {
     vi.useFakeTimers({ toFake: ['Date'] });
     try {
-      // @ts-expect-error Use the trusted backend clock boundary in the Firebase fake.
-      vi.spyOn(storageEngine, '_getServerTimeMs').mockImplementation(async () => Date.now());
+      vi.spyOn(storageEngine as unknown as { _getServerTimeMs: typeof storageEngine['_getServerTimeMs'] }, '_getServerTimeMs').mockImplementation(async () => Date.now());
       vi.setSystemTime(new Date('2026-01-01T00:00:00Z'));
       const config: StudyConfig = { ...configSimple, factors: { group: ['A', 'B'] }, betweenSubjects: ['group'] };
       await storageEngine.saveConfig(config);
@@ -1631,8 +1624,7 @@ describe.each([
   test('progress updates do not take the participant lock', async () => {
     await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'progressing');
     await storageEngine.releaseExpiredAssignments();
-    // @ts-expect-error protected
-    const locks = vi.spyOn(storageEngine, '_runWithLock');
+    const locks = vi.spyOn(storageEngine as unknown as { _runWithLock: typeof storageEngine['_runWithLock'] }, '_runWithLock');
     await storageEngine.updateProgressData({ total: 3, answered: ['testComponent_0'], isDynamic: false }, 'progressing');
     expect(locks).not.toHaveBeenCalled();
     expect(await storageEngine.getSequenceAssignment(studyId, 'progressing')).toMatchObject({ total: 3, answered: ['testComponent_0'] });
