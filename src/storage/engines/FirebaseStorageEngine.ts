@@ -893,6 +893,7 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
   }
 
   async initializeStudyDb(studyId: string) {
+    await this.finishTimeoutSweepsBeforeSwitching(studyId);
     try {
       // Create or retrieve database for study
       this.studyCollection = collection(

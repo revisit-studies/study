@@ -1174,7 +1174,7 @@ describe.each([
     }
   });
 
-  test('a sweep stops when the engine switches studies or the timeout changes', async () => {
+  test('switching studies waits for a running sweep, which stays in its own study', async () => {
     vi.useFakeTimers({ toFake: ['Date'] });
     try {
       vi.setSystemTime(new Date('2026-01-01T00:00:00.000Z'));
@@ -1187,25 +1187,59 @@ describe.each([
       await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'shared');
       await storageEngine.releaseExpiredAssignments();
       vi.setSystemTime(new Date('2026-01-01T00:02:00.000Z'));
+
+      // Another study is opened while the sweep reads the clock.
+      let switched: Promise<void> | undefined;
       const engineInternals = storageEngine as unknown as { _getServerTimeMs: () => Promise<number> };
-
-      // Another study becomes current while the sweep reads the clock.
       vi.spyOn(engineInternals, '_getServerTimeMs').mockImplementationOnce(async () => {
-        await storageEngine.initializeStudyDb(otherStudyId);
+        switched = storageEngine.initializeStudyDb(otherStudyId);
         return Date.now();
       });
       await storageEngine.releaseExpiredAssignments();
+      await switched;
+
+      expect((await storageEngine.getSequenceAssignment(studyId, 'shared'))?.autoTimedOutAt).toBeDefined();
       expect((await storageEngine.getSequenceAssignment(otherStudyId, 'shared'))?.autoTimedOutAt).toBeUndefined();
-      expect((await storageEngine.getSequenceAssignment(studyId, 'shared'))?.autoTimedOutAt).toBeUndefined();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
 
-      // The designer disables the timeout while the sweep reads the clock.
-      await storageEngine.initializeStudyDb(studyId);
-      vi.spyOn(engineInternals, '_getServerTimeMs').mockImplementationOnce(async () => {
-        await storageEngine.setAutoTimeoutMinutes(studyId, undefined);
-        return Date.now();
-      });
+  test('disabling the timeout during a sweep stops it before the next timeout', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    try {
+      vi.setSystemTime(new Date('2026-01-01T00:00:00.000Z'));
+      await storageEngine.setAutoTimeoutMinutes(studyId, 1);
+      await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'first-expired');
+      await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'second-expired');
       await storageEngine.releaseExpiredAssignments();
-      expect((await storageEngine.getSequenceAssignment(studyId, 'shared'))?.autoTimedOutAt).toBeUndefined();
+      vi.setSystemTime(new Date('2026-01-01T00:02:00.000Z'));
+
+      let releaseTimeout!: () => void;
+      const timeoutHeld = new Promise<void>((resolve) => { releaseTimeout = resolve; });
+      let disabling: Promise<void> | undefined;
+      // @ts-expect-error protected
+      const mark = storageEngine._markSequenceAssignmentTimedOut.bind(storageEngine);
+      // @ts-expect-error protected
+      vi.spyOn(storageEngine, '_markSequenceAssignmentTimedOut').mockImplementationOnce(async (...args: [string, number, number?]) => {
+        disabling = storageEngine.setAutoTimeoutMinutes(studyId, undefined);
+        await timeoutHeld;
+        return mark(...args);
+      });
+      const sweep = storageEngine.releaseExpiredAssignments();
+      await vi.waitFor(() => expect(disabling).toBeDefined());
+      // The disable waits for the timeout already being written.
+      let disabled = false;
+      disabling!.then(() => { disabled = true; }, () => undefined);
+      await new Promise((resolve) => { setTimeout(resolve, 20); });
+      expect(disabled).toBe(false);
+      releaseTimeout();
+      await sweep;
+      await disabling;
+
+      const timedOut = (await storageEngine.getAllSequenceAssignments(studyId)).filter((assignment) => assignment.autoTimedOutAt !== undefined);
+      expect(timedOut).toHaveLength(1);
+      expect((await storageEngine.getModes(studyId)).autoTimeoutMinutes).toBeUndefined();
     } finally {
       vi.useRealTimers();
     }

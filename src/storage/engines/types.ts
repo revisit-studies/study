@@ -1458,6 +1458,17 @@ export abstract class StorageEngine {
     return sweep;
   }
 
+  // The engine is shared across studies and engines read `this.studyId` while a
+  // timeout writes, so switching to another study waits for this session's sweeps.
+  protected async finishTimeoutSweepsBeforeSwitching(studyId: string) {
+    while (this.studyId !== undefined && studyId !== this.studyId) {
+      const pending = this.timeoutSweeps;
+      // eslint-disable-next-line no-await-in-loop
+      await pending;
+      if (pending === this.timeoutSweeps) return;
+    }
+  }
+
   private async readTimeoutSettings(studyId: string) {
     const { modes, stageData } = await this.getModesAndStageData(studyId);
     return {
@@ -1490,14 +1501,17 @@ export abstract class StorageEngine {
     // Each engine rechecks eligibility in the same operation that writes, so a
     // participant who finished or was rejected in the meantime keeps their slot.
     for (const assignment of expiredAssignments) {
-      // The engine is shared across studies, so stop if it has moved to another
-      // study or the timeout settings changed since the sweep started.
-      // eslint-disable-next-line no-await-in-loop
-      const current = await this.readTimeoutSettings(studyId);
-      if (this.studyId !== studyId || current.timeoutMinutes !== timeoutMinutes || current.stage !== stage) return;
+      // Settings changes hold the admission-policy lock, so recheck them under it:
+      // a timeout cannot land after a designer disables, changes, or moves it.
       // Stop at the first failed mutation; a later sweep retries the rest.
       // eslint-disable-next-line no-await-in-loop
-      await this._markSequenceAssignmentTimedOut(assignment.participantId, serverNow, deadline);
+      const applied = await this._runWithLock(ADMISSION_POLICY_LOCK_KEY, async () => {
+        const current = await this.readTimeoutSettings(studyId);
+        if (this.studyId !== studyId || current.timeoutMinutes !== timeoutMinutes || current.stage !== stage) return false;
+        await this._markSequenceAssignmentTimedOut(assignment.participantId, serverNow, deadline);
+        return true;
+      });
+      if (!applied) return;
     }
   }
 

@@ -750,6 +750,7 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
   }
 
   async initializeStudyDb(studyId: string) {
+    await this.finishTimeoutSweepsBeforeSwitching(studyId);
     // Check if we have a session
     let error: AuthError | null = null;
     const { data } = await this.getSession();

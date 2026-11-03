@@ -407,6 +407,7 @@ export class LocalStorageEngine extends StorageEngine {
   }
 
   async initializeStudyDb(studyId: string) {
+    await this.finishTimeoutSweepsBeforeSwitching(studyId);
     // Create or retrieve database for study
     this.studyId = studyId;
   }

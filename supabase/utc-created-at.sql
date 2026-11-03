@@ -1,9 +1,17 @@
 -- Existing deployments: store createdAt in UTC, matching revisit.sql.
--- Rows written so far hold the database's local time, so convert them once from
--- the current server timezone. The default is changed first, which blocks writes
--- until the conversion commits. Once the default is UTC, rerunning does nothing.
+-- Rows written so far hold local time in the timezone of the sessions that wrote
+-- them (PostgREST's), which can differ from this session's, so pass it explicitly:
+--   psql -v source_timezone=America/Denver ... < utc-created-at.sql
+-- The default is changed first, which blocks writes until the conversion commits.
+-- Once the default is UTC, rerunning does nothing.
+BEGIN;
+SELECT set_config('revisit.source_timezone', :'source_timezone', true);
 DO $$
+DECLARE
+  source_timezone text := current_setting('revisit.source_timezone');
 BEGIN
+  -- Reject an unknown timezone name before changing anything.
+  PERFORM now() AT TIME ZONE source_timezone;
   IF (
     SELECT pg_get_expr(d.adbin, d.adrelid)
     FROM pg_attrdef d
@@ -12,7 +20,8 @@ BEGIN
   ) = 'now()' THEN
     ALTER TABLE public.revisit ALTER COLUMN "createdAt" SET DEFAULT (now() AT TIME ZONE 'utc');
     UPDATE public.revisit
-      SET "createdAt" = ("createdAt" AT TIME ZONE current_setting('TimeZone')) AT TIME ZONE 'utc'
+      SET "createdAt" = ("createdAt" AT TIME ZONE source_timezone) AT TIME ZONE 'utc'
       WHERE "createdAt" IS NOT NULL;
   END IF;
 END $$;
+COMMIT;
