@@ -176,6 +176,31 @@ describe('IframeController', () => {
     expect(postMessage.mock.calls.filter(([data]) => data.type === '@REVISIT_COMMS/RESUME')).toHaveLength(1);
   });
 
+  test.each([0, undefined])('accepts new revisit provenance from a legacy website announcing protocol %s', (protocolVersion) => {
+    mockRetained.graph = { root: 'saved-root' };
+    const { container } = render(<IframeController currentConfig={{ ...websiteConfig, path: 'chart.html' }} answers={{}} />);
+    const iframe = container.querySelector('iframe')!;
+    const iframeId = new URL(iframe.src).searchParams.get('id');
+    const receive = (type: string, message: unknown) => act(() => {
+      window.dispatchEvent(new MessageEvent('message', {
+        source: iframe.contentWindow,
+        data: { iframeId, type: `@REVISIT_COMMS/${type}`, message },
+      }));
+    });
+    receive('WINDOW_READY', protocolVersion === undefined ? undefined : { protocolVersion });
+    const graph = { root: 'revisit-root', current: 'changed-node', nodes: {} };
+    receive('PROVENANCE', graph);
+    receive('ANSWERS', { answer: 2 });
+    expect(mockSetReactiveAnswers).toHaveBeenCalledWith({ answer: 2 });
+    expect(mockUpdateProvenance).toHaveBeenCalledWith(expect.objectContaining({ provenanceGraph: graph }));
+
+    // A page can opt into managed restoration after its initial legacy announcement.
+    receive('WINDOW_READY', { protocolVersion: 1, documentId: 'managed' });
+    mockUpdateProvenance.mockClear();
+    receive('PROVENANCE', graph);
+    expect(mockUpdateProvenance).not.toHaveBeenCalled();
+  });
+
   test('rejects a fresh legacy graph while a revisited website is still registering', () => {
     mockRetained.graph = { root: 'saved-root' };
     const { container } = render(<IframeController currentConfig={{ ...websiteConfig, path: 'chart.html' }} answers={{}} />);

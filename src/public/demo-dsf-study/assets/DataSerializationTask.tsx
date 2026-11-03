@@ -15,21 +15,71 @@ interface DataSerializationTaskParameters {
   taskId: string;
 }
 
-const CONFIG_DOCUMENTS: Record<SerializationFormat, string> = {
+export const CONFIG_DOCUMENTS: Record<SerializationFormat, string> = {
   JSON: '{\n  "name": "d3",\n  "version": "7.9.0",\n  "engines": { "node": ">=18" },\n  "keywords": ["visualization", "data"],\n  "repository": { "type": "git", "url": "https://github.com/d3/d3" },\n  "dependencies": { "d3-array": "^3.2.4", "d3-scale": "^4.0.2" }\n}',
   JSONC: '// Visualization package configuration\n{\n  "name": "d3",\n  "version": "7.9.0",\n  "engines": { "node": ">=18" },\n  "keywords": ["visualization", "data"],\n  "repository": { "type": "git", "url": "https://github.com/d3/d3" },\n  "dependencies": { "d3-array": "^3.2.4", "d3-scale": "^4.0.2" },\n}',
   JSON5: "// Visualization package configuration\n{\n  name: 'd3',\n  version: '7.9.0',\n  engines: { node: '>=18' },\n  keywords: ['visualization', 'data'],\n  repository: { type: 'git', url: 'https://github.com/d3/d3' },\n  dependencies: { 'd3-array': '^3.2.4', 'd3-scale': '^4.0.2' },\n}",
-  HJSON: '# Visualization package configuration\nname: d3\nversion: 7.9.0\nengines: { node: >=18 }\nkeywords: [visualization, data]\nrepository: { type: git, url: https://github.com/d3/d3 }\ndependencies: { d3-array: ^3.2.4, d3-scale: ^4.0.2 }',
+  HJSON: `# Visualization package configuration
+name: d3
+version: 7.9.0
+engines: {
+  node: >=18
+}
+keywords: [
+  visualization
+  data
+]
+repository: {
+  type: git
+  url: https://github.com/d3/d3
+}
+dependencies: {
+  d3-array: ^3.2.4
+  d3-scale: ^4.0.2
+}`,
   YAML: '# Visualization package configuration\nname: d3\nversion: 7.9.0\nengines:\n  node: ">=18"\nkeywords:\n  - visualization\n  - data\nrepository:\n  type: git\n  url: https://github.com/d3/d3\ndependencies:\n  d3-array: ^3.2.4\n  d3-scale: ^4.0.2',
   TOML: '# Visualization package configuration\nname = "d3"\nversion = "7.9.0"\nkeywords = ["visualization", "data"]\n\n[engines]\nnode = ">=18"\n\n[repository]\ntype = "git"\nurl = "https://github.com/d3/d3"\n\n[dependencies]\nd3-array = "^3.2.4"\nd3-scale = "^4.0.2"',
   XML: '<?xml version="1.0"?>\n<package>\n  <name>d3</name>\n  <version>7.9.0</version>\n  <engines><node>&gt;=18</node></engines>\n  <keywords><keyword>visualization</keyword><keyword>data</keyword></keywords>\n  <repository type="git"><url>https://github.com/d3/d3</url></repository>\n  <dependencies><dependency name="d3-array">^3.2.4</dependency><dependency name="d3-scale">^4.0.2</dependency></dependencies>\n</package>',
 };
 
-const TABULAR_DOCUMENTS: Record<SerializationFormat, string> = {
+export const TABULAR_DOCUMENTS: Record<SerializationFormat, string> = {
   JSON: '[\n  { "student": "Alice", "quiz1": 88, "quiz2": 95, "final": 92, "sports": ["tennis"], "absences": 0 },\n  { "student": "Bob", "quiz1": 76, "quiz2": 82, "final": 91, "sports": ["soccer", "track"], "absences": 1 },\n  { "student": "Carla", "quiz1": 90, "quiz2": 87, "final": 89, "sports": ["swimming"], "absences": 0 }\n]',
   JSONC: '// Student assessment records\n[\n  { "student": "Alice", "quiz1": 88, "quiz2": 95, "final": 92, "sports": ["tennis"], "absences": 0 },\n  { "student": "Bob", "quiz1": 76, "quiz2": 82, "final": 91, "sports": ["soccer", "track"], "absences": 1 },\n  { "student": "Carla", "quiz1": 90, "quiz2": 87, "final": 89, "sports": ["swimming"], "absences": 0 },\n]',
   JSON5: "// Student assessment records\n[\n  { student: 'Alice', quiz1: 88, quiz2: 95, final: 92, sports: ['tennis'], absences: 0 },\n  { student: 'Bob', quiz1: 76, quiz2: 82, final: 91, sports: ['soccer', 'track'], absences: 1 },\n  { student: 'Carla', quiz1: 90, quiz2: 87, final: 89, sports: ['swimming'], absences: 0 },\n]",
-  HJSON: '# Student assessment records\n[\n  { student: Alice, quiz1: 88, quiz2: 95, final: 92, sports: [tennis], absences: 0 }\n  { student: Bob, quiz1: 76, quiz2: 82, final: 91, sports: [soccer, track], absences: 1 }\n  { student: Carla, quiz1: 90, quiz2: 87, final: 89, sports: [swimming], absences: 0 }\n]',
+  HJSON: `# Student assessment records
+[
+  {
+    student: Alice
+    quiz1: 88
+    quiz2: 95
+    final: 92
+    sports: [
+      tennis
+    ]
+    absences: 0
+  }
+  {
+    student: Bob
+    quiz1: 76
+    quiz2: 82
+    final: 91
+    sports: [
+      soccer
+      track
+    ]
+    absences: 1
+  }
+  {
+    student: Carla
+    quiz1: 90
+    quiz2: 87
+    final: 89
+    sports: [
+      swimming
+    ]
+    absences: 0
+  }
+]`,
   YAML: '# Student assessment records\n- student: Alice\n  quiz1: 88\n  quiz2: 95\n  final: 92\n  sports: [tennis]\n  absences: 0\n- student: Bob\n  quiz1: 76\n  quiz2: 82\n  final: 91\n  sports: [soccer, track]\n  absences: 1\n- student: Carla\n  quiz1: 90\n  quiz2: 87\n  final: 89\n  sports: [swimming]\n  absences: 0',
   TOML: '# Student assessment records\n[[students]]\nstudent = "Alice"\nquiz1 = 88\nquiz2 = 95\nfinal = 92\nsports = ["tennis"]\nabsences = 0\n\n[[students]]\nstudent = "Bob"\nquiz1 = 76\nquiz2 = 82\nfinal = 91\nsports = ["soccer", "track"]\nabsences = 1\n\n[[students]]\nstudent = "Carla"\nquiz1 = 90\nquiz2 = 87\nfinal = 89\nsports = ["swimming"]\nabsences = 0',
   XML: '<?xml version="1.0"?>\n<students>\n  <student name="Alice"><quiz1>88</quiz1><quiz2>95</quiz2><final>92</final><sports><sport>tennis</sport></sports><absences>0</absences></student>\n  <student name="Bob"><quiz1>76</quiz1><quiz2>82</quiz2><final>91</final><sports><sport>soccer</sport><sport>track</sport></sports><absences>1</absences></student>\n  <student name="Carla"><quiz1>90</quiz1><quiz2>87</quiz2><final>89</final><sports><sport>swimming</sport></sports><absences>0</absences></student>\n</students>',

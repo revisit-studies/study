@@ -31,6 +31,7 @@ export function IframeController({ currentConfig, provState, answers }: { curren
   const updaterCleanup = useRef<(() => void) | undefined>(undefined);
   const pendingUpdate = useRef<{ id: string; resolve:(value: GlobalStoreValues) => void; reject: (error: Error) => void } | undefined>(undefined);
   const documentId = useRef<string | undefined>(undefined);
+  const legacyDocument = useRef(false);
   const disposeUpdater = useCallback((message: string) => {
     updaterCleanup.current?.();
     updaterCleanup.current = undefined;
@@ -204,6 +205,7 @@ export function IframeController({ currentConfig, provState, answers }: { curren
         if (!isBootstrap && data.requestId && data.requestId !== resumeRequest.current) return;
         switch (data.type) {
           case `${PREFIX}/WINDOW_READY`: {
+            legacyDocument.current = data.message?.protocolVersion !== 1;
             const isNewDocument = documentId.current !== data.message?.documentId;
             disposeUpdater('The website navigated before its global store update finished.');
             documentId.current = data.message?.documentId;
@@ -302,8 +304,8 @@ export function IframeController({ currentConfig, provState, answers }: { curren
           }
           case `${PREFIX}/PROVENANCE`: {
             if (isAnalysis || resumeStatusRef.current === 'pending' || resumeStatusRef.current === 'error') return;
-            // Legacy initialization may arrive before an asynchronous restoration handler registers.
-            if (provenance && data.message?.root !== provenance.root) return;
+            // Protect managed restoration until registration, while legacy pages start a fresh graph on revisit.
+            if (!legacyDocument.current && provenance && data.message?.root !== provenance.root) return;
             storeDispatch(updateProvenance({
               location: 'stimulus',
               identifier,
