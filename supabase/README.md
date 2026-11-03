@@ -171,6 +171,16 @@ before upgrading. If you use Realtime Postgres Changes, the release notes also
 document a connection-restart issue and the `REGION: us-east-1` workaround;
 reVISit's storage engine does not subscribe to Postgres Changes.
 
+Deployments initialized with an older `revisit.sql` should apply
+`utc-created-at.sql` once. reVISit reads `createdAt` as UTC, so a database
+running in another timezone otherwise shifts participant start times. Rows
+written before the change keep their original values:
+
+```sh
+docker exec -i supabase-db psql -U supabase_admin \
+  -v ON_ERROR_STOP=1 < "$revisit_support/utc-created-at.sql"
+```
+
 ## Local regression checks
 
 Run these checks from your reVISit checkout. The migration helper requires
