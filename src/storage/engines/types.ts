@@ -206,6 +206,11 @@ export function consumesCapacity(assignment: SequenceAssignment) {
 // committed against a stage configuration that changed mid-assignment.
 const ADMISSION_POLICY_LOCK_KEY = 'participant-assignment';
 
+// Participant IDs must not collide with shared policy or settings lock keys.
+export function getParticipantLockKey(participantId: string) {
+  return `participant:${participantId}`;
+}
+
 export function getStageParticipantCounts(sequenceAssignments: SequenceAssignment[]) {
   return sequenceAssignments.reduce<Record<string, number>>((counts, assignment) => {
     if (consumesCapacity(assignment)) {
@@ -961,7 +966,7 @@ export abstract class StorageEngine {
       this.participantDataWriteError = null;
       try {
         if (snapshot.globalStoreRevision !== undefined) await this.provenanceWriteChains.get(publicationKey);
-        await this._runWithLock(`participant-${participantId}`, async () => {
+        await this._runWithLock(getParticipantLockKey(participantId), async () => {
           // An admin can reject a participant in another browser while this
           // client still has a debounced full-record write pending. The same
           // lock is held by rejectParticipant, so the check and write cannot
@@ -1643,7 +1648,7 @@ export abstract class StorageEngine {
     participantId: string,
     updatedFields: Partial<SequenceAssignment>,
   ) {
-    await this._runWithLock(`participant-${participantId}`, async () => {
+    await this._runWithLock(getParticipantLockKey(participantId), async () => {
       await this._updateSequenceAssignmentFields(participantId, updatedFields);
     });
   }
@@ -1692,7 +1697,7 @@ export abstract class StorageEngine {
   }
 
   private async getParticipantSessionSnapshot(participantId: string) {
-    return this._runWithLock(`participant-${participantId}`, async () => {
+    return this._runWithLock(getParticipantLockKey(participantId), async () => {
       const assignment = await this._getSequenceAssignment(participantId);
       const latest = await this._getFromStorage(`participants/${participantId}`, 'participantData', undefined, true, true);
       return isParticipantData(latest) && assignment && assignment.completed !== null
@@ -2064,7 +2069,7 @@ export abstract class StorageEngine {
 
   // Rejects a participant with the given participantId and reason.
   async timeoutParticipant(participantId: string): Promise<void> {
-    await this._runWithLock(ADMISSION_POLICY_LOCK_KEY, () => this._runWithLock(`participant-${participantId}`, async () => {
+    await this._runWithLock(ADMISSION_POLICY_LOCK_KEY, () => this._runWithLock(getParticipantLockKey(participantId), async () => {
       const assignment = await this._getSequenceAssignment(participantId);
       // An auto-timed-out participant has already released their slot and may
       // still finish, so a manual timeout must not turn them into a rejection.
@@ -2074,7 +2079,7 @@ export abstract class StorageEngine {
   }
 
   async rejectParticipant(participantId: string, reason: string): Promise<void> {
-    const participantRecordMissing = await this._runWithLock(ADMISSION_POLICY_LOCK_KEY, () => this._runWithLock(`participant-${participantId}`, () => (
+    const participantRecordMissing = await this._runWithLock(ADMISSION_POLICY_LOCK_KEY, () => this._runWithLock(getParticipantLockKey(participantId), () => (
       this.rejectParticipantUnlocked(participantId, reason)
     )));
 
@@ -2204,7 +2209,7 @@ export abstract class StorageEngine {
   async undoRejectParticipant(participantId: string) {
     // Admin restoration may exceed recruitment limits. Keep the admission lock
     // to coordinate rejected-slot ownership with new admissions.
-    return await this._runWithLock(ADMISSION_POLICY_LOCK_KEY, () => this._runWithLock(`participant-${participantId}`, async () => {
+    return await this._runWithLock(ADMISSION_POLICY_LOCK_KEY, () => this._runWithLock(getParticipantLockKey(participantId), async () => {
       const assignment = await this._getSequenceAssignment(participantId);
       // A timed-out participant holds no slot, so a replacement reusing theirs
       // does not prevent restoring them.
@@ -2538,7 +2543,7 @@ export abstract class StorageEngine {
     }
 
     try {
-      await this._runWithLock(`participant-${this.currentParticipantId}`, async () => {
+      await this._runWithLock(getParticipantLockKey(this.currentParticipantId), async () => {
         assertCurrentSession();
         const assignment = await this._getSequenceAssignment(this.currentParticipantId!);
         if (assignment?.rejected) throw new Error('This participant has been timed out or rejected');
@@ -2715,7 +2720,7 @@ export abstract class StorageEngine {
         }
       };
       if (progress) {
-        await this._runWithLock(`participant-${participantId}`, async () => {
+        await this._runWithLock(getParticipantLockKey(participantId), async () => {
           let uploadProgress = progress;
           let provenance = provenanceToSave;
           const current = this.participantData;

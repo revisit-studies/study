@@ -13,7 +13,7 @@ import { generateSequenceArray } from '../../utils/handleRandomSequences';
 import { hash } from '../engines/utils/storageEngineHelpers';
 import { Sequence } from '../../store/types';
 import {
-  StorageEngine, getBetweenSubjectsCombinationKey, SequenceAssignment, StoredUser, RuntimeStudySettings,
+  StorageEngine, getParticipantLockKey, getBetweenSubjectsCombinationKey, SequenceAssignment, StoredUser, RuntimeStudySettings,
 } from '../engines/types';
 import { filterSequenceByCondition } from '../../utils/handleConditionLogic';
 import { SupabaseStorageEngine } from '../engines/SupabaseStorageEngine';
@@ -521,6 +521,33 @@ describe.each([
     Object.keys(localStore).forEach((key) => delete localStore[key]);
   });
 
+  test('participant ID assignment can initialize, time out, reject and restore without recursive locks', async () => {
+    const engine = storageEngine as unknown as { _runWithLock: (key: string, operation: () => Promise<unknown>) => Promise<unknown> };
+    const runWithLock = engine._runWithLock.bind(engine);
+    const held = new Set<string>();
+    // Fail immediately for the same non-reentrant acquisition that otherwise waits 30 seconds.
+    const lock = vi.spyOn(engine, '_runWithLock').mockImplementation(async (key, operation) => {
+      if (held.has(key)) throw new Error(`Recursive acquisition of ${key}`);
+      return runWithLock(key, async () => {
+        held.add(key);
+        try { return await operation(); } finally { held.delete(key); }
+      });
+    });
+    try {
+      await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'assignment');
+      await storageEngine.timeoutParticipant('assignment');
+      expect((await storageEngine.getSequenceAssignment(studyId, 'assignment'))?.rejected).toBe(true);
+      await storageEngine.undoRejectParticipant('assignment');
+      expect((await storageEngine.getSequenceAssignment(studyId, 'assignment'))?.rejected).toBe(false);
+      await storageEngine.rejectParticipant('assignment', 'Admin rejection');
+      expect((await storageEngine.getSequenceAssignment(studyId, 'assignment'))?.rejected).toBe(true);
+      await storageEngine.undoRejectParticipant('assignment');
+      expect((await storageEngine.getSequenceAssignment(studyId, 'assignment'))?.rejected).toBe(false);
+    } finally {
+      lock.mockRestore();
+    }
+  });
+
   test('regression: a Supabase cache reupload stays protected until later completion', async () => {
     const definitions = { budget: { initialValue: 100 } };
     const config: StudyConfig = { ...configSimple, globalVariables: definitions };
@@ -540,7 +567,7 @@ describe.each([
     cacheUploadHook = async (path, options) => {
       if ((options as { cacheControl?: string })?.cacheControl && path.endsWith(`/provenance/${participantId}_testComponent_0`)) {
         cacheUploadHook = null;
-        const lock = revisitRows.find((row) => row.docId === `lock_participant-${participantId}`);
+        const lock = revisitRows.find((row) => row.docId === `lock_${getParticipantLockKey(participantId)}`);
         cacheWasProtected = !!(lock?.data as { token?: string } | undefined)?.token;
         started();
         await gate;
@@ -2366,7 +2393,7 @@ describe.each([
     // @ts-expect-error Observe the competing writer reaching the participant lock.
     const runWithLock = competingSession._runWithLock.bind(competingSession);
     vi.spyOn(competingSession as unknown as { _runWithLock: typeof competingSession['_runWithLock'] }, '_runWithLock').mockImplementation((key, operation) => {
-      if (key.startsWith('participant-')) attemptedLock();
+      if (key.startsWith('participant:')) attemptedLock();
       return runWithLock(key, operation);
     });
     let competing: Promise<unknown> | undefined;
@@ -2766,7 +2793,7 @@ describe.each([
     const assignment = await storageEngine.getSequenceAssignment(studyId, session.participantId);
     expect(assignment).toMatchObject({ total: 99, answered: ['intro'] });
     expect(assignment?.autoTimedOutAt).toBeDefined();
-    expect(locks).toHaveBeenCalledWith(`participant-${session.participantId}`, expect.any(Function));
+    expect(locks).toHaveBeenCalledWith(getParticipantLockKey(session.participantId), expect.any(Function));
     expect(locks).not.toHaveBeenCalledWith(expect.stringMatching(/^stage-allocation-/), expect.any(Function));
   });
 

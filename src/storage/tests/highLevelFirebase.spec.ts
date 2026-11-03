@@ -14,7 +14,7 @@ import { hash } from '../engines/utils/storageEngineHelpers';
 import { type Sequence } from '../../store/types';
 import { FirebaseStorageEngine } from '../engines/FirebaseStorageEngine';
 import {
-  type StorageEngine, getBetweenSubjectsCombinationKey, type SequenceAssignment, type StoredUser,
+  type StorageEngine, getParticipantLockKey, getBetweenSubjectsCombinationKey, type SequenceAssignment, type StoredUser,
 } from '../engines/types';
 import { filterSequenceByCondition } from '../../utils/handleConditionLogic';
 
@@ -783,10 +783,37 @@ describe.each([
     expect((await storageEngine.getAllSequenceAssignments(studyId)).filter((assignment) => !assignment.rejected)).toHaveLength(1);
   });
 
+  test('participant ID assignment can initialize, time out, reject and restore without recursive locks', async () => {
+    const engine = storageEngine as unknown as { _runWithLock: (key: string, operation: () => Promise<unknown>) => Promise<unknown> };
+    const runWithLock = engine._runWithLock.bind(engine);
+    const held = new Set<string>();
+    // Fail immediately for the same non-reentrant acquisition that otherwise waits 30 seconds.
+    const lock = vi.spyOn(engine, '_runWithLock').mockImplementation(async (key, operation) => {
+      if (held.has(key)) throw new Error(`Recursive acquisition of ${key}`);
+      return runWithLock(key, async () => {
+        held.add(key);
+        try { return await operation(); } finally { held.delete(key); }
+      });
+    });
+    try {
+      await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'assignment');
+      await storageEngine.timeoutParticipant('assignment');
+      expect((await storageEngine.getSequenceAssignment(studyId, 'assignment'))?.rejected).toBe(true);
+      await storageEngine.undoRejectParticipant('assignment');
+      expect((await storageEngine.getSequenceAssignment(studyId, 'assignment'))?.rejected).toBe(false);
+      await storageEngine.rejectParticipant('assignment', 'Admin rejection');
+      expect((await storageEngine.getSequenceAssignment(studyId, 'assignment'))?.rejected).toBe(true);
+      await storageEngine.undoRejectParticipant('assignment');
+      expect((await storageEngine.getSequenceAssignment(studyId, 'assignment'))?.rejected).toBe(false);
+    } finally {
+      lock.mockRestore();
+    }
+  });
+
   test('independent participant locks do not contend on one shared document', async () => {
     const results = await Promise.allSettled(Array.from({ length: 40 }, (_, index) => (
       // @ts-expect-error Exercise actual lock acquisition and optimistic transaction retries.
-      storageEngine._runWithLock(`participant-independent-${index}`, async () => index)
+      storageEngine._runWithLock(getParticipantLockKey(`independent-${index}`), async () => index)
     )));
     expect(results.filter((result) => result.status === 'rejected')).toEqual([]);
     expect(results.map((result) => result.status === 'fulfilled' && result.value)).toEqual(
@@ -794,7 +821,7 @@ describe.each([
     );
   });
 
-  test.each(['participant-subject', 'participant-assignment', 'study-settings', 'prepare-sequences-config'])('the same lock key %s still excludes another browser', async (lockKey) => {
+  test.each([getParticipantLockKey('subject'), 'participant-assignment', 'study-settings', 'prepare-sequences-config'])('the same lock key %s still excludes another browser', async (lockKey) => {
     const second = new FirebaseStorageEngine(true);
     await second.connect();
     await second.initializeStudyDb(studyId);
@@ -849,7 +876,7 @@ describe.each([
 
   test.each(['subject[1]', 'subject.with.dot'])('renews literal lock keys for custom participant ID %s', async (participantId) => {
     vi.useFakeTimers();
-    const lockKey = `participant-${participantId}`;
+    const lockKey = getParticipantLockKey(participantId);
     const lockPath = `dev-${studyId}/locks/keys/${await hash(lockKey)}`;
     let release!: () => void;
     let started!: () => void;
@@ -876,7 +903,7 @@ describe.each([
   test('a failed lock release preserves a successfully saved participant and its reservation', async () => {
     const original = vi.mocked(runTransaction).getMockImplementation()!;
     let failed = false;
-    const participantLockPath = `dev-${studyId}/locks/keys/${await hash('participant-saved')}`;
+    const participantLockPath = `dev-${studyId}/locks/keys/${await hash(getParticipantLockKey('saved'))}`;
     vi.mocked(runTransaction).mockImplementation(async (db, callback) => original(db, async (transaction) => {
       const wrapped = Object.create(transaction) as typeof transaction;
       wrapped.delete = ((reference) => {

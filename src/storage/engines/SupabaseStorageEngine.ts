@@ -5,7 +5,7 @@ import {
   isParticipantData, rebuildSequenceAllocator, retrySequenceAllocation, SEQUENCE_ALLOCATION_ATTEMPTS, waitForAllocationRetry,
 } from './utils/storageEngineHelpers';
 import {
-  StageAllocation, SequenceRowContext, REVISIT_MODE, RuntimeStudySettings, SequenceAssignment, SnapshotDocContent, StorageObject, StorageObjectType, StoredUser, CloudStorageEngine, UserWrapped, cleanupModes, consumesCapacity, getStageAllocationFromAssignments, applyStageUpdates, StageData, SequenceAssignmentAllocation, SequenceAllocator,
+  getParticipantLockKey, StageAllocation, SequenceRowContext, REVISIT_MODE, RuntimeStudySettings, SequenceAssignment, SnapshotDocContent, StorageObject, StorageObjectType, StoredUser, CloudStorageEngine, UserWrapped, cleanupModes, consumesCapacity, getStageAllocationFromAssignments, applyStageUpdates, StageData, SequenceAssignmentAllocation, SequenceAllocator,
 } from './types';
 import { SnapshotParticipantCounts } from './utils/snapshotParticipantCounts';
 import { fetchFreshStorageObject } from './utils/fetchFreshStorageObject';
@@ -518,7 +518,7 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
     const claimedParticipantId = data.data.claimedParticipantId as string | undefined;
     if (claimedParticipantId) {
       const claimedSequenceAssignmentPath = `sequenceAssignment_${claimedParticipantId}`;
-      await this._runWithLock(`participant-${claimedParticipantId}`, async () => {
+      await this._runWithLock(getParticipantLockKey(claimedParticipantId), async () => {
         const { data: claimedData, error: claimedError } = await this.supabase
           .from('revisit')
           .select('data')
@@ -571,7 +571,7 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
       return true;
     }
     const legacyClaimedParticipantId = legacySources[0].data.participantId;
-    await this._runWithLock(`participant-${legacyClaimedParticipantId}`, async () => {
+    await this._runWithLock(getParticipantLockKey(legacyClaimedParticipantId), async () => {
       const { data: latestClaimedData, error: latestClaimedError } = await this.supabase
         .from('revisit')
         .select('data')
@@ -628,7 +628,7 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
 
     if (claimedParticipantId) {
       const claimedSequenceAssignmentPath = `sequenceAssignment_${claimedParticipantId}`;
-      await this._runWithLock(`participant-${claimedParticipantId}`, async () => {
+      await this._runWithLock(getParticipantLockKey(claimedParticipantId), async () => {
         const { data: claimedData, error: claimedError } = await this.supabase
           .from('revisit')
           .select('data, createdAt')
@@ -676,7 +676,7 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
     }
 
     const sequenceAssignmentPath = `sequenceAssignment_${participantId}`;
-    await this._runWithLock(`participant-${participantId}`, async () => {
+    await this._runWithLock(getParticipantLockKey(participantId), async () => {
       // Re-read the source row inside the lock. This whole-record JSON update
       // would otherwise overwrite a completion, rejection, or timeout that
       // landed after the caller read the assignment.
@@ -727,7 +727,7 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
   }
 
   protected async _markSequenceAssignmentTimedOut(participantId: string, timedOutAt: number, deadline?: number): Promise<boolean> {
-    return await this._runWithLock(`participant-${participantId}`, async () => {
+    return await this._runWithLock(getParticipantLockKey(participantId), async () => {
       await this.verifyStudyDatabase();
       if (!this.studyId) {
         throw new Error('Study ID is not set');
