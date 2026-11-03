@@ -721,6 +721,24 @@ describe('Shell', () => {
     expect(participantStore.actions.setMetadata).not.toHaveBeenCalled();
   });
 
+  test('regression: completed startup preserves saved conditions without syncing URL overrides', async () => {
+    vi.mocked(getStudyConfig).mockResolvedValue(mockActiveConfig);
+    mockSearchParams = new URLSearchParams('condition=other');
+    vi.mocked(parseConditionParam).mockReturnValue(['other']);
+    const engine = {
+      ...makeStartupEngine(),
+      updateParticipantSearchParams: vi.fn().mockResolvedValue(undefined),
+      updateStudyCondition: vi.fn().mockResolvedValue(undefined),
+    };
+    engine.getModes.mockResolvedValue({ developmentModeEnabled: true, dataCollectionEnabled: true, dataSharingEnabled: false });
+    engine.initializeParticipantSession.mockResolvedValue({ ...baseSession, finalized: true });
+    mockStorageEngine = engine;
+    const { queryByTestId } = render(<Shell globalConfig={globalConfig} />);
+    await waitFor(() => expect(queryByTestId('study-loading-barrier')).toBeNull());
+    expect(engine.updateParticipantSearchParams).not.toHaveBeenCalled();
+    expect(engine.updateStudyCondition).not.toHaveBeenCalled();
+  });
+
   test('does not start metadata work when completion resolves after unmount', async () => {
     vi.mocked(getStudyConfig).mockResolvedValue(mockActiveConfig);
     const engine = makeStartupEngine();

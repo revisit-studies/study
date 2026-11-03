@@ -129,7 +129,7 @@ export function ComponentController() {
   // Find current block, if it has an ID, add it as a participant tag
   const prevBlockForStepRef = useRef<string[]>([]);
   useEffect(() => {
-    if (startupInteractionBlocked || isAnalysis || !storageEngine) {
+    if (startupInteractionBlocked || completed || isAnalysis || !storageEngine) {
       return;
     }
     const blockForStep = findBlockForStep(sequence, currentStep)
@@ -141,7 +141,7 @@ export function ComponentController() {
       storageEngine.addParticipantTags(blockForStep);
     }
     prevBlockForStepRef.current = blockForStep;
-  }, [currentStep, startupInteractionBlocked, storageEngine, sequence, isAnalysis]);
+  }, [completed, currentStep, startupInteractionBlocked, storageEngine, sequence, isAnalysis]);
 
   const currentConfig = useMemo(() => {
     const toReturn = currentComponent && currentComponent !== 'end' && !currentComponent.startsWith('__') && studyComponentToIndividualComponent(stepConfig, studyConfig) as IndividualComponent;

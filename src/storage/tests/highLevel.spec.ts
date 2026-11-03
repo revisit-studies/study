@@ -505,7 +505,7 @@ describe.each([
     expect(await storageEngine.getCurrentConfigHash(studyId)).toBe(configHash);
   });
 
-  test.each(['finalized cache', 'newer unuploaded cache'] as const)(
+  test.each(['finalized cache', 'newer unuploaded cache', 'missing participant cache'] as const)(
     'regression: reopening a completed session reconciles its %s without publishing',
     async (cache) => {
       const definitions = { budget: { initialValue: 100 } };
@@ -528,6 +528,9 @@ describe.each([
         const revised = createGlobalStoreSubmission(first.graph, definitions, edited, { budget: 40 }, [], provenance);
         await stale.saveGlobalStoreSubmission({ testComponent_0: edited }, revised.graph, 2, 'testComponent_0', provenance);
         await expect(stale.flushPendingParticipantData()).rejects.toThrow('completed');
+      } else if (cache === 'missing participant cache') {
+        // @ts-expect-error simulate a browser missing only its participant cache
+        await storageEngine.removeCachedParticipantDataSnapshot(participantId);
       }
 
       const resumed = new TestEngine(true);
@@ -536,8 +539,11 @@ describe.each([
       const writes = vi.spyOn(resumed as unknown as { _pushToStorage: StorageEngine['_pushToStorage'] }, '_pushToStorage');
       const restored = await resumed.initializeParticipantSession({}, config, participantMetadata, participantId);
       await resumed.updateParticipantMetadata({ ...restored.metadata, ip: '192.0.2.1' });
+      await resumed.addParticipantTags(['late-block']);
       expect(await resumed.finalizeParticipant()).toEqual({ status: 'complete' });
-      expect(restored).toMatchObject({ answers: { testComponent_0: answer }, globalStoreRevision: 1, finalized: true });
+      expect(restored).toMatchObject({
+        answers: { testComponent_0: answer }, globalStoreRevision: 1, finalized: true, participantTags: [],
+      });
       expect(await resumed.getProvenance(GLOBAL_STORE_TASK)).toMatchObject({ globalStore: { current: first.graph.current } });
       expect(writes).not.toHaveBeenCalled();
       expect(resumed.getCurrentParticipantDataSnapshot()?.metadata).toEqual(participantMetadata);

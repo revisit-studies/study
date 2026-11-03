@@ -529,7 +529,7 @@ function StudyShell({ globalConfig }: { globalConfig: GlobalConfig }) {
 
         if (!isCurrentStartup()) return;
 
-        if (studyCondition.length > 0 && resolvedModes.developmentModeEnabled) {
+        if (!participantSession.finalized && studyCondition.length > 0 && resolvedModes.developmentModeEnabled) {
           const updatedSearchParams = {
             ...participantSession.searchParams,
             condition: studyCondition.join(','),

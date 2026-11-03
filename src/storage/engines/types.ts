@@ -1054,12 +1054,14 @@ export abstract class StorageEngine {
     if (!this.currentParticipantId || this.participantData === undefined) {
       throw new Error('Participant not initialized');
     }
+    if (this.participantData.finalized) return;
 
     const { studyId, currentParticipantId } = this;
     const { immediate = false, cache = false } = options;
     await this.verifyStudyDatabase();
     let cloudWrite: Promise<void> | undefined;
     await this.updateParticipantDataLocally(studyId, currentParticipantId, async (assertCurrentSession) => {
+      if (this.participantData!.finalized) return;
       update?.(this.participantData!);
       const snapshot = cloneParticipantDataSnapshot(this.participantData!);
       await this.cacheParticipantDataSnapshot(snapshot, currentParticipantId);
@@ -1689,6 +1691,15 @@ export abstract class StorageEngine {
     return true;
   }
 
+  private async getParticipantSessionSnapshot(participantId: string) {
+    return this._runWithLock(`participant-${participantId}`, async () => {
+      const assignment = await this._getSequenceAssignment(participantId);
+      const latest = await this._getFromStorage(`participants/${participantId}`, 'participantData', undefined, true, true);
+      return isParticipantData(latest) && assignment && assignment.completed !== null
+        ? { ...latest, finalized: true } : latest;
+    });
+  }
+
   // Initializes or resumes a participant session for the given studyId. This will create a new participant data object if it does not exist, or update the existing one.
   async initializeParticipantSession(
     searchParams: Record<string, string>,
@@ -1717,13 +1728,7 @@ export abstract class StorageEngine {
     }
     if (cachedParticipant && (cachedParticipant.globalStoreRevision !== undefined || config.globalVariables !== undefined)
       && (await this.getModes(this.studyId!)).dataCollectionEnabled) {
-      const participantId = this.currentParticipantId;
-      const remote = await this._runWithLock(`participant-${participantId}`, async () => {
-        const assignment = await this._getSequenceAssignment(participantId);
-        const latest = await this._getFromStorage(`participants/${participantId}`, 'participantData', undefined, true, true);
-        return isParticipantData(latest) && assignment && assignment.completed !== null
-          ? { ...latest, finalized: true } : latest;
-      });
+      const remote = await this.getParticipantSessionSnapshot(this.currentParticipantId);
       if (isParticipantData(remote) && (remote.finalized || isStaleGlobalStoreSnapshot(cachedParticipant, remote))) {
         // Trial assets have logical keys, so an older local copy must not shadow the new history.
         const prefix = this.localProvenanceKey('', this.currentParticipantId);
@@ -1740,10 +1745,13 @@ export abstract class StorageEngine {
     }
 
     // Check if the participant has already been initialized
-    const participant = await this._getFromStorage(
+    let participant = await this._getFromStorage(
       `participants/${this.currentParticipantId}`,
       'participantData',
     );
+    if (isParticipantData(participant) && (participant.globalStoreRevision !== undefined || config.globalVariables !== undefined)) {
+      participant = await this.getParticipantSessionSnapshot(this.currentParticipantId);
+    }
 
     if (this.studyId === undefined) {
       throw new Error('Study ID is not set');
@@ -1760,10 +1768,13 @@ export abstract class StorageEngine {
     const initializeParticipant = async (): Promise<ParticipantData> => {
       // Another session may have completed initialization while this session waited
       // for the lock, so always read the participant record again inside it.
-      const existingParticipant = await this._getFromStorage(
+      let existingParticipant = await this._getFromStorage(
         `participants/${this.currentParticipantId}`,
         'participantData',
       );
+      if (isParticipantData(existingParticipant) && (existingParticipant.globalStoreRevision !== undefined || config.globalVariables !== undefined)) {
+        existingParticipant = await this.getParticipantSessionSnapshot(this.currentParticipantId!);
+      }
       if (isParticipantData(existingParticipant) && await this.confirmParticipantReservation(existingParticipant)) {
         await this.cacheParticipantDataSnapshot(existingParticipant, this.currentParticipantId);
         return existingParticipant;
