@@ -31,6 +31,7 @@ let nextSupabaseSelectError: { message: string; code?: string } | null = null;
 let assignmentWriteError = false;
 let rejectedAssignmentError: 'lookup' | 'claim' | null = null;
 let failStageAllocationRebuild = false;
+let failNextStageAllocationUpdate = false;
 let loseTimeoutWriteResponse: 'assignment' | 'allocation' | null = null;
 let beforeMetadataInitialization: (() => Promise<void>) | null = null;
 const supabaseOperations: Array<{
@@ -241,6 +242,14 @@ vi.mock('@supabase/supabase-js', () => {
             });
             resolve({ data: toUpsert, error: null });
           } else if (op === 'update') {
+            if (failNextStageAllocationUpdate
+              && filters.some((filter) => filter.col === 'docId' && String(filter.val).startsWith('stageAllocation_'))
+              && !((payload as RowData)?.data as RowData)?.needsRebuild) {
+              failNextStageAllocationUpdate = false;
+              resolve({ data: null, error: { message: 'stage allocation unavailable' } });
+              return;
+            }
+
             if (failStageAllocationRebuild
               && filters.some((filter) => filter.col === 'docId' && String(filter.val).startsWith('stageAllocation_'))
               && !((payload as RowData)?.data as RowData)?.needsRebuild) {
@@ -464,6 +473,7 @@ describe.each([
     );
     nextSupabaseSelectError = null;
     failStageAllocationRebuild = false;
+    failNextStageAllocationUpdate = false;
     loseTimeoutWriteResponse = null;
     beforeMetadataInitialization = null;
     assignmentWriteError = false;
@@ -474,6 +484,7 @@ describe.each([
   afterEach(async () => {
     nextSupabaseSelectError = null;
     failStageAllocationRebuild = false;
+    failNextStageAllocationUpdate = false;
     loseTimeoutWriteResponse = null;
     beforeMetadataInitialization = null;
     assignmentWriteError = false;
@@ -2351,6 +2362,34 @@ describe.each([
     }
   });
 
+  test('release regression: repairs newly occupied row counts after a failed assignment update', async () => {
+    await storageEngine.setCurrentStage(studyId, 'LIMITED', '#ff0000', 2);
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'original');
+    const [original] = await storageEngine.getAllSequenceAssignments(studyId);
+    failNextStageAllocationUpdate = true;
+    // @ts-expect-error Interrupt the actual assignment write before its cached count update.
+    await expect(storageEngine._createSequenceAssignment('interrupted', { ...original, participantId: 'interrupted', sequenceKey: 'new-row' })).rejects.toThrow();
+    const retry = await makeSecondSession();
+    // @ts-expect-error Read the cache through the recovery path used by admission.
+    const allocation = await retry.getStageAllocation('LIMITED');
+    expect(allocation.count).toBe(2);
+    expect(allocation.rowCounts['new-row']).toBe(1);
+  });
+
+  test('release regression: rejection rollback does not inflate cached stage capacity', async () => {
+    await storageEngine.setCurrentStage(studyId, 'LIMITED', '#ff0000', 2);
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'original');
+    failNextStageAllocationUpdate = true;
+    await expect(storageEngine.rejectParticipant('original', 'test')).rejects.toThrow();
+    const retry = await makeSecondSession();
+    const assignments = await retry.getAllSequenceAssignments(studyId);
+    expect(assignments.filter((assignment) => !assignment.rejected && assignment.autoTimedOutAt === undefined)).toHaveLength(1);
+    // @ts-expect-error Read the actual cached allocation after rollback.
+    expect((await retry.getStageAllocation('LIMITED')).count).toBe(1);
+    await expect(retry.initializeParticipantSession({}, configSimple, participantMetadata, 'replacement'))
+      .resolves.toMatchObject({ participantId: 'replacement' });
+  });
+
   test('repairs a persisted timeout after its capacity write fails across sessions', async () => {
     await storageEngine.setCurrentStage(studyId, 'LIMITED', '#ff0000', 1);
     const first = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'expired');
@@ -2362,6 +2401,7 @@ describe.each([
     const retry = await makeSecondSession();
     await expect(retry.initializeParticipantSession({}, configSimple, participantMetadata, 'replacement')).rejects.toThrow();
     failStageAllocationRebuild = false;
+    failNextStageAllocationUpdate = false;
     await expect(retry.initializeParticipantSession({}, configSimple, participantMetadata, 'replacement')).resolves.toMatchObject({ participantId: 'replacement' });
     // @ts-expect-error protected
     const allocation = await retry.getStageAllocation('LIMITED');
@@ -2636,6 +2676,48 @@ describe.each([
     const laterAssignment = assignments.find((assignment) => assignment.participantId === later.participantId);
     expect(laterAssignment?.rejected).toBe(false);
     expect(laterAssignment?.claimed).toBe(false);
+  });
+
+  test('release regression: a fast browser cannot steal a live distributed lock', async () => {
+    vi.useFakeTimers();
+    const now = Date.now();
+    const clock = vi.spyOn(Date, 'now').mockReturnValue(now);
+    let release!: () => void;
+    let entered!: () => void;
+    const started = new Promise<void>((resolve) => { entered = resolve; });
+    let firstActive = true;
+    let overlapped = false;
+    const second = new SupabaseStorageEngine(true);
+    await second.connect();
+    await second.initializeStudyDb(studyId);
+    // The backend clock stays correct while the second browser's wall clock is fast.
+    // @ts-expect-error Mock only the server-clock boundary, not the lock.
+    vi.spyOn(storageEngine, '_getServerTimeMs').mockImplementation(async () => new Date().getTime());
+    // @ts-expect-error Mock only the server-clock boundary, not the lock.
+    vi.spyOn(second, '_getServerTimeMs').mockImplementation(async () => new Date().getTime());
+    try {
+      // @ts-expect-error Exercise the provider's actual distributed lock.
+      const first = storageEngine._runWithLock('clock-skew', async () => {
+        entered();
+        await new Promise<void>((resolve) => { release = resolve; });
+      });
+      await started;
+      clock.mockReturnValue(now + 120_000);
+      // @ts-expect-error Exercise a second browser without advancing backend time.
+      const competing = second._runWithLock('clock-skew', async () => { overlapped = firstActive; });
+      await vi.advanceTimersByTimeAsync(0);
+      clock.mockReturnValue(now);
+      firstActive = false;
+      release();
+      await first;
+      await vi.advanceTimersByTimeAsync(100);
+      await competing;
+      expect(overlapped).toBe(false);
+    } finally {
+      release?.();
+      clock.mockRestore();
+      vi.useRealTimers();
+    }
   });
 
   test.each(['early finish', 'recovered renewal', 'lost ownership'])('lock refresh handles %s', async (scenario) => {

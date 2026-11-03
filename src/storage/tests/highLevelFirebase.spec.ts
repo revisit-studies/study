@@ -133,11 +133,21 @@ vi.mock('firebase/firestore', () => {
     direction?: 'asc' | 'desc';
   };
 
+  class MockTimestamp {
+    constructor(public seconds: number, public nanoseconds: number) { }
+
+    toMillis() { return this.seconds * 1000 + Math.floor(this.nanoseconds / 1e6); }
+
+    static fromMillis(milliseconds: number) {
+      return new MockTimestamp(Math.floor(milliseconds / 1000), (milliseconds % 1000) * 1e6);
+    }
+  }
+
   function resolveSentinels(data: DocData): DocData {
     const now = Date.now();
     const result: DocData = {};
     for (const [k, v] of Object.entries(data)) {
-      result[k] = v === SERVER_TS_SENTINEL ? now : v;
+      result[k] = v === SERVER_TS_SENTINEL ? (k === 'readAt' ? MockTimestamp.fromMillis(now) : now) : v;
     }
     return result;
   }
@@ -348,16 +358,6 @@ vi.mock('firebase/firestore', () => {
       }
     }
     throw new Error('Transaction contention exceeded test retry limit');
-  }
-
-  class MockTimestamp {
-    constructor(public seconds: number, public nanoseconds: number) { }
-
-    toMillis() { return this.seconds * 1000 + Math.floor(this.nanoseconds / 1e6); }
-
-    static fromMillis(milliseconds: number) {
-      return new MockTimestamp(Math.floor(milliseconds / 1000), (milliseconds % 1000) * 1e6);
-    }
   }
 
   return {
@@ -1499,6 +1499,48 @@ describe.each([
     await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'later-participant');
     await storageEngine.releaseExpiredAssignments();
     expect(historyReads).toHaveBeenCalledTimes(legacy ? 1 : 0);
+  });
+
+  test('release regression: a fast browser cannot steal a live distributed lock', async () => {
+    vi.useFakeTimers();
+    const now = Date.now();
+    const clock = vi.spyOn(Date, 'now').mockReturnValue(now);
+    let release!: () => void;
+    let entered!: () => void;
+    const started = new Promise<void>((resolve) => { entered = resolve; });
+    let firstActive = true;
+    let overlapped = false;
+    const second = new FirebaseStorageEngine(true);
+    await second.connect();
+    await second.initializeStudyDb(studyId);
+    // The backend clock stays correct while the second browser's wall clock is fast.
+    // @ts-expect-error Mock only the server-clock boundary, not the lock.
+    vi.spyOn(storageEngine, '_getServerTimeMs').mockImplementation(async () => new Date().getTime());
+    // @ts-expect-error Mock only the server-clock boundary, not the lock.
+    vi.spyOn(second, '_getServerTimeMs').mockImplementation(async () => new Date().getTime());
+    try {
+      // @ts-expect-error Exercise the provider's actual distributed lock.
+      const first = storageEngine._runWithLock('clock-skew', async () => {
+        entered();
+        await new Promise<void>((resolve) => { release = resolve; });
+      });
+      await started;
+      clock.mockReturnValue(now + 120_000);
+      // @ts-expect-error Exercise a second browser without advancing backend time.
+      const competing = second._runWithLock('clock-skew', async () => { overlapped = firstActive; });
+      await vi.advanceTimersByTimeAsync(0);
+      clock.mockReturnValue(now);
+      firstActive = false;
+      release();
+      await first;
+      await vi.advanceTimersByTimeAsync(100);
+      await competing;
+      expect(overlapped).toBe(false);
+    } finally {
+      release?.();
+      clock.mockRestore();
+      vi.useRealTimers();
+    }
   });
 
   test.each(['early finish', 'recovered renewal', 'lost ownership'])('lock refresh handles %s', async (scenario) => {
