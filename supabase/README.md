@@ -171,6 +171,29 @@ before upgrading. If you use Realtime Postgres Changes, the release notes also
 document a connection-restart issue and the `REGION: us-east-1` workaround;
 reVISit's storage engine does not subscribe to Postgres Changes.
 
+Deployments initialized with an older `revisit.sql` should apply
+`utc-created-at.sql`. reVISit reads `createdAt` as UTC, so a database running in
+another timezone otherwise shifts participant start times and auto-timeout
+deadlines. The script switches new rows to UTC and converts existing rows once;
+rerunning it does nothing.
+
+Existing rows hold local time in the timezone of the sessions that wrote them,
+which are PostgREST's, not your `psql` session's. PostgREST runs requests as the
+`authenticated` role (participants sign in anonymously) or `anon`, so use the
+first `timezone` that applies: one set on that role, then on `authenticator`,
+then on the database (all appear in `SELECT * FROM pg_db_role_setting`), then
+the server's (`SELECT setting FROM pg_file_settings WHERE name = 'timezone'`).
+The bundled stack runs in UTC, in which case the conversion leaves rows
+unchanged. If `anon` and `authenticated` use different timezones, or the timezone
+changed in the past, a single run cannot convert every row correctly. Times in
+the repeated hour at a daylight-saving change are read as standard time. The
+script locks the table until it finishes:
+
+```sh
+docker exec -i supabase-db psql -U supabase_admin -v ON_ERROR_STOP=1 \
+  -v source_timezone=UTC < "$revisit_support/utc-created-at.sql"
+```
+
 ## Local regression checks
 
 Run these checks from your reVISit checkout. The migration helper requires

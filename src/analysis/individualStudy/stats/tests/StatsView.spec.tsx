@@ -85,7 +85,7 @@ vi.mock('../../summary/OverviewStats', () => ({
 vi.mock('../../summary/utils', () => ({
   getOverviewStats: vi.fn(() => ({
     participantCounts: {
-      total: 5, completed: 3, inProgress: 1, rejected: 1,
+      total: 5, completed: 3, inProgress: 1, rejected: 1, timedOut: 0, completedLate: 0,
     },
     startDate: null,
     endDate: null,
@@ -120,6 +120,7 @@ const mockParticipant: ParticipantDataWithStatus = {
     userAgent: '', resolution: { width: 0, height: 0 }, language: '', ip: '',
   },
   completed: true,
+  timedOut: false,
   rejected: false,
   participantTags: [],
   stage: 'DEFAULT',

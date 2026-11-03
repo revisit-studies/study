@@ -1,21 +1,39 @@
 import { Tooltip, Badge, Flex } from '@mantine/core';
-import { IconCheck, IconProgress, IconX } from '@tabler/icons-react';
+import {
+  IconCheck, IconClockOff, IconProgress, IconX,
+} from '@tabler/icons-react';
 import { ParticipantCounts } from '../types';
+import {
+  PARTICIPANT_STATUSES, PARTICIPANT_STATUS_LABELS, ParticipantStatus,
+} from '../../storage/participantStatus';
 
 const ICON_SIZE = 14;
 
-export function ParticipantStatusBadges({ completed, inProgress, rejected }: Omit<ParticipantCounts, 'total'>) {
+const STATUS_BADGES: Record<ParticipantStatus, { color: string; Icon: typeof IconCheck }> = {
+  completed: { color: 'green', Icon: IconCheck },
+  inProgress: { color: 'orange', Icon: IconProgress },
+  rejected: { color: 'red', Icon: IconX },
+  timedOut: { color: 'yellow', Icon: IconClockOff },
+  completedLate: { color: 'grape', Icon: IconCheck },
+};
+
+type ParticipantStatusBadgesProps = Omit<ParticipantCounts, 'total'> & {
+  showTimeoutStatuses?: boolean;
+};
+
+export function ParticipantStatusBadges({ showTimeoutStatuses = false, ...counts }: ParticipantStatusBadgesProps) {
   return (
     <Flex ml={4} gap={4}>
-      <Tooltip label="Completed">
-        <Badge variant="light" color="green" leftSection={<IconCheck width={ICON_SIZE} height={ICON_SIZE} style={{ paddingTop: 1 }} />} pb={1}>{completed}</Badge>
-      </Tooltip>
-      <Tooltip label="In Progress">
-        <Badge variant="light" color="orange" leftSection={<IconProgress width={ICON_SIZE} height={ICON_SIZE} style={{ paddingTop: 1 }} />} pb={1}>{inProgress}</Badge>
-      </Tooltip>
-      <Tooltip label="Rejected">
-        <Badge variant="light" color="red" leftSection={<IconX width={ICON_SIZE} height={ICON_SIZE} style={{ paddingTop: 1 }} />} pb={1}>{rejected}</Badge>
-      </Tooltip>
+      {PARTICIPANT_STATUSES.filter((status) => (
+        showTimeoutStatuses || (status !== 'timedOut' && status !== 'completedLate')
+      )).map((status) => {
+        const { color, Icon } = STATUS_BADGES[status];
+        return (
+          <Tooltip key={status} label={PARTICIPANT_STATUS_LABELS[status]}>
+            <Badge variant="light" color={color} leftSection={<Icon width={ICON_SIZE} height={ICON_SIZE} style={{ paddingTop: 1 }} />} pb={1}>{counts[status]}</Badge>
+          </Tooltip>
+        );
+      })}
     </Flex>
   );
 }
