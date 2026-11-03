@@ -324,9 +324,11 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
     const lockDocumentId = `lock_${lockKey}`;
     const token = uuidv4();
     const expiresInMs = 60_000;
+    // Backend time governs shared expiry; a monotonic clock bounds our local lease.
     let lockExpiresAt = 0;
     const acquireLock = async (attempt: number): Promise<void> => {
-      const now = Date.now();
+      const leaseStartedAt = performance.now();
+      const now = await this._getServerTimeMs();
       const { data: existingLockRow, error: readError } = await this.supabase
         .from('revisit')
         .select('data')
@@ -351,7 +353,7 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
             data: { token, expiresAt: now + expiresInMs },
           });
         if (!createError) {
-          lockExpiresAt = now + expiresInMs;
+          lockExpiresAt = leaseStartedAt + expiresInMs;
           return;
         }
         if (createError.code !== '23505') {
@@ -369,7 +371,7 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
           throw new Error('Failed to acquire expired study update lock');
         }
         if ((updatedLockRows?.length ?? 0) === 1) {
-          lockExpiresAt = now + expiresInMs;
+          lockExpiresAt = leaseStartedAt + expiresInMs;
           return;
         }
       }
@@ -388,7 +390,8 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
     let lockRefreshError: unknown;
     let lockLost = false;
     const refreshLock = async () => {
-      const now = Date.now();
+      const leaseStartedAt = performance.now();
+      const now = await this._getServerTimeMs();
       const { data, error } = await this.supabase
         .from('revisit')
         .update({ data: { token, expiresAt: now + expiresInMs } })
@@ -401,7 +404,7 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
         lockLost = true;
         throw new Error('Study update lock was lost');
       }
-      lockExpiresAt = now + expiresInMs;
+      lockExpiresAt = leaseStartedAt + expiresInMs;
       lockRefreshError = undefined;
     };
     const refreshTimer = setInterval(() => {
@@ -411,10 +414,11 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
     }, expiresInMs / 3);
 
     try {
+      if (performance.now() >= lockExpiresAt) throw new Error('Study update lock expired before the operation started');
       const result = await operation();
       // A transient refresh failure does not undo a successful operation while
       // our last acknowledged lease is still valid. Confirmed loss still fails.
-      if (lockLost || Date.now() >= lockExpiresAt) {
+      if (lockLost || performance.now() >= lockExpiresAt) {
         throw lockRefreshError || new Error('Study update lock was lost');
       }
       return result;
@@ -752,7 +756,7 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
         if (!updated) {
           throw new TimeoutNotAppliedError();
         }
-      }, true).catch((changeError) => {
+      }).catch((changeError) => {
         if (!(changeError instanceof TimeoutNotAppliedError)) throw changeError;
       });
       if (updated) {
@@ -1885,7 +1889,7 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
     return this.readStageAllocation(stage, conditionKeys, sequenceRows);
   }
 
-  private async changeStageCounts(previous: SequenceAssignment | null, next: SequenceAssignment, write: () => Promise<void>, invalidateBeforeWrite = false) {
+  private async changeStageCounts(previous: SequenceAssignment | null, next: SequenceAssignment, write: () => Promise<void>) {
     const affected = [...new Set([previous?.stage, next.stage].filter((stage): stage is string => stage !== undefined))].sort();
     const changes = affected.map((stage) => ({
       stage,
@@ -1897,56 +1901,56 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
       const allocations = new Map(await Promise.all(changes.map(async ({ stage }) => (
         [stage, await this.readStageAllocation(stage)] as const
       ))));
-      if (invalidateBeforeWrite) {
-        for (const { stage } of changes) {
-          // Persist invalidation BEFORE the assignment write. Any interrupted or
-          // unacknowledged write is reconciled from assignments by the next reader.
-          const current = allocations.get(stage)!;
-          // eslint-disable-next-line no-await-in-loop
-          const result = await this.supabase.from('revisit').update({ data: { ...current, needsRebuild: true, version: current.version + 1 } })
-            .eq('studyId', `${this.collectionPrefix}${this.studyId}`).eq('docId', `stageAllocation_${encodeURIComponent(stage)}`)
-            .eq('data->version', current.version)
-            .select('docId');
-          if (result.error || result.data?.length !== 1) throw new Error('Failed to invalidate stage allocation');
-          allocations.set(stage, { ...current, needsRebuild: true, version: current.version + 1 });
-        }
+      for (const { stage, after } of changes) {
+        // Record touched keys before writing the assignment so a recovery can
+        // recount a newly occupied condition or row as well as existing keys.
+        const current = allocations.get(stage)!;
+        const invalidated = {
+          ...current,
+          combinationCounts: { ...current.combinationCounts },
+          rowCounts: { ...current.rowCounts },
+          needsRebuild: true,
+          version: current.version + 1,
+        };
+        if (after?.betweenSubjectsCombinationKey) invalidated.combinationCounts[after.betweenSubjectsCombinationKey] ??= 0;
+        if (after?.sequenceKey) invalidated.rowCounts[after.sequenceKey] ??= 0;
+        // eslint-disable-next-line no-await-in-loop
+        const result = await this.supabase.from('revisit').update({ data: invalidated })
+          .eq('studyId', `${this.collectionPrefix}${this.studyId}`).eq('docId', `stageAllocation_${encodeURIComponent(stage)}`)
+          .eq('data->version', current.version)
+          .select('docId');
+        if (result.error || result.data?.length !== 1) throw new Error('Failed to invalidate stage allocation');
+        allocations.set(stage, invalidated);
       }
       await write();
       for (const { stage, before, after } of changes) {
-        let saved = false;
-        for (let attempt = 0; attempt < SEQUENCE_ALLOCATION_ATTEMPTS && !saved; attempt += 1) {
+        const current = allocations.get(stage)!;
+        const combinationCounts = { ...current.combinationCounts };
+        const rowCounts = { ...current.rowCounts };
+        if (before?.betweenSubjectsCombinationKey) combinationCounts[before.betweenSubjectsCombinationKey] = Math.max(0, (combinationCounts[before.betweenSubjectsCombinationKey] || 0) - 1);
+        if (after?.betweenSubjectsCombinationKey) combinationCounts[after.betweenSubjectsCombinationKey] = (combinationCounts[after.betweenSubjectsCombinationKey] || 0) + 1;
+        if (before?.sequenceKey) rowCounts[before.sequenceKey] = Math.max(0, (rowCounts[before.sequenceKey] || 0) - 1);
+        if (after?.sequenceKey) rowCounts[after.sequenceKey] = (rowCounts[after.sequenceKey] || 0) + 1;
+        // eslint-disable-next-line no-await-in-loop
+        const result = await this.supabase.from('revisit').update({
+          data: {
+            ...current,
+            needsRebuild: false,
+            count: Math.max(0, current.count + Number(Boolean(after)) - Number(Boolean(before))),
+            combinationCounts,
+            rowCounts,
+            version: current.version + 1,
+          },
+        }).eq('studyId', `${this.collectionPrefix}${this.studyId}`).eq('docId', `stageAllocation_${encodeURIComponent(stage)}`)
+          .eq('data->version', current.version)
+          .select('docId');
+        if (result.error) throw new Error('Failed to update stage allocation');
+        if (result.data?.length !== 1) {
+          // A competing reader may have rebuilt after the assignment write.
+          // Recount instead of applying the delta twice.
           // eslint-disable-next-line no-await-in-loop
-          const current = invalidateBeforeWrite ? allocations.get(stage)! : await this.readStageAllocation(stage);
-          const combinationCounts = { ...current.combinationCounts };
-          const rowCounts = { ...current.rowCounts };
-          if (before?.betweenSubjectsCombinationKey) combinationCounts[before.betweenSubjectsCombinationKey] = Math.max(0, (combinationCounts[before.betweenSubjectsCombinationKey] || 0) - 1);
-          if (after?.betweenSubjectsCombinationKey) combinationCounts[after.betweenSubjectsCombinationKey] = (combinationCounts[after.betweenSubjectsCombinationKey] || 0) + 1;
-          if (before?.sequenceKey) rowCounts[before.sequenceKey] = Math.max(0, (rowCounts[before.sequenceKey] || 0) - 1);
-          if (after?.sequenceKey) rowCounts[after.sequenceKey] = (rowCounts[after.sequenceKey] || 0) + 1;
-          // eslint-disable-next-line no-await-in-loop
-          const result = await this.supabase.from('revisit').update({
-            data: {
-              ...current,
-              ...(invalidateBeforeWrite ? { needsRebuild: false } : {}),
-              count: Math.max(0, current.count + Number(Boolean(after)) - Number(Boolean(before))),
-              combinationCounts,
-              rowCounts,
-              version: current.version + 1,
-            },
-          }).eq('studyId', `${this.collectionPrefix}${this.studyId}`).eq('docId', `stageAllocation_${encodeURIComponent(stage)}`)
-            .eq('data->version', current.version)
-            .select('docId');
-          if (result.error) throw new Error('Failed to update stage allocation');
-          saved = result.data?.length === 1;
-          if (!saved && invalidateBeforeWrite) {
-            // A competing reader may have already rebuilt after our assignment
-            // write. Reconcile from truth instead of applying the delta twice.
-            // eslint-disable-next-line no-await-in-loop
-            await this.readStageAllocation(stage);
-            saved = true;
-          }
+          await this.readStageAllocation(stage);
         }
-        if (!saved) throw new Error('Failed to update stage allocation after concurrent changes');
       }
     };
     const withStageLocks = async (index: number): Promise<void> => {

@@ -250,6 +250,7 @@ export function TableView({
               answer.correctAnswer,
               component?.response,
               answer.checkAnswer,
+              answer.globalStoreEntry,
             )];
           }),
         header: 'Correct Answers',

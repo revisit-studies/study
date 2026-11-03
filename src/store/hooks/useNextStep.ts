@@ -295,7 +295,7 @@ export function useNextStep(responses?: Response[], correctAnswers?: Answer[]) {
           return route === window.location.href && !current.completed && current.participantId === live!.participantId
             && current.globalStoreRevision === live!.globalStoreRevision
             && (!collectData || (updater === context.globalStoreUpdaters.get(identifier)
-              && currentValidation && (currentValidation.assetStatus === undefined || currentValidation.assetStatus === 'ready')
+              && currentValidation && (currentValidation.assetStatus === undefined || currentValidation.assetStatus === 'ready' || currentValidation.assetStatus === 'missing')
               && (['aboveStimulus', 'belowStimulus', 'sidebar', 'stimulus'] as const).every((location) => currentValidation[location].valid)))
             && isEqual(answer, getPersistedAnswersFromAllLocations(currentValidation, responseConfig, correctAnswerConfig, checkAnswerState, entryStore));
         };

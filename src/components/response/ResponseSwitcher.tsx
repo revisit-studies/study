@@ -323,7 +323,7 @@ export function ResponseSwitcher({
       )}
       {response.type === 'date' && (
       <DateResponseInput
-        response={response}
+        response={withTemplatedFields(response)}
         disabled={isDisabled || dontKnowChecked}
         answer={ans as { value: string }}
         error={responseError}
@@ -333,7 +333,7 @@ export function ResponseSwitcher({
       )}
       {response.type === 'time' && (
       <TimeResponseInput
-        response={response}
+        response={withTemplatedFields(response)}
         disabled={isDisabled || dontKnowChecked}
         answer={ans as { value: string }}
         error={responseError}
