@@ -932,6 +932,10 @@ export abstract class StorageEngine {
       ? await this._getFromStorage(`participants/${participantId}`, 'participantData', undefined, true, true)
       : remoteParticipant;
     if (snapshot.globalStoreRevision === undefined && (!isParticipantData(remote) || remote.globalStoreRevision === undefined)) return;
+    // Finalization marks the assignment under this same participant lock; its
+    // completion is authoritative even when another browser still has an open session.
+    const assignment = await this._getSequenceAssignment(participantId);
+    if (assignment && assignment.completed !== null) throw new Error('This participant has already completed the study. Reload before continuing.');
     const conflict = () => new Error('This session has newer progress in another browser. Reload before continuing.');
     if (isParticipantData(remote) && isStaleGlobalStoreSnapshot(snapshot, remote)) throw conflict();
     if (!snapshot.globalStoreRevision) return;
@@ -957,7 +961,7 @@ export abstract class StorageEngine {
       this.participantDataWriteError = null;
       try {
         if (snapshot.globalStoreRevision !== undefined) await this.provenanceWriteChains.get(publicationKey);
-        const uploaded = await this._runWithLock(`participant-${participantId}`, async () => {
+        await this._runWithLock(`participant-${participantId}`, async () => {
           // An admin can reject a participant in another browser while this
           // client still has a debounced full-record write pending. The same
           // lock is held by rejectParticipant, so the check and write cannot
@@ -992,15 +996,11 @@ export abstract class StorageEngine {
             'participantData',
             snapshot,
           );
+          if (cache && snapshot.globalStoreRevision === undefined) {
+            await this._cacheStorageObject(`participants/${participantId}`, 'participantData');
+          }
           return true;
         });
-
-        if (uploaded && cache && snapshot.globalStoreRevision === undefined) {
-          await this._cacheStorageObject(
-            `participants/${participantId}`,
-            'participantData',
-          );
-        }
       } catch (error) {
         this.recordParticipantDataWriteError(error);
         throw this.participantDataWriteError;
@@ -1054,12 +1054,14 @@ export abstract class StorageEngine {
     if (!this.currentParticipantId || this.participantData === undefined) {
       throw new Error('Participant not initialized');
     }
+    if (this.participantData.finalized) return;
 
     const { studyId, currentParticipantId } = this;
     const { immediate = false, cache = false } = options;
     await this.verifyStudyDatabase();
     let cloudWrite: Promise<void> | undefined;
     await this.updateParticipantDataLocally(studyId, currentParticipantId, async (assertCurrentSession) => {
+      if (this.participantData!.finalized) return;
       update?.(this.participantData!);
       const snapshot = cloneParticipantDataSnapshot(this.participantData!);
       await this.cacheParticipantDataSnapshot(snapshot, currentParticipantId);
@@ -1097,6 +1099,7 @@ export abstract class StorageEngine {
   }
 
   async retryFailedWrites() {
+    if (this.participantData?.finalized) return;
     await this.connect();
     if (!this.isConnected()) {
       throw new Error(`Failed to reconnect to ${this.getEngine()} storage engine`);
@@ -1376,15 +1379,13 @@ export abstract class StorageEngine {
       if (!this.studyId) throw new Error('Study ID is not set');
       const currentConfigHash = await this._getCurrentConfigHash();
       const configHash = await hash(JSON.stringify(config));
-      if (currentConfigHash === configHash) return;
-      const keys = getConfigConditionKeys(config);
-      await this.validateStageConditions(this.studyId, keys);
       const storedConfig = currentConfigHash === configHash
         ? await this._getFromStorage(`configs/${configHash}`, 'config') : null;
-      if (!storedConfig || Object.keys(storedConfig).length === 0) {
-        await this._pushToStorage(`configs/${configHash}`, 'config', config);
-        await this._cacheStorageObject(`configs/${configHash}`, 'config');
-      }
+      if (storedConfig && Object.keys(storedConfig).length > 0) return;
+      const keys = getConfigConditionKeys(config);
+      await this.validateStageConditions(this.studyId, keys);
+      await this._pushToStorage(`configs/${configHash}`, 'config', config);
+      await this._cacheStorageObject(`configs/${configHash}`, 'config');
       // Failed uploads must not advance the append-only condition definitions.
       await this.activateConfig(configHash, keys);
     });
@@ -1690,6 +1691,15 @@ export abstract class StorageEngine {
     return true;
   }
 
+  private async getParticipantSessionSnapshot(participantId: string) {
+    return this._runWithLock(`participant-${participantId}`, async () => {
+      const assignment = await this._getSequenceAssignment(participantId);
+      const latest = await this._getFromStorage(`participants/${participantId}`, 'participantData', undefined, true, true);
+      return isParticipantData(latest) && assignment && assignment.completed !== null
+        ? { ...latest, finalized: true } : latest;
+    });
+  }
+
   // Initializes or resumes a participant session for the given studyId. This will create a new participant data object if it does not exist, or update the existing one.
   async initializeParticipantSession(
     searchParams: Record<string, string>,
@@ -1718,8 +1728,8 @@ export abstract class StorageEngine {
     }
     if (cachedParticipant && (cachedParticipant.globalStoreRevision !== undefined || config.globalVariables !== undefined)
       && (await this.getModes(this.studyId!)).dataCollectionEnabled) {
-      const remote = await this._getFromStorage(`participants/${this.currentParticipantId}`, 'participantData', undefined, true, true);
-      if (isParticipantData(remote) && isStaleGlobalStoreSnapshot(cachedParticipant, remote)) {
+      const remote = await this.getParticipantSessionSnapshot(this.currentParticipantId);
+      if (isParticipantData(remote) && (remote.finalized || isStaleGlobalStoreSnapshot(cachedParticipant, remote))) {
         // Trial assets have logical keys, so an older local copy must not shadow the new history.
         const prefix = this.localProvenanceKey('', this.currentParticipantId);
         const keys = await this.participantStore.keys();
@@ -1735,10 +1745,13 @@ export abstract class StorageEngine {
     }
 
     // Check if the participant has already been initialized
-    const participant = await this._getFromStorage(
+    let participant = await this._getFromStorage(
       `participants/${this.currentParticipantId}`,
       'participantData',
     );
+    if (isParticipantData(participant) && (participant.globalStoreRevision !== undefined || config.globalVariables !== undefined)) {
+      participant = await this.getParticipantSessionSnapshot(this.currentParticipantId);
+    }
 
     if (this.studyId === undefined) {
       throw new Error('Study ID is not set');
@@ -1755,10 +1768,13 @@ export abstract class StorageEngine {
     const initializeParticipant = async (): Promise<ParticipantData> => {
       // Another session may have completed initialization while this session waited
       // for the lock, so always read the participant record again inside it.
-      const existingParticipant = await this._getFromStorage(
+      let existingParticipant = await this._getFromStorage(
         `participants/${this.currentParticipantId}`,
         'participantData',
       );
+      if (isParticipantData(existingParticipant) && (existingParticipant.globalStoreRevision !== undefined || config.globalVariables !== undefined)) {
+        existingParticipant = await this.getParticipantSessionSnapshot(this.currentParticipantId!);
+      }
       if (isParticipantData(existingParticipant) && await this.confirmParticipantReservation(existingParticipant)) {
         await this.cacheParticipantDataSnapshot(existingParticipant, this.currentParticipantId);
         return existingParticipant;
@@ -2006,6 +2022,7 @@ export abstract class StorageEngine {
     const modes = await this.getModes(studyId);
     return this.updateParticipantDataLocally(studyId, currentParticipantId, async (assertCurrentSession) => {
       if (!this.participantData) throw new Error('Participant data not initialized');
+      if (this.participantData.finalized) return;
       this.participantData.metadata = metadata;
       const snapshot = cloneParticipantDataSnapshot(this.participantData);
       await this.cacheParticipantDataSnapshot(snapshot, currentParticipantId);
@@ -2310,7 +2327,7 @@ export abstract class StorageEngine {
 
   /** Rebuild upload work from accepted local history after a reload loses in-memory retries. */
   private async restoreGlobalStoreUploads(participant: ParticipantData) {
-    if (!participant.globalStoreRevision || !this.studyId) return;
+    if (participant.finalized || !participant.globalStoreRevision || !this.studyId) return;
     const { studyId, currentParticipantId } = this;
     const saved = await this.participantStore.getItem<StoredProvenance>(
       this.localProvenanceKey(`${GLOBAL_STORE_TASK}/${participant.globalStoreRevision}`, participant.participantId),
@@ -2464,18 +2481,22 @@ export abstract class StorageEngine {
     return sequenceAssignment ? sequenceAssignment.completed !== null : false;
   }
 
-  private async markParticipantFinalized() {
+  private async markParticipantFinalized(assertCurrentSession: () => void) {
     if (!this.participantData) return;
-    const { studyId, currentParticipantId } = this;
-    await this.updateParticipantDataLocally(studyId, currentParticipantId, async (assertCurrentSession) => {
-      const snapshot = { ...this.participantData!, finalized: true };
-      await this.cacheParticipantDataSnapshot(snapshot, currentParticipantId, !!snapshot.globalStoreRevision);
-      assertCurrentSession();
-      this.participantData = snapshot;
-    });
+    const snapshot = { ...this.participantData, finalized: true };
+    await this.cacheParticipantDataSnapshot(snapshot, this.currentParticipantId, !!snapshot.globalStoreRevision);
+    assertCurrentSession();
+    this.participantData = snapshot;
   }
 
   async finalizeParticipant(): Promise<FinalizeParticipantResult> {
+    const { studyId, currentParticipantId } = this;
+    // Keep finalization in the local update queue through the final flush and
+    // completion marker, so accepted background writes cannot arrive afterward.
+    return this.updateParticipantDataLocally(studyId, currentParticipantId, (assertCurrentSession) => this.finalizeParticipantSession(assertCurrentSession));
+  }
+
+  private async finalizeParticipantSession(assertCurrentSession: () => void): Promise<FinalizeParticipantResult> {
     try {
       await this.flushPendingParticipantData();
     } catch (error) {
@@ -2496,14 +2517,15 @@ export abstract class StorageEngine {
     }
 
     const modes = await this.getModes(this.studyId);
+    assertCurrentSession();
     if (!modes.dataCollectionEnabled) {
-      await this.markParticipantFinalized();
+      await this.markParticipantFinalized(assertCurrentSession);
       return { status: 'complete' };
     }
 
     const alreadyCompleted = await this.getParticipantCompletionStatus();
     if (alreadyCompleted) {
-      await this.markParticipantFinalized();
+      await this.markParticipantFinalized(assertCurrentSession);
       return { status: 'complete' };
     }
 
@@ -2517,11 +2539,12 @@ export abstract class StorageEngine {
 
     try {
       await this._runWithLock(`participant-${this.currentParticipantId}`, async () => {
+        assertCurrentSession();
         const assignment = await this._getSequenceAssignment(this.currentParticipantId!);
         if (assignment?.rejected) throw new Error('This participant has been timed out or rejected');
         await this._completeCurrentParticipantRealtime();
       });
-      await this.markParticipantFinalized();
+      await this.markParticipantFinalized(assertCurrentSession);
     } catch (error) {
       return {
         status: 'error',
@@ -2679,8 +2702,19 @@ export abstract class StorageEngine {
         throw new Error('Data collection is disabled for this study');
       }
 
-      const upload = (provenance = provenanceToSave) => this._pushToStorage(`provenance/${participantId}`, taskName, provenance as unknown as StorageObject<typeof taskName>);
-      if (progress?.globalStoreRevision !== undefined) {
+      const upload = async (provenance = provenanceToSave) => {
+        await this._pushToStorage(`provenance/${participantId}`, taskName, provenance as unknown as StorageObject<typeof taskName>);
+        if (progress?.globalStoreRevision === undefined) {
+          try {
+            // Supabase refreshes headers by reuploading bytes, so keep this
+            // mutation inside the same protection as the original upload.
+            await this._cacheStorageObject(`provenance/${participantId}`, taskName);
+          } catch (error) {
+            console.warn(`Failed to update cache headers for provenance ${taskName}:`, error);
+          }
+        }
+      };
+      if (progress) {
         await this._runWithLock(`participant-${participantId}`, async () => {
           let uploadProgress = progress;
           let provenance = provenanceToSave;
@@ -2732,14 +2766,6 @@ export abstract class StorageEngine {
         });
       } else {
         await upload();
-      }
-
-      if (progress?.globalStoreRevision === undefined) {
-        try {
-          await this._cacheStorageObject(`provenance/${participantId}`, taskName);
-        } catch (error) {
-          console.warn(`Failed to update cache headers for provenance ${taskName}:`, error);
-        }
       }
     });
     this.provenanceWriteChains.set(queueKey, write);

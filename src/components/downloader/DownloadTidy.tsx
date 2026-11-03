@@ -115,6 +115,11 @@ async function runWithConcurrencyLimit(tasks: Array<() => Promise<void>>, concur
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type TidyRow = Prettify<Record<RequiredProperty, any> & Partial<Record<OptionalProperty | MetaProperty, any>>> & Record<string, number | string[] | boolean | string | null>;
 
+function formatTidyValue(value: unknown): string {
+  const cell = value ?? '';
+  return typeof cell === 'object' ? JSON.stringify(cell) : String(cell);
+}
+
 export function download(graph: string, filename: string) {
   const dataStr = `data:text/json;charset=utf-8,${encodeURIComponent(graph)}`;
   const downloadAnchorNode = document.createElement('a');
@@ -466,8 +471,7 @@ export function DownloadTidy({
           for (let index = startIndex; index < endIndex; index += 1) {
             const row = tableData.rows[index];
             const serializedRow = tableData.header.map((header) => {
-              const rawValue = row[header] ?? '';
-              const fieldValue = typeof rawValue === 'object' ? JSON.stringify(rawValue) : `${rawValue}`;
+              const fieldValue = formatTidyValue(row[header]);
               // Escape double quotes by replacing them with two double quotes
               const escapedValue = fieldValue.replace(/"/g, '""');
               return `"${escapedValue}"`; // Double-quote the field value
@@ -648,7 +652,7 @@ export function DownloadTidy({
                           whiteSpace: ['description', 'instruction', 'participantId'].includes(header) ? 'normal' : 'nowrap',
                         }}
                       >
-                        {row[header]}
+                        {formatTidyValue(row[header])}
                       </Table.Td>
                     ))}
                   </Table.Tr>

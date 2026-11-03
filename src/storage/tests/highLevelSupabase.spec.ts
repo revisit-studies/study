@@ -4,6 +4,7 @@ import {
   vi,
 } from 'vitest';
 import isEqual from 'lodash.isequal';
+import { initializeTrrack, Registry } from '@trrack/core';
 import { ParticipantMetadata, StudyConfig } from '../../parser/types';
 import testConfigSimple from './testConfigSimple.json';
 import testConfigSimple2 from './testConfigSimple2.json';
@@ -16,6 +17,8 @@ import {
 } from '../engines/types';
 import { filterSequenceByCondition } from '../../utils/handleConditionLogic';
 import { SupabaseStorageEngine } from '../engines/SupabaseStorageEngine';
+import { createEmptyProvenance } from '../../store/provenance';
+import { createGlobalStoreSubmission } from '../../store/globalStoreProvenance';
 
 type RowData = Record<string, string | number | boolean | null | object>;
 
@@ -34,6 +37,7 @@ let failStageAllocationRebuild = false;
 let failNextStageAllocationUpdate = false;
 let loseTimeoutWriteResponse: 'assignment' | 'allocation' | null = null;
 let beforeMetadataInitialization: (() => Promise<void>) | null = null;
+let cacheUploadHook: ((path: string, options?: object) => Promise<void>) | null = null;
 const supabaseOperations: Array<{
   op: string | null;
   filters: Array<{ col: string; type: string; val: string | number | boolean | null }>;
@@ -331,6 +335,7 @@ vi.mock('@supabase/supabase-js', () => {
             return { data: null, error: { message: 'Object not found', status: 400, statusCode: '404' } };
           },
           upload: async (path: string, data: Blob | Buffer | string | object, _opts?: object) => {
+            await cacheUploadHook?.(path, _opts);
             let text: string;
             if (data instanceof Blob) {
               text = await data.text();
@@ -496,12 +501,14 @@ describe.each([
     failNextStageAllocationUpdate = false;
     loseTimeoutWriteResponse = null;
     beforeMetadataInitialization = null;
+    cacheUploadHook = null;
     assignmentWriteError = false;
     rejectedAssignmentError = null;
     supabaseOperations.length = 0;
   });
 
   afterEach(async () => {
+    cacheUploadHook = null;
     nextSupabaseSelectError = null;
     failStageAllocationRebuild = false;
     failNextStageAllocationUpdate = false;
@@ -512,6 +519,51 @@ describe.each([
     // @ts-expect-error using protected method for testing
     await storageEngine._testingReset(studyId);
     Object.keys(localStore).forEach((key) => delete localStore[key]);
+  });
+
+  test('regression: a Supabase cache reupload stays protected until later completion', async () => {
+    const definitions = { budget: { initialValue: 100 } };
+    const config: StudyConfig = { ...configSimple, globalVariables: definitions };
+    const { participantId } = await storageEngine.initializeParticipantSession({}, config, participantMetadata);
+    const second = new TestEngine(true);
+    await second.connect();
+    await second.initializeStudyDb(studyId);
+    await second.initializeParticipantSession({}, config, participantMetadata, participantId);
+    await second.flushPendingParticipantData();
+    const trrack = initializeTrrack({ registry: Registry.create(), initialState: { cost: 30 } });
+    const original = { ...createEmptyProvenance(), stimulus: structuredClone(trrack.graph.backend) };
+    let started!: () => void;
+    const held = new Promise<void>((resolve) => { started = resolve; });
+    let release!: () => void;
+    const gate = new Promise<void>((resolve) => { release = resolve; });
+    let cacheWasProtected = false;
+    cacheUploadHook = async (path, options) => {
+      if ((options as { cacheControl?: string })?.cacheControl && path.endsWith(`/provenance/${participantId}_testComponent_0`)) {
+        cacheUploadHook = null;
+        const lock = revisitRows.find((row) => row.docId === `lock_participant-${participantId}`);
+        cacheWasProtected = !!(lock?.data as { token?: string } | undefined)?.token;
+        started();
+        await gate;
+      }
+    };
+    const pending = second.saveProvenance(original, 'testComponent_0');
+    await held;
+    trrack.record({
+      label: 'Edit', state: { cost: 60 }, eventType: 'edit', sideEffects: { do: [], undo: [] },
+    });
+    const provenance = { ...createEmptyProvenance(), stimulus: structuredClone(trrack.graph.backend) };
+    const answer = { ...makeStoredAnswer({ identifier: 'testComponent_0', endTime: 10 }), componentName: 'testComponent', answer: { cost: 60 } };
+    const submission = createGlobalStoreSubmission(undefined, definitions, answer, { budget: 40 }, [], provenance);
+    await storageEngine.saveGlobalStoreSubmission({ testComponent_0: answer }, submission.graph, 1, 'testComponent_0', provenance);
+    const completing = storageEngine.finalizeParticipant();
+    release();
+    await pending;
+    expect(await completing).toEqual({ status: 'complete' });
+    const observer = new TestEngine(true);
+    await observer.connect();
+    await observer.initializeStudyDb(studyId);
+    expect(await observer.getProvenance('testComponent_0', participantId, true)).toEqual(provenance);
+    expect(cacheWasProtected).toBe(true);
   });
 
   // saveConfig and getAllConfigsFromHash tests

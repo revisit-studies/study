@@ -692,6 +692,53 @@ describe('Shell', () => {
     expect(participantStore.actions.setParticipantCompleted).toHaveBeenCalledWith(true);
   });
 
+  test.each([false, true])('regression: does not refresh IP for a completed session with finalized=%s', async (finalized) => {
+    vi.mocked(getStudyConfig).mockResolvedValue({ ...mockActiveConfig, globalVariables: { budget: { initialValue: 100 } } });
+    const engine = makeStartupEngine();
+    engine.initializeParticipantSession.mockResolvedValue({ ...baseSession, finalized });
+    engine.getParticipantCompletionStatus.mockResolvedValue(!finalized);
+    mockStorageEngine = engine;
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(JSON.stringify({ ip: '192.0.2.1' })));
+    const { queryByTestId } = render(<Shell globalConfig={globalConfig} />);
+    await waitFor(() => expect(queryByTestId('study-loading-barrier')).toBeNull());
+    expect(fetchSpy).not.toHaveBeenCalled();
+    expect(engine.updateParticipantMetadata).not.toHaveBeenCalled();
+  });
+
+  test('regression: discards an IP lookup that resolves after participant completion', async () => {
+    vi.mocked(getStudyConfig).mockResolvedValue(mockActiveConfig);
+    const engine = makeStartupEngine();
+    mockStorageEngine = engine;
+    let resolveIp!: (response: Response) => void;
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockImplementation(() => new Promise<Response>((resolve) => { resolveIp = resolve; }));
+    render(<Shell globalConfig={globalConfig} />);
+    await waitFor(() => expect(fetchSpy).toHaveBeenCalled());
+    const participantStore = await vi.mocked(studyStoreCreator).mock.results.at(-1)!.value;
+    const state = participantStore.store.getState();
+    vi.spyOn(participantStore.store, 'getState').mockReturnValue({ ...state, completed: true });
+    await act(async () => resolveIp(new Response(JSON.stringify({ ip: '192.0.2.1' }))));
+    expect(engine.updateParticipantMetadata).not.toHaveBeenCalled();
+    expect(participantStore.actions.setMetadata).not.toHaveBeenCalled();
+  });
+
+  test('regression: completed startup preserves saved conditions without syncing URL overrides', async () => {
+    vi.mocked(getStudyConfig).mockResolvedValue(mockActiveConfig);
+    mockSearchParams = new URLSearchParams('condition=other');
+    vi.mocked(parseConditionParam).mockReturnValue(['other']);
+    const engine = {
+      ...makeStartupEngine(),
+      updateParticipantSearchParams: vi.fn().mockResolvedValue(undefined),
+      updateStudyCondition: vi.fn().mockResolvedValue(undefined),
+    };
+    engine.getModes.mockResolvedValue({ developmentModeEnabled: true, dataCollectionEnabled: true, dataSharingEnabled: false });
+    engine.initializeParticipantSession.mockResolvedValue({ ...baseSession, finalized: true });
+    mockStorageEngine = engine;
+    const { queryByTestId } = render(<Shell globalConfig={globalConfig} />);
+    await waitFor(() => expect(queryByTestId('study-loading-barrier')).toBeNull());
+    expect(engine.updateParticipantSearchParams).not.toHaveBeenCalled();
+    expect(engine.updateStudyCondition).not.toHaveBeenCalled();
+  });
+
   test('does not start metadata work when completion resolves after unmount', async () => {
     vi.mocked(getStudyConfig).mockResolvedValue(mockActiveConfig);
     const engine = makeStartupEngine();

@@ -811,6 +811,28 @@ describe('ComponentController — effect coverage (render-based)', () => {
     await waitFor(() => expect(addTagsSpy).toHaveBeenCalledWith(['blockA']));
   });
 
+  test('regression: a completed numeric trial renders StudyEnd without adding block tags', () => {
+    const state = makeStableState({ completed: true });
+    vi.mocked(useStoreSelector).mockImplementation((selector) => selector(state));
+    vi.mocked(useCurrentComponent).mockReturnValue('trial1');
+    const addTags = vi.fn().mockResolvedValue(undefined);
+    vi.mocked(useStorageEngine).mockReturnValue({
+      storageEngine: makeStorageEngine({ addParticipantTags: addTags }),
+      setStorageEngine: vi.fn(),
+    });
+    vi.mocked(findBlockForStep).mockReturnValue([{
+      currentBlock: {
+        id: 'blockA', orderPath: '', order: 'fixed', components: [], skip: [],
+      },
+      firstIndex: 0,
+      lastIndex: 0,
+    }]);
+
+    const { container } = render(<ComponentController />);
+    expect(container.textContent).toBe('StudyEnd');
+    expect(addTags).not.toHaveBeenCalled();
+  });
+
   test('setAnalysisCanPlayScreenRecording dispatched with true', async () => {
     const setAnalysisCanPlaySpy = vi.fn().mockReturnValue('PLAY_ACTION');
     mockStoreActions = {
