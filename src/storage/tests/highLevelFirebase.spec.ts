@@ -1583,6 +1583,32 @@ describe.each([
     expect(await storageEngine._markSequenceAssignmentTimedOut('expiring', now, now - 60_000)).toBe(true);
   });
 
+  test('reading settings never rewrites the stored document', async () => {
+    const path = `dev-${studyId}/modes`;
+    firestoreData[path] = { ...firestoreData[path], studyNavigatorEnabled: false, analyticsInterfacePubliclyAccessible: true };
+    delete firestoreData[path].developmentModeEnabled;
+    delete firestoreData[path].dataSharingEnabled;
+    const stored = structuredClone(firestoreData[path]);
+
+    expect(await storageEngine.getModes(studyId)).toMatchObject({ developmentModeEnabled: false, dataSharingEnabled: true });
+    expect(firestoreData[path]).toEqual(stored);
+  });
+
+  test('missing settings are created without replacing a document created meanwhile', async () => {
+    const path = `dev-${studyId}/modes`;
+    delete firestoreData[path];
+    // Another session creates the document after this read finds it missing.
+    vi.mocked(getDoc).mockImplementationOnce(async () => {
+      firestoreData[path] = {
+        dataCollectionEnabled: false, developmentModeEnabled: false, dataSharingEnabled: false, autoTimeoutMinutes: 5,
+      };
+      return { exists: () => false, data: () => undefined } as unknown as Awaited<ReturnType<typeof getDoc>>;
+    });
+
+    expect(await storageEngine.getModes(studyId)).toMatchObject({ dataCollectionEnabled: false, autoTimeoutMinutes: 5 });
+    expect(firestoreData[path]).toMatchObject({ dataCollectionEnabled: false, autoTimeoutMinutes: 5 });
+  });
+
   test('concurrent automatic timeouts release an allocation only once', async () => {
     await storageEngine.setCurrentStage(studyId, 'LIMITED', '#00AAFF', 1);
     await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'expiring');
@@ -1643,7 +1669,8 @@ describe.each([
     expect(scanSpy).not.toHaveBeenCalled();
     expect(countMock).toHaveBeenCalledTimes(4);
     expect(getDocsMock).toHaveBeenCalledTimes(2);
-    expect(transactionMock).toHaveBeenCalledTimes(8);
+    // Includes creating the study's default settings once.
+    expect(transactionMock).toHaveBeenCalledTimes(9);
 
     const getDocMock = vi.mocked(getDoc);
     getDocMock.mockClear();
@@ -1720,7 +1747,8 @@ describe.each([
     expect(scanSpy).not.toHaveBeenCalled();
     expect(countMock).toHaveBeenCalledTimes(3);
     expect(getDocsMock).not.toHaveBeenCalled();
-    expect(transactionMock).toHaveBeenCalledTimes(6);
+    // Includes creating the study's default settings once.
+    expect(transactionMock).toHaveBeenCalledTimes(7);
   });
 
   test.each([false, true])('legacy mixed timestamps preserve the sequence slot (returning: %s)', async (returning) => {

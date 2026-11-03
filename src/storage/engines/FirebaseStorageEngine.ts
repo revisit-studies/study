@@ -954,26 +954,24 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
     const revisitModesData = await getDoc(revisitModesDoc);
 
     if (revisitModesData.exists()) {
-      const modes = revisitModesData.data() as RuntimeStudySettings;
-      const needsUpdate = 'studyNavigatorEnabled' in modes || 'analyticsInterfacePubliclyAccessible' in modes;
-
-      if (needsUpdate) {
-        const cleanedModes = cleanupModes(modes);
-        await setDoc(revisitModesDoc, cleanedModes);
-        return cleanedModes;
-      }
-
-      return modes;
+      // Normalize legacy fields in memory. An ordinary read must not rewrite
+      // a stale copy over a setting saved by another session.
+      return cleanupModes(revisitModesData.data() as RuntimeStudySettings) as RuntimeStudySettings;
     }
 
-    // Else set to default values
-    const defaultModes = {
-      dataCollectionEnabled: true,
-      developmentModeEnabled: true,
-      dataSharingEnabled: true,
-    };
-    await setDoc(revisitModesDoc, defaultModes);
-    return defaultModes;
+    // Create the defaults in a transaction, so a document another session
+    // created meanwhile is kept rather than replaced.
+    return await runTransaction(this.firestore, async (transaction) => {
+      const current = await transaction.get(revisitModesDoc);
+      if (current.exists()) return cleanupModes(current.data() as RuntimeStudySettings) as RuntimeStudySettings;
+      const defaultModes = {
+        dataCollectionEnabled: true,
+        developmentModeEnabled: true,
+        dataSharingEnabled: true,
+      };
+      transaction.set(revisitModesDoc, defaultModes);
+      return defaultModes;
+    });
   }
 
   protected async _setMode(studyId: string, mode: REVISIT_MODE, value: boolean) {
