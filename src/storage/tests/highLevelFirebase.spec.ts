@@ -1563,6 +1563,26 @@ describe.each([
     expect((await storageEngine.getModes(studyId)).dataCollectionEnabled).toBe(true);
   });
 
+  test('a sweep timeout is refused once the stage changes or the timeout is disabled', async () => {
+    await storageEngine.setCurrentStage(studyId, 'SWEPT', '#00AAFF');
+    await storageEngine.setAutoTimeoutMinutes(studyId, 1);
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'expiring');
+    const path = Object.keys(firestoreData).find((key) => key.endsWith('/sequenceAssignment/expiring'))!;
+    firestoreData[path].createdTime = Timestamp.fromMillis(Date.now() - 120_000);
+    const now = Date.now();
+
+    await storageEngine.setCurrentStage(studyId, 'NEXT', '#00AAFF');
+    // @ts-expect-error protected backend mutation
+    expect(await storageEngine._markSequenceAssignmentTimedOut('expiring', now, now - 60_000)).toBe(false);
+    await storageEngine.setCurrentStage(studyId, 'SWEPT', '#00AAFF');
+    await storageEngine.setAutoTimeoutMinutes(studyId, undefined);
+    // @ts-expect-error protected backend mutation
+    expect(await storageEngine._markSequenceAssignmentTimedOut('expiring', now, now - 60_000)).toBe(false);
+    await storageEngine.setAutoTimeoutMinutes(studyId, 1);
+    // @ts-expect-error protected backend mutation
+    expect(await storageEngine._markSequenceAssignmentTimedOut('expiring', now, now - 60_000)).toBe(true);
+  });
+
   test('concurrent automatic timeouts release an allocation only once', async () => {
     await storageEngine.setCurrentStage(studyId, 'LIMITED', '#00AAFF', 1);
     await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'expiring');

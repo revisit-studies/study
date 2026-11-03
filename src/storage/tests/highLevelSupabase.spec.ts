@@ -2698,6 +2698,53 @@ describe.each([
     expect((row.data as RowData).needsRebuild).toBe(false);
   });
 
+  test('a sweep started while another study is being opened finishes in its own study', async () => {
+    await storageEngine.setAutoTimeoutMinutes(studyId, 1);
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'expiring');
+    await storageEngine.releaseExpiredAssignments();
+    revisitRows.find((row) => row.docId === 'sequenceAssignment_expiring')!.createdAt = new Date(Date.now() - 120_000).toISOString();
+    const engineState = storageEngine as unknown as { studyId?: string; _markSequenceAssignmentTimedOut: (...args: [string, number, number?]) => Promise<boolean> };
+
+    // Opening the other study pauses at its session check.
+    let releaseSession!: () => void;
+    const sessionHeld = new Promise<void>((resolve) => { releaseSession = resolve; });
+    const sessions = storageEngine as unknown as { getSession: () => Promise<unknown> };
+    const getSession = sessions.getSession.bind(storageEngine);
+    vi.spyOn(sessions, 'getSession').mockImplementationOnce(async () => {
+      await sessionHeld;
+      return getSession();
+    });
+    // The sweep pauses inside its timeout write.
+    let releaseTimeout!: () => void;
+    const timeoutHeld = new Promise<void>((resolve) => { releaseTimeout = resolve; });
+    let timeoutStarted = false;
+    let studyAfterTimeout: string | undefined;
+    const mark = engineState._markSequenceAssignmentTimedOut.bind(storageEngine);
+    vi.spyOn(engineState, '_markSequenceAssignmentTimedOut').mockImplementationOnce(async (...args) => {
+      timeoutStarted = true;
+      await timeoutHeld;
+      const result = await mark(...args);
+      studyAfterTimeout = engineState.studyId;
+      return result;
+    });
+
+    const switching = storageEngine.initializeStudyDb('other-study');
+    // The sweep starts after the switch is already under way.
+    await new Promise((resolve) => { setTimeout(resolve, 0); });
+    const sweep = storageEngine.releaseExpiredAssignments();
+    await vi.waitFor(() => expect(timeoutStarted).toBe(true));
+    // Let the switch run as far as it can before the timeout write continues.
+    releaseSession();
+    await new Promise((resolve) => { setTimeout(resolve, 0); });
+    releaseTimeout();
+    await sweep;
+    await switching;
+
+    expect(studyAfterTimeout).toBe(studyId);
+    expect(engineState.studyId).toBe('other-study');
+    expect((await storageEngine.getSequenceAssignment(studyId, 'expiring'))?.autoTimedOutAt).toBeDefined();
+  });
+
   test('rejecting a legacy replacement without claimedParticipantId still releases its source', async () => {
     const source = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
     await storageEngine.rejectParticipant(source.participantId, 'test');

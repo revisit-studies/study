@@ -1218,24 +1218,24 @@ describe.each([
       let releaseTimeout!: () => void;
       const timeoutHeld = new Promise<void>((resolve) => { releaseTimeout = resolve; });
       let disabling: Promise<void> | undefined;
+      const events: string[] = [];
       // @ts-expect-error protected
       const mark = storageEngine._markSequenceAssignmentTimedOut.bind(storageEngine);
       // @ts-expect-error protected
       vi.spyOn(storageEngine, '_markSequenceAssignmentTimedOut').mockImplementationOnce(async (...args: [string, number, number?]) => {
-        disabling = storageEngine.setAutoTimeoutMinutes(studyId, undefined);
+        disabling = storageEngine.setAutoTimeoutMinutes(studyId, undefined).then(() => { events.push('disabled'); });
         await timeoutHeld;
-        return mark(...args);
+        const result = await mark(...args);
+        events.push('timed out');
+        return result;
       });
       const sweep = storageEngine.releaseExpiredAssignments();
       await vi.waitFor(() => expect(disabling).toBeDefined());
-      // The disable waits for the timeout already being written.
-      let disabled = false;
-      disabling!.then(() => { disabled = true; }, () => undefined);
-      await new Promise((resolve) => { setTimeout(resolve, 20); });
-      expect(disabled).toBe(false);
       releaseTimeout();
       await sweep;
       await disabling;
+      // The disable waited for the timeout already being written.
+      expect(events).toEqual(['timed out', 'disabled']);
 
       const timedOut = (await storageEngine.getAllSequenceAssignments(studyId)).filter((assignment) => assignment.autoTimedOutAt !== undefined);
       expect(timedOut).toHaveLength(1);

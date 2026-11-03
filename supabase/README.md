@@ -178,14 +178,16 @@ deadlines. The script switches new rows to UTC and converts existing rows once;
 rerunning it does nothing.
 
 Existing rows hold local time in the timezone of the sessions that wrote them,
-which are PostgREST's, not your `psql` session's. Use the `timezone` set on the
-`authenticator` role or the database if there is one (both appear in
-`SELECT * FROM pg_db_role_setting`), otherwise the server's
-(`SELECT setting FROM pg_file_settings WHERE name = 'timezone'`). The bundled
-stack runs in UTC, in which case the conversion leaves rows unchanged. If that
-timezone changed in the past, older rows are converted with the one you pass, and
-times in the repeated hour at a daylight-saving change are read as standard time.
-Pause writes while it runs:
+which are PostgREST's, not your `psql` session's. PostgREST runs requests as the
+`authenticated` role (participants sign in anonymously) or `anon`, so use the
+first `timezone` that applies: one set on that role, then on `authenticator`,
+then on the database (all appear in `SELECT * FROM pg_db_role_setting`), then
+the server's (`SELECT setting FROM pg_file_settings WHERE name = 'timezone'`).
+The bundled stack runs in UTC, in which case the conversion leaves rows
+unchanged. If `anon` and `authenticated` use different timezones, or the timezone
+changed in the past, a single run cannot convert every row correctly. Times in
+the repeated hour at a daylight-saving change are read as standard time. The
+script locks the table until it finishes:
 
 ```sh
 docker exec -i supabase-db psql -U supabase_admin -v ON_ERROR_STOP=1 \

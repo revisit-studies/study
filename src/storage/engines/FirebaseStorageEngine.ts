@@ -834,6 +834,18 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
       ) {
         return false;
       }
+      if (deadline !== undefined) {
+        // Stage changes do not take the admission lock on Firebase, so a sweep
+        // rechecks the settings here: a concurrent stage or timeout change makes
+        // this transaction retry instead of landing after the change.
+        const modes = (await transaction.get(doc(this.studyCollection, 'modes'))).data() as RuntimeStudySettings | undefined;
+        const timeoutMinutes = modes?.dataCollectionEnabled ? modes.autoTimeoutMinutes : undefined;
+        if (timeoutMinutes === undefined
+          || (modes?.stage?.currentStage.stageName ?? 'DEFAULT') !== assignment.stage
+          || createdTime > timedOutAt - timeoutMinutes * 60_000) {
+          return false;
+        }
+      }
       const allocationReference = doc(this.studyCollection, 'allocation');
       const revision = await transaction.get(allocationReference);
       const stageReference = this.stageAllocationReference(assignment.stage);

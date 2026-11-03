@@ -2,9 +2,11 @@
 -- Rows written so far hold local time in the timezone of the sessions that wrote
 -- them (PostgREST's), which can differ from this session's, so pass it explicitly:
 --   psql -v source_timezone=America/Denver ... < utc-created-at.sql
--- The default is changed first, which blocks writes until the conversion commits.
--- Once the default is UTC, rerunning does nothing.
+-- The table is locked until the conversion commits. Once the default is UTC,
+-- rerunning does nothing.
 BEGIN;
+-- Lock before checking the default, so concurrent runs cannot both convert.
+LOCK TABLE public.revisit IN ACCESS EXCLUSIVE MODE;
 SELECT set_config('revisit.source_timezone', :'source_timezone', true);
 DO $$
 DECLARE

@@ -750,7 +750,6 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
   }
 
   async initializeStudyDb(studyId: string) {
-    await this.finishTimeoutSweepsBeforeSwitching(studyId);
     // Check if we have a session
     let error: AuthError | null = null;
     const { data } = await this.getSession();
@@ -771,6 +770,8 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
         docId: 'connect',
         data: {},
       });
+    // No await between waiting for sweeps and switching, so none can start in between.
+    await this.finishTimeoutSweepsBeforeSwitching(studyId);
     this.studyId = studyId;
 
     // Error if login failed or if there was a SQL issue that was not a duplicate record
