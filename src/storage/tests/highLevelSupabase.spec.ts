@@ -68,6 +68,15 @@ vi.mock('@supabase/supabase-js', () => {
     return obj[col];
   }
 
+  function isJsonText(value: string) {
+    try {
+      JSON.parse(value);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
   function applyFilters(
     rows: Array<RowData>,
     filters: Array<{ col: string; val: string | number | boolean | null; type: 'eq' | 'neq' | 'is' | 'like' | 'not' | 'lt' | 'gt' }>,
@@ -127,6 +136,12 @@ vi.mock('@supabase/supabase-js', () => {
             const beforeWrite = beforeMetadataInitialization;
             beforeMetadataInitialization = null;
             await beforeWrite();
+          }
+          // `data->field` yields JSON, so PostgREST rejects a filter value that is
+          // not JSON text, such as an unquoted string; `data->>field` is text.
+          if (filters.some(({ col, val, type }) => /->(?!>)/.test(col) && ['eq', 'neq', 'lt', 'gt'].includes(type) && !isJsonText(String(val)))) {
+            resolve({ data: null, error: { message: 'invalid input syntax for type json', code: '22P02' } });
+            return;
           }
           supabaseOperations.push({
             op,
@@ -1002,8 +1017,8 @@ describe.each([
     const assignmentQueries = supabaseOperations.filter((operation) => operation.filters.some(
       (filter) => filter.col === 'docId' && filter.type === 'like' && filter.val === 'sequenceAssignment_%',
     ));
-    expect(assignmentQueries.filter((operation) => operation.headOnly && !operation.filters.some((filter) => filter.col === 'data->stage'))).toHaveLength(2);
-    expect(assignmentQueries.filter((operation) => operation.headOnly && operation.filters.some((filter) => filter.col === 'data->stage'))).toHaveLength(2);
+    expect(assignmentQueries.filter((operation) => operation.headOnly && !operation.filters.some((filter) => filter.col === 'data->>stage'))).toHaveLength(2);
+    expect(assignmentQueries.filter((operation) => operation.headOnly && operation.filters.some((filter) => filter.col === 'data->>stage'))).toHaveLength(2);
     expect(assignmentQueries.filter((operation) => !operation.headOnly)).toEqual([
       expect.objectContaining({ limit: 1 }),
       expect.objectContaining({ limit: 1 }),
@@ -2509,7 +2524,7 @@ describe.each([
     await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'replacement');
     await storageEngine.releaseExpiredAssignments();
     const recounts = supabaseOperations.filter((operation) => operation.headOnly
-      && operation.filters.some((filter) => filter.col === 'data->sequenceKey'));
+      && operation.filters.some((filter) => filter.col === 'data->>sequenceKey'));
     expect(recounts).toHaveLength(0);
     expect((await storageEngine.getAllSequenceAssignments(studyId)).filter((assignment) => assignment.autoTimedOutAt !== undefined)).toHaveLength(3);
     // @ts-expect-error Inspect the persisted capacity and row counters.

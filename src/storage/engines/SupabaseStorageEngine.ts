@@ -189,7 +189,7 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
         .order('docId', { ascending: true })
         .limit(1000);
       if (stage !== undefined) {
-        request = request.eq('data->stage', stage).eq('data->>rejected', 'false')
+        request = request.eq('data->>stage', stage).eq('data->>rejected', 'false')
           .is('data->>completed', null).is('data->>autoTimedOutAt', null);
       }
       if (afterDocId !== undefined) request = request.gt('docId', afterDocId);
@@ -1755,7 +1755,7 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
   protected override async hasStageAssignments(stage: string): Promise<boolean> {
     const { count, error } = await this.supabase.from('revisit').select('docId', { count: 'exact', head: true })
       .eq('studyId', `${this.collectionPrefix}${this.studyId}`).like('docId', 'sequenceAssignment_%')
-      .eq('data->stage', stage);
+      .eq('data->>stage', stage);
     if (error) throw new Error('Failed to check stage assignment history');
     return (count || 0) > 0;
   }
@@ -1763,10 +1763,10 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
   private async countStageAssignments(stage: string, filter?: { field: 'sequenceKey' | 'betweenSubjectsCombinationKey'; value: string }): Promise<number> {
     const request = this.supabase.from('revisit').select('docId', { count: 'exact', head: true })
       .eq('studyId', `${this.collectionPrefix}${this.studyId}`).like('docId', 'sequenceAssignment_%')
-      .eq('data->stage', stage)
+      .eq('data->>stage', stage)
       .eq('data->rejected', false)
       .is('data->>autoTimedOutAt', null);
-    const { count, error } = await (filter ? request.eq(`data->${filter.field}`, filter.value) : request);
+    const { count, error } = await (filter ? request.eq(`data->>${filter.field}`, filter.value) : request);
     if (error) throw new Error('Failed to count stage assignments');
     return count ?? 0;
   }
@@ -1795,7 +1795,7 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
     if (!sequenceRows || Object.values(current.rowCounts).reduce((total, count) => total + count, 0) === current.count) return false;
     const timeouts = await this.supabase.from('revisit').select('docId', { count: 'exact', head: true })
       .eq('studyId', `${this.collectionPrefix}${this.studyId}`).like('docId', 'sequenceAssignment_%')
-      .eq('data->stage', stage)
+      .eq('data->>stage', stage)
       .not('data->>autoTimedOutAt', 'is', null);
     if (timeouts.error) throw new Error('Failed to check stage timeouts');
     return (timeouts.count ?? 0) > 0;

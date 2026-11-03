@@ -172,9 +172,13 @@ document a connection-restart issue and the `REGION: us-east-1` workaround;
 reVISit's storage engine does not subscribe to Postgres Changes.
 
 Deployments initialized with an older `revisit.sql` should apply
-`utc-created-at.sql` once. reVISit reads `createdAt` as UTC, so a database
-running in another timezone otherwise shifts participant start times. Rows
-written before the change keep their original values:
+`utc-created-at.sql`. reVISit reads `createdAt` as UTC, so a database running in
+another timezone otherwise shifts participant start times and auto-timeout
+deadlines. The script switches new rows to UTC and converts existing rows from
+the database's current timezone; rerunning it does nothing. If that timezone
+changed in the past, older rows convert with the current one, and times in the
+repeated hour at a daylight-saving change are read as standard time. Pause
+writes while it runs:
 
 ```sh
 docker exec -i supabase-db psql -U supabase_admin \

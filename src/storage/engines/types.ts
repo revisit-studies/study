@@ -1442,27 +1442,33 @@ export abstract class StorageEngine {
     return { currentRow, creationIndex: allocation.creationIndex + 1 };
   }
 
-  private timeoutSweep?: Promise<void>;
+  private timeoutSweeps: Promise<void> = Promise.resolve();
 
   /**
-   * Times out expired assignments in the current stage. This is safe outside the
-   * admission lock: each engine rechecks eligibility and moves the stage counts
-   * with the write, and a timeout only ever frees capacity. Calls made while a
-   * sweep is running in this session share it.
+   * Times out expired assignments in the current study's current stage. This is
+   * safe outside the admission lock: each engine rechecks eligibility and moves
+   * the stage counts with the write, and a timeout only ever frees capacity.
+   * Sweeps in this session run one at a time, so a call made during a sweep
+   * gets its own pass, with current settings, once that sweep finishes.
    */
-  async releaseExpiredAssignments(settings?: ModesAndStageData): Promise<void> {
-    if (!this.timeoutSweep) {
-      this.timeoutSweep = (async () => {
-        const { modes, stageData } = settings ?? await this.getModesAndStageData(this.studyId!);
-        await this.timeoutExpiredAssignments(modes, stageData.currentStage.stageName);
-      })().finally(() => { this.timeoutSweep = undefined; });
-    }
-    return this.timeoutSweep;
+  async releaseExpiredAssignments(): Promise<void> {
+    const studyId = this.studyId!;
+    const sweep = this.timeoutSweeps.then(() => this.timeoutExpiredAssignments(studyId));
+    this.timeoutSweeps = sweep.catch(() => undefined);
+    return sweep;
   }
 
-  private async timeoutExpiredAssignments(modes: StudyModes, stage: string): Promise<void> {
-    const timeoutMinutes = modes.autoTimeoutMinutes;
-    if (!modes.dataCollectionEnabled || timeoutMinutes === undefined) {
+  private async readTimeoutSettings(studyId: string) {
+    const { modes, stageData } = await this.getModesAndStageData(studyId);
+    return {
+      timeoutMinutes: modes.dataCollectionEnabled ? modes.autoTimeoutMinutes : undefined,
+      stage: stageData.currentStage.stageName,
+    };
+  }
+
+  private async timeoutExpiredAssignments(studyId: string): Promise<void> {
+    const { timeoutMinutes, stage } = await this.readTimeoutSettings(studyId);
+    if (timeoutMinutes === undefined) {
       return;
     }
 
@@ -1484,6 +1490,11 @@ export abstract class StorageEngine {
     // Each engine rechecks eligibility in the same operation that writes, so a
     // participant who finished or was rejected in the meantime keeps their slot.
     for (const assignment of expiredAssignments) {
+      // The engine is shared across studies, so stop if it has moved to another
+      // study or the timeout settings changed since the sweep started.
+      // eslint-disable-next-line no-await-in-loop
+      const current = await this.readTimeoutSettings(studyId);
+      if (this.studyId !== studyId || current.timeoutMinutes !== timeoutMinutes || current.stage !== stage) return;
       // Stop at the first failed mutation; a later sweep retries the rest.
       // eslint-disable-next-line no-await-in-loop
       await this._markSequenceAssignmentTimedOut(assignment.participantId, serverNow, deadline);
@@ -1595,7 +1606,7 @@ export abstract class StorageEngine {
       return participant;
     }
 
-    let sweepSettings: ModesAndStageData | undefined;
+    let autoTimeoutEnabled = false;
     const initializeParticipant = async (): Promise<ParticipantData> => {
       // Another session may have completed initialization while this session waited
       // for the lock, so always read the participant record again inside it.
@@ -1616,7 +1627,7 @@ export abstract class StorageEngine {
 
       const { modes, stageData } = await this.getModesAndStageData(this.studyId!, this.cloudEngine ? undefined : bootstrapData?.modesDocument);
       const currentStage = stageData.currentStage.stageName;
-      sweepSettings = { modes, stageData };
+      autoTimeoutEnabled = modes.dataCollectionEnabled && modes.autoTimeoutMinutes !== undefined;
       const currentStageInfo = stageData.allStages.find((stage) => stage.stageName === currentStage);
       if (!this.hasAtomicSequenceReservation && modes.dataCollectionEnabled && (!existingReservation || existingReservation.rejected) && currentStageInfo && isStageParticipantLimitEnabled(currentStageInfo)) {
         const stageParticipantCounts = await this.getStageAllocation(currentStage, getConfigConditionKeys(config));
@@ -1705,8 +1716,8 @@ export abstract class StorageEngine {
     }
 
     // Release other expired participants without delaying this one.
-    if (sweepSettings) {
-      this.releaseExpiredAssignments(sweepSettings)
+    if (autoTimeoutEnabled) {
+      this.releaseExpiredAssignments()
         .catch((sweepError) => console.warn('Failed to release expired participant allocations:', sweepError));
     }
 

@@ -1174,6 +1174,51 @@ describe.each([
     }
   });
 
+  test('a sweep stops when the engine switches studies or the timeout changes', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    try {
+      vi.setSystemTime(new Date('2026-01-01T00:00:00.000Z'));
+      const otherStudyId = 'other-study';
+      await storageEngine.initializeStudyDb(otherStudyId);
+      await storageEngine.setSequenceArray(generateSequenceArray(configSimple));
+      await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'shared');
+      await storageEngine.initializeStudyDb(studyId);
+      await storageEngine.setAutoTimeoutMinutes(studyId, 1);
+      await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'shared');
+      await storageEngine.releaseExpiredAssignments();
+      vi.setSystemTime(new Date('2026-01-01T00:02:00.000Z'));
+      const engineInternals = storageEngine as unknown as { _getServerTimeMs: () => Promise<number> };
+
+      // Another study becomes current while the sweep reads the clock.
+      vi.spyOn(engineInternals, '_getServerTimeMs').mockImplementationOnce(async () => {
+        await storageEngine.initializeStudyDb(otherStudyId);
+        return Date.now();
+      });
+      await storageEngine.releaseExpiredAssignments();
+      expect((await storageEngine.getSequenceAssignment(otherStudyId, 'shared'))?.autoTimedOutAt).toBeUndefined();
+      expect((await storageEngine.getSequenceAssignment(studyId, 'shared'))?.autoTimedOutAt).toBeUndefined();
+
+      // The designer disables the timeout while the sweep reads the clock.
+      await storageEngine.initializeStudyDb(studyId);
+      vi.spyOn(engineInternals, '_getServerTimeMs').mockImplementationOnce(async () => {
+        await storageEngine.setAutoTimeoutMinutes(studyId, undefined);
+        return Date.now();
+      });
+      await storageEngine.releaseExpiredAssignments();
+      expect((await storageEngine.getSequenceAssignment(studyId, 'shared'))?.autoTimedOutAt).toBeUndefined();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  test('a sweep requested during another sweep gets its own pass', async () => {
+    await storageEngine.setAutoTimeoutMinutes(studyId, 1);
+    // @ts-expect-error protected
+    const candidates = vi.spyOn(storageEngine, '_getTimeoutCandidates');
+    await Promise.all([storageEngine.releaseExpiredAssignments(), storageEngine.releaseExpiredAssignments()]);
+    expect(candidates).toHaveBeenCalledTimes(2);
+  });
+
   test('a failed fallback sweep still reports the stage as full', async () => {
     await storageEngine.setCurrentStage(studyId, 'LIMITED', '#ff0000', 1);
     await storageEngine.setAutoTimeoutMinutes(studyId, 1);
