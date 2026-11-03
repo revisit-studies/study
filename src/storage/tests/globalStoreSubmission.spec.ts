@@ -560,6 +560,40 @@ test.each(['tag', 'submission'])('a delayed %s write preserves automatic block t
   expect(storage.remoteWrite.mock.calls.filter((call) => call[1] === 'participantData').at(-1)?.[2]).toMatchObject(expected);
 });
 
+test('regression: finalization drains an in-flight metadata cache write before completing', async () => {
+  const storage = new RemoteRecoveryStorage();
+  storage.collectionEnabled = true;
+  storage.remote.set('participants/participant/participantData', structuredClone(participant));
+  const { graph } = submission();
+  await storage.saveGlobalStoreSubmission({ purchase_0: answer }, graph, 1, 'purchase_0', createEmptyProvenance());
+  await storage.flushPendingParticipantData();
+  const errors = vi.fn();
+  storage.subscribeToParticipantDataWriteErrors(errors);
+  const metadata = { ...participant.metadata, ip: '192.0.2.1' };
+  const pause = storage.pauseNextWrite('/localParticipantData');
+  vi.useFakeTimers();
+  const updating = storage.updateParticipantMetadata(metadata);
+  await pause.paused;
+  const finishing = storage.finalizeParticipant();
+  try {
+    await vi.advanceTimersByTimeAsync(0);
+    expect(storage.completed).toBe(false);
+  } finally {
+    pause.release();
+    try {
+      await updating;
+      await vi.runAllTimersAsync();
+      await finishing;
+    } finally {
+      vi.useRealTimers();
+    }
+  }
+  expect(await finishing).toEqual({ status: 'complete' });
+  await expect(storage.flushPendingParticipantData()).resolves.toBeUndefined();
+  expect(storage.remote.get('participants/participant/participantData')).toMatchObject({ metadata, globalStoreRevision: 1 });
+  expect(errors).not.toHaveBeenCalled();
+});
+
 test.each(['metadata', 'finalization'])('a delayed %s write preserves accepted progress and respects completed metadata', async (delayed) => {
   const storage = new RecoveryStorage();
   const { graph } = submission();

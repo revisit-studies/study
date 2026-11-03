@@ -2481,18 +2481,22 @@ export abstract class StorageEngine {
     return sequenceAssignment ? sequenceAssignment.completed !== null : false;
   }
 
-  private async markParticipantFinalized() {
+  private async markParticipantFinalized(assertCurrentSession: () => void) {
     if (!this.participantData) return;
-    const { studyId, currentParticipantId } = this;
-    await this.updateParticipantDataLocally(studyId, currentParticipantId, async (assertCurrentSession) => {
-      const snapshot = { ...this.participantData!, finalized: true };
-      await this.cacheParticipantDataSnapshot(snapshot, currentParticipantId, !!snapshot.globalStoreRevision);
-      assertCurrentSession();
-      this.participantData = snapshot;
-    });
+    const snapshot = { ...this.participantData, finalized: true };
+    await this.cacheParticipantDataSnapshot(snapshot, this.currentParticipantId, !!snapshot.globalStoreRevision);
+    assertCurrentSession();
+    this.participantData = snapshot;
   }
 
   async finalizeParticipant(): Promise<FinalizeParticipantResult> {
+    const { studyId, currentParticipantId } = this;
+    // Keep finalization in the local update queue through the final flush and
+    // completion marker, so accepted background writes cannot arrive afterward.
+    return this.updateParticipantDataLocally(studyId, currentParticipantId, (assertCurrentSession) => this.finalizeParticipantSession(assertCurrentSession));
+  }
+
+  private async finalizeParticipantSession(assertCurrentSession: () => void): Promise<FinalizeParticipantResult> {
     try {
       await this.flushPendingParticipantData();
     } catch (error) {
@@ -2513,14 +2517,15 @@ export abstract class StorageEngine {
     }
 
     const modes = await this.getModes(this.studyId);
+    assertCurrentSession();
     if (!modes.dataCollectionEnabled) {
-      await this.markParticipantFinalized();
+      await this.markParticipantFinalized(assertCurrentSession);
       return { status: 'complete' };
     }
 
     const alreadyCompleted = await this.getParticipantCompletionStatus();
     if (alreadyCompleted) {
-      await this.markParticipantFinalized();
+      await this.markParticipantFinalized(assertCurrentSession);
       return { status: 'complete' };
     }
 
@@ -2534,11 +2539,12 @@ export abstract class StorageEngine {
 
     try {
       await this._runWithLock(`participant-${this.currentParticipantId}`, async () => {
+        assertCurrentSession();
         const assignment = await this._getSequenceAssignment(this.currentParticipantId!);
         if (assignment?.rejected) throw new Error('This participant has been timed out or rejected');
         await this._completeCurrentParticipantRealtime();
       });
-      await this.markParticipantFinalized();
+      await this.markParticipantFinalized(assertCurrentSession);
     } catch (error) {
       return {
         status: 'error',
