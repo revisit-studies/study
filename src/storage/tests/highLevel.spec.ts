@@ -535,10 +535,12 @@ describe.each([
       await resumed.initializeStudyDb(studyId);
       const writes = vi.spyOn(resumed as unknown as { _pushToStorage: StorageEngine['_pushToStorage'] }, '_pushToStorage');
       const restored = await resumed.initializeParticipantSession({}, config, participantMetadata, participantId);
+      await resumed.updateParticipantMetadata({ ...restored.metadata, ip: '192.0.2.1' });
       expect(await resumed.finalizeParticipant()).toEqual({ status: 'complete' });
       expect(restored).toMatchObject({ answers: { testComponent_0: answer }, globalStoreRevision: 1, finalized: true });
       expect(await resumed.getProvenance(GLOBAL_STORE_TASK)).toMatchObject({ globalStore: { current: first.graph.current } });
       expect(writes).not.toHaveBeenCalled();
+      expect(resumed.getCurrentParticipantDataSnapshot()?.metadata).toEqual(participantMetadata);
     },
   );
 

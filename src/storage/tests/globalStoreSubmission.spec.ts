@@ -560,7 +560,7 @@ test.each(['tag', 'submission'])('a delayed %s write preserves automatic block t
   expect(storage.remoteWrite.mock.calls.filter((call) => call[1] === 'participantData').at(-1)?.[2]).toMatchObject(expected);
 });
 
-test.each(['metadata', 'finalization'])('a delayed %s write preserves metadata and finalized progress', async (delayed) => {
+test.each(['metadata', 'finalization'])('a delayed %s write preserves accepted progress and respects completed metadata', async (delayed) => {
   const storage = new RecoveryStorage();
   const { graph } = submission();
   await storage.saveGlobalStoreSubmission({ purchase_0: answer }, graph, 1, 'purchase_0', createEmptyProvenance());
@@ -575,7 +575,10 @@ test.each(['metadata', 'finalization'])('a delayed %s write preserves metadata a
   pause.release();
   await Promise.all([first, second]);
   const expected = {
-    metadata, finalized: true, answers: { purchase_0: answer }, globalStoreRevision: 1,
+    metadata: delayed === 'metadata' ? metadata : participant.metadata,
+    finalized: true,
+    answers: { purchase_0: answer },
+    globalStoreRevision: 1,
   };
   expect(storage.getCurrentParticipantDataSnapshot()).toMatchObject(expected);
   expect([...storage.local].find(([key]) => key.endsWith('/localParticipantData'))![1]).toMatchObject(expected);

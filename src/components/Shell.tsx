@@ -605,11 +605,11 @@ function StudyShell({ globalConfig }: { globalConfig: GlobalConfig }) {
           setIsCompletionCheckResolved(true);
           setStartupPhase('ready');
 
-          if (!resolvedModes.dataCollectionEnabled || searchParams.has('participantId')) {
+          if (participantCompleted || !resolvedModes.dataCollectionEnabled || searchParams.has('participantId')) {
             return;
           }
           fetchParticipantIp().then(async (ip) => {
-            if (!isCurrentStartup() || !ip.ip || participantSession.metadata.ip === ip.ip) {
+            if (!isCurrentStartup() || newStore.store.getState().completed || !ip.ip || participantSession.metadata.ip === ip.ip) {
               return;
             }
 
@@ -621,7 +621,7 @@ function StudyShell({ globalConfig }: { globalConfig: GlobalConfig }) {
 
             await storageEngine.updateParticipantMetadata(metadataWithIp);
 
-            if (isCurrentStartup()) {
+            if (isCurrentStartup() && !newStore.store.getState().completed) {
               newStore.store.dispatch(newStore.actions.setMetadata(metadataWithIp));
             }
           }).catch((error) => {

@@ -2011,6 +2011,7 @@ export abstract class StorageEngine {
     const modes = await this.getModes(studyId);
     return this.updateParticipantDataLocally(studyId, currentParticipantId, async (assertCurrentSession) => {
       if (!this.participantData) throw new Error('Participant data not initialized');
+      if (this.participantData.finalized) return;
       this.participantData.metadata = metadata;
       const snapshot = cloneParticipantDataSnapshot(this.participantData);
       await this.cacheParticipantDataSnapshot(snapshot, currentParticipantId);
