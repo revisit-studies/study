@@ -35,7 +35,6 @@ export default defineConfig(({ command, mode }) => {
           inline: ['@trrack/core'],
         },
       },
-      setupFiles: ['vitest-localstorage-mock'],
       fileParallelism: true,
       maxWorkers: '100%',
       minWorkers: 1,
