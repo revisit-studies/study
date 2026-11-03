@@ -3,6 +3,7 @@ import {
   afterEach,
   vi,
 } from 'vitest';
+import isEqual from 'lodash.isequal';
 import { ParticipantMetadata, StudyConfig } from '../../parser/types';
 import testConfigSimple from './testConfigSimple.json';
 import testConfigSimple2 from './testConfigSimple2.json';
@@ -83,6 +84,11 @@ vi.mock('@supabase/supabase-js', () => {
   ): Array<RowData> {
     return rows.filter((row) => filters.every(({ col, val, type }) => {
       const colVal = getFieldValue(row, col);
+      if (col.startsWith('data->') && !col.startsWith('data->>')) {
+        const jsonVal = JSON.parse(String(val));
+        if (type === 'eq') return isEqual(colVal, jsonVal);
+        if (type === 'neq') return !isEqual(colVal, jsonVal);
+      }
       // PostgREST compares filter values as text, so `data->>rejected` matches
       // the string 'false' rather than the boolean.
       if (type === 'eq') return col === 'data' ? JSON.stringify(colVal) === val : String(colVal) === String(val);
@@ -490,7 +496,7 @@ describe.each([
     // @ts-expect-error Pause publication while the other client observes the missing array.
     const upload = storageEngine._pushToStorage.bind(storageEngine);
     // Exercise the actual distributed lock.
-    vi.spyOn(storageEngine, '_pushToStorage').mockImplementationOnce(async (path, type, data) => {
+    vi.spyOn(storageEngine as unknown as { _pushToStorage: typeof storageEngine['_pushToStorage'] }, '_pushToStorage').mockImplementationOnce(async (path, type, data) => {
       uploading();
       await new Promise<void>((resolve) => { release = resolve; });
       return upload(path, type, data);
@@ -530,7 +536,7 @@ describe.each([
     if (lockedRecheck) vi.spyOn(storageEngine, 'getSequenceArray').mockResolvedValueOnce(null);
     const generate = vi.fn(() => generateSequenceArray(configSimple2));
     // Failed reads must never result in a replacement upload.
-    const upload = vi.spyOn(storageEngine, '_pushToStorage');
+    const upload = vi.spyOn(storageEngine as unknown as { _pushToStorage: typeof storageEngine['_pushToStorage'] }, '_pushToStorage');
     failSequenceReads = true;
     try {
       await expect(storageEngine.getOrCreateSequenceArray(configHash, generate)).rejects.toMatchObject({ message: 'Storage unavailable' });
@@ -548,7 +554,7 @@ describe.each([
     await storageEngine.setSequenceArray(canonical, configHash);
     const generate = vi.fn(() => generateSequenceArray(configSimple2));
     // Existing arrays must take the normal read path without a lock.
-    const lock = vi.spyOn(storageEngine, '_runWithLock');
+    const lock = vi.spyOn(storageEngine as unknown as { _runWithLock: typeof storageEngine['_runWithLock'] }, '_runWithLock');
     expect(await storageEngine.getOrCreateSequenceArray(configHash, generate)).toEqual(canonical);
     expect(generate).not.toHaveBeenCalled();
     expect(lock).not.toHaveBeenCalled();
@@ -558,7 +564,7 @@ describe.each([
     const configHash = await hash(JSON.stringify(configSimple));
     const canonical = generateSequenceArray(configSimple);
     // A failed first upload must not leave the preparation lock held.
-    vi.spyOn(storageEngine, '_pushToStorage').mockRejectedValueOnce(new Error('upload failed'));
+    vi.spyOn(storageEngine as unknown as { _pushToStorage: typeof storageEngine['_pushToStorage'] }, '_pushToStorage').mockRejectedValueOnce(new Error('upload failed'));
     await expect(storageEngine.getOrCreateSequenceArray(configHash, () => canonical)).rejects.toThrow('upload failed');
     await expect(storageEngine.getOrCreateSequenceArray(configHash, () => canonical)).resolves.toEqual(canonical);
   });
@@ -606,7 +612,7 @@ describe.each([
     await storageEngine.setSequenceArray(generateSequenceArray(original));
     await storageEngine.initializeParticipantSession({}, original, participantMetadata, 'first');
     // Inject an upload failure after append-only validation.
-    vi.spyOn(storageEngine, '_pushToStorage').mockRejectedValueOnce(new Error('config upload failed'));
+    vi.spyOn(storageEngine as unknown as { _pushToStorage: typeof storageEngine['_pushToStorage'] }, '_pushToStorage').mockRejectedValueOnce(new Error('config upload failed'));
     await expect(storageEngine.saveConfig(appended)).rejects.toThrow('config upload failed');
     await expect(storageEngine.saveConfig(original)).resolves.toBeUndefined();
     await expect(storageEngine.initializeParticipantSession({}, original, participantMetadata, 'second')).resolves.toBeDefined();
@@ -873,7 +879,7 @@ describe.each([
     await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'original');
     await storageEngine.rejectParticipant('original', 'review');
     // Inject a failed initial participant upload.
-    vi.spyOn(storageEngine, '_pushToStorage').mockRejectedValueOnce(new Error('upload failed'));
+    vi.spyOn(storageEngine as unknown as { _pushToStorage: typeof storageEngine['_pushToStorage'] }, '_pushToStorage').mockRejectedValueOnce(new Error('upload failed'));
     await expect(storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'replacement')).rejects.toThrow('upload failed');
     await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'claims-original');
     await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'replacement');
@@ -907,7 +913,7 @@ describe.each([
     await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'recheck-active');
     await storageEngine.clearCurrentParticipantId();
     // Simulate an initially absent blob followed by a failing admission-lock recheck.
-    vi.spyOn(storageEngine, '_getFromStorage').mockResolvedValueOnce({});
+    vi.spyOn(storageEngine as unknown as { _getFromStorage: typeof storageEngine['_getFromStorage'] }, '_getFromStorage').mockResolvedValueOnce({});
     failParticipantReads = true;
     try {
       await expect(storageEngine.rejectParticipant('recheck-active', 'review')).rejects.toMatchObject({ message: 'Participant storage unavailable' });
@@ -960,7 +966,7 @@ describe.each([
     const stage = (await storageEngine.getStageData(studyId)).allStages[0];
     const a = getBetweenSubjectsCombinationKey({ group: 'A' }, ['group']);
     // Do not fall back to stale keys if the authoritative config is unavailable.
-    vi.spyOn(storageEngine, '_getFromStorage').mockResolvedValueOnce({});
+    vi.spyOn(storageEngine as unknown as { _getFromStorage: typeof storageEngine['_getFromStorage'] }, '_getFromStorage').mockResolvedValueOnce({});
     await expect(storageEngine.setStageDesiredParticipants(studyId, 'DEFAULT', a, 6, { [a]: 5 })).rejects.toThrow(/configuration could not be loaded/);
     expect((await storageEngine.getStageData(studyId)).allStages[0]).toEqual(stage);
   });
@@ -2784,6 +2790,35 @@ describe.each([
     await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'third');
     await expect(storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'fourth'))
       .rejects.toThrow(/participant limit/);
+  });
+
+  test('stage allocation initializes and rebuilds nonzero condition counts', async () => {
+    const config: StudyConfig = { ...configSimple, factors: { group: ['A', 'B'] }, betweenSubjects: ['group'] };
+    await storageEngine.saveConfig(config);
+    await storageEngine.setSequenceArray(generateSequenceArray(config));
+    await storageEngine.setCurrentStage(studyId, 'RECOUNT', '#00AAFF', 5);
+    await storageEngine.initializeParticipantSession({}, config, participantMetadata, 'counted-a');
+    await storageEngine.initializeParticipantSession({}, config, participantMetadata, 'counted-b');
+    const keys = ['A', 'B'].map((group) => getBetweenSubjectsCombinationKey({ group }, ['group']));
+    const allocationIndex = revisitRows.findIndex((row) => row.studyId === `dev-${studyId}` && row.docId === 'stageAllocation_RECOUNT');
+    const [original] = revisitRows.splice(allocationIndex, 1);
+    // @ts-expect-error Inspect initialization from existing assignment history.
+    const initialized = await storageEngine.getStageAllocation('RECOUNT', keys);
+    expect(initialized.count).toBe(2);
+    expect(initialized.combinationCounts).toEqual(Object.fromEntries(keys.map((key) => [key, 1])));
+
+    const row = revisitRows.find((item) => item.studyId === `dev-${studyId}` && item.docId === 'stageAllocation_RECOUNT')!;
+    row.data = {
+      ...original.data as object,
+      count: 0,
+      combinationCounts: Object.fromEntries(keys.map((key) => [key, 0])),
+      needsRebuild: true,
+    };
+    // @ts-expect-error Inspect aggregate recovery of condition and sequence-row counts.
+    const rebuilt = await storageEngine.getStageAllocation('RECOUNT', keys);
+    expect(rebuilt.count).toBe(2);
+    expect(rebuilt.combinationCounts).toEqual(initialized.combinationCounts);
+    expect(Object.values(rebuilt.rowCounts).sort()).toEqual([1, 1]);
   });
 
   test('reading stage counts takes the stage lock only when they need a rebuild', async () => {
