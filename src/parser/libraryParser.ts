@@ -737,9 +737,6 @@ function resolveFactor(
     };
   }
   if (action === 'zip') {
-    if (mode === 'materialize' && (hasRuntimeOrder || hasRuntimeSample)) {
-      zipFactorConditions(conditionSets, factorName, errors, warnings);
-    }
     return {
       conditions: mode === 'materialize' && (hasRuntimeOrder || hasRuntimeSample)
         ? crossFactorConditions(conditionSets)

@@ -33,7 +33,7 @@ jobs:
       - name: Build main deployment
         run: |
           if [ "$GITHUB_REPOSITORY" = "revisit-studies/study" ]; then
-            VITE_STORAGE_ENGINE=firebase VITE_REPO_URL=https://github.com/revisit-studies/study/tree/main/public/ yarn build
+            VITE_RECAPTCHA_ENTERPRISE_SITE_KEY=6LeksfUtAAAAADwbkOg-HyN8ZkMD04uIbJvrSWeX VITE_STORAGE_ENGINE=firebase VITE_REPO_URL=https://github.com/revisit-studies/study/tree/main/public/ yarn build
           else
             if [ -z "$VITE_STORAGE_ENGINE" ]; then unset VITE_STORAGE_ENGINE; fi
             yarn build
@@ -83,7 +83,7 @@ jobs:
       - name: Build dev deployment
         run: |
           if [ "$GITHUB_REPOSITORY" = "revisit-studies/study" ]; then
-            VITE_STORAGE_ENGINE=firebase VITE_REPO_URL=https://github.com/revisit-studies/study/tree/dev/public/ yarn build
+            VITE_RECAPTCHA_ENTERPRISE_SITE_KEY=6LeksfUtAAAAADwbkOg-HyN8ZkMD04uIbJvrSWeX VITE_STORAGE_ENGINE=firebase VITE_REPO_URL=https://github.com/revisit-studies/study/tree/dev/public/ yarn build
           else
             if [ -z "$VITE_STORAGE_ENGINE" ]; then unset VITE_STORAGE_ENGINE; fi
             yarn build
@@ -154,6 +154,7 @@ jobs:
         if: ${{ github.repository == 'revisit-studies/study' && vars.VITE_STORAGE_ENGINE != '' }}
         run: VITE_STORAGE_ENGINE=$VITE_STORAGE_ENGINE VITE_BASE_PATH=$VITE_BASE_PATH yarn build
         env:
+          VITE_RECAPTCHA_ENTERPRISE_SITE_KEY: "6LeksfUtAAAAADwbkOg-HyN8ZkMD04uIbJvrSWeX"
           VITE_STORAGE_ENGINE: ${{ vars.VITE_STORAGE_ENGINE }}
           VITE_BASE_PATH: "/${{ github.event.repository.name }}/PR${{ github.event.number }}/"
 

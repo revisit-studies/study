@@ -3,7 +3,7 @@ import {
 } from 'vitest';
 import { signInAnonymously, signOut } from '@firebase/auth';
 import {
-  enableNetwork, Timestamp, runTransaction, getCountFromServer, getDocs, getDoc, getDocsFromServer,
+  enableNetwork, Timestamp, runTransaction, getCountFromServer, getDocs, getDoc, getDocsFromServer, setDoc,
 } from 'firebase/firestore';
 import { type ParticipantMetadata, type StudyConfig } from '../../parser/types';
 import testConfigSimple from './testConfigSimple.json';
@@ -783,15 +783,74 @@ describe.each([
     expect((await storageEngine.getAllSequenceAssignments(studyId)).filter((assignment) => !assignment.rejected)).toHaveLength(1);
   });
 
+  test('independent participant locks do not contend on one shared document', async () => {
+    const results = await Promise.allSettled(Array.from({ length: 40 }, (_, index) => (
+      // @ts-expect-error Exercise actual lock acquisition and optimistic transaction retries.
+      storageEngine._runWithLock(`participant-independent-${index}`, async () => index)
+    )));
+    expect(results.filter((result) => result.status === 'rejected')).toEqual([]);
+    expect(results.map((result) => result.status === 'fulfilled' && result.value)).toEqual(
+      Array.from({ length: 40 }, (_, index) => index),
+    );
+  });
+
+  test.each(['participant-subject', 'participant-assignment', 'study-settings', 'prepare-sequences-config'])('the same lock key %s still excludes another browser', async (lockKey) => {
+    const second = new FirebaseStorageEngine(true);
+    await second.connect();
+    await second.initializeStudyDb(studyId);
+    vi.useFakeTimers();
+    let release!: () => void;
+    let started!: () => void;
+    let secondEntered = false;
+    const ready = new Promise<void>((resolve) => { started = resolve; });
+    // @ts-expect-error Exercise the distributed lock shared by separate engine instances.
+    const first = storageEngine._runWithLock(lockKey, async () => {
+      started();
+      await new Promise<void>((resolve) => { release = resolve; });
+    });
+    await ready;
+    // @ts-expect-error The second browser must wait for the same shared key.
+    const competing = second._runWithLock(lockKey, async () => { secondEntered = true; });
+    try {
+      await vi.advanceTimersByTimeAsync(0);
+      expect(secondEntered).toBe(false);
+    } finally {
+      release();
+      await first;
+      await vi.advanceTimersByTimeAsync(100);
+      await competing;
+      vi.useRealTimers();
+    }
+    expect(secondEntered).toBe(true);
+  });
+
+  test('backend clock reads from different browsers write different documents', async () => {
+    const second = new FirebaseStorageEngine(true);
+    await second.connect();
+    await second.initializeStudyDb(studyId);
+    vi.mocked(setDoc).mockClear();
+    // @ts-expect-error Exercise the backend clock used for leases and timeouts.
+    const firstTime = await storageEngine._getServerTimeMs();
+    // @ts-expect-error Exercise an independent browser clock query.
+    const secondTime = await second._getServerTimeMs();
+    expect(firstTime).toBeGreaterThan(0);
+    expect(secondTime).toBeGreaterThanOrEqual(firstTime);
+    const paths = vi.mocked(setDoc).mock.calls.filter(([, data]) => 'readAt' in data)
+      .map(([reference]) => (reference as unknown as { _path: string })._path);
+    expect(paths).toHaveLength(2);
+    expect(new Set(paths).size).toBe(2);
+  });
+
   test('releases literal participant lock keys containing periods', async () => {
     await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'subject.1');
-    expect(Object.values(firestoreData).some((data) => Object.hasOwn(data, 'participant-subject.1'))).toBe(false);
+    expect(Object.keys(firestoreData).filter((path) => path.startsWith(`dev-${studyId}/locks/keys/`))).toEqual([]);
     await expect(storageEngine.updateParticipantMetadata(participantMetadata)).resolves.toBeUndefined();
   });
 
   test.each(['subject[1]', 'subject.with.dot'])('renews literal lock keys for custom participant ID %s', async (participantId) => {
     vi.useFakeTimers();
     const lockKey = `participant-${participantId}`;
+    const lockPath = `dev-${studyId}/locks/keys/${await hash(lockKey)}`;
     let release!: () => void;
     let started!: () => void;
     const operationStarted = new Promise<void>((resolve) => { started = resolve; });
@@ -802,12 +861,12 @@ describe.each([
     });
     await operationStarted;
     try {
-      const originalExpiry = (firestoreData[`dev-${studyId}/locks`][lockKey] as { expiresAt: number }).expiresAt;
+      const originalExpiry = (firestoreData[lockPath] as { expiresAt: number }).expiresAt;
       await vi.advanceTimersByTimeAsync(20_001);
-      expect((firestoreData[`dev-${studyId}/locks`][lockKey] as { expiresAt: number }).expiresAt).toBeGreaterThan(originalExpiry);
+      expect((firestoreData[lockPath] as { expiresAt: number }).expiresAt).toBeGreaterThan(originalExpiry);
       release();
       await expect(result).resolves.toBe('saved');
-      expect(firestoreData[`dev-${studyId}/locks`][lockKey]).toBeUndefined();
+      expect(firestoreData[lockPath]).toBeUndefined();
     } finally {
       release();
       await result.finally(() => vi.useRealTimers());
@@ -817,15 +876,16 @@ describe.each([
   test('a failed lock release preserves a successfully saved participant and its reservation', async () => {
     const original = vi.mocked(runTransaction).getMockImplementation()!;
     let failed = false;
+    const participantLockPath = `dev-${studyId}/locks/keys/${await hash('participant-saved')}`;
     vi.mocked(runTransaction).mockImplementation(async (db, callback) => original(db, async (transaction) => {
       const wrapped = Object.create(transaction) as typeof transaction;
-      wrapped.update = ((...args: Parameters<typeof transaction.update>) => {
-        if (!failed && String((args[1] as unknown as { key?: string }).key).startsWith('participant-')) {
+      wrapped.delete = ((reference) => {
+        if (!failed && (reference as unknown as { _path: string })._path === participantLockPath) {
           failed = true;
           throw new Error('Simulated release failure');
         }
-        return transaction.update(...args);
-      }) as typeof transaction.update;
+        return transaction.delete(reference);
+      }) as typeof transaction.delete;
       return callback(wrapped);
     }));
     try {
@@ -1554,7 +1614,7 @@ describe.each([
       });
       await ready;
       if (scenario === 'lost ownership') {
-        firestoreData[`dev-${studyId}/locks`].review = { token: 'another-owner', expiresAt: Date.now() + 60_000 };
+        firestoreData[`dev-${studyId}/locks/keys/${await hash('review')}`] = { token: 'another-owner', expiresAt: Date.now() + 60_000 };
       } else {
         vi.mocked(runTransaction).mockRejectedValueOnce(new Error('temporary network failure'));
       }

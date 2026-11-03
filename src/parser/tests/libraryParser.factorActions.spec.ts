@@ -732,6 +732,27 @@ describe('factor sequence actions', () => {
     expect(typeof component.path).toBe('string');
   });
 
+  test('checks zip lengths after sampling rather than against the full input pool', () => {
+    const config = factorConfig();
+    config.factors!.sampledA = {
+      action: 'sample', factors: ['a'], numSamples: 2, samplingStrategy: 'withoutReplacement',
+    };
+    config.sequence = {
+      type: 'factor',
+      id: 'sampledZip',
+      factor: { action: 'zip', factors: ['sampledA', 'b'] },
+      components: 'trial',
+    };
+    const errors: ParserErrorWarning[] = [];
+    const warnings: ParserErrorWarning[] = [];
+    const compiled = compileFactorBlocks(config.sequence, config, errors, warnings);
+    expect(errors).toEqual([]);
+    expect(warnings).toEqual([]);
+    const sequences = generateSequenceArray({ ...config, ...compiled }, warnings);
+    expect(sequences.every((sequence) => getSequenceFlatMap(sequence).length === 3)).toBe(true);
+    expect(warnings).toEqual([]);
+  });
+
   test('warns when a runtime zip will truncate unequal inputs', () => {
     const config = factorConfig();
     config.factors = {
@@ -741,7 +762,7 @@ describe('factor sequence actions', () => {
     const errors: ParserErrorWarning[] = [];
     const warnings: ParserErrorWarning[] = [];
 
-    compileFactorBlocks({
+    const compiled = compileFactorBlocks({
       type: 'factor',
       id: 'runtimeZip',
       factor: { action: 'zip', factors: ['ordered', 'short'] },
@@ -749,6 +770,9 @@ describe('factor sequence actions', () => {
     }, config, errors, warnings);
 
     expect(errors).toEqual([]);
+    expect(warnings).toEqual([]);
+    const sequences = generateSequenceArray({ ...config, ...compiled }, warnings);
+    expect(getSequenceFlatMap(sequences[0])).toHaveLength(2);
     expect(warnings.map((warning) => warning.message)).toContain(
       'Zip factor `runtimeZip` received inputs with different lengths (2, 1); stopping after the shortest input',
     );
