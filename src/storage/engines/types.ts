@@ -19,7 +19,7 @@ import {
   ParticipantTags, Tag, TaglessEditedText, TranscribedAudio,
 } from '../../analysis/individualStudy/thinkAloud/types';
 import {
-  createEmptyProvenance, normalizeStoredProvenance,
+  createEmptyProvenance, hasProvenanceSource, mergeStoredProvenance, normalizeStoredProvenance,
   splitProvenanceFromAnswers,
 } from '../../store/provenance';
 import {
@@ -2371,9 +2371,25 @@ export abstract class StorageEngine {
         globalStoreHead: graph.current,
         globalStoreRevision: revision,
       };
+      const previousProvenance = normalizeStoredProvenance(await this.participantStore.getItem(this.localProvenanceKey(task, participantId)));
+      assertCurrentSession();
+      let retainedProvenance = mergeStoredProvenance(previousProvenance, provenance);
+      const sources = Object.values(getGlobalStoreNodeStates(graph)).flatMap(({ submission }) => (
+        submission?.answer.identifier === task ? Object.entries(submission.sourceNodes) : []
+      ));
+      const hasEverySource = () => sources.every(([location, source]) => (
+        hasProvenanceSource(retainedProvenance[location as keyof StoredProvenance], source)
+      ));
+      // Local acceptance stays available offline. Only missing historical assets
+      // require a download (for example a direct caller resuming on a new device).
+      if (!previousProvenance && !hasEverySource()) {
+        retainedProvenance = mergeStoredProvenance(await this.getProvenance(task, participantId, true), provenance);
+        assertCurrentSession();
+      }
+      if (!hasEverySource()) throw new Error('The accepted interaction state is missing.');
       // Assets may be ahead after a failed save. Only the accepted snapshot's head and
       // source-node references decide what is restored, so the previous revision is safe.
-      await this.participantStore.setItem(this.localProvenanceKey(task, participantId), structuredClone(provenance));
+      await this.participantStore.setItem(this.localProvenanceKey(task, participantId), structuredClone(retainedProvenance));
       assertCurrentSession();
       await this.participantStore.setItem(this.localProvenanceKey(`${GLOBAL_STORE_TASK}/${revision}`, participantId), { globalStore: structuredClone(graph) });
       assertCurrentSession();
@@ -2750,7 +2766,7 @@ export abstract class StorageEngine {
             states.filter((state) => state.submission?.answer.identifier === trial.task).forEach(({ submission }) => {
               Object.entries(submission!.sourceNodes).forEach(([location, source]) => {
                 const graph = trial.provenance?.[location as keyof StoredProvenance];
-                if (!graph || graph.root !== source.root || !graph.nodes[source.current]) throw new Error('The accepted interaction state is missing.');
+                if (!hasProvenanceSource(graph, source)) throw new Error('The accepted interaction state is missing.');
               });
             });
           });

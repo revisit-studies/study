@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 
+import { initializeTrrack, Registry } from '@trrack/core';
 import { readFileSync } from 'node:fs';
 import { runInNewContext } from 'node:vm';
 import {
@@ -199,6 +200,29 @@ describe('IframeController', () => {
     mockUpdateProvenance.mockClear();
     receive('PROVENANCE', graph);
     expect(mockUpdateProvenance).not.toHaveBeenCalled();
+  });
+
+  test('accepts post-registration provenance when the website explicitly cannot restore', () => {
+    mockRetained.graph = structuredClone(initializeTrrack({ registry: Registry.create(), initialState: { answer: 1 } }).graph.backend);
+    const { container } = render(<IframeController currentConfig={{ ...websiteConfig, path: 'chart.html' }} answers={{}} />);
+    const iframe = container.querySelector('iframe')!;
+    const sent = vi.spyOn(iframe.contentWindow!, 'postMessage');
+    const receive = (type: string, message: object) => act(() => {
+      window.dispatchEvent(new MessageEvent('message', {
+        source: iframe.contentWindow,
+        data: { iframeId: new URL(iframe.src).searchParams.get('id'), type: `@REVISIT_COMMS/${type}`, message },
+      }));
+    });
+    // registerGlobalStoreUpdater alone announces v1; onRestore is optional.
+    receive('WINDOW_READY', { protocolVersion: 1, documentId: 'website', globalStoreUpdater: true });
+    const resume = sent.mock.calls.find(([data]) => data.type === '@REVISIT_COMMS/RESUME')![0].message;
+    receive('RESTORATION_CAPABILITY', { protocolVersion: 1, requestId: resume.requestId, supported: false });
+    expect(iframe.hasAttribute('inert')).toBe(false);
+    const graph = structuredClone(initializeTrrack({ registry: Registry.create(), initialState: { answer: 2 } }).graph.backend);
+    receive('ANSWERS', { answer: 2 });
+    receive('PROVENANCE', graph);
+    expect(mockSetReactiveAnswers).toHaveBeenCalledWith({ answer: 2 });
+    expect(mockUpdateProvenance).toHaveBeenCalledWith(expect.objectContaining({ provenanceGraph: graph }));
   });
 
   test('rejects a fresh legacy graph while a revisited website is still registering', () => {

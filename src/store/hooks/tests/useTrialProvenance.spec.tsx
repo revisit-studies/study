@@ -6,6 +6,7 @@ import { initializeTrrack, Registry } from '@trrack/core';
 import {
   afterEach, beforeEach, expect, test, vi,
 } from 'vitest';
+import { mergeProvenanceGraphs } from '../../provenance';
 import { createGlobalStoreSubmission } from '../../globalStoreProvenance';
 import { TrialProvenanceBoundary, useTrialProvenance } from '../useTrialProvenance';
 import { makeStoredAnswer } from '../../../tests/utils';
@@ -206,4 +207,16 @@ test('returning to the submitting trial does not restore it before the pending s
   mocks.state.globalStoreRevision = 1;
   draw();
   await waitFor(() => expect(screen.getByTestId('stimulus')).toBeTruthy());
+});
+
+test('restores an accepted source from a later independent visit inside the merged history', async () => {
+  const first = graph();
+  const later = initializeTrrack({ registry: Registry.create(), initialState: { value: 'later visit' } }).graph.backend;
+  const answer = makeStoredAnswer({ identifier: 'trial_0', trialOrder: '0', endTime: 20 });
+  const accepted = createGlobalStoreSubmission(undefined, { budget: 100 }, answer, { budget: 70 }, [], { stimulus: later });
+  mocks.state.globalStoreGraph = accepted.graph;
+  mocks.getProvenance.mockResolvedValue({ stimulus: mergeProvenanceGraphs(first, later) });
+  mount();
+  await waitFor(() => expect(mocks.restoreTrialProvenance).toHaveBeenCalled());
+  expect(mocks.restoreTrialProvenance.mock.lastCall?.[0].provenance.stimulus).toMatchObject({ root: first.root, current: later.current });
 });

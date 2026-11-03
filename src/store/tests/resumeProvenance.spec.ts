@@ -78,3 +78,36 @@ describe('resume provenance', () => {
     expect(initializeResumedTrrack(options).getState()).toEqual({ count: 0 });
   });
 });
+
+test('framework merges repeated publications from independent visits without losing branches or traversal', async () => {
+  const { options: base, increment } = setup();
+  const options = { ...base, initialState: { count: 0, stable: true, other: 0 } };
+  const first = initializeTrrack(options);
+  await first.apply('First', increment(1));
+  let retained = appendProvenanceTraversalEvent(undefined, first.graph.backend, Date.now());
+  const originals = [structuredClone(first.graph.backend)];
+  for (const visit of [2, 3]) {
+    const next = initializeTrrack({ ...options, initialState: { ...options.initialState, count: visit * 10 } });
+    retained = appendProvenanceTraversalEvent(retained, next.graph.backend, Date.now());
+    // eslint-disable-next-line no-await-in-loop
+    await next.apply('Next', increment(1));
+    expect(next.current.state.type).toBe('patch');
+    retained = appendProvenanceTraversalEvent(retained, next.graph.backend, Date.now());
+    const snapshot = structuredClone(retained);
+    retained = appendProvenanceTraversalEvent(retained, next.graph.backend, Date.now());
+    expect(retained).toEqual(snapshot);
+    originals.push(structuredClone(next.graph.backend));
+  }
+  expect(retained.root).toBe(first.root.id);
+  originals.forEach((graph, index) => {
+    const resumed = initializeResumedTrrack(options, { ...retained, current: graph.current });
+    expect(resumed.getState()).toEqual({ ...options.initialState, count: index === 0 ? 1 : (index + 1) * 10 + 1 });
+    expect(retained.nodes[graph.root]).toBeDefined();
+    expect(retained.traversalEvents?.some(({ nodeId }) => nodeId === graph.current)).toBe(true);
+  });
+  const resumed = initializeResumedTrrack(options, retained);
+  await resumed.undo();
+  expect(resumed.getState()).toEqual({ ...options.initialState, count: 30 });
+  await resumed.undo();
+  expect(resumed.getState()).toEqual({ ...options.initialState, count: 21 });
+});

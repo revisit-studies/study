@@ -1,5 +1,6 @@
 import { expect, test, vi } from 'vitest';
 import { initializeTrrack, Registry } from '@trrack/core';
+import { getResumedProvenanceState } from '../../store/resumeProvenance';
 import { makeSequenceAssignment, makeStudyConfig } from '../../tests/utils';
 import { LocalStorageEngine } from '../engines/LocalStorageEngine';
 import type { ParticipantData } from '../types';
@@ -683,4 +684,68 @@ test('recovered local acceptance republishes participant data before normal fina
   expect(reloaded.remoteWrite.mock.calls.find((call) => call[1] === 'participantData')?.[2]).toMatchObject({
     globalStoreHead: graph.current, globalStoreRevision: 1, answers: { purchase_0: answer },
   });
+});
+
+test('independent legacy graphs remain replayable across three visits and global-store finalization', async () => {
+  const { storage, first, retained } = await cachedRecovery();
+  await storage.initializeParticipantSession({}, makeStudyConfig(), participant.metadata);
+  await storage.flushPendingParticipantData();
+  const visits = [retained.stimulus!];
+  let globalGraph = first.graph;
+  for (const visit of [2, 3]) {
+    const stimulus = initializeTrrack({ registry: Registry.create(), initialState: { visit } }).graph.backend;
+    visits.push(structuredClone(stimulus));
+    const fresh = { ...createEmptyProvenance(), stimulus };
+    const revisedAnswer = { ...answer, answer: { cost: visit * 10 } };
+    globalGraph = createGlobalStoreSubmission(globalGraph, { budget: 100 }, revisedAnswer, { budget: 100 - visit * 10 }, [], fresh).graph;
+    // Each visit must finish saving before the next one starts.
+    // eslint-disable-next-line no-await-in-loop
+    await storage.saveGlobalStoreSubmission({ purchase_0: revisedAnswer }, globalGraph, visit, 'purchase_0', fresh);
+    // eslint-disable-next-line no-await-in-loop
+    await expect(storage.flushPendingParticipantData()).resolves.toBeUndefined();
+  }
+  expect(await storage.finalizeParticipant()).toEqual({ status: 'complete' });
+  const saved = storage.remote.get('provenance/participant/purchase_0') as StoredProvenance;
+  visits.forEach((visit, index) => {
+    expect(getResumedProvenanceState({ ...saved.stimulus!, current: visit.current })).toEqual({ visit: index + 1 });
+  });
+});
+
+test('a missing historical source rejects a revision before accepting its answers', async () => {
+  const { storage, first } = await cachedRecovery();
+  await storage.initializeParticipantSession({}, makeStudyConfig(), participant.metadata);
+  await storage.flushPendingParticipantData();
+  const missing = initializeTrrack({ registry: Registry.create(), initialState: { visit: 2 } }).graph.backend;
+  const changed = { ...answer, answer: { cost: 60 } };
+  const second = createGlobalStoreSubmission(first.graph, { budget: 100 }, changed, { budget: 40 }, [], { stimulus: missing });
+  await expect(storage.saveGlobalStoreSubmission({ purchase_0: changed }, second.graph, 2, 'purchase_0', createEmptyProvenance()))
+    .rejects.toThrow('The accepted interaction state is missing.');
+  expect(storage.getCurrentParticipantDataSnapshot()).toMatchObject({ globalStoreRevision: 1, answers: { purchase_0: answer } });
+});
+
+test('a cloud download outage does not prevent local acceptance of a self-contained submission', async () => {
+  const storage = new RemoteRecoveryStorage();
+  storage.collectionEnabled = true;
+  storage.remoteRead.mockRejectedValue(new Error('Cloud download unavailable'));
+  const { graph } = submission();
+  await expect(storage.saveGlobalStoreSubmission({ purchase_0: answer }, graph, 1, 'purchase_0', createEmptyProvenance()))
+    .resolves.toBeUndefined();
+  expect(storage.getCurrentParticipantDataSnapshot()).toMatchObject({ globalStoreRevision: 1, answers: { purchase_0: answer } });
+  await expect(storage.flushPendingParticipantData()).rejects.toThrow('Cloud download unavailable');
+});
+
+test('a caller without a local trial asset downloads the historical graph before accepting a fresh visit', async () => {
+  const { storage, first } = await cachedRecovery();
+  await storage.initializeParticipantSession({}, makeStudyConfig(), participant.metadata);
+  await storage.flushPendingParticipantData();
+  const resumed = new InterleavedStorage();
+  resumed.manual = false;
+  resumed.collectionEnabled = true;
+  resumed.remote = storage.remote;
+  resumed.resume(storage.getCurrentParticipantDataSnapshot()!);
+  const fresh = { ...createEmptyProvenance(), stimulus: initializeTrrack({ registry: Registry.create(), initialState: { visit: 2 } }).graph.backend };
+  const second = createGlobalStoreSubmission(first.graph, { budget: 100 }, answer, { budget: 70 }, [], fresh);
+  await resumed.saveGlobalStoreSubmission({ purchase_0: answer }, second.graph, 2, 'purchase_0', fresh);
+  expect(resumed.remoteRead).toHaveBeenCalledWith('provenance/participant/purchase_0');
+  await expect(resumed.flushPendingParticipantData()).resolves.toBeUndefined();
 });

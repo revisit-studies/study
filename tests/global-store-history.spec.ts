@@ -1,7 +1,10 @@
 /* eslint-disable no-await-in-loop */
 // Participant journeys must finish each action before advancing to the next trial.
+import { createRequire } from 'node:module';
 import { expect, test } from '@playwright/test';
-import { nextClick } from './utils';
+import budgetStudy from '../public/test-global-store/config.json' with { type: 'json' };
+import type { StoredProvenance } from '../src/store/types';
+import { nextClick, readStoredValue, resetClientStudyState } from './utils';
 import {
   expectBudget, fillCost, readGlobalStoreParticipant, startBudgetStudy, submitFormPurchase,
 } from './global-store.utils';
@@ -210,3 +213,79 @@ test('replay selects original and revised accepted answers without changing the 
   await expect(page.getByText('Tracked entry budget: 90', { exact: true })).toBeVisible();
   expect((await readGlobalStoreParticipant(page)).globalVariables.budget).toBe(75);
 });
+
+// Trrack's CommonJS entry works in Node; its ESM entry expects a browser bundler.
+const { initializeTrrack, Registry } = createRequire(import.meta.url)('@trrack/core');
+
+for (const protocol of ['legacy', 'unsupported-v1']) {
+  test(`${protocol} HTML retains three independent visit graphs through completion`, async ({ page }) => {
+    const trrack = initializeTrrack({ registry: Registry.create(), initialState: { cost: 0 } });
+    const variants = [10, 20].map((cost) => {
+      trrack.record({
+        label: 'Select cost', state: { cost }, eventType: 'select', sideEffects: { do: [], undo: [] },
+      });
+      return structuredClone(trrack.graph.backend);
+    });
+    const config = {
+      ...budgetStudy,
+      components: {
+        ...budgetStudy.components,
+        review: {
+          type: 'questionnaire', instruction: 'Review HTML purchase', previousButton: true, response: [],
+        },
+      },
+      sequence: { order: 'fixed', components: ['introduction', 'htmlPurchase', 'review'] },
+    };
+    await page.route('**/test-global-store/config.json', (route) => route.fulfill({ json: config }));
+    await page.route('**/test-global-store/assets/purchase.html*', (route) => route.fulfill({
+      contentType: 'text/html',
+      body: `<!doctype html><html><head><script src="../../revisitUtilities/revisit-communicate.js"></script></head><body>
+        <button data-cost="10">Spend 10</button><button data-cost="20">Spend 20</button>
+        <output id="selected">none</output><script>
+        // Valid Trrack graphs, with independent IDs for each document load.
+        let serialized = ${JSON.stringify(JSON.stringify(variants))};
+        const originals = JSON.parse(serialized);
+        Object.keys(originals[1].nodes).forEach((id) => { serialized = serialized.split(id).join(crypto.randomUUID()); });
+        const graphs = JSON.parse(serialized);
+        let selectedCost;
+        ${protocol === 'unsupported-v1' ? 'Revisit.registerGlobalStoreUpdater(({ store }) => ({ budget: store.budget - selectedCost }));' : ''}
+        document.querySelectorAll('button').forEach((button, index) => button.onclick = () => {
+          selectedCost = Number(button.dataset.cost);
+          document.querySelector('#selected').textContent = selectedCost;
+          Revisit.postProvenance(graphs[index]);
+          Revisit.postAnswers({ selectedCost });
+        });
+        </script></body></html>`,
+    }));
+    await resetClientStudyState(page);
+    await page.goto('/test-global-store');
+    await nextClick(page);
+    const savedGraphs: StoredProvenance['stimulus'][] = [];
+    for (const cost of [10, 20, 10]) {
+      const frame = page.frameLocator('iframe');
+      await frame.getByRole('button', { name: `Spend ${cost}`, exact: true }).click();
+      await expect(frame.locator('#selected')).toHaveText(String(cost));
+      await nextClick(page);
+      await expect(page.getByText('Review HTML purchase', { exact: true })).toBeVisible();
+      const participant = await readGlobalStoreParticipant(page);
+      const key = `dev-test-global-store/provenance/${participant.participantId}_htmlPurchase_1`;
+      await expect.poll(async () => (await readStoredValue<StoredProvenance>(page, key))?.stimulus?.current).not.toBe(savedGraphs.at(-1)?.current);
+      const saved = (await readStoredValue<StoredProvenance>(page, key))!.stimulus!;
+      savedGraphs.push(saved);
+      savedGraphs.forEach((visit, index) => {
+        const replay = initializeTrrack({ registry: Registry.create(), initialState: {} });
+        replay.importObject({ ...saved, current: visit!.current });
+        expect(replay.getState()).toEqual({ cost: [10, 20, 10][index] });
+      });
+      expect(saved.root).toBe(savedGraphs[0]!.root);
+      if (savedGraphs.length < 3) {
+        await page.reload();
+        await page.getByRole('button', { name: 'Previous', exact: true }).click();
+      }
+    }
+    await nextClick(page);
+    await expect(page.getByText('Global store study complete.', { exact: true })).toBeVisible();
+    const participant = await readGlobalStoreParticipant(page);
+    expect(participant.globalVariables.budget).toBe(protocol === 'legacy' ? 100 : 90);
+  });
+}

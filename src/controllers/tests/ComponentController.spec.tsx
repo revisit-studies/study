@@ -535,9 +535,11 @@ describe('VideoController', () => {
     vi.mocked(getStaticAssetByPath).mockResolvedValueOnce(undefined);
     const { container } = render(<VideoController currentConfig={{ ...videoConfig, forceCompletion: true }} />);
 
-    await waitFor(() => expect(container.textContent).toContain('ResourceNotFound'));
-    expect(mockStoreActions.setAssetStatus).toHaveBeenLastCalledWith({ identifier: 'trial1_0', status: 'missing' });
-    expect(mockStoreActions.updateResponseBlockValidation).toHaveBeenLastCalledWith(expect.objectContaining({ status: true, values: {} }));
+    await waitFor(() => {
+      expect(container.textContent).toContain('ResourceNotFound');
+      expect(mockStoreActions.setAssetStatus).toHaveBeenLastCalledWith({ identifier: 'trial1_0', status: 'missing' });
+      expect(mockStoreActions.updateResponseBlockValidation).toHaveBeenLastCalledWith(expect.objectContaining({ status: true, values: {} }));
+    });
   });
 
   test('renders LoadingOverlay while loading for a local path', () => {

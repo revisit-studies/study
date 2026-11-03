@@ -304,8 +304,8 @@ export function IframeController({ currentConfig, provState, answers }: { curren
           }
           case `${PREFIX}/PROVENANCE`: {
             if (isAnalysis || resumeStatusRef.current === 'pending' || resumeStatusRef.current === 'error') return;
-            // Protect managed restoration until registration, while legacy pages start a fresh graph on revisit.
-            if (!legacyDocument.current && provenance && data.message?.root !== provenance.root) return;
+            // Unsupported pages may start a fresh visit; supported restoration must retain its root.
+            if (!legacyDocument.current && resumeStatusRef.current !== 'unsupported' && provenance && data.message?.root !== provenance.root) return;
             storeDispatch(updateProvenance({
               location: 'stimulus',
               identifier,

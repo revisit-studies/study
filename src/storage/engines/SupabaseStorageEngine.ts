@@ -1847,11 +1847,20 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
   }
 
   // Callers hold the stage lock, including while a timeout writes its assignment.
-  private async readStageAllocation(stage: string, conditionKeys: string[] = [], sequenceRows?: SequenceRowContext): Promise<SupabaseStageAllocation> {
+  private async readStageAllocation(stage: string, conditionKeys: string[] = [], sequenceRows?: SequenceRowContext, forceRebuild = false): Promise<SupabaseStageAllocation> {
     const studyId = `${this.collectionPrefix}${this.studyId}`;
     const docId = `stageAllocation_${encodeURIComponent(stage)}`;
-    const current = await this.fetchStageAllocation(stage);
+    let current = await this.fetchStageAllocation(stage);
     if (current) {
+      if (forceRebuild && !current.needsRebuild) {
+        const invalidated = { ...current, needsRebuild: true, version: current.version + 1 };
+        const result = await this.supabase.from('revisit').update({ data: invalidated })
+          .eq('studyId', studyId).eq('docId', docId)
+          .eq('data->version', current.version)
+          .select('docId');
+        if (result.error || result.data?.length !== 1) throw new Error('Failed to invalidate stage allocation');
+        current = invalidated;
+      }
       const legacyRows = await this.hasUnknownLegacyRows(current, stage, sequenceRows);
       if (!current.needsRebuild && !legacyRows) return current;
       let rebuilt: SupabaseStageAllocation;
@@ -1911,6 +1920,7 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
       before: previous?.stage === stage && consumesCapacity(previous) ? previous : undefined,
       after: next.stage === stage && consumesCapacity(next) ? next : undefined,
     })).filter(({ before, after }) => Boolean(before) !== Boolean(after) || before?.sequenceKey !== after?.sequenceKey || before?.betweenSubjectsCombinationKey !== after?.betweenSubjectsCombinationKey);
+    const rebuildStages = new Set<string>();
     const updateCounts = async () => {
       const allocations = new Map(await Promise.all(changes.map(async ({ stage }) => (
         [stage, await this.readStageAllocation(stage)] as const
@@ -1958,12 +1968,11 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
         }).eq('studyId', `${this.collectionPrefix}${this.studyId}`).eq('docId', `stageAllocation_${encodeURIComponent(stage)}`)
           .eq('data->version', current.version)
           .select('docId');
-        if (result.error) throw new Error('Failed to update stage allocation');
-        if (result.data?.length !== 1) {
-          // A competing reader may have rebuilt after the assignment write.
-          // Recount instead of applying the delta twice.
-          // eslint-disable-next-line no-await-in-loop
-          await this.readStageAllocation(stage);
+        if (result.error || result.data?.length !== 1) {
+          // A reader may have marked the cache clean before this delayed write.
+          // Reacquire protection after leaving the expired lease, then recount.
+          rebuildStages.add(stage);
+          if (result.error) throw new Error('Failed to update stage allocation');
         }
       }
     };
@@ -1971,7 +1980,14 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
       if (index === changes.length) return updateCounts();
       return this._runWithLock(`stage-allocation-${changes[index].stage}`, () => withStageLocks(index + 1));
     };
-    await withStageLocks(0);
+    try {
+      await withStageLocks(0);
+    } finally {
+      for (const stage of rebuildStages) {
+        // eslint-disable-next-line no-await-in-loop
+        await this._runWithLock(`stage-allocation-${stage}`, () => this.readStageAllocation(stage, [], undefined, true));
+      }
+    }
   }
 }
 

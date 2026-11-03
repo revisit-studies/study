@@ -3272,4 +3272,63 @@ describe.each([
     expect(result!.uid).toBe('mock-uid');
     expect(result!.email).toBe('test@test.com');
   });
+  test.each([false, true])('a delayed timeout recovers capacity after a concurrent rebuild (recount failure: %s)', async (failRecount) => {
+    await storageEngine.setCurrentStage(studyId, 'LIMITED', '#ff0000', 2);
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'distinct-original');
+    await storageEngine.setAutoTimeoutMinutes(studyId, 1);
+    revisitRows.find((row) => row.docId === 'sequenceAssignment_distinct-original')!.createdAt = new Date(Date.now() - 120_000).toISOString();
+    const second = await makeSecondSession();
+    const internals = storageEngine as unknown as {
+      changeStageCounts: (p: SequenceAssignment | null, n: SequenceAssignment, w: () => Promise<void>) => Promise<void>;
+      _getServerTimeMs: () => Promise<number>;
+      countStageAssignments: (stage: string) => Promise<number>;
+    };
+    const original = internals.changeStageCounts.bind(storageEngine);
+    let resume!: () => void;
+    let paused!: () => void;
+    const ready = new Promise<void>((resolve) => { paused = resolve; });
+    const gate = new Promise<void>((resolve) => { resume = resolve; });
+    vi.spyOn(internals, 'changeStageCounts').mockImplementation((p, n, write) => original(p, n, async () => {
+      paused();
+      await gate;
+      await write();
+    }));
+    vi.useFakeTimers();
+    try {
+      const timingOut = storageEngine.releaseExpiredAssignments().catch((e: unknown) => e);
+      await ready;
+      const clock = vi.spyOn(internals, '_getServerTimeMs').mockRejectedValue(new Error('Suspended browser'));
+      await vi.advanceTimersByTimeAsync(61_000);
+      // The new participant's normal admission reads and recovers the invalidated counts
+      // before the suspended timeout assignment reaches Postgres.
+      let resumeBackground!: () => void;
+      const backgroundGate = new Promise<void>((resolve) => { resumeBackground = resolve; });
+      const sweep = second.releaseExpiredAssignments.bind(second);
+      let background: Promise<number> | undefined;
+      vi.spyOn(second, 'releaseExpiredAssignments').mockImplementation((...args) => {
+        background = backgroundGate.then(() => sweep(...args));
+        return background;
+      });
+      await expect(second.initializeParticipantSession({}, configSimple, participantMetadata, 'distinct-new')).resolves.toMatchObject({ participantId: 'distinct-new' });
+      clock.mockRestore();
+      if (failRecount) vi.spyOn(internals, 'countStageAssignments').mockRejectedValueOnce(new Error('Temporary aggregate failure'));
+      resume();
+      const outcome = await timingOut;
+      expect(outcome).toBeInstanceOf(Error);
+      const row = revisitRows.find((entry) => entry.studyId === `dev-${studyId}` && entry.docId === 'stageAllocation_LIMITED')!.data as RowData;
+      if (failRecount) expect(row.needsRebuild).toBe(true);
+      resumeBackground();
+      await background;
+      vi.mocked(second.releaseExpiredAssignments).mockRestore();
+      const actual = (await second.getAllSequenceAssignments(studyId)).filter((a) => !a.rejected && a.autoTimedOutAt === undefined).length;
+      expect(actual).toBe(1);
+      // No expired assignment remains; the next reader must repair durable invalidation.
+      // @ts-expect-error Inspect the allocation used by the next admission.
+      const cached = await second.getStageAllocation('LIMITED');
+
+      expect(cached.count).toBe(actual);
+      expect(Object.values(cached.rowCounts).reduce((sum: number, count: number) => sum + count, 0)).toBe(actual);
+      await expect(second.initializeParticipantSession({}, configSimple, participantMetadata, 'distinct-third')).resolves.toMatchObject({ participantId: 'distinct-third' });
+    } finally { resume?.(); vi.useRealTimers(); vi.restoreAllMocks(); }
+  });
 });

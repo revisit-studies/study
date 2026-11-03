@@ -12,7 +12,7 @@ import type {
   FormElementProvenance, StoredAnswer, StoredProvenance, TrrackedProvenance,
 } from '../types';
 import type { ResponseBlockLocation } from '../../parser/types';
-import { createEmptyProvenance, getLegacyStoredAnswerProvenance } from '../provenance';
+import { createEmptyProvenance, getLegacyStoredAnswerProvenance, hasProvenanceSource } from '../provenance';
 import { getResumedProvenanceState, validateResumableProvenance } from '../resumeProvenance';
 import { useIsAnalysis } from './useIsAnalysis';
 import { ErrorBoundary } from '../../controllers/ErrorBoundary';
@@ -56,13 +56,13 @@ function TrialProvenanceLoader({ children }: { children: ReactNode }) {
       if (historical) {
         Object.entries(historical.sourceNodes).forEach(([location, source]) => {
           const graph = provenance[location as ResponseBlockLocation];
-          if (!graph || source.root !== graph.root || !graph.nodes[source.current]) throw new Error('The accepted interaction state is missing.');
+          if (!hasProvenanceSource(graph, source)) throw new Error('The accepted interaction state is missing.');
         });
         Object.entries(provenance).forEach(([location, candidate]) => {
           if (!candidate) return;
           const graph: TrrackedProvenance = structuredClone(candidate);
           const source = active?.submission.sourceNodes[location];
-          if (source && (source.root !== graph.root || !graph.nodes[source.current])) throw new Error('The accepted interaction state is missing.');
+          if (source && !hasProvenanceSource(graph, source)) throw new Error('The accepted interaction state is missing.');
           graph.current = (source?.current ?? graph.root) as typeof graph.current;
           if (!active) graph.resetToInitialState = true;
           provenance[location as ResponseBlockLocation] = graph;
