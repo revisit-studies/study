@@ -37,9 +37,9 @@ vi.mock('@mantine/core', () => ({
   NumberInput: ({
     value, disabled, onChange, onBlur, 'aria-label': ariaLabel,
   }: {
-    value: number;
+    value: number | '';
     disabled?: boolean;
-    onChange?: (value: number) => void;
+    onChange?: (value: number | '') => void;
     onBlur?: () => void;
     'aria-label': string;
   }) => (
@@ -47,7 +47,7 @@ vi.mock('@mantine/core', () => ({
       aria-label={ariaLabel}
       value={value}
       disabled={disabled}
-      onChange={(event) => onChange?.(Number(event.target.value))}
+      onChange={(event) => onChange?.(event.target.value === '' ? '' : Number(event.target.value))}
       onBlur={onBlur}
     />
   ),
@@ -148,6 +148,28 @@ describe('AutoTimeoutSettings', () => {
     await act(async () => { fireEvent.blur(minutesInput); });
 
     expect(engine.setAutoTimeoutMinutes).toHaveBeenCalledWith('test-study', 45);
+  });
+
+  test('allows clearing and replacing minutes without saving a default', async () => {
+    const engine = makeEngine({ getModes: vi.fn().mockResolvedValue({ autoTimeoutMinutes: 30 }) });
+    const { minutesInput } = await renderSettings(engine);
+
+    await act(async () => { fireEvent.change(minutesInput, { target: { value: '' } }); });
+    expect(minutesInput.value).toBe('');
+    expect(engine.setAutoTimeoutMinutes).not.toHaveBeenCalled();
+    await act(async () => { fireEvent.change(minutesInput, { target: { value: '45' } }); });
+    await act(async () => { fireEvent.blur(minutesInput); });
+    expect(engine.setAutoTimeoutMinutes).toHaveBeenCalledWith('test-study', 45);
+  });
+
+  test('restores the stored minutes when an empty draft loses focus', async () => {
+    const engine = makeEngine({ getModes: vi.fn().mockResolvedValue({ autoTimeoutMinutes: 30 }) });
+    const { minutesInput } = await renderSettings(engine);
+
+    await act(async () => { fireEvent.change(minutesInput, { target: { value: '' } }); });
+    await act(async () => { fireEvent.blur(minutesInput); });
+    expect(minutesInput.value).toBe('30');
+    expect(engine.setAutoTimeoutMinutes).not.toHaveBeenCalled();
   });
 
   test('turning the toggle off disables auto-timeout', async () => {

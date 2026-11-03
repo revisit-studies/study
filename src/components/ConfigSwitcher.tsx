@@ -217,7 +217,7 @@ function ValidStudyCard({
           )}
           {hasWebcamRecording && (
           <Tooltip label="Webcam recording enabled" withinPortal position="bottom">
-            <IconCamera size={16} color="var(--mantine-color-orange-text)" />
+            <IconCamera size={16} color="orange" />
           </Tooltip>
           )}
           {modes?.developmentModeEnabled

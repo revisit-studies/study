@@ -22,7 +22,7 @@ export function AutoTimeoutSettings({
   // so a click while a save is pending reverses that request instead of
   // repeating it.
   const [requestedEnabled, setRequestedEnabled] = useState(false);
-  const [draftMinutes, setDraftMinutes] = useState(DEFAULT_MINUTES);
+  const [draftMinutes, setDraftMinutes] = useState<number | ''>(DEFAULT_MINUTES);
   const [confirmationOpen, setConfirmationOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -140,7 +140,7 @@ export function AutoTimeoutSettings({
             <Button
               onClick={() => {
                 setConfirmationOpen(false);
-                save(draftMinutes).catch(() => undefined);
+                if (draftMinutes !== '') save(draftMinutes).catch(() => undefined);
               }}
             >
               Enable auto-timeout
@@ -167,9 +167,13 @@ export function AutoTimeoutSettings({
               disabled={!editable || saving}
               w={125}
               onChange={(value) => setDraftMinutes(
-                typeof value === 'number' ? Math.max(1, Math.floor(value)) : DEFAULT_MINUTES,
+                typeof value === 'number' ? Math.max(1, Math.floor(value)) : '',
               )}
               onBlur={() => {
+                if (draftMinutes === '') {
+                  setDraftMinutes(minutes ?? DEFAULT_MINUTES);
+                  return;
+                }
                 // Only persist a value that actually changed. Saving on every
                 // blur would disable the switch just as a click on it lands,
                 // swallowing the first attempt to turn auto-timeout off.
