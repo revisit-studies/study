@@ -9,6 +9,7 @@ import { ScreenRecordingReplay } from '../ScreenRecordingReplay';
 // ── mutable state ─────────────────────────────────────────────────────────────
 
 let mockIsAnalysis = false;
+let mockAssetIdentifier: string | undefined;
 let mockStorageEngine: Record<string, ReturnType<typeof vi.fn>> | null = null;
 let mockSearchParams = new URLSearchParams();
 let mockUpdateReplayRef = vi.fn();
@@ -80,6 +81,8 @@ vi.mock('../../../routes/utils', () => ({
   useCurrentIdentifier: () => 'component1',
 }));
 
+vi.mock('../../../store/hooks/useStoredAnswer', () => ({ useStoredAnswer: () => ({ assetIdentifier: mockAssetIdentifier }) }));
+
 vi.mock('../../../store/hooks/useIsAnalysis', () => ({
   useIsAnalysis: () => mockIsAnalysis,
 }));
@@ -100,6 +103,7 @@ vi.mock('../../../store/hooks/useReplay', () => ({
 describe('ScreenRecordingReplay', () => {
   beforeEach(() => {
     mockIsAnalysis = false;
+    mockAssetIdentifier = undefined;
     mockStorageEngine = null;
     mockSearchParams = new URLSearchParams();
     mockUpdateReplayRef = vi.fn();
@@ -302,4 +306,14 @@ describe('ScreenRecordingReplay', () => {
     expect(video).not.toBeNull();
     expect(video?.style.border).toContain('rgb(204, 204, 204)');
   });
+});
+
+test('historical replay loads the recordings referenced by that accepted submission', async () => {
+  mockIsAnalysis = true;
+  mockAssetIdentifier = 'component1__global_7';
+  mockSearchParams = new URLSearchParams('participantId=p1');
+  mockStorageEngine = { getScreenRecording: vi.fn(async () => null), getWebcamRecording: vi.fn(async () => null) };
+  render(<ScreenRecordingReplay />);
+  await waitFor(() => expect(mockStorageEngine!.getScreenRecording).toHaveBeenCalledWith('component1__global_7', 'p1'));
+  expect(mockStorageEngine.getWebcamRecording).toHaveBeenCalledWith('component1__global_7', 'p1');
 });

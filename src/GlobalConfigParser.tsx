@@ -25,6 +25,7 @@ import { initializeStorageEngine, selectStudyStorageEngine } from './storage/ini
 import { useStorageEngine } from './storage/storageEngineHooks';
 import { PageTitle } from './utils/PageTitle';
 import { shouldProtectAnalysisRoute } from './utils/analysisRouteAccess';
+import { StudyStorageReadyProvider } from './components/StartupContext';
 import { StartupErrorScreen } from './components/StartupErrorScreen';
 
 async function fetchGlobalConfigArray() {
@@ -124,8 +125,10 @@ function StudyStorageRoute({ globalConfig, children }: { globalConfig: GlobalCon
   }, [configuredStorageEngine, globalConfig, participantRoute, routeKey, setStorageEngine, storageSearch, studyId]);
 
   if (selectionError) return <StartupErrorScreen error={selectionError} />;
-  if (readyKey !== routeKey) return <LoadingOverlay visible />;
-  return children;
+  const storageReady = readyKey === routeKey;
+  const canPreviewStudy = participantRoute && (studyId !== null || routeStudyId === '__revisit-widget');
+  if (!storageReady && !canPreviewStudy) return <LoadingOverlay visible />;
+  return <StudyStorageReadyProvider value={storageReady}>{children}</StudyStorageReadyProvider>;
 }
 
 export function GlobalConfigParser() {

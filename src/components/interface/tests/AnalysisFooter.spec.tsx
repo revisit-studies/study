@@ -26,6 +26,7 @@ vi.mock('../../../routes/utils', () => ({
 }));
 
 vi.mock('../../../store/store', () => ({
+  useStoreSelector: (selector: (state: { answers: object }) => unknown) => selector({ answers: {} }),
   useStoreActions: () => ({ saveAnalysisState: vi.fn() }),
   useStoreDispatch: () => vi.fn(),
 }));

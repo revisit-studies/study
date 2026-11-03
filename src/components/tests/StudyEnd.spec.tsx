@@ -6,6 +6,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import {
   afterEach, beforeEach, describe, expect, test, vi,
 } from 'vitest';
+import { StartupInteractionProvider } from '../StartupContext';
 import { StudyEnd } from '../StudyEnd';
 import { download } from '../downloader/DownloadTidy';
 
@@ -162,6 +163,18 @@ describe('StudyEnd', () => {
   afterEach(() => {
     cleanup();
     vi.clearAllMocks();
+  });
+
+  test('defers participant identity reads and finalization until startup is ready', async () => {
+    const { rerender } = render(
+      <StartupInteractionProvider value><StudyEnd /></StartupInteractionProvider>,
+    );
+    expect(mockStorageEngine?.getCurrentParticipantId).not.toHaveBeenCalled();
+    expect(mockStorageEngine?.getParticipantData).not.toHaveBeenCalled();
+    expect(mockStorageEngine?.finalizeParticipant).not.toHaveBeenCalled();
+    rerender(<StartupInteractionProvider value={false}><StudyEnd /></StartupInteractionProvider>);
+    await waitFor(() => expect(mockStorageEngine?.getCurrentParticipantId).toHaveBeenCalledTimes(1));
+    expect(mockStorageEngine?.finalizeParticipant).toHaveBeenCalledTimes(1);
   });
 
   test('shows "Thank you" message by default (data collection disabled)', () => {

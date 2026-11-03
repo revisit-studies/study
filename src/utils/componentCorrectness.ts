@@ -1,4 +1,6 @@
-import type { IndividualComponent, Response, StoredAnswer } from '../parser/types';
+import type {
+  GlobalStoreValues, IndividualComponent, Response, StoredAnswer,
+} from '../parser/types';
 import type { CheckAnswerState } from '../store/types';
 import {
   answerSnapshotMatches, getSavedScoresForAnswer, hasResponseScorer, hasSavedScores, isRequiredResponseUngraded, isResponseAnswered, isResponseAnsweredForScoring, isResponseScoreCorrect, scoreResponseAnswerWithStatus,
@@ -10,6 +12,7 @@ export function componentAnswersAreCorrect(
   componentCorrectAnswers: IndividualComponent['correctAnswer'],
   responses?: Response[],
   checkAnswer?: CheckAnswerState,
+  store: GlobalStoreValues = {},
 ): boolean | null {
   let allCorrect: boolean = true;
   let hasUnknownScore = false;
@@ -18,7 +21,7 @@ export function componentAnswersAreCorrect(
   const savedScoreIds = new Set(Object.keys(checkAnswer?.scores ?? {}));
   const staleScoreIds = answerSnapshotMatches(checkAnswer, componentUserAnswers) ? new Set<string>() : savedScoreIds;
 
-  const applicableAnswers = getApplicableCorrectAnswers(responses ?? [], componentUserAnswers, componentCorrectAnswers, persistedScores);
+  const applicableAnswers = getApplicableCorrectAnswers(responses ?? [], componentUserAnswers, componentCorrectAnswers, persistedScores, store);
   const expectedIds = new Set(applicableAnswers.map((answer) => answer.id));
   const { visibleIds } = resolveResponseVisibility(
     responses ?? [],
@@ -26,6 +29,7 @@ export function componentAnswersAreCorrect(
     {},
     componentCorrectAnswers,
     persistedScores,
+    store,
   );
   const idsToScore = new Set([
     ...applicableAnswers
@@ -116,6 +120,7 @@ export function getComponentAnswerStatus(
     componentCorrectAnswers,
     responses,
     componentAnswer.checkAnswer,
+    componentAnswer.globalStoreEntry,
   );
   return correct === null ? 'unknown' : correct ? 'correct' : 'incorrect';
 }

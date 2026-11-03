@@ -1,11 +1,10 @@
 /* eslint-disable no-await-in-loop */
 import {
   expect,
-  Locator,
   Page,
   test,
 } from '@playwright/test';
-import { nextClick, waitForStudyEndMessage } from './utils';
+import { advanceStudyStep as advanceStep, readStoredValue, waitForStudyEndMessage } from './utils';
 
 test.setTimeout(180000);
 
@@ -17,38 +16,9 @@ function getStudyMain(page: Page) {
 
 async function selectRadioOption(page: Page, label: string, timeout = 10000) {
   const main = getStudyMain(page);
-  let availableRadio: Locator | undefined;
-
-  await expect.poll(async () => {
-    const radios = main.getByRole('radio', { name: label, exact: true });
-    const count = await radios.count().catch(() => 0);
-
-    for (let i = 0; i < count; i += 1) {
-      const radio = radios.nth(i);
-      const isVisible = await radio.isVisible().catch(() => false);
-      const isEnabled = await radio.isEnabled().catch(() => false);
-      if (isVisible && isEnabled) {
-        availableRadio = radio;
-        return true;
-      }
-    }
-
-    return false;
-  }, { timeout, intervals: [100, 250, 500, 1000] }).toBe(true);
-
-  if (!availableRadio) {
-    throw new Error(`Could not find an available radio option for "${label}".`);
-  }
-
-  await availableRadio.check({ force: true });
-  await expect(availableRadio).toBeChecked({ timeout });
-}
-
-async function advanceStep(page: Page) {
-  // Consecutive steps can render the same text and controls; wait for their route to change.
-  const previousPath = new URL(page.url()).pathname;
-  await nextClick(page);
-  await page.waitForURL((url) => url.pathname !== previousPath);
+  const radio = main.getByRole('radio', { name: label, exact: true }).filter({ visible: true });
+  await radio.check({ timeout });
+  await expect(radio).toBeChecked({ timeout });
 }
 
 async function answerTrial1(page: Page, q1: string, q2: string) {
@@ -103,6 +73,7 @@ async function verifyStudyEnd(page: Page) {
 
 async function startSkipLogicStudy(page: Page) {
   await page.goto('/test-skip-logic');
+  await expect(page.getByTestId('study-interface')).toHaveAttribute('aria-busy', 'false', { timeout: 30000 });
   await expect(page.getByText('Please answer the following questions')).toBeVisible({ timeout: 30000 });
 }
 
@@ -181,34 +152,15 @@ async function goToCheck(page: Page, check: SkipCheck) {
 }
 
 async function getTags(page: Page) {
-  return page.evaluate(async () => {
-    let db;
-    const request = indexedDB.open('revisit');
-
-    return new Promise((resolve) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      request.onsuccess = async (event: any) => {
-        db = event.target.result;
-        const transaction = db.transaction(['keyvaluepairs'], 'readonly');
-        const store = transaction.objectStore('keyvaluepairs');
-        // const sequenceArrayInternal = store.get('sequenceArray');
-        // sequenceArrayInternal.onsuccess = () => resolve(sequenceArrayInternal.result);
-        const currentParticipant = store.get('dev-test-skip-logic/currentParticipantId');
-        currentParticipant.onsuccess = () => {
-          const participantData = store.get(`dev-test-skip-logic/participants/${currentParticipant.result}_participantData`);
-          participantData.onsuccess = () => {
-            const { participantTags } = participantData.result;
-            resolve(participantTags);
-          };
-        };
-      };
-    });
-  });
+  const participantId = await readStoredValue<string>(page, 'dev-test-skip-logic/currentParticipantId');
+  const participant = await readStoredValue<{ participantTags: string[] }>(page, `dev-test-skip-logic/participants/${participantId}_participantData`);
+  return participant?.participantTags ?? [];
 }
 
 test('evaluates the all-correct skip path', async ({ page }) => {
   await startSkipLogicStudy(page);
   await goToCheck(page, 'end');
+  await expect.poll(() => getTags(page), { timeout: 15000 }).toEqual(expect.arrayContaining(['testBlockId', 'targetBlock']));
   const tags = await getTags(page);
   expect(tags).toContain('testBlockId');
   expect(tags).toContain('targetBlock');

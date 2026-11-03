@@ -83,7 +83,11 @@ function getFirstTrialIdentifier(participant: ParticipantData | null | undefined
   return orderedAnswers[0]?.identifier || '';
 }
 
-export function ThinkAloudAnalysis({ visibleParticipants, storageEngine, footerRef } : { visibleParticipants: ParticipantData[], storageEngine: FirebaseStorageEngine, footerRef?: Ref<HTMLElement> }) {
+type ThinkAloudAnalysisProps = { visibleParticipants: ParticipantData[], storageEngine: FirebaseStorageEngine, footerRef?: Ref<HTMLElement> };
+
+function ThinkAloudTranscript({
+  visibleParticipants, storageEngine, footerRef, participant, assetIdentifier,
+}: ThinkAloudAnalysisProps & { participant: ParticipantData | null; assetIdentifier: string }) {
   const auth = useAuth();
 
   const [searchParams, setSearchParams] = useSearchParams();
@@ -97,8 +101,6 @@ export function ThinkAloudAnalysis({ visibleParticipants, storageEngine, footerR
 
   const [currentShownTranscription, setCurrentShownTranscription] = useState(0);
 
-  const { value: participant } = useAsync(getParticipantData, [participantId, storageEngine]);
-
   const replay = useReplay();
 
   const [hasAudio, setHasAudio] = useState<boolean>();
@@ -107,15 +109,17 @@ export function ThinkAloudAnalysis({ visibleParticipants, storageEngine, footerR
 
   const [editedTranscript, _setEditedTranscript] = useState<EditedText[]>([]);
 
-  const { value: rawTranscript, status: rawTranscriptStatus } = useAsync(getRawTranscript, [storageEngine, currentTrial, participantId, studyId]);
+  const { value: rawTranscript, status: rawTranscriptStatus } = useAsync(getRawTranscript, participant ? [storageEngine, assetIdentifier, participantId, studyId] : null);
 
   const debouncedSave = useMemo(() => {
-    if (storageEngine && participantId && currentTrial) {
-      return debounce((editedText: EditedText[]) => storageEngine.saveEditedTranscript(participantId, auth.user.user?.email || 'temp', currentTrial, editedText), 1000, { maxWait: 5000 });
+    if (storageEngine && participantId && assetIdentifier) {
+      return debounce((editedText: EditedText[]) => storageEngine.saveEditedTranscript(participantId, auth.user.user?.email || 'temp', assetIdentifier, editedText), 1000, { maxWait: 5000 });
     }
 
-    return (_editedText: EditedText[]) => null;
-  }, [currentTrial, auth.user.user?.email, storageEngine, participantId]);
+    return null;
+  }, [assetIdentifier, auth.user.user?.email, storageEngine, participantId]);
+
+  useEffect(() => () => { debouncedSave?.flush(); }, [debouncedSave]);
 
   useEffect(() => {
     if (!participantId && visibleParticipants.length > 0) {
@@ -147,10 +151,10 @@ export function ThinkAloudAnalysis({ visibleParticipants, storageEngine, footerR
 
   const setEditedTranscript = useCallback((editedText: EditedText[]) => {
     _setEditedTranscript(editedText);
-    debouncedSave(editedText);
+    debouncedSave?.(editedText);
   }, [debouncedSave]);
 
-  const { value: onlineTranscriptList, status: transcriptStatus } = useAsync(getTranscript, [storageEngine, participantId, currentTrial, auth.user.user?.email || 'temp']);
+  const { value: onlineTranscriptList, status: transcriptStatus } = useAsync(getTranscript, participant ? [storageEngine, participantId, assetIdentifier, auth.user.user?.email || 'temp'] : null);
 
   useEffect(() => {
     if (onlineTranscriptList && transcriptStatus === 'success') {
@@ -239,4 +243,16 @@ export function ThinkAloudAnalysis({ visibleParticipants, storageEngine, footerR
       </Group>
     </ReplayContext.Provider>
   );
+}
+
+export function ThinkAloudAnalysis(props: ThinkAloudAnalysisProps) {
+  const [searchParams] = useSearchParams();
+  const participantId = searchParams.get('participantId') || '';
+  const { trialId } = useParams();
+  const currentTrial = trialId || '';
+  const { value: loadedParticipant } = useAsync(getParticipantData, [participantId, props.storageEngine]);
+  const participant = loadedParticipant?.participantId === participantId ? loadedParticipant : null;
+  const assetIdentifier = participant?.answers[currentTrial]?.assetIdentifier ?? currentTrial;
+  // A recording owns its transcript state and pending reads; never mix visits during a switch.
+  return <ThinkAloudTranscript key={`${participantId}:${assetIdentifier}`} {...props} participant={participant} assetIdentifier={assetIdentifier} />;
 }

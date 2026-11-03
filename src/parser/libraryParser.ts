@@ -916,7 +916,8 @@ function compileFactorBlock(
       return existing;
     }
 
-    const conditionComponentIds = baseComponents.flatMap((baseComponent) => {
+    const conditionComponentIds = baseComponents.flatMap((baseComponentTemplate) => {
+      const baseComponent = fillTemplate(baseComponentTemplate, condition);
       const template = config.baseComponents?.[baseComponent];
       if (!template) {
         addFactorError(

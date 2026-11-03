@@ -2,12 +2,14 @@ name: Playwright Tests
 
 on:
   pull_request:
+    types: [opened, synchronize, reopened, labeled]
     branches:
       - dev
       - main
 
 jobs:
   changes:
+    if: github.event.action != 'labeled' || github.event.label.name == 'ci-stress'
     name: Check for Playwright-relevant changes
     runs-on: ubuntu-latest
     outputs:
@@ -25,6 +27,7 @@ jobs:
         run: |
           if git diff --quiet "$BASE_SHA" "$HEAD_SHA" -- \
             'index.html' \
+            '.github/workflows/playwright.yml' \
             'package.json' \
             'playwright.config.ts' \
             'public/**' \
@@ -41,17 +44,19 @@ jobs:
   chromium-fast:
     needs: changes
     if: needs.changes.outputs.run_tests == 'true' && github.base_ref != 'main'
-    name: 🧪 Chromium shard ${{ matrix.shard }}/4
+    name: 🧪 Chromium shard ${{ matrix.shard }}/4${{ contains(github.event.pull_request.labels.*.name, 'ci-stress') && format(' (run {0}/10)', matrix.repetition) || '' }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     strategy:
       fail-fast: false
       matrix:
         shard: [1, 2, 3, 4]
+        repetition: ${{ fromJSON(contains(github.event.pull_request.labels.*.name, 'ci-stress') && '[1,2,3,4,5,6,7,8,9,10]' || '[1]') }}
     env:
       PLAYWRIGHT_BROWSERS_PATH: /home/runner/.cache/ms-playwright
       PW_CI_REPORTER: dot
       PW_CI_WORKERS: 1
+      STRESS_ARGS: ${{ contains(github.event.pull_request.labels.*.name, 'ci-stress') && '--retries=0' || '' }}
     steps:
       - uses: actions/checkout@v7
 
@@ -80,7 +85,7 @@ jobs:
         run: yarn playwright install --with-deps --only-shell chromium
 
       - name: Run Playwright shard
-        run: yarn test --project=chromium --shard=${{ matrix.shard }}/4
+        run: yarn test --project=chromium --shard=${{ matrix.shard }}/4 $STRESS_ARGS
 
   chromium-main:
     needs: changes

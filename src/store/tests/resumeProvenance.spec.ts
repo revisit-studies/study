@@ -13,6 +13,23 @@ function setup() {
 }
 
 describe('resume provenance', () => {
+  test('an invalidated trial starts from the new entry context while retaining its old graph branch', () => {
+    const original = initializeTrrack({ registry: Registry.create(), initialState: { budgetAtEntry: 70 } });
+    original.record({
+      label: 'Old purchase', state: { budgetAtEntry: 50 }, eventType: 'purchase', sideEffects: { do: [], undo: [] },
+    });
+    const saved = structuredClone(original.graph.backend);
+    const reset = { ...saved, current: saved.root, resetToInitialState: true };
+    const revised = initializeResumedTrrack({ registry: Registry.create(), initialState: { budgetAtEntry: 90 } }, reset);
+    expect(revised.getState()).toEqual({ budgetAtEntry: 90 });
+    expect(revised.graph.backend.root).toBe(saved.root);
+    Object.entries(saved.nodes).forEach(([id, node]) => {
+      expect(revised.graph.backend.nodes[id]).toMatchObject({ id, state: node.state, createdOn: node.createdOn });
+    });
+    expect(revised.graph.backend.nodes[saved.current]).toBeDefined();
+    expect(revised.graph.backend).not.toHaveProperty('resetToInitialState');
+  });
+
   test('restores the selected node, branches, timestamps and traversal events before appending', async () => {
     const { options, increment } = setup();
     const original = initializeTrrack(options);

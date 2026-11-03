@@ -23,6 +23,7 @@ import { StudyConfig } from '../../parser/types';
 import { Sequence } from '../../store/types';
 import { ParticipantData } from '../types';
 import { SnapshotParticipantCounts } from './utils/snapshotParticipantCounts';
+import { fetchFreshStorageObject } from './utils/fetchFreshStorageObject';
 
 type FirebaseStageAllocation = StageAllocation & { hasUnkeyedAssignments?: boolean };
 
@@ -311,7 +312,7 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
     }
   }
 
-  protected async _getFromStorage<T extends StorageObjectType>(prefix: string, type: T, studyId?: string, strict = false) {
+  protected async _getFromStorage<T extends StorageObjectType>(prefix: string, type: T, studyId?: string, strict = false, fresh = false) {
     const storageRef = ref(
       this.storage,
       `${this.collectionPrefix}${studyId || this.studyId}/${prefix}_${type}`,
@@ -319,7 +320,14 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
 
     let storageObj: StorageObject<T> = {} as StorageObject<T>;
     try {
-      const blob = await getBlob(storageRef);
+      let blob: Blob;
+      if (fresh) {
+        const response = await fetchFreshStorageObject(await getDownloadURL(storageRef));
+        if (!response.ok) throw Object.assign(new Error('Failed to read current participant history.'), { code: response.status === 404 ? 'storage/object-not-found' : 'storage/download-failed' });
+        blob = await response.blob();
+      } else {
+        blob = await getBlob(storageRef);
+      }
       const fullProvStr = await blob.text();
       storageObj = JSON.parse(fullProvStr);
       if (type === 'participantData' && !isParticipantData(storageObj)) throw new Error('Invalid participant data');
@@ -593,6 +601,7 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
     const lockDocument = doc(this.studyCollection, 'locks');
     const token = uuidv4();
     const expiresInMs = 60_000;
+    let lockExpiresAt = 0;
     const acquireLock = async (attempt: number): Promise<void> => {
       const now = Date.now();
       try {
@@ -610,6 +619,7 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
             [lockKey]: { token, expiresAt: now + expiresInMs },
           }, { merge: true });
         });
+        lockExpiresAt = now + expiresInMs;
       } catch (error) {
         if (!(error instanceof Error) || error.message !== 'Study lock is held') {
           throw error;
@@ -627,16 +637,20 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
     await acquireLock(0);
 
     let lockRefreshError: unknown;
+    let lockLost = false;
     const refreshLock = async () => {
       const now = Date.now();
       await runTransaction(this.firestore, async (transaction) => {
         const snapshot = await transaction.get(lockDocument);
         const existingLock = snapshot.data()?.[lockKey] as { token?: string } | undefined;
         if (existingLock?.token !== token) {
+          lockLost = true;
           throw new Error('Study update lock was lost');
         }
         transaction.update(lockDocument, new FieldPath(lockKey), { token, expiresAt: now + expiresInMs });
       });
+      lockExpiresAt = now + expiresInMs;
+      lockRefreshError = undefined;
     };
     const refreshTimer = setInterval(() => {
       refreshLock().catch((error) => {
@@ -646,8 +660,10 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
 
     try {
       const result = await operation();
-      if (lockRefreshError) {
-        throw lockRefreshError;
+      // A transient refresh failure does not undo a successful operation while
+      // our last acknowledged lease is still valid. Confirmed loss still fails.
+      if (lockLost || Date.now() >= lockExpiresAt) {
+        throw lockRefreshError || new Error('Study update lock was lost');
       }
       return result;
     } finally {
@@ -717,7 +733,7 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
       const source = assignment.claimedParticipantId
         ? state.assignments.find((item) => item.participantId === assignment.claimedParticipantId)
         : state.assignments.find((item) => item.claimed && item.timestamp === assignment.timestamp);
-      if (source) {
+      if (source && assignment.autoTimedOutAt === undefined) {
         state.hasAllocator = true;
         assignment.reusableSequenceIndex = state.allocator.nextSequenceIndex;
         state.allocator.nextSequenceIndex += 1;
@@ -809,6 +825,12 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
       throw new Error('Failed to read the server clock');
     }
     return readAt.toMillis();
+  }
+
+  // The timeout transaction rechecks the settings and retries if they change, so
+  // the admission-policy lock the base version takes is not needed here.
+  protected override async releaseExpiredAssignment(_studyId: string, participantId: string, serverNow: number, deadline: number) {
+    return await this._markSequenceAssignmentTimedOut(participantId, serverNow, deadline) ? 'released' as const : 'skipped' as const;
   }
 
   protected async _markSequenceAssignmentTimedOut(participantId: string, timedOutAt: number, deadline?: number): Promise<boolean> {

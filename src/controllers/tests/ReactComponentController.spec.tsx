@@ -6,8 +6,12 @@ import {
 import { ReactComponentController } from '../ReactComponentController';
 import { makeStoredAnswer } from '../../tests/utils';
 import type { ReactComponent } from '../../parser/types';
+import type { StimulusParams } from '../../store/types';
 
-vi.mock('../../public/demo-react-trrack/assets/DemoReactTrrack', () => ({ default: () => null }));
+vi.mock('../../store/hooks/useGlobalStore', () => ({ useGlobalStore: () => ({ budget: 100 }), useGlobalStoreUpdaterRegistration: () => vi.fn() }));
+vi.mock('../../public/demo-react-trrack/assets/DemoReactTrrack', () => ({
+  default: ({ globalVariables }: { globalVariables?: StimulusParams<unknown>['globalVariables'] }) => <p>{`Budget: ${globalVariables?.budget}`}</p>,
+}));
 vi.mock('../../store/hooks/useTrialProvenance', () => ({ useTrialProvenance: () => undefined }));
 vi.mock('../../store/hooks/useDesignerPreview', () => ({ useDesignerPreview: () => true }));
 vi.mock('../../store/hooks/useIsAnalysis', () => ({ useIsAnalysis: () => false }));
@@ -28,6 +32,18 @@ beforeEach(() => {
   vi.stubGlobal('matchMedia', vi.fn(() => ({ matches: false, addEventListener: vi.fn(), removeEventListener: vi.fn() })));
 });
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
+
+test('React content receives the globalVariables prop directly', async () => {
+  render(
+    <MantineProvider>
+      <ReactComponentController
+        currentConfig={{ type: 'react-component', path: 'demo-react-trrack/assets/DemoReactTrrack.tsx', response: [] }}
+        answers={{ trial_0: makeStoredAnswer({ identifier: 'trial_0' }) }}
+      />
+    </MantineProvider>,
+  );
+  expect(await screen.findByText('Budget: 100')).toBeDefined();
+});
 
 test.each(['reactive', 'shortText'] as const)('Preview distinguishes saved %s answers from host inputs', (type) => {
   const config: ReactComponent = {

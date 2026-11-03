@@ -181,7 +181,7 @@ function calculateCorrectnessStats(
     const responsesById = new Map((component?.response ?? []).map((r) => [r.id, r]));
 
     const persistedScores = getSavedScoresForAnswer(answer.checkAnswer, answer.answer);
-    const expectedAnswers = getApplicableCorrectAnswers(component?.response ?? [], answer.answer, answer.correctAnswer, persistedScores);
+    const expectedAnswers = getApplicableCorrectAnswers(component?.response ?? [], answer.answer, answer.correctAnswer, persistedScores, answer.globalStoreEntry);
     const expectedIds = new Set(expectedAnswers.map((entry) => entry.id));
     const visibleResponseIds = resolveResponseVisibility(
       component?.response ?? [],
@@ -189,6 +189,7 @@ function calculateCorrectnessStats(
       {},
       answer.correctAnswer,
       persistedScores,
+      answer.globalStoreEntry,
     ).visibleIds;
     const responseIdsToScore = new Set([
       ...expectedAnswers

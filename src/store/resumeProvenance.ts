@@ -12,12 +12,22 @@ export function initializeResumedTrrack<State, Event extends string>(
     if (!provenance.nodes?.[provenance.root] || !provenance.nodes?.[provenance.current]) {
       throw new Error('Saved interaction history is invalid.');
     }
-    trrack.graph.update(trrack.graph.load(structuredClone(provenance)));
+    const { resetToInitialState, ...retained } = structuredClone(provenance);
+    trrack.graph.update(trrack.graph.load(retained));
     trrack.getState();
+    if (resetToInitialState) {
+      trrack.record({
+        label: 'Start revised trial', state: structuredClone(options.initialState), eventType: '__revisit_trial_reset' as Event, sideEffects: { do: [], undo: [] },
+      });
+    }
   }
   return trrack;
 }
 
 export function getResumedProvenanceState(provenance: TrrackedProvenance) {
   return initializeResumedTrrack({ registry: Registry.create(), initialState: {} }, provenance).getState();
+}
+
+export function validateResumableProvenance(provenance: TrrackedProvenance) {
+  initializeResumedTrrack({ registry: Registry.create(), initialState: {} }, { ...provenance, resetToInitialState: false });
 }

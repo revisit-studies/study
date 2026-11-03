@@ -9,7 +9,7 @@
             body {
                 font-family: sans-serif;
                 margin: 0;
-                padding: 16px;
+                padding: 0;
             }
             h2 {
                 margin-top: 0;
@@ -23,24 +23,42 @@
             button[aria-pressed="true"] {
                 outline: 3px solid steelblue;
             }
+
+            code {
+                background: #f0f0f0;
+            }
         </style>
     </head>
 
     <body>
         <!-- Double-stache in markup: the substituted value is HTML-escaped. -->
-        <div style="margin: 0 50px 25px">
+        <div style="margin: 20px 0">
             <!-- Compare the previous step's answer with its own correctAnswer field. -->
             <i>
                 {{lookupParametersRel -1 'flag'}} You answered
                 {{lookupAnswersRel -1 'capital-answer'}} in your previous task,
-                which is
-                {{#ifEquals (lookupAnswersRel -1 'capital-answer') (lookupCorrectAnswerRel -1 'capital-answer')}}correct{{else}}incorrect{{/ifEquals}}.
+                which is {{#ifEquals (lookupAnswersRel -1 'capital-answer')
+                (lookupCorrectAnswerRel -1
+                'capital-answer')}}correct{{else}}incorrect{{/ifEquals}}.
             </i>
         </div>
         <h1>{{flag}} {{country}}</h1>
-        <h2>Which of these is the capital of {{country}}?</h2>
-        <p>A country in {{continent}}, known for {{funFact}}.</p>
+        <p>
+            Hint for the task: A country in {{continent}}, known for
+            {{funFact}}.
+        </p>
         <div id="options"></div>
+
+        <div style="margin: 20px 0; font-style: italic">
+            Note: This is an HTML file where the variables
+            <code>\{{country}}</code>, <code>\{{continent}}</code>, and
+            <code>\{{funFact}}</code> are replaced by
+            <strong>"{{country}}"</strong>, <strong>"{{continent}}"</strong>,
+            and <strong>"{{funFact}}"</strong>, respectively. The first line
+            reads the previous question's flag, answer, and correct answer with
+            <code>lookupParametersRel</code>, <code>lookupAnswersRel</code>, and
+            <code>lookupCorrectAnswerRel</code>.
+        </div>
 
         <script>
             // Triple-stache inside a script: the value is inserted verbatim, without HTML escaping.

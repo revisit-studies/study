@@ -12,6 +12,8 @@ import type { StoreState } from '../../types';
 import ScreenRecordingPermission from '../../../public/libraries/screen-recording/assets/ScreenRecording';
 import WebcamRecordingPermission from '../../../public/libraries/webcam-recording/assets/WebcamRecording';
 
+const mockAssetOwner = vi.hoisted(() => ({ trialAssetEntry: undefined as { identifier: string; key: string } | undefined }));
+
 // ── mutable state ─────────────────────────────────────────────────────────────
 
 let mockRecordingConfig = {
@@ -24,6 +26,12 @@ let mockRecordingConfig = {
   currentComponentHasClickToRecord: false,
 };
 let mockCurrentComponent = 'intro';
+let mockIdentifier = 'intro_0';
+let mockGlobalStoreEnabled = false;
+let mockCompleted = false;
+let mockGlobalRevision = 0;
+let mockGlobalStoreSubmitting = false;
+let mockGlobalStorePendingRevision = 0;
 let mockStorageEngine: Record<string, ReturnType<typeof vi.fn>> | null = null;
 let mockStoredAnswer: { endTime: number } | null = null;
 let mockModes = { dataCollectionEnabled: true, developmentModeEnabled: false, dataSharingEnabled: false };
@@ -112,6 +120,7 @@ function renderWithMantine(ui: React.ReactElement) {
 
 vi.mock('../useStudyConfig', () => ({
   useStudyConfig: () => ({
+    globalVariables: mockGlobalStoreEnabled ? { budget: { initialValue: 100 } } : undefined,
     uiConfig: { recordScreenFPS: undefined, recordAudio: false, recordWebcam: false },
     sequence: {
       id: 'root', order: 'fixed', components: ['intro', 'end'], skip: [],
@@ -121,7 +130,7 @@ vi.mock('../useStudyConfig', () => ({
 
 vi.mock('../../../routes/utils', () => ({
   useCurrentComponent: () => mockCurrentComponent,
-  useCurrentIdentifier: () => 'intro_0',
+  useCurrentIdentifier: () => mockIdentifier,
 }));
 
 vi.mock('../../../storage/storageEngineHooks', () => ({
@@ -140,9 +149,14 @@ vi.mock('../useIsAnalysis', () => ({
   useIsAnalysis: () => false,
 }));
 
-vi.mock('../../store', () => ({
+vi.mock('../../store', async () => ({
+  StudyStoreContext: (await vi.importActual<typeof React>('react')).createContext(mockAssetOwner),
   useStoreSelector: (selector: (s: StoreState) => unknown) => selector({
     modes: mockModes,
+    completed: mockCompleted,
+    globalStoreRevision: mockGlobalRevision,
+    globalStoreSubmitting: mockGlobalStoreSubmitting,
+    globalStorePendingRevision: mockGlobalStorePendingRevision,
   } as StoreState),
 }));
 
@@ -159,6 +173,13 @@ beforeEach(() => {
     currentComponentHasClickToRecord: false,
   };
   mockCurrentComponent = 'intro';
+  mockIdentifier = 'intro_0';
+  mockGlobalStoreEnabled = false;
+  mockAssetOwner.trialAssetEntry = undefined;
+  mockCompleted = false;
+  mockGlobalRevision = 0;
+  mockGlobalStoreSubmitting = false;
+  mockGlobalStorePendingRevision = 0;
   mockStorageEngine = null;
   mockStoredAnswer = null;
   mockModes = { dataCollectionEnabled: true, developmentModeEnabled: false, dataSharingEnabled: false };
@@ -648,6 +669,35 @@ describe('useRecording stopScreenCapture with refs populated', () => {
 // ── stopAudioRecording tests ───────────────────────────────────────────────────
 
 describe('useRecording audio recording effect', () => {
+  test('a completed global-store session cannot restart audio on an earlier answered trial', async () => {
+    mockGlobalStoreEnabled = true;
+    mockCompleted = true;
+    mockStoredAnswer = { endTime: 100 };
+    mockRecordingConfig = { ...mockRecordingConfig, studyHasAudioRecording: true, currentComponentHasAudioRecording: true };
+    mockStorageEngine = { saveAudioRecording: vi.fn(async () => {}) };
+    const { result } = renderHook(() => useRecording());
+    await act(async () => {});
+    expect(navigator.mediaDevices.getUserMedia).not.toHaveBeenCalled();
+    expect(result.current.isAudioRecording).toBe(false);
+  });
+
+  test.each([false, true])('completion stops active audio or discards a pending microphone request (pending=%s)', async (pending) => {
+    mockGlobalStoreEnabled = true;
+    mockRecordingConfig = { ...mockRecordingConfig, studyHasAudioRecording: true, currentComponentHasAudioRecording: true };
+    mockStorageEngine = { saveAudioRecording: vi.fn(async () => {}) };
+    const stream = new MockMediaStream();
+    let resolve!: (value: MediaStream) => void;
+    vi.mocked(navigator.mediaDevices.getUserMedia).mockReturnValue(new Promise((done) => { resolve = done; }));
+    const { result, rerender } = renderHook(() => useRecording());
+    if (!pending) await act(async () => { resolve(stream as unknown as MediaStream); });
+    mockCompleted = true;
+    rerender();
+    if (pending) await act(async () => { resolve(stream as unknown as MediaStream); });
+    expect(stream.getTracks()[0].stop).toHaveBeenCalled();
+    expect(result.current.isAudioRecording).toBe(false);
+    if (pending) expect(mockRecorderStartAudioStates).toHaveLength(0);
+  });
+
   test('audio recording effect triggers startAudioRecording when conditions met', async () => {
     mockRecordingConfig = {
       ...mockRecordingConfig,
@@ -662,6 +712,27 @@ describe('useRecording audio recording effect', () => {
     // getUserMedia was called for audio recording
     expect(vi.mocked(navigator.mediaDevices.getUserMedia)).toHaveBeenCalled();
     expect(result.current.isAudioRecording).toBe(true);
+  });
+
+  test.each([false, true])('completion stops active or pending persistent screen capture (pending=%s)', async (pending) => {
+    mockGlobalStoreEnabled = true;
+    mockRecordingConfig = { ...mockRecordingConfig, studyHasScreenRecording: true, currentComponentHasScreenRecording: true };
+    mockStorageEngine = { saveScreenRecording: vi.fn(async () => {}) };
+    const stream = new MockMediaStream();
+    let resolve!: (value: MediaStream) => void;
+    vi.mocked(navigator.mediaDevices.getDisplayMedia).mockReturnValue(new Promise((done) => { resolve = done; }));
+    const { result, rerender } = renderHook(() => useRecording());
+    act(() => { result.current.startScreenCapture(); });
+    if (!pending) await act(async () => { resolve(stream as unknown as MediaStream); });
+    mockCompleted = true;
+    rerender();
+    if (pending) await act(async () => { resolve(stream as unknown as MediaStream); });
+    expect(stream.getTracks()[0].stop).toHaveBeenCalled();
+    expect(result.current.isScreenCapturing).toBe(false);
+    expect(result.current.isScreenRecording).toBe(false);
+    const requests = vi.mocked(navigator.mediaDevices.getDisplayMedia).mock.calls.length;
+    act(() => { result.current.startScreenCapture(); });
+    expect(navigator.mediaDevices.getDisplayMedia).toHaveBeenCalledTimes(requests);
   });
 
   test('audio effect stopAudioRecording called when currentComponentHasAudioRecording turns false', async () => {
@@ -880,6 +951,8 @@ describe('ScreenRecordingPermission component', () => {
         parameters: undefined,
         answers: {},
         useTrrack: vi.fn(),
+        globalVariables: {},
+        registerGlobalStoreUpdater: () => () => undefined,
       } as React.ComponentProps<typeof ScreenRecordingPermission>),
     );
 
@@ -910,6 +983,8 @@ describe('ScreenRecordingPermission component', () => {
         parameters: undefined,
         answers: {},
         useTrrack: vi.fn(),
+        globalVariables: {},
+        registerGlobalStoreUpdater: () => () => undefined,
       } as React.ComponentProps<typeof ScreenRecordingPermission>),
     );
 
@@ -943,6 +1018,8 @@ describe('WebcamRecordingPermission component', () => {
         parameters: undefined,
         answers: {},
         useTrrack: vi.fn(),
+        globalVariables: {},
+        registerGlobalStoreUpdater: () => () => undefined,
       } as React.ComponentProps<typeof WebcamRecordingPermission>),
     );
 
@@ -956,4 +1033,44 @@ describe('WebcamRecordingPermission component', () => {
     expect(startWebcamCapture).not.toHaveBeenCalled();
     expect(stopScreenCapture).not.toHaveBeenCalled();
   });
+});
+
+test('a previously accepted global-store trial records its revision under a separate media key', async () => {
+  mockGlobalStoreEnabled = true;
+  mockGlobalRevision = 7;
+  mockStoredAnswer = { endTime: 100 };
+  mockRecordingConfig = { ...mockRecordingConfig, studyHasScreenRecording: true, currentComponentHasScreenRecording: true };
+  mockStorageEngine = { saveScreenRecording: vi.fn(async () => {}) };
+  const { result } = renderHook(() => useRecording());
+  act(() => { result.current.startScreenCapture(); });
+  await waitFor(() => expect(result.current.isScreenRecording).toBe(true));
+  act(() => { result.current.stopScreenRecording(); });
+  await waitFor(() => expect(mockStorageEngine!.saveScreenRecording).toHaveBeenCalledWith(expect.any(Blob), mockAssetOwner.trialAssetEntry!.key));
+  expect(mockAssetOwner.trialAssetEntry!.key).toMatch(/^intro_0__global_/);
+});
+
+test('destination audio waits for acceptance and saves under the shared visit key', async () => {
+  mockGlobalStoreEnabled = true;
+  mockRecordingConfig = { ...mockRecordingConfig, studyHasAudioRecording: true, currentComponentHasAudioRecording: true };
+  mockStorageEngine = { saveAudioRecording: vi.fn(async () => {}) };
+  const hook = renderHook(useRecording);
+  await waitFor(() => expect(hook.result.current.isAudioRecording).toBe(true));
+  act(() => {
+    mockGlobalStoreSubmitting = true;
+    mockCurrentComponent = 'next';
+    mockIdentifier = 'next_1';
+    hook.rerender();
+  });
+  expect(navigator.mediaDevices.getUserMedia).toHaveBeenCalledTimes(1);
+  expect(hook.result.current.isAudioRecording).toBe(false);
+  await act(async () => { mockGlobalRevision = 1; hook.rerender(); });
+  await waitFor(() => expect(hook.result.current.isAudioRecording).toBe(true));
+  const { key } = mockAssetOwner.trialAssetEntry!;
+  act(() => {
+    mockCurrentComponent = 'end';
+    mockIdentifier = 'end_2';
+    mockRecordingConfig.currentComponentHasAudioRecording = false;
+    hook.rerender();
+  });
+  expect(mockStorageEngine.saveAudioRecording).toHaveBeenLastCalledWith(expect.any(Blob), key);
 });

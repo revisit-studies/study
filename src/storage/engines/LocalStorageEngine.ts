@@ -292,7 +292,7 @@ export class LocalStorageEngine extends StorageEngine {
           (assignment) => assignment.claimed
             && assignment.timestamp === participantSequenceAssignment.timestamp,
         );
-      if (claimedAssignmentData) {
+      if (claimedAssignmentData && participantSequenceAssignment.autoTimedOutAt === undefined) {
         const assignments = Object.values(sequenceAssignments);
         const indexedSlots = assignments.flatMap((assignment) => [
           assignment.sequenceIndex,

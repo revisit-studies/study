@@ -2,6 +2,8 @@ import localforage from 'localforage';
 import throttle from 'lodash.throttle';
 import { v4 as uuidv4 } from 'uuid';
 import { resolveBetweenSubjectsFactorLevels } from '../../parser/libraryParser';
+import { GLOBAL_STORE_TASK, getGlobalStoreNodeState, getGlobalStoreNodeStates } from '../../store/globalStoreProvenance';
+import type { GlobalStoreGraph } from '../../store/globalStoreProvenance';
 import { StudyConfig } from '../../parser/types';
 import { DISTINCT_COLOR_PALETTE } from '../../utils/colors';
 import { ParticipantMetadata, Sequence, StoredProvenance } from '../../store/types';
@@ -16,8 +18,14 @@ import { parseConditionParam } from '../../utils/handleConditionLogic';
 import {
   ParticipantTags, Tag, TaglessEditedText, TranscribedAudio,
 } from '../../analysis/individualStudy/thinkAloud/types';
-import { normalizeStoredProvenance, splitProvenanceFromAnswers } from '../../store/provenance';
-import { SnapshotParticipantCounts, calculateSnapshotParticipantCounts } from './utils/snapshotParticipantCounts';
+import {
+  createEmptyProvenance, normalizeStoredProvenance,
+  splitProvenanceFromAnswers,
+} from '../../store/provenance';
+import {
+  SnapshotParticipantCounts,
+  calculateSnapshotParticipantCounts,
+} from './utils/snapshotParticipantCounts';
 import { getStageCombinationTargets } from './utils/stageAllocation';
 
 export interface StoredUser {
@@ -394,6 +402,17 @@ function cloneParticipantDataSnapshot(participantData: ParticipantData) {
   return structuredClone(participantData);
 }
 
+type GlobalStoreProgress = Pick<ParticipantData, 'globalStoreRevision' | 'globalStoreHead' | 'finalized' | 'rejected'>;
+
+function isStaleGlobalStoreSnapshot(snapshot: GlobalStoreProgress, remote: GlobalStoreProgress) {
+  const revision = snapshot.globalStoreRevision ?? 0;
+  const remoteRevision = remote.globalStoreRevision ?? 0;
+  return remoteRevision > revision
+    || (remoteRevision === revision && remoteRevision > 0 && remote.globalStoreHead !== snapshot.globalStoreHead)
+    || (!!remote.finalized && !snapshot.finalized)
+    || (remote.rejected && !snapshot.rejected);
+}
+
 type AssetRetryOperation = () => Promise<unknown>;
 
 type ProgressData = { total: number; answered: string[]; isDynamic: boolean };
@@ -438,9 +457,6 @@ export function getStageAllocationFromAssignments(all: SequenceAssignment[], sta
   const assignments = all.filter((assignment) => assignment.stage === stage && consumesCapacity(assignment));
   const combinationCounts: Record<string, number> = {};
   const rowCounts: Record<string, number> = {};
-  if (sequenceRows && all.some((assignment) => assignment.stage === stage && assignment.autoTimedOutAt !== undefined)) {
-    assertAutoTimeoutStageSupported(all, stage);
-  }
   assignments.forEach((assignment) => {
     if (assignment.betweenSubjectsCombinationKey) combinationCounts[assignment.betweenSubjectsCombinationKey] = (combinationCounts[assignment.betweenSubjectsCombinationKey] || 0) + 1;
     const sequenceKey = assignment.sequenceKey || (sequenceRows && assignment.sequenceIndex !== undefined
@@ -478,7 +494,13 @@ export abstract class StorageEngine {
 
   private pendingParticipantDataWriteTimer: ReturnType<typeof setTimeout> | null = null;
 
+  private provenanceWriteChains = new Map<string, Promise<unknown>>();
+
+  private globalStorePendingTrials = new Map<string, Map<string, number>>();
+
   private participantDataWriteChain: Promise<void> = Promise.resolve();
+
+  private localParticipantDataUpdateChain: Promise<void> = Promise.resolve();
 
   private participantDataWriteError: Error | null = null;
 
@@ -537,7 +559,7 @@ export abstract class StorageEngine {
   */
   /* Storage ------------------------------------------------------------- */
   // Gets an object from the storage engine. The object is identified by its type and studyId.
-  protected abstract _getFromStorage<T extends StorageObjectType>(prefix: string, type: T, studyId?: string, strict?: boolean): Promise<StorageObject<T> | null>;
+  protected abstract _getFromStorage<T extends StorageObjectType>(prefix: string, type: T, studyId?: string, strict?: boolean, fresh?: boolean): Promise<StorageObject<T> | null>;
 
   // Pushes an object to the storage engine. The object is identified by its type and studyId.
   protected abstract _pushToStorage<T extends StorageObjectType>(prefix: string, type: T, objectToUpload: StorageObject<T>): Promise<void>;
@@ -790,7 +812,7 @@ export abstract class StorageEngine {
     return `${this.collectionPrefix}${this.studyId}/participants/${participantId}/localParticipantData`;
   }
 
-  private async cacheParticipantDataSnapshot(snapshot: ParticipantData, participantId?: string) {
+  private async cacheParticipantDataSnapshot(snapshot: ParticipantData, participantId?: string, required = false) {
     const targetParticipantId = participantId || this.currentParticipantId;
     if (!this.studyId || !targetParticipantId) {
       return;
@@ -802,8 +824,26 @@ export abstract class StorageEngine {
         cloneParticipantDataSnapshot(snapshot),
       );
     } catch (error) {
+      if (required) throw error;
       console.warn('Failed to cache participant data locally:', error);
     }
+  }
+
+  /** Serialize local acceptance and background updates without waiting for cloud writes. */
+  private async updateParticipantDataLocally<T>(
+    studyId: string | undefined,
+    participantId: string | undefined,
+    update: (assertCurrentSession: () => void) => Promise<T>,
+  ) {
+    const assertCurrentSession = () => {
+      if (this.studyId !== studyId || this.currentParticipantId !== participantId) throw new Error('The participant session changed before its data could be saved.');
+    };
+    const pending = this.localParticipantDataUpdateChain.then(() => {
+      assertCurrentSession();
+      return update(assertCurrentSession);
+    });
+    this.localParticipantDataUpdateChain = pending.then(() => undefined, () => undefined);
+    return pending;
   }
 
   private async getCachedParticipantDataSnapshot(participantId?: string) {
@@ -882,15 +922,42 @@ export abstract class StorageEngine {
     return error;
   }
 
+  private async assertGlobalStoreUploadCurrent(
+    participantId: string,
+    snapshot: GlobalStoreProgress,
+    remoteParticipant?: ParticipantData | null,
+    incomingHistory?: GlobalStoreGraph,
+  ) {
+    const remote = remoteParticipant === undefined
+      ? await this._getFromStorage(`participants/${participantId}`, 'participantData', undefined, true, true)
+      : remoteParticipant;
+    if (snapshot.globalStoreRevision === undefined && (!isParticipantData(remote) || remote.globalStoreRevision === undefined)) return;
+    const conflict = () => new Error('This session has newer progress in another browser. Reload before continuing.');
+    if (isParticipantData(remote) && isStaleGlobalStoreSnapshot(snapshot, remote)) throw conflict();
+    if (!snapshot.globalStoreRevision) return;
+
+    // History can finish uploading before its participant snapshot. Protect that interval too.
+    const uploaded = await this.parseProvenanceStorageObject(await this._getFromStorage(`provenance/${participantId}`, GLOBAL_STORE_TASK, undefined, true, true));
+    if (!uploaded?.globalStore) return;
+    if (!incomingHistory && uploaded.globalStore.current === snapshot.globalStoreHead) return;
+    const local = incomingHistory ?? (await this.participantStore.getItem<StoredProvenance>(
+      this.localProvenanceKey(`${GLOBAL_STORE_TASK}/${snapshot.globalStoreRevision}`, participantId),
+    ))?.globalStore;
+    if (!local?.nodes[uploaded.globalStore.current]) throw conflict();
+  }
+
   private async enqueueParticipantDataWrite(
     participantId: string,
     snapshot: ParticipantData,
     cache: boolean,
   ) {
+    const { studyId } = this;
+    const publicationKey = `${studyId}/${participantId}/${GLOBAL_STORE_TASK}`;
     const write = async () => {
       this.participantDataWriteError = null;
       try {
-        await this._runWithLock(`participant-${participantId}`, async () => {
+        if (snapshot.globalStoreRevision !== undefined) await this.provenanceWriteChains.get(publicationKey);
+        const uploaded = await this._runWithLock(`participant-${participantId}`, async () => {
           // An admin can reject a participant in another browser while this
           // client still has a debounced full-record write pending. The same
           // lock is held by rejectParticipant, so the check and write cannot
@@ -898,6 +965,9 @@ export abstract class StorageEngine {
           const latestParticipant = await this._getFromStorage(
             `participants/${participantId}`,
             'participantData',
+            undefined,
+            true,
+            snapshot.globalStoreRevision !== undefined,
           );
           if (isParticipantData(latestParticipant) && latestParticipant.rejected) {
             if (participantId === this.currentParticipantId) {
@@ -907,17 +977,25 @@ export abstract class StorageEngine {
               await this.cacheParticipantDataSnapshot(latestParticipant, participantId);
               this.participantRejectionListeners.forEach((listener) => listener());
             }
-            return;
+            return false;
           }
+
+          const current = this.participantData;
+          // A newer local acceptance includes earlier tag/metadata mutations and supersedes this projection.
+          if (this.studyId === studyId && this.currentParticipantId === participantId && current?.participantId === participantId
+            && (current.globalStoreRevision ?? 0) > (snapshot.globalStoreRevision ?? 0)) return false;
+
+          await this.assertGlobalStoreUploadCurrent(participantId, snapshot, latestParticipant);
 
           await this._pushToStorage(
             `participants/${participantId}`,
             'participantData',
             snapshot,
           );
+          return true;
         });
 
-        if (cache) {
+        if (uploaded && cache && snapshot.globalStoreRevision === undefined) {
           await this._cacheStorageObject(
             `participants/${participantId}`,
             'participantData',
@@ -971,25 +1049,30 @@ export abstract class StorageEngine {
 
   protected async persistCurrentParticipantData(
     options: { immediate?: boolean; cache?: boolean } = {},
+    update?: (participant: ParticipantData) => void,
   ) {
     if (!this.currentParticipantId || this.participantData === undefined) {
       throw new Error('Participant not initialized');
     }
 
-    const snapshot = cloneParticipantDataSnapshot(this.participantData);
+    const { studyId, currentParticipantId } = this;
     const { immediate = false, cache = false } = options;
-
-    await this.cacheParticipantDataSnapshot(snapshot, this.currentParticipantId);
     await this.verifyStudyDatabase();
-
-    if (!immediate) {
-      this.scheduleParticipantDataWrite(snapshot, cache);
-      return;
-    }
-
-    this.clearPendingParticipantDataWriteTimer();
-    this.pendingParticipantDataWrite = undefined;
-    await this.enqueueParticipantDataWrite(this.currentParticipantId, snapshot, cache);
+    let cloudWrite: Promise<void> | undefined;
+    await this.updateParticipantDataLocally(studyId, currentParticipantId, async (assertCurrentSession) => {
+      update?.(this.participantData!);
+      const snapshot = cloneParticipantDataSnapshot(this.participantData!);
+      await this.cacheParticipantDataSnapshot(snapshot, currentParticipantId);
+      assertCurrentSession();
+      if (immediate) {
+        this.clearPendingParticipantDataWriteTimer();
+        this.pendingParticipantDataWrite = undefined;
+        cloudWrite = this.enqueueParticipantDataWrite(currentParticipantId, snapshot, cache);
+      } else {
+        this.scheduleParticipantDataWrite(snapshot, cache);
+      }
+    });
+    await cloudWrite;
   }
 
   async flushPendingParticipantData() {
@@ -1019,6 +1102,17 @@ export abstract class StorageEngine {
       throw new Error(`Failed to reconnect to ${this.getEngine()} storage engine`);
     }
 
+    if (this.participantData?.globalStoreRevision !== undefined) {
+      const queueKey = `${this.studyId}/${this.currentParticipantId}/${GLOBAL_STORE_TASK}`;
+      await this.provenanceWriteChains.get(queueKey)?.catch(() => undefined);
+      const assetKey = `provenance/${GLOBAL_STORE_TASK}`;
+      const retry = this.failedAssetRetryOperations.get(assetKey);
+      if (retry) {
+        const publication = this.trackAssetOperation(assetKey, retry);
+        this.provenanceWriteChains.set(queueKey, publication);
+        await publication;
+      }
+    }
     await this.persistCurrentParticipantData({ immediate: true });
 
     const { pendingProgressDataWrite } = this;
@@ -1450,11 +1544,12 @@ export abstract class StorageEngine {
    * the stage counts with the write, and a timeout only ever frees capacity.
    * Sweeps in this session run one at a time, so a call made during a sweep
    * gets its own pass, with current settings, once that sweep finishes.
+   * Resolves to the number of participants released, at most `limit`.
    */
-  async releaseExpiredAssignments(): Promise<void> {
+  async releaseExpiredAssignments(limit = Infinity): Promise<number> {
     const studyId = this.studyId!;
-    const sweep = this.timeoutSweeps.then(() => this.timeoutExpiredAssignments(studyId));
-    this.timeoutSweeps = sweep.catch(() => undefined);
+    const sweep = this.timeoutSweeps.then(() => this.timeoutExpiredAssignments(studyId, limit));
+    this.timeoutSweeps = sweep.then(() => undefined, () => undefined);
     return sweep;
   }
 
@@ -1479,10 +1574,10 @@ export abstract class StorageEngine {
     };
   }
 
-  private async timeoutExpiredAssignments(studyId: string): Promise<void> {
+  private async timeoutExpiredAssignments(studyId: string, limit: number): Promise<number> {
     const { timeoutMinutes, stage } = await this.readTimeoutSettings(studyId);
     if (timeoutMinutes === undefined) {
-      return;
+      return 0;
     }
 
     const assignments = await this._getTimeoutCandidates(stage);
@@ -1502,19 +1597,40 @@ export abstract class StorageEngine {
 
     // Each engine rechecks eligibility in the same operation that writes, so a
     // participant who finished or was rejected in the meantime keeps their slot.
+    // Stop at the first failed mutation; a later sweep retries the rest.
+    let released = 0;
     for (const assignment of expiredAssignments) {
-      // Settings changes hold the admission-policy lock, so recheck them under it:
-      // a timeout cannot land after a designer disables, changes, or moves it.
-      // Stop at the first failed mutation; a later sweep retries the rest.
+      if (released >= limit) break;
+      // Concurrent sweeps share a backlog, so skip rows already settled before
+      // paying for the timeout write's locks.
       // eslint-disable-next-line no-await-in-loop
-      const applied = await this._runWithLock(ADMISSION_POLICY_LOCK_KEY, async () => {
-        const current = await this.readTimeoutSettings(studyId);
-        if (this.studyId !== studyId || current.timeoutMinutes !== timeoutMinutes || current.stage !== stage) return false;
-        await this._markSequenceAssignmentTimedOut(assignment.participantId, serverNow, deadline);
-        return true;
-      });
-      if (!applied) return;
+      const latest = await this._getSequenceAssignment(assignment.participantId);
+      if (latest && consumesCapacity(latest) && latest.completed === null && latest.stage === stage) {
+        // eslint-disable-next-line no-await-in-loop
+        const result = await this.releaseExpiredAssignment(studyId, assignment.participantId, serverNow, deadline, { timeoutMinutes, stage });
+        if (result === 'stopped') break;
+        if (result === 'released') released += 1;
+      }
     }
+    return released;
+  }
+
+  // Times out one expired assignment. Settings changes hold the admission-policy
+  // lock, so recheck them under it: a timeout cannot land after a designer
+  // disables, changes, or moves it. Engines whose timeout write rechecks the
+  // settings itself override this.
+  protected async releaseExpiredAssignment(
+    studyId: string,
+    participantId: string,
+    serverNow: number,
+    deadline: number,
+    settings: { timeoutMinutes: number; stage: string },
+  ): Promise<'released' | 'skipped' | 'stopped'> {
+    return this._runWithLock(ADMISSION_POLICY_LOCK_KEY, async () => {
+      const current = await this.readTimeoutSettings(studyId);
+      if (this.studyId !== studyId || current.timeoutMinutes !== settings.timeoutMinutes || current.stage !== settings.stage) return 'stopped';
+      return await this._markSequenceAssignmentTimedOut(participantId, serverNow, deadline) ? 'released' : 'skipped';
+    });
   }
 
   // Patches an assignment without erasing a completion, rejection, or timeout
@@ -1600,8 +1716,21 @@ export abstract class StorageEngine {
         await this.cacheParticipantDataSnapshot(current, this.currentParticipantId);
       }
     }
+    if (cachedParticipant && (cachedParticipant.globalStoreRevision !== undefined || config.globalVariables !== undefined)
+      && (await this.getModes(this.studyId!)).dataCollectionEnabled) {
+      const remote = await this._getFromStorage(`participants/${this.currentParticipantId}`, 'participantData', undefined, true, true);
+      if (isParticipantData(remote) && isStaleGlobalStoreSnapshot(cachedParticipant, remote)) {
+        // Trial assets have logical keys, so an older local copy must not shadow the new history.
+        const prefix = this.localProvenanceKey('', this.currentParticipantId);
+        const keys = await this.participantStore.keys();
+        await Promise.all(keys.filter((key) => key.startsWith(prefix)).map((key) => this.participantStore.removeItem(key)));
+        cachedParticipant = remote;
+        await this.cacheParticipantDataSnapshot(remote, this.currentParticipantId, true);
+      }
+    }
     if (cachedParticipant && await this.confirmParticipantReservation(cachedParticipant, undefined, true)) {
       this.participantData = cachedParticipant;
+      await this.restoreGlobalStoreUploads(cachedParticipant);
       return cachedParticipant;
     }
 
@@ -1715,20 +1844,25 @@ export abstract class StorageEngine {
     const admit = () => (this.hasAtomicSequenceReservation
       ? this._runWithLock(`initialize-participant-${this.currentParticipantId}`, initializeParticipant)
       : this._runWithLock(ADMISSION_POLICY_LOCK_KEY, initializeParticipant));
-    let initializedParticipant: ParticipantData;
-    try {
-      initializedParticipant = await admit();
-    } catch (error) {
-      if (!(error instanceof StageCapacityExceededError)) throw error;
-      // Expired participants are released lazily, so the stage may only be full
-      // of them. Release them and retry once before turning this participant away.
+    let initializedParticipant: ParticipantData | undefined;
+    while (!initializedParticipant) {
       try {
-        await this.releaseExpiredAssignments();
-      } catch (sweepError) {
-        console.warn('Failed to release expired participant allocations:', sweepError);
-        throw error;
+        // eslint-disable-next-line no-await-in-loop
+        initializedParticipant = await admit();
+      } catch (error) {
+        if (!(error instanceof StageCapacityExceededError || error instanceof StageOnlyDisabledConditionsHaveCapacityError)) throw error;
+        // Expired participants are released lazily, so the stage may only be full
+        // of them. Release one at a time and retry, so this participant waits only
+        // as long as needed, and turn them away once nothing more can be released.
+        let released = 0;
+        try {
+          // eslint-disable-next-line no-await-in-loop
+          released = await this.releaseExpiredAssignments(1);
+        } catch (sweepError) {
+          console.warn('Failed to release expired participant allocations:', sweepError);
+        }
+        if (released === 0) throw error;
       }
-      initializedParticipant = await admit();
     }
 
     // Release other expired participants without delaying this one.
@@ -1844,60 +1978,40 @@ export abstract class StorageEngine {
 
   // Adds a participant tag to the current participant.
   async addParticipantTags(tags: string[]) {
-    await this.verifyStudyDatabase();
-    if (!this.participantData) {
-      throw new Error('Participant data not initialized');
-    }
-    this.participantData.participantTags = [...new Set([...this.participantData.participantTags, ...tags])];
-
-    await this.persistCurrentParticipantData({ immediate: true });
+    await this.persistCurrentParticipantData({ immediate: true }, (participant) => {
+      participant.participantTags = [...new Set([...participant.participantTags, ...tags])];
+    });
   }
 
   // Removes participant tags from the current participant.
   async removeParticipantTags(tags: string[]): Promise<void> {
-    await this.verifyStudyDatabase();
-
-    if (!this.participantData) {
-      throw new Error('Participant data not initialized');
-    }
-    this.participantData.participantTags = this.participantData.participantTags.filter((tag) => !tags.includes(tag));
-
-    await this.persistCurrentParticipantData({ immediate: true });
+    await this.persistCurrentParticipantData({ immediate: true }, (participant) => {
+      participant.participantTags = participant.participantTags.filter((tag) => !tags.includes(tag));
+    });
   }
 
   // Updates the participant's stored search params.
   async updateParticipantSearchParams(searchParams: Record<string, string>) {
-    await this.verifyStudyDatabase();
-
-    if (!this.participantData) {
-      throw new Error('Participant data not initialized');
-    }
-
-    this.participantData.searchParams = searchParams;
-
-    await this.persistCurrentParticipantData({ immediate: true });
+    await this.persistCurrentParticipantData({ immediate: true }, (participant) => {
+      participant.searchParams = searchParams;
+    });
   }
 
   async updateParticipantMetadata(metadata: ParticipantMetadata) {
+    const { studyId, currentParticipantId } = this;
     await this.verifyStudyDatabase();
-
-    if (!this.participantData) {
-      throw new Error('Participant data not initialized');
-    }
-
-    this.participantData.metadata = metadata;
-
-    if (!this.studyId) {
+    if (!studyId) {
       throw new Error('Study ID is not set');
     }
-
-    const modes = await this.getModes(this.studyId);
-    if (!modes.dataCollectionEnabled) {
-      await this.cacheParticipantDataSnapshot(this.participantData, this.currentParticipantId);
-      return;
-    }
-
-    await this.persistCurrentParticipantData({ immediate: false });
+    const modes = await this.getModes(studyId);
+    return this.updateParticipantDataLocally(studyId, currentParticipantId, async (assertCurrentSession) => {
+      if (!this.participantData) throw new Error('Participant data not initialized');
+      this.participantData.metadata = metadata;
+      const snapshot = cloneParticipantDataSnapshot(this.participantData);
+      await this.cacheParticipantDataSnapshot(snapshot, currentParticipantId);
+      assertCurrentSession();
+      if (modes.dataCollectionEnabled) this.scheduleParticipantDataWrite(snapshot);
+    });
   }
 
   async updateStudyCondition(condition: string | string[]) {
@@ -2182,6 +2296,81 @@ export abstract class StorageEngine {
   }
 
   // Save the answer into the local participant data and queue a debounced write to storage.
+  private localProvenanceKey(task: string, participantId: string) {
+    return `${this.collectionPrefix}${this.studyId}/participants/${participantId}/localProvenance/${task}`;
+  }
+
+  private queueGlobalStoreProvenance(participant: ParticipantData, graph: GlobalStoreGraph, tasks: string[]) {
+    const queueKey = `${this.studyId}/${participant.participantId}/${GLOBAL_STORE_TASK}`;
+    const pending = this.globalStorePendingTrials.get(queueKey) ?? new Map<string, number>();
+    tasks.forEach((task) => pending.set(task, Math.max(pending.get(task) ?? 0, participant.globalStoreRevision!)));
+    this.globalStorePendingTrials.set(queueKey, pending);
+    this.saveProvenance({ ...createEmptyProvenance(), globalStore: graph }, GLOBAL_STORE_TASK).catch(() => undefined);
+  }
+
+  /** Rebuild upload work from accepted local history after a reload loses in-memory retries. */
+  private async restoreGlobalStoreUploads(participant: ParticipantData) {
+    if (!participant.globalStoreRevision || !this.studyId) return;
+    const { studyId, currentParticipantId } = this;
+    const saved = await this.participantStore.getItem<StoredProvenance>(
+      this.localProvenanceKey(`${GLOBAL_STORE_TASK}/${participant.globalStoreRevision}`, participant.participantId),
+    );
+    if (!saved?.globalStore || !(await this.getModes(studyId)).dataCollectionEnabled) return;
+    const tasks = new Set(Object.values(getGlobalStoreNodeStates(saved.globalStore))
+      .flatMap((state) => (state.submission ? [state.submission.answer.identifier] : [])));
+    const retained = await Promise.all([...tasks].map(async (task) => ({
+      task, provenance: await this.participantStore.getItem<StoredProvenance>(this.localProvenanceKey(task, participant.participantId)),
+    })));
+    if (this.studyId !== studyId || this.currentParticipantId !== currentParticipantId) throw new Error('The participant session changed while restoring its interaction history.');
+    this.queueGlobalStoreProvenance(participant, saved.globalStore, retained.filter(({ provenance }) => normalizeStoredProvenance(provenance)).map(({ task }) => task));
+    this.scheduleParticipantDataWrite(participant);
+  }
+
+  /** Accept once locally. Cloud retries upload this snapshot and never rerun store actions. */
+  async saveGlobalStoreSubmission(
+    answers: ParticipantData['answers'],
+    graph: GlobalStoreGraph,
+    revision: number,
+    task: string,
+    provenance: StoredProvenance,
+  ) {
+    if (!this.participantData || !this.currentParticipantId) throw new Error('Participant not initialized');
+    if (this.participantData.rejected || this.participantData.finalized) throw new Error('This participant session is closed.');
+    const participantId = this.currentParticipantId;
+    const { studyId } = this;
+    const modes = await this.getModes(studyId!);
+    return this.updateParticipantDataLocally(studyId, participantId, async (assertCurrentSession) => {
+      const participantData = this.participantData!;
+      if (participantData.rejected || participantData.finalized) throw new Error('This participant session is closed.');
+      const snapshot: ParticipantData = {
+        ...participantData,
+        answers: structuredClone(answers),
+        globalVariables: structuredClone(getGlobalStoreNodeState(graph).values),
+        globalStoreHead: graph.current,
+        globalStoreRevision: revision,
+      };
+      // Assets may be ahead after a failed save. Only the accepted snapshot's head and
+      // source-node references decide what is restored, so the previous revision is safe.
+      await this.participantStore.setItem(this.localProvenanceKey(task, participantId), structuredClone(provenance));
+      assertCurrentSession();
+      await this.participantStore.setItem(this.localProvenanceKey(`${GLOBAL_STORE_TASK}/${revision}`, participantId), { globalStore: structuredClone(graph) });
+      assertCurrentSession();
+      await this.cacheParticipantDataSnapshot(snapshot, participantId, true);
+      assertCurrentSession();
+      const previousRevision = participantData.globalStoreRevision;
+      this.participantData = snapshot;
+      if (previousRevision) {
+        this.participantStore.removeItem(this.localProvenanceKey(`${GLOBAL_STORE_TASK}/${previousRevision}`, participantId))
+          .catch((error) => console.warn('Could not remove an obsolete local global-store snapshot:', error));
+      }
+      if (modes.dataCollectionEnabled) {
+        // Start tracking assets before the participant write/finalization can flush.
+        this.queueGlobalStoreProvenance(snapshot, graph, [task]);
+        this.scheduleParticipantDataWrite(snapshot);
+      }
+    });
+  }
+
   async saveAnswers(answers: ParticipantData['answers']) {
     if (!this.currentParticipantId || this.participantData === undefined) {
       throw new Error('Participant not initialized');
@@ -2192,6 +2381,9 @@ export abstract class StorageEngine {
       return;
     }
 
+    const { studyId, currentParticipantId } = this;
+    const revision = this.participantData.globalStoreRevision;
+
     const {
       answers: answersWithoutProvenance,
       provenanceByIdentifier,
@@ -2200,14 +2392,15 @@ export abstract class StorageEngine {
       ([taskName, provenanceGraph]) => this.saveProvenance(provenanceGraph, taskName),
     );
 
-    // Update the local copy of the participant data
-    this.participantData = {
-      ...this.participantData,
-      answers: answersWithoutProvenance,
-    };
-
-    await this.cacheParticipantDataSnapshot(this.participantData, this.currentParticipantId);
-    this.scheduleParticipantDataWrite(this.participantData);
+    await this.updateParticipantDataLocally(studyId, currentParticipantId, async (assertCurrentSession) => {
+      // A completed submission supersedes any earlier pending Check Answer draft.
+      if (this.participantData!.rejected || this.participantData!.globalStoreRevision !== revision) return;
+      const snapshot = { ...this.participantData!, answers: answersWithoutProvenance };
+      this.participantData = snapshot;
+      await this.cacheParticipantDataSnapshot(snapshot, currentParticipantId);
+      assertCurrentSession();
+      this.scheduleParticipantDataWrite(snapshot);
+    });
     await Promise.all(provenanceUploadPromises);
   }
 
@@ -2265,9 +2458,21 @@ export abstract class StorageEngine {
     if (studyIdToUse !== this.studyId) {
       await this.initializeStudyDb(studyIdToUse);
     }
+    if (participantIdToUse === this.currentParticipantId && this.participantData?.finalized) return true;
     const sequenceAssignment = await this._getSequenceAssignment(participantIdToUse);
 
     return sequenceAssignment ? sequenceAssignment.completed !== null : false;
+  }
+
+  private async markParticipantFinalized() {
+    if (!this.participantData) return;
+    const { studyId, currentParticipantId } = this;
+    await this.updateParticipantDataLocally(studyId, currentParticipantId, async (assertCurrentSession) => {
+      const snapshot = { ...this.participantData!, finalized: true };
+      await this.cacheParticipantDataSnapshot(snapshot, currentParticipantId, !!snapshot.globalStoreRevision);
+      assertCurrentSession();
+      this.participantData = snapshot;
+    });
   }
 
   async finalizeParticipant(): Promise<FinalizeParticipantResult> {
@@ -2292,11 +2497,13 @@ export abstract class StorageEngine {
 
     const modes = await this.getModes(this.studyId);
     if (!modes.dataCollectionEnabled) {
+      await this.markParticipantFinalized();
       return { status: 'complete' };
     }
 
     const alreadyCompleted = await this.getParticipantCompletionStatus();
     if (alreadyCompleted) {
+      await this.markParticipantFinalized();
       return { status: 'complete' };
     }
 
@@ -2314,6 +2521,7 @@ export abstract class StorageEngine {
         if (assignment?.rejected) throw new Error('This participant has been timed out or rejected');
         await this._completeCurrentParticipantRealtime();
       });
+      await this.markParticipantFinalized();
     } catch (error) {
       return {
         status: 'error',
@@ -2398,11 +2606,17 @@ export abstract class StorageEngine {
       throw new Error('Participant not initialized');
     }
 
+    const localTask = task === GLOBAL_STORE_TASK && this.participantData?.globalStoreRevision
+      ? `${task}/${this.participantData.globalStoreRevision}` : task;
+    const local = targetParticipantId === this.currentParticipantId
+      ? await this.participantStore.getItem<StoredProvenance>(this.localProvenanceKey(localTask, targetParticipantId)) : null;
+    if (local) return normalizeStoredProvenance(local);
     const provenanceObject = await this._getFromStorage(
       `provenance/${targetParticipantId}`,
       task,
       undefined,
       strict,
+      true,
     );
 
     if (strict && provenanceObject != null) {
@@ -2438,11 +2652,26 @@ export abstract class StorageEngine {
       return undefined;
     }
 
-    return this.trackAssetOperation(`provenance/${taskName}`, async () => {
+    const participantId = this.currentParticipantId;
+    const { studyId } = this;
+    const progress: GlobalStoreProgress | undefined = this.participantData ? {
+      globalStoreRevision: this.participantData.globalStoreRevision,
+      globalStoreHead: this.participantData.globalStoreHead,
+      finalized: this.participantData.finalized,
+      rejected: this.participantData.rejected,
+    } : undefined;
+    const assetKey = `provenance/${taskName}`;
+    const queueKey = `${studyId}/${participantId}/${taskName}`;
+    const previous = this.provenanceWriteChains.get(queueKey);
+    const write = this.trackAssetOperation(assetKey, async () => {
+      await previous?.catch(() => undefined);
+      this.clearAssetUploadError(assetKey);
+      this.failedAssetRetryOperations.delete(assetKey);
+      if (this.studyId !== studyId) throw new Error('The study changed before its interaction history was uploaded.');
       if (this.studyId === undefined) {
         throw new Error('Study ID is not set');
       }
-      if (!this.currentParticipantId) {
+      if (!participantId) {
         throw new Error('Participant not initialized');
       }
       const modes = await this.getModes(this.studyId);
@@ -2450,18 +2679,71 @@ export abstract class StorageEngine {
         throw new Error('Data collection is disabled for this study');
       }
 
-      await this._pushToStorage(
-        `provenance/${this.currentParticipantId}`,
-        taskName,
-        provenanceToSave as unknown as StorageObject<typeof taskName>,
-      );
+      const upload = (provenance = provenanceToSave) => this._pushToStorage(`provenance/${participantId}`, taskName, provenance as unknown as StorageObject<typeof taskName>);
+      if (progress?.globalStoreRevision !== undefined) {
+        await this._runWithLock(`participant-${participantId}`, async () => {
+          let uploadProgress = progress;
+          let provenance = provenanceToSave;
+          const current = this.participantData;
+          if (taskName !== GLOBAL_STORE_TASK && participantId === this.currentParticipantId
+            && current && (current.globalStoreRevision ?? 0) > progress.globalStoreRevision!) {
+            const accepted = await this.participantStore.getItem<StoredProvenance>(
+              this.localProvenanceKey(`${GLOBAL_STORE_TASK}/${current.globalStoreRevision}`, participantId),
+            );
+            if (progress.globalStoreHead && accepted?.globalStore?.nodes[progress.globalStoreHead]) {
+              // A later acceptance in this browser still needs its earlier trial assets.
+              uploadProgress = current;
+              provenance = normalizeStoredProvenance(await this.participantStore.getItem(this.localProvenanceKey(taskName, participantId))) ?? provenance;
+            }
+          }
+          await this.assertGlobalStoreUploadCurrent(participantId, uploadProgress, undefined, provenance.globalStore);
+          const pending = this.globalStorePendingTrials.get(queueKey);
+          const states = taskName === GLOBAL_STORE_TASK && provenance.globalStore
+            ? Object.values(getGlobalStoreNodeStates(provenance.globalStore)) : [];
+          const requiredTasks = new Set(states.flatMap((state) => (state.submission ? [state.submission.answer.identifier] : [])));
+          const trials = await Promise.all([...pending ?? []].filter(([task]) => requiredTasks.has(task)).map(async ([task, revision]) => ({
+            task,
+            revision,
+            provenance: normalizeStoredProvenance(await this.participantStore.getItem(this.localProvenanceKey(task, participantId))),
+          })));
+          // Validate every retained source before publishing any part of the matching boundary.
+          trials.forEach((trial) => {
+            states.filter((state) => state.submission?.answer.identifier === trial.task).forEach(({ submission }) => {
+              Object.entries(submission!.sourceNodes).forEach(([location, source]) => {
+                const graph = trial.provenance?.[location as keyof StoredProvenance];
+                if (!graph || graph.root !== source.root || !graph.nodes[source.current]) throw new Error('The accepted interaction state is missing.');
+              });
+            });
+          });
+          // Await all writes before releasing the lock, including when one of them fails.
+          const uploads = await Promise.allSettled(trials.map((trial) => (trial.provenance
+            ? this._pushToStorage(`provenance/${participantId}`, trial.task, trial.provenance as unknown as StorageObject<typeof trial.task>) : Promise.resolve())));
+          const failed = uploads.find((result): result is PromiseRejectedResult => result.status === 'rejected');
+          if (failed) throw failed.reason;
+          await upload(provenance);
+          trials.forEach(({ task, revision }) => {
+            if (pending?.get(task) === revision && revision <= progress.globalStoreRevision!) {
+              pending.delete(task);
+              this.clearAssetUploadError(`provenance/${task}`);
+              this.failedAssetRetryOperations.delete(`provenance/${task}`);
+            }
+          });
+          if (pending?.size === 0) this.globalStorePendingTrials.delete(queueKey);
+        });
+      } else {
+        await upload();
+      }
 
-      try {
-        await this._cacheStorageObject(`provenance/${this.currentParticipantId}`, taskName);
-      } catch (error) {
-        console.warn(`Failed to update cache headers for provenance ${taskName}:`, error);
+      if (progress?.globalStoreRevision === undefined) {
+        try {
+          await this._cacheStorageObject(`provenance/${participantId}`, taskName);
+        } catch (error) {
+          console.warn(`Failed to update cache headers for provenance ${taskName}:`, error);
+        }
       }
     });
+    this.provenanceWriteChains.set(queueKey, write);
+    return write;
   }
 
   // Gets the transcript download URL (currently only supported by Firebase)
@@ -2620,11 +2902,13 @@ export abstract class StorageEngine {
     this.clearPendingParticipantDataWriteTimer();
     this.pendingParticipantDataWrite = undefined;
     this.participantDataWriteChain = Promise.resolve();
+    this.localParticipantDataUpdateChain = Promise.resolve();
     this.participantDataWriteError = null;
     this.pendingAssetUploads.clear();
     this.pendingAssetOperations.clear();
     this.failedAssetUploads.clear();
     this.failedAssetRetryOperations.clear();
+    this.globalStorePendingTrials.clear();
     this.pendingProgressDataWrite = undefined;
     this.assetUploadActivityVersion = 0;
     this.participantData = undefined;

@@ -3,14 +3,14 @@
   "studyMetadata": {
     "title": "Reviewing Communication with Interactive Data Visualizations (Factors Demo)",
     "version": "pilot",
-    "authors": ["VDL"],
+    "authors": ["The reVISit Team"],
     "date": "2026-08-20",
     "description": "A factors-based version of the second visualization guardrails study.",
     "organizations": ["University of Utah"]
   },
   "uiConfig": {
     "contactEmail": "contact@revisit.dev",
-    "helpTextPath": "demo-max-study2/assets/help.md",
+    "helpTextPath": "test-max-study2/assets/help.md",
     "logoPath": "revisitAssets/revisitLogoSquare.svg",
     "withProgressBar": true,
     "autoDownloadStudy": false,
@@ -4167,7 +4167,7 @@
   "baseComponents": {
     "evaluationTrial": {
       "type": "react-component",
-      "path": "demo-max-study2/assets/DataExplorer.tsx",
+      "path": "test-max-study2/assets/DataExplorer.tsx",
       "instruction": "{{instruction}}",
       "instructionLocation": "aboveStimulus",
       "nextButtonLocation": "belowStimulus",
@@ -4295,12 +4295,12 @@
   "components": {
     "introduction": {
       "type": "markdown",
-      "path": "demo-max-study2/assets/introduction.md",
+      "path": "test-max-study2/assets/introduction.md",
       "response": []
     },
     "consent": {
       "type": "markdown",
-      "path": "demo-max-study2/assets/consent.md",
+      "path": "test-max-study2/assets/consent.md",
       "nextButtonText": "Agree",
       "response": [
         {
@@ -4325,7 +4325,7 @@
     },
     "task-introduction": {
       "type": "markdown",
-      "path": "demo-max-study2/assets/task-introduction.md",
+      "path": "test-max-study2/assets/task-introduction.md",
       "response": []
     },
     "viral-a-check-month": {
@@ -4378,7 +4378,7 @@
     },
     "post-study": {
       "type": "markdown",
-      "path": "demo-max-study2/assets/post-study.md",
+      "path": "test-max-study2/assets/post-study.md",
       "response": [
         {
           "id": "viz",

@@ -1,6 +1,7 @@
 /* eslint-disable no-await-in-loop */
 import { expect, Page, test } from '@playwright/test';
 import {
+  advanceStudyStep,
   nextClick,
   openStudyFromLanding,
   readStoredValue,
@@ -25,10 +26,12 @@ test('correlation trials accept intentional choices and persist matching respons
   page.on('pageerror', (error) => pageErrors.push(error.message));
   await resetClientStudyState(page);
   await openStudyFromLanding(page, 'Factor-demos', 'Correlation Judgements using Visualization');
-  await nextClick(page);
+  await expect(page.getByTestId('study-interface')).toHaveAttribute('aria-busy', 'false', { timeout: 30000 });
+  await advanceStudyStep(page);
   await page.getByRole('radio', { name: 'Yes', exact: true }).check();
-  await nextClick(page);
-  await nextClick(page);
+  await advanceStudyStep(page);
+  await expect(page.getByRole('heading', { name: 'Tutorial', exact: true })).toBeVisible();
+  await advanceStudyStep(page);
 
   const frame = page.frameLocator('#root iframe');
   const next = page.getByRole('button', { name: 'Next', exact: true });

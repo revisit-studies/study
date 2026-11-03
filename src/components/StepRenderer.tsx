@@ -9,6 +9,8 @@ import {
 import type { CSSProperties } from 'react';
 import debounce from 'lodash.debounce';
 import { IconArrowLeft, IconDotsVertical } from '@tabler/icons-react';
+import { useStartupInteractionBlocked } from './StartupContext';
+import { GlobalStoreHistory } from './interface/GlobalStoreHistory';
 import { AppAside } from './interface/AppAside';
 import { AppHeader } from './interface/AppHeader';
 import { AppNavBar } from './interface/AppNavBar';
@@ -48,6 +50,7 @@ export function StepRenderer() {
   const { storageEngine } = useStorageEngine();
 
   const isAnalysis = useIsAnalysis();
+  const startupInteractionBlocked = useStartupInteractionBlocked();
   const studyConfig = useStudyConfig();
   const studyColorMode = useComputedColorScheme('light');
   const currentComponent = useCurrentComponent();
@@ -221,7 +224,7 @@ export function StepRenderer() {
   const { developmentModeEnabled, dataCollectionEnabled } = useMemo(() => modes, [modes]);
 
   // No default value for withSidebar since it's a required field in uiConfig
-  const sidebarOpen = useMemo(() => ((((analysisHasScreenRecording || analysisHasWebcamRecording) && analysisCanPlayScreenRecording) || currentComponent === 'end') ? false : (componentConfig.withSidebar ?? studyConfig.uiConfig.withSidebar)), [analysisHasScreenRecording, analysisHasWebcamRecording, analysisCanPlayScreenRecording, currentComponent, componentConfig.withSidebar, studyConfig.uiConfig.withSidebar]);
+  const sidebarOpen = useMemo(() => ((((analysisHasScreenRecording || analysisHasWebcamRecording) && analysisCanPlayScreenRecording) || currentComponent === 'end' || (isCompleted && !isAnalysis)) ? false : (componentConfig.withSidebar ?? studyConfig.uiConfig.withSidebar)), [analysisHasScreenRecording, analysisHasWebcamRecording, analysisCanPlayScreenRecording, currentComponent, componentConfig.withSidebar, studyConfig.uiConfig.withSidebar, isCompleted, isAnalysis]);
   const sidebarWidth = useMemo(() => componentConfig?.sidebarWidth ?? studyConfig.uiConfig.sidebarWidth ?? 300, [componentConfig, studyConfig]);
   const showTitleBar = useMemo(() => componentConfig.showTitleBar ?? studyConfig.uiConfig.showTitleBar ?? true, [componentConfig, studyConfig]);
 
@@ -412,12 +415,14 @@ export function StepRenderer() {
                 </div>
               </header>
               <TrialProvenanceBoundary>
+                {!startupInteractionBlocked && (
                 <AppNavBar
                   width={sidebarWidth}
                   top={showTitleBar ? 70 : 0}
                   bottom={isAnalysis ? 125 + (hasAudio ? 55 : 0) : 0}
                   sidebarOpen={sidebarOpen}
                 />
+                )}
                 {/* 10px is the gap between the sidebar and the main content */}
                 <AppShell.Main
                   className="main"
@@ -448,13 +453,14 @@ export function StepRenderer() {
                       minWidth: 0,
                     }}
                   >
-                    <Outlet />
+                    {!startupInteractionBlocked && isAnalysis && <GlobalStoreHistory />}
+                    {!startupInteractionBlocked && <Outlet />}
                   </div>
                 </AppShell.Main>
               </TrialProvenanceBoundary>
             </Flex>
             {asideOpen && <AppAside />}
-            {isAnalysis && (
+            {!startupInteractionBlocked && isAnalysis && (
             <AnalysisFooter setHasAudio={setHasAudio} key={currentComponent} />
             )}
           </AppShell>

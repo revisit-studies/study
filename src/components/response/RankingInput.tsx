@@ -210,7 +210,7 @@ function RankingSublistComponent({
         </DroppableZone>
       </Stack>
 
-      <DragOverlay>
+      <DragOverlay className="ranking-drag-overlay">
         {activeItem ? <SortableItem item={activeItem} /> : undefined}
       </DragOverlay>
     </DndContext>
@@ -314,7 +314,7 @@ function RankingCategoricalComponent({
         ))}
       </Stack>
 
-      <DragOverlay>
+      <DragOverlay className="ranking-drag-overlay">
         {activeItem ? <SortableItem item={activeItem} /> : undefined}
       </DragOverlay>
     </DndContext>
@@ -653,7 +653,7 @@ function RankingPairwiseComponent({
         </DroppableZone>
       </Stack>
 
-      <DragOverlay>
+      <DragOverlay className="ranking-drag-overlay">
         {activeItem ? <SortableItem item={activeItem} /> : undefined}
       </DragOverlay>
     </DndContext>

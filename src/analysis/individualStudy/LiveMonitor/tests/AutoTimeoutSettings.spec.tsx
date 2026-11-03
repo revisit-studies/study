@@ -77,6 +77,8 @@ function makeEngine(overrides: Partial<{
   setAutoTimeoutMinutes: ReturnType<typeof vi.fn>;
 }> = {}) {
   return {
+    initializeStudyDb: vi.fn().mockResolvedValue(undefined),
+    releaseExpiredAssignments: vi.fn().mockResolvedValue(0),
     getModes: vi.fn().mockResolvedValue({ autoTimeoutMinutes: undefined }),
     setAutoTimeoutMinutes: vi.fn().mockResolvedValue(undefined),
     ...overrides,
@@ -110,6 +112,20 @@ beforeEach(() => { mockUser = { isAdmin: true }; });
 afterEach(() => { cleanup(); vi.clearAllMocks(); });
 
 describe('AutoTimeoutSettings', () => {
+  test('initializes the study and releases expired allocations when an admin opens the monitor', async () => {
+    const engine = makeEngine();
+    await renderSettings(engine);
+    expect(engine.initializeStudyDb).toHaveBeenCalledWith('test-study');
+    expect(engine.releaseExpiredAssignments).toHaveBeenCalledOnce();
+  });
+
+  test('does not release allocations for a non-admin', async () => {
+    mockUser = { isAdmin: false };
+    const engine = makeEngine();
+    await renderSettings(engine);
+    expect(engine.releaseExpiredAssignments).not.toHaveBeenCalled();
+  });
+
   test('explains the fresh-stage requirement and rolls back the toggle', async () => {
     vi.spyOn(console, 'error').mockImplementation(() => {});
     const engine = makeEngine({ setAutoTimeoutMinutes: vi.fn().mockRejectedValue(new LegacyAutoTimeoutStageError()) });

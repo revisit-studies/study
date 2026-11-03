@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { readStoredValue } from './utils';
 
 test('keeps landing visibility and data sharing independent while allowing direct study links', async ({ page }) => {
   await page.route('**/global.json', async (route) => {
@@ -14,7 +15,12 @@ test('keeps landing visibility and data sharing independent while allowing direc
   });
 
   await page.goto('/demo-html');
+  await expect(page.getByTestId('study-interface')).toHaveAttribute('aria-busy', 'false', { timeout: 30000 });
   await expect(page.getByText(/example study.*embed html elements/i)).toBeVisible();
+  await expect.poll(async () => {
+    const assignments = await readStoredValue<Record<string, { timestamp: number }>>(page, 'dev-demo-html/sequenceAssignment');
+    return Object.values(assignments ?? {}).some(({ timestamp }) => timestamp > 0);
+  }, { timeout: 15000 }).toBe(true);
   await page.goto('/analysis/stats/demo-html/manage');
   const manageCards = page.getByRole('tabpanel', { name: 'Manage', exact: true }).locator('.mantine-Paper-root');
   await expect(manageCards.first().getByRole('heading', { name: 'ReVISit Modes', exact: true })).toBeVisible({ timeout: 15000 });

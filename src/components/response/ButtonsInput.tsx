@@ -211,13 +211,12 @@ export function ButtonsInput({
                       size="xs"
                       aria-hidden="true"
                       style={{
-                        // backgroundColor: 'transparent',
                         color: 'inherit',
                         boxShadow: 'none',
                         border: 'none',
                         fontSize: '12px',
                         fontWeight: 600,
-                        padding: '0 12px',
+                        padding: '0 10px',
                         alignSelf: 'stretch',
                         display: 'flex',
                         alignItems: 'center',

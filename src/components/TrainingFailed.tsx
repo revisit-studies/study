@@ -1,18 +1,20 @@
 import { Text } from '@mantine/core';
 import { useEffect } from 'react';
+import { useStartupInteractionBlocked } from './StartupContext';
 import { useStorageEngine } from '../storage/storageEngineHooks';
 
 export function TrainingFailed() {
   const { storageEngine } = useStorageEngine();
+  const startupInteractionBlocked = useStartupInteractionBlocked();
 
   useEffect(() => {
-    if (storageEngine) {
+    if (!startupInteractionBlocked && storageEngine) {
       storageEngine.rejectCurrentParticipant('Failed training')
         .catch(() => {
           console.error('Failed to reject participant who failed training');
         });
     }
-  }, [storageEngine]);
+  }, [startupInteractionBlocked, storageEngine]);
 
   return (
     <Text>

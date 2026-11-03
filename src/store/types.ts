@@ -2,8 +2,9 @@
 import type { ProvenanceGraph } from '@trrack/core/graph/graph-slice';
 import type { ConfigureTrrackOptions, Trrack } from '@trrack/core';
 import type { GetInputPropsReturnType } from '@mantine/form/lib/types';
+import type { GlobalStoreGraph, GlobalStoreProvenanceState } from './globalStoreProvenance';
 import type {
-  Answer, ComponentBlock, ConfigResponseBlockLocation, CustomResponse, InterruptionBlock, JsonValue, ParsedStringOption, ParticipantData, ResponseBlockLocation, SkipConditions, StudyConfig, ValueOf,
+  GlobalStoreValues, Answer, ComponentBlock, ConfigResponseBlockLocation, CustomResponse, InterruptionBlock, JsonValue, ParsedStringOption, ParticipantData, ResponseBlockLocation, SkipConditions, StudyConfig, ValueOf,
 } from '../parser/types';
 import { type REVISIT_MODE } from '../storage/engines/types';
 import type { StimulusIssueReason } from '../components/response/stimulusErrors';
@@ -31,8 +32,11 @@ export type ProvenanceTraversalEvent = {
 
 export type TrrackedProvenance = ProvenanceGraph<any, any> & {
   traversalEvents?: ProvenanceTraversalEvent[];
+  /** Transient restoration instruction; consumed before publishing a fresh execution. */
+  resetToInitialState?: boolean;
 };
-export type StoredProvenance = Record<ResponseBlockLocation, TrrackedProvenance | undefined>;
+export type StoredProvenance = Record<ResponseBlockLocation, TrrackedProvenance | undefined> & { globalStore?: GlobalStoreGraph };
+export type ProvenanceLocation = ResponseBlockLocation | 'globalStore';
 
 // timestamp, event type, event data
 type FocusEvent = [number, 'focus', string];
@@ -61,7 +65,7 @@ export type ValidationStatus = {
   /** Whether this location has initialized its form values, so answers cleared by visibleIf are not restored from saved answers or defaults. */
   initialized?: boolean;
 }
-export type AssetStatus = 'loading' | 'ready' | 'error';
+export type AssetStatus = 'loading' | 'ready' | 'missing' | 'error';
 
 export type TrialValidation = Record<
   string,
@@ -76,7 +80,7 @@ export type TrialValidation = Record<
 >;
 
 /**
- * The StoredAnswer object is a data structure describing the participant's interaction with an individual component. It is the data structure used as values of the `answers` object of [ParticipantData](../ParticipantData). The general structure for this is below:
+ * The StoredAnswer object is a data structure describing the participant's interaction with an individual component. It is the data structure used as values of the `answers` object of {@link ParticipantData}. The general structure for this is below:
  *
  * ```json
  * {
@@ -92,11 +96,15 @@ export type TrialValidation = Record<
  *   ]
  * }
  * ```
- * The `answer` object here uses the "id" in the [Response](../BaseResponse) list of the component in your [StudyConfiguration](../StudyConfig) as its keys. It then contains a list of the answers given. You are also given a start and end time for the participant's interaction with the component. Lastly, a set of windowEvents is given. Below is an example of the windowEvents list.
+ * The `answer` object here uses the "id" in the {@link BaseResponse} list of the component in your {@link StudyConfig} as its keys. It then contains a list of the answers given. You are also given a start and end time for the participant's interaction with the component. Lastly, a set of windowEvents is given. Below is an example of the windowEvents list.
  *
  * Each item in the window event is given a time, a position an event name, and some extra information for the event (for mouse events, this is the location).
  */
 export interface StoredAnswer {
+  /** Active projection of the entry state for validation/analysis. Provenance remains canonical. */
+  globalStoreEntry?: GlobalStoreValues;
+  /** Recording/transcription key for this accepted entry. Legacy records use identifier. */
+  assetIdentifier?: string;
   /** Object whose keys are the "id"s in the Response list of the component in the StudyConfig and whose value is the inputted value from the participant. */
   answer: Record<string, JsonValue>;
   identifier: string;
@@ -181,7 +189,7 @@ export interface CheckAnswerState {
   attemptsUsed: number;
   /** Whether every response was correct at the last check. */
   correct: boolean;
-  /** The correctness of each response at the last check. Keys are the "id"s in the [Response](../BaseResponse) list of the component in your [StudyConfiguration](../StudyConfig); values indicate whether that response was correct. */
+  /** The correctness of each response at the last check. Keys are the "id"s in the {@link BaseResponse} list of the component in your {@link StudyConfig}; values indicate whether that response was correct. */
   responses: Record<string, boolean>;
   /** Fractional score for each checked response, when custom scoring is configured. */
   scores?: Record<string, number>;
@@ -192,6 +200,7 @@ export interface CheckAnswerState {
 }
 
 export interface JumpFunctionParameters<T> {
+  store: Readonly<GlobalStoreValues>;
   answers: ParticipantData['answers'],
   customParameters: T,
   currentStep: number,
@@ -208,7 +217,12 @@ export type UseTrrack = <State, Event extends string = string>(
   options: ConfigureTrrackOptions<State, Event>,
 ) => Trrack<State, Event>;
 
+export type GlobalStoreUpdater = (context: { store: Readonly<GlobalStoreValues>; answers: Readonly<StoredAnswer['answer']> }) => GlobalStoreValues | Promise<GlobalStoreValues>;
+export type RegisterGlobalStoreUpdater = (updater: GlobalStoreUpdater) => () => void;
+
 export interface StimulusParams<T, S = never> {
+  globalVariables: Readonly<GlobalStoreValues>;
+  registerGlobalStoreUpdater: RegisterGlobalStoreUpdater;
   parameters: T;
   provenanceState?: S;
   answers: ParticipantData['answers'];
@@ -279,6 +293,13 @@ export type FormElementProvenance = {
 };
 export type AlertModalState = { show: boolean, message: string, title: string };
 export interface StoreState {
+  globalVariables?: GlobalStoreValues;
+  globalStoreGraph?: GlobalStoreGraph;
+  globalStoreRevision?: number;
+  globalStoreSubmitting?: boolean;
+  globalStorePendingIdentifier?: string;
+  globalStorePendingRevision?: number;
+  globalStoreError?: string;
   studyId: string;
   participantId: string;
   answers: ParticipantData['answers'];
@@ -293,8 +314,9 @@ export interface StoreState {
   checkAnswer: Record<string, CheckAnswerState>;
   reactiveAnswers: Record<string, ValueOf<StoredAnswer['answer']>>;
   metadata: ParticipantMetadata;
-  analysisProvState: Record<ConfigResponseBlockLocation, FormElementProvenance | undefined> & { stimulus: unknown | undefined };
+  analysisProvState: Record<ConfigResponseBlockLocation, FormElementProvenance | undefined> & { stimulus: unknown | undefined; globalStore?: GlobalStoreProvenanceState };
   analysisIsPlaying: boolean;
+  analysisGlobalStoreIdentifier?: string;
   analysisHasAudio: boolean;
   analysisHasScreenRecording: boolean;
   analysisHasWebcamRecording: boolean;

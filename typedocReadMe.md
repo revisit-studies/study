@@ -65,14 +65,14 @@ Likert-style rating scales:
 - [LikertResponse](interfaces/LikertResponse.md)
 
 Matrix-style options that can be used for numerical or categorical responses:
-- [MatrixResponse](interfaces/MatrixResponse.md)
+- [MatrixResponse](type-aliases/MatrixResponse.md)
 
 You can specify numerical and textual responses through those interfaces:
 - [NumberOption](interfaces/NumberOption.md)
 - [StringOption](interfaces/StringOption.md)
 
 Ranking-style options that let participants order or compare items:
-- [RankingResponse](interfaces/RankingResponse.md)
+- [RankingResponse](type-aliases/RankingResponse.md)
 
 There is also a response that doesn't actually take a response, which is useful when you want to show some text in the middle of a form:
 - [TextOnlyResponse](interfaces/TextOnlyResponse.md)
@@ -83,6 +83,24 @@ Sequencing determines the order in which components appear.
 
 - [ComponentBlock](interfaces/ComponentBlock.md) — The ComponentBlock interface is used to define order properties within the sequence.
 - [DynamicBlock](interfaces/DynamicBlock.md) — The DynamicBlock interface is used to dynamically define the sequence of components based on previous responses or other factors.
+
+### Factors
+
+Declare reusable conditions in `StudyConfig.factors`, then use a factor block in the sequence to materialize components for those conditions. Factors are study configuration, not a mutable participant store.
+
+- [Factor](type-aliases/Factor.md) — The supported forms of a factor definition.
+- [OrderedFactorValues](interfaces/OrderedFactorValues.md) — Explicit levels with participant-level ordering and sampling.
+- [FactorBlock](interfaces/FactorBlock.md) — The sequence block that uses a factor.
+- [FactorExpression](type-aliases/FactorExpression.md) — Factor operations, including combinations, filtering, sampling, and repetition. Its linked interfaces document the fields for each operation.
+- [StudyConfig.betweenSubjects](interfaces/StudyConfig.md#betweensubjects) — Participant-level condition assignment.
+
+These are the JSON configuration types. The ReVISitPy `PermuteFactors` reference describes a Python helper; it is not the definition of `StudyConfig.factors`.
+
+## HTML Component API
+
+- [Revisit.postAnswers](documents/Revisit.postAnswers.md) — Send answers from an embedded HTML stimulus, including payload format, replacement behavior, and restoration when navigating back.
+
+## Sequence Interruptions and Skipping
 
 Interruptions augment the sequence with components that are inserted either randomly or deterministically. These might be for breaks or attention checks.
 

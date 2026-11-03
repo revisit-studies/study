@@ -72,6 +72,18 @@ export function AutoTimeoutSettings({
     return () => { cancelled = true; };
   }, [storageEngine, studyId, loadAttempt]);
 
+  // Release expired participants when the monitor opens, so their status is
+  // current even if nobody new has joined the study.
+  useEffect(() => {
+    if (!storageEngine || !studyId || !user.isAdmin) return;
+    const releaseExpiredAssignments = async () => {
+      await storageEngine.initializeStudyDb(studyId);
+      await storageEngine.releaseExpiredAssignments();
+    };
+    releaseExpiredAssignments()
+      .catch((sweepError) => console.warn('Failed to release expired participant allocations:', sweepError));
+  }, [storageEngine, studyId, user.isAdmin]);
+
   const save = useCallback(async (updatedMinutes: number | undefined) => {
     if (!storageEngine || !studyId || !user.isAdmin) return;
     const contextVersion = contextVersionRef.current;
@@ -129,7 +141,7 @@ export function AutoTimeoutSettings({
       >
         <Stack gap="md">
           <Text size="sm">
-            On the next new participant assignment, participants who started more than
+            When a new participant starts or an administrator opens this monitor, participants who started more than
             {' '}
             {draftMinutes}
             {' '}
@@ -153,7 +165,7 @@ export function AutoTimeoutSettings({
           <Stack gap={2}>
             <Title order={5} size="h5">Auto-timeout</Title>
             <Text size="sm" c="dimmed">
-              When a new participant starts, people who began more than this long ago no longer count toward participant limits. Timed-out participants can still finish normally.
+              When a new participant starts or an administrator opens this monitor, people who began more than this long ago no longer count toward participant limits. Timed-out participants can still finish normally.
             </Text>
           </Stack>
           <Group align="center" wrap="nowrap">

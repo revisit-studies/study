@@ -36,6 +36,9 @@
       fn(message);
     }
   };
+  let onGlobalVariablesReceiveCallback = null;
+  let globalStoreUpdater = null;
+  let globalStore;
   const managedTrrackSubscriptions = new Set();
   const managedTrracks = new Set();
   let restoreCallback = null;
@@ -45,14 +48,15 @@
   let restoring = false;
   let restored = false;
   let queuedAnswers;
+  let latestAnswers;
   let legacyMode = false;
   const documentId = crypto.randomUUID?.() ?? `document-${Date.now()}-${Math.random()}`;
   let announced = null;
   const announce = () => {
-    const version = registrationStarted || registrationComplete || restoreCallback ? 1 : 0;
+    const version = registrationStarted || registrationComplete || restoreCallback || globalStoreUpdater ? 1 : 0;
     if (announced === version) return;
     announced = version;
-    sendMessage('WINDOW_READY', { protocolVersion: version, documentId });
+    sendMessage('WINDOW_READY', { protocolVersion: version, documentId, globalStoreUpdater: !!globalStoreUpdater });
   };
 
   const beginRegistration = () => {
@@ -63,6 +67,7 @@
 
   const publish = (tag, message) => {
     if (resume?.isAnalysis) return;
+    if (tag === 'ANSWERS') latestAnswers = message;
     if (!legacyMode && (registrationStarted || managedTrracks.size > 0 || restoreCallback)) {
       if (!restored || restoring) {
         if (tag === 'ANSWERS') queuedAnswers = message;
@@ -80,12 +85,18 @@
     sendMessage('RESTORATION_CAPABILITY', { protocolVersion: 1, requestId: request.requestId, supported });
     try {
       if (supported && !request.isAnalysis) {
-        if (request.provenanceGraph || Object.keys(request.answers ?? {}).length > 0) queuedAnswers = undefined;
+        if (request.provenanceGraph || Object.keys(request.answers ?? {}).length > 0) {
+          queuedAnswers = undefined;
+          latestAnswers = request.answers;
+        }
         for (const managed of managedTrracks) {
           if (request.provenanceGraph) {
             managed.previous = request.provenanceGraph;
-            const graph = structuredClone(request.provenanceGraph);
+            const { resetToInitialState, ...graph } = structuredClone(request.provenanceGraph);
             managed.trrack.graph.update(managed.trrack.graph.load(graph));
+            if (resetToInitialState) {
+              managed.trrack.record({ label: 'Start revised trial', state: structuredClone(managed.initialState), eventType: '__revisit_trial_reset', sideEffects: { do: [], undo: [] } });
+            }
           }
         }
         await restoreCallback?.({
@@ -101,7 +112,7 @@
         if (queuedAnswers !== undefined) sendMessage('ANSWERS', queuedAnswers);
         managedTrracks.forEach((managed) => {
           // Existing graphs are already retained by the host. Only new trials need an initial graph.
-          if (!request.provenanceGraph) managed.publish();
+          if (!request.provenanceGraph || request.provenanceGraph.resetToInitialState) managed.publish();
         });
       }
     } catch {
@@ -161,6 +172,15 @@
           resume = data.message;
           restored = false;
           restore();
+        } else if (restored) {
+          // A cached document returns with the same request; acknowledge without resetting its state.
+          const supported = !!restoreCallback;
+          sendMessage('RESTORATION_CAPABILITY', { protocolVersion: 1, requestId: resume.requestId, supported });
+          if (supported) sendMessage('RESTORED', { protocolVersion: 1, requestId: resume.requestId });
+          if (!resume.isAnalysis) {
+            if (latestAnswers !== undefined) sendMessage('ANSWERS', latestAnswers);
+            managedTrracks.forEach((managed) => managed.publish());
+          }
         }
       }
       if (data.type === `${PREFIX}/RETRY_RESTORE` && data.message?.requestId === resume?.requestId) restore();
@@ -170,10 +190,40 @@
         if (callback) callback(data.message);
         else if (registrationStarted) pendingMessages.set(tag, data.message);
       });
+      if (data.type === `${PREFIX}/GLOBAL_STORE`) {
+        globalStore = Object.freeze({ ...data.message });
+        onGlobalVariablesReceiveCallback?.(globalStore);
+      }
+      if (data.type === `${PREFIX}/GLOBAL_STORE_UPDATE` && data.message?.documentId === documentId && !resume?.isAnalysis) {
+        const request = data.message;
+        Promise.resolve().then(() => {
+          if (!globalStoreUpdater) throw new Error('The global store updater is no longer registered.');
+          return globalStoreUpdater({ store: Object.freeze({ ...request.store }), answers: Object.freeze(request.answers) });
+        }).then((value) => sendMessage('GLOBAL_STORE_RESULT', { requestId: request.requestId, documentId, value }))
+          .catch((error) => sendMessage('GLOBAL_STORE_RESULT', { requestId: request.requestId, documentId, error: error.message || 'The global store updater failed.' }));
+      }
     }
   });
 
   window.Revisit = {
+    onGlobalVariablesReceive: (fn) => {
+      onGlobalVariablesReceiveCallback = fn;
+      if (globalStore !== undefined) fn(globalStore);
+      return () => { if (onGlobalVariablesReceiveCallback === fn) onGlobalVariablesReceiveCallback = null; };
+    },
+    registerGlobalStoreUpdater: (fn) => {
+      if (globalStoreUpdater) throw new Error('Only one global store updater may be registered for a stimulus.');
+      globalStoreUpdater = fn;
+      if (!registrationStarted) registrationComplete = true;
+      announced = null;
+      announce();
+      restore();
+      return () => {
+        if (globalStoreUpdater !== fn) return;
+        globalStoreUpdater = null;
+        sendMessage('GLOBAL_STORE_UPDATER', { documentId, enabled: false });
+      };
+    },
     postAnswers: (answers) => {
       publish("ANSWERS", answers);
     },
@@ -189,7 +239,7 @@
       }
 
       const trrack = initializeTrrack(options);
-      const managed = { trrack, previous: undefined, publish: null };
+      const managed = { trrack, initialState: structuredClone(options.initialState), previous: undefined, publish: null };
       managedTrracks.add(managed);
       const publishProvenance = () => {
         const provenance = appendTraversalEvent(
@@ -253,8 +303,16 @@
     false
   );
   window.addEventListener('pagehide', (event) => {
+    if (globalStoreUpdater) sendMessage('GLOBAL_STORE_UPDATER', { documentId, enabled: false });
     if (!event.persisted) {
       disposeManagedTrracks();
+    }
+  });
+  window.addEventListener('pageshow', (event) => {
+    if (event.persisted) {
+      announced = null;
+      announce();
+      if (legacyMode && latestAnswers !== undefined) sendMessage('ANSWERS', latestAnswers);
     }
   });
 })();

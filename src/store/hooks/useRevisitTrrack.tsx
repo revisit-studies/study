@@ -58,7 +58,7 @@ export function useManagedTrrack<State, Event extends string = string>(
     };
 
     const unsubscribe = trrack.currentChange(publishProvenance);
-    if (!retainedProvenance) publishProvenance();
+    if (!retainedProvenance || retainedProvenance.resetToInitialState) publishProvenance();
 
     return () => {
       unsubscribe();

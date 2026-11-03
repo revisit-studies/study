@@ -555,7 +555,7 @@ describe.each([
 
   test('an initial upload failure frees its transactional reservation for a replacement', async () => {
     await storageEngine.setCurrentStage(studyId, 'LIMITED', '#00AAFF', 1);
-    // @ts-expect-error Inject an upload failure after the Firestore reservation commits.
+    // Inject an upload failure after the Firestore reservation commits.
     const write = vi.spyOn(storageEngine, '_pushToStorage');
     write.mockRejectedValueOnce(new Error('upload failed'));
     await expect(storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'failed')).rejects.toThrow('upload failed');
@@ -565,7 +565,7 @@ describe.each([
 
   test('a confirmation failure retains the uploaded participant reservation for retry', async () => {
     await storageEngine.setCurrentStage(studyId, 'LIMITED', '#00AAFF', 1);
-    // @ts-expect-error Fail Firestore confirmation after the participant upload is acknowledged.
+    // Fail Firestore confirmation after the participant upload is acknowledged.
     vi.spyOn(storageEngine, 'confirmParticipantReservation').mockRejectedValueOnce(new Error('confirmation unavailable'));
     await expect(storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'retry')).rejects.toThrow('confirmation unavailable');
     expect((await storageEngine.getSequenceAssignment(studyId, 'retry'))?.rejected).toBe(false);
@@ -602,7 +602,7 @@ describe.each([
     const uploadStarted = new Promise<void>((resolve) => { uploading = resolve; });
     // @ts-expect-error Hold the first participant's upload while another joins.
     const upload = storageEngine._pushToStorage.bind(storageEngine);
-    // @ts-expect-error Keep the real participant and admission locks enabled.
+    // Keep the real participant and admission locks enabled.
     vi.spyOn(storageEngine, '_pushToStorage').mockImplementationOnce(async (path, type, data) => {
       uploading();
       await new Promise<void>((resolve) => { release = resolve; });
@@ -636,7 +636,7 @@ describe.each([
     const uploadStarted = new Promise<void>((resolve) => { uploading = resolve; });
     // @ts-expect-error Pause the first record upload before another startup reads it.
     const upload = storageEngine._pushToStorage.bind(storageEngine);
-    // @ts-expect-error Keep the actual locks enabled.
+    // Keep the actual locks enabled.
     vi.spyOn(storageEngine, '_pushToStorage').mockImplementationOnce(async (path, type, data) => {
       uploading();
       await new Promise<void>((resolve) => { releaseUpload = resolve; });
@@ -647,7 +647,7 @@ describe.each([
     const secondPaused = new Promise<void>((resolve) => { secondWaiting = resolve; });
     // @ts-expect-error Hold the second startup before its first lock acquisition.
     const runWithLock = second._runWithLock.bind(second);
-    // @ts-expect-error Let the first session save an answer before the delayed startup continues.
+    // Let the first session save an answer before the delayed startup continues.
     vi.spyOn(second, '_runWithLock').mockImplementationOnce(async (key, operation) => {
       secondWaiting();
       await new Promise<void>((resolve) => { resumeSecond = resolve; });
@@ -697,7 +697,7 @@ describe.each([
     let failUpload!: () => void;
     let firstUploading!: () => void;
     const firstStarted = new Promise<void>((resolve) => { firstUploading = resolve; });
-    // @ts-expect-error Fail the first upload only after the other client has joined.
+    // Fail the first upload only after the other client has joined.
     vi.spyOn(storageEngine, '_pushToStorage').mockImplementationOnce(async () => {
       firstUploading();
       await new Promise<void>((resolve) => { failUpload = resolve; });
@@ -708,7 +708,7 @@ describe.each([
     const secondStarted = new Promise<void>((resolve) => { secondUploading = resolve; });
     // @ts-expect-error Control the second upload independently of the first.
     const upload = second._pushToStorage.bind(second);
-    // @ts-expect-error Pause after the second reservation but before its upload.
+    // Pause after the second reservation but before its upload.
     vi.spyOn(second, '_pushToStorage').mockImplementationOnce(async (path, type, data) => {
       secondUploading();
       if (!successFirst) await new Promise<void>((resolve) => { finishSecond = resolve; });
@@ -842,7 +842,7 @@ describe.each([
     await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'finishing');
     // @ts-expect-error Inject completion after the UI/storage precheck but before the timeout transaction.
     const read = storageEngine._getSequenceAssignment.bind(storageEngine);
-    // @ts-expect-error Exercise an overlapping writer independently of the browser lease.
+    // Exercise an overlapping writer independently of the browser lease.
     vi.spyOn(storageEngine, '_getSequenceAssignment').mockImplementationOnce(async (participantId: string) => {
       const previous = await read(participantId);
       // @ts-expect-error Simulate completion from the participant's other session.
@@ -896,8 +896,7 @@ describe.each([
     await storageEngine._createSequenceAssignment('legacy-restored', assignment);
     await storageEngine.rejectParticipant('legacy-restored', 'review');
     await storageEngine.setAutoTimeoutMinutes(studyId, 1);
-    // @ts-expect-error Verify rejection is checked before rewriting saved answers.
-    const upload = vi.spyOn(storageEngine, '_pushToStorage');
+    const upload = vi.spyOn(storageEngine as unknown as { _pushToStorage: typeof storageEngine['_pushToStorage'] }, '_pushToStorage');
     await expect(storageEngine.undoRejectParticipant('legacy-restored')).rejects.toThrow('Create and activate a new stage');
     expect(upload).not.toHaveBeenCalled();
     expect((await storageEngine.getSequenceAssignment(studyId, 'legacy-restored'))?.rejected).toBe(true);
@@ -925,8 +924,7 @@ describe.each([
     await storageEngine.setAutoTimeoutMinutes(studyId, undefined);
     await storageEngine.setMode(studyId, 'dataCollectionEnabled', true);
     firestoreData[`dev-${studyId}/modes`].autoTimeoutMinutes = 1;
-    // @ts-expect-error Mock the backend clock, not the participant clock.
-    vi.spyOn(storageEngine, '_getServerTimeMs').mockResolvedValue(Date.now());
+    vi.spyOn(storageEngine as unknown as { _getServerTimeMs: typeof storageEngine['_getServerTimeMs'] }, '_getServerTimeMs').mockResolvedValue(Date.now());
     // Shell activates the deployed config before resuming saved participants.
     await storageEngine.saveConfig({ ...configSimple, studyMetadata: { ...configSimple.studyMetadata, title: 'Updated title' } });
     await storageEngine.saveConfig(configSimple);
@@ -1015,8 +1013,7 @@ describe.each([
     await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'auto-expired');
     // @ts-expect-error protected upload boundary
     const upload = storageEngine._pushToStorage.bind(storageEngine);
-    // @ts-expect-error Simulate the automatic sweep while the manual upload is in flight.
-    vi.spyOn(storageEngine, '_pushToStorage').mockImplementationOnce(async (path, type, data) => {
+    vi.spyOn(storageEngine as unknown as { _pushToStorage: typeof storageEngine['_pushToStorage'] }, '_pushToStorage').mockImplementationOnce(async (path, type, data) => {
       // @ts-expect-error protected backend mutation
       await storageEngine._markSequenceAssignmentTimedOut('auto-expired', Date.now());
       return upload(path, type, data);
@@ -1050,7 +1047,7 @@ describe.each([
     const started = new Promise<void>((resolve) => { uploading = resolve; });
     // @ts-expect-error Pause publication while the other client observes the missing array.
     const upload = storageEngine._pushToStorage.bind(storageEngine);
-    // @ts-expect-error Exercise the actual distributed lock.
+    // Exercise the actual distributed lock.
     vi.spyOn(storageEngine, '_pushToStorage').mockImplementationOnce(async (path, type, data) => {
       uploading();
       await new Promise<void>((resolve) => { release = resolve; });
@@ -1090,7 +1087,7 @@ describe.each([
     await storageEngine.setSequenceArray(canonical, configHash);
     if (lockedRecheck) vi.spyOn(storageEngine, 'getSequenceArray').mockResolvedValueOnce(null);
     const generate = vi.fn(() => generateSequenceArray(configSimple2));
-    // @ts-expect-error Failed reads must never result in a replacement upload.
+    // Failed reads must never result in a replacement upload.
     const upload = vi.spyOn(storageEngine, '_pushToStorage');
     failSequenceReads = true;
     try {
@@ -1108,7 +1105,7 @@ describe.each([
     const canonical = generateSequenceArray(configSimple);
     await storageEngine.setSequenceArray(canonical, configHash);
     const generate = vi.fn(() => generateSequenceArray(configSimple2));
-    // @ts-expect-error Existing arrays must take the normal read path without a lock.
+    // Existing arrays must take the normal read path without a lock.
     const lock = vi.spyOn(storageEngine, '_runWithLock');
     expect(await storageEngine.getOrCreateSequenceArray(configHash, generate)).toEqual(canonical);
     expect(generate).not.toHaveBeenCalled();
@@ -1118,7 +1115,7 @@ describe.each([
   test('failed publication releases the preparation lock for a retry', async () => {
     const configHash = await hash(JSON.stringify(configSimple));
     const canonical = generateSequenceArray(configSimple);
-    // @ts-expect-error A failed first upload must not leave the preparation lock held.
+    // A failed first upload must not leave the preparation lock held.
     vi.spyOn(storageEngine, '_pushToStorage').mockRejectedValueOnce(new Error('upload failed'));
     await expect(storageEngine.getOrCreateSequenceArray(configHash, () => canonical)).rejects.toThrow('upload failed');
     await expect(storageEngine.getOrCreateSequenceArray(configHash, () => canonical)).resolves.toEqual(canonical);
@@ -1167,7 +1164,7 @@ describe.each([
     await storageEngine.saveConfig(original);
     await storageEngine.setSequenceArray(generateSequenceArray(original));
     await storageEngine.initializeParticipantSession({}, original, participantMetadata, 'first');
-    // @ts-expect-error Inject an upload failure after append-only validation.
+    // Inject an upload failure after append-only validation.
     vi.spyOn(storageEngine, '_pushToStorage').mockRejectedValueOnce(new Error('config upload failed'));
     await expect(storageEngine.saveConfig(appended)).rejects.toThrow('config upload failed');
     await expect(storageEngine.saveConfig(original)).resolves.toBeUndefined();
@@ -1336,7 +1333,7 @@ describe.each([
   test('an orphan recheck read failure leaves the assignment reserved', async () => {
     await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'recheck-active');
     await storageEngine.clearCurrentParticipantId();
-    // @ts-expect-error Simulate an initially absent blob followed by a failing admission-lock recheck.
+    // Simulate an initially absent blob followed by a failing admission-lock recheck.
     vi.spyOn(storageEngine, '_getFromStorage').mockResolvedValueOnce({});
     failParticipantReads = true;
     try {
@@ -1389,7 +1386,7 @@ describe.each([
     await storageEngine.saveConfig(config);
     const stage = (await storageEngine.getStageData(studyId)).allStages[0];
     const a = getBetweenSubjectsCombinationKey({ group: 'A' }, ['group']);
-    // @ts-expect-error Do not fall back to stale keys if the authoritative config is unavailable.
+    // Do not fall back to stale keys if the authoritative config is unavailable.
     vi.spyOn(storageEngine, '_getFromStorage').mockResolvedValueOnce({});
     await expect(storageEngine.setStageDesiredParticipants(studyId, 'DEFAULT', a, 6, { [a]: 5 })).rejects.toThrow(/configuration could not be loaded/);
     expect((await storageEngine.getStageData(studyId)).allStages[0]).toEqual(stage);
@@ -1450,14 +1447,12 @@ describe.each([
     const path = Object.keys(firestoreData).find((key) => key.endsWith(`/sequenceAssignment/${first.participantId}`))!;
     firestoreData[path].createdTime = Timestamp.fromMillis(Date.now() - 120_000);
     await storageEngine.setAutoTimeoutMinutes(studyId, 1);
-    // @ts-expect-error Mock the trusted backend clock at the external boundary.
-    vi.spyOn(storageEngine, '_getServerTimeMs').mockResolvedValue(Date.now());
+    vi.spyOn(storageEngine as unknown as { _getServerTimeMs: typeof storageEngine['_getServerTimeMs'] }, '_getServerTimeMs').mockResolvedValue(Date.now());
     // A failed initial upload can release the old reservation, then a retry
     // replaces it at the same document ID after the sweep selected it.
     // @ts-expect-error protected test seam
     const mark = storageEngine._markSequenceAssignmentTimedOut.bind(storageEngine);
-    // @ts-expect-error protected test seam
-    vi.spyOn(storageEngine, '_markSequenceAssignmentTimedOut').mockImplementationOnce(async (...args: [string, number, number?]) => {
+    vi.spyOn(storageEngine as unknown as { _markSequenceAssignmentTimedOut: typeof storageEngine['_markSequenceAssignmentTimedOut'] }, '_markSequenceAssignmentTimedOut').mockImplementationOnce(async (...args: [string, number, number?]) => {
       firestoreData[path] = {
         ...firestoreData[path],
         createdTime: Timestamp.fromMillis(Date.now()),
@@ -1485,15 +1480,14 @@ describe.each([
       if (legacy && path.includes('/allocation/stages/')) delete firestoreData[path];
     });
     await storageEngine.setAutoTimeoutMinutes(studyId, 1);
-    // @ts-expect-error Mock only the external backend clock.
-    vi.spyOn(storageEngine, '_getServerTimeMs').mockResolvedValue(serverNow);
+    vi.spyOn(storageEngine as unknown as { _getServerTimeMs: typeof storageEngine['_getServerTimeMs'] }, '_getServerTimeMs').mockResolvedValue(serverNow);
     const historyReads = vi.mocked(getDocsFromServer);
     historyReads.mockClear();
     const scans = vi.spyOn(storageEngine, 'getAllSequenceAssignments');
     await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'new-participant');
     await storageEngine.releaseExpiredAssignments();
-    // Admission rebuilds a missing legacy allocation before the sweep needs it.
-    expect(historyReads).not.toHaveBeenCalled();
+    // A missing legacy allocation is bootstrapped once and then cached.
+    expect(historyReads).toHaveBeenCalledTimes(legacy ? 1 : 0);
     expect(scans).not.toHaveBeenCalled();
     const assignments = await storageEngine.getAllSequenceAssignments(studyId);
     expect(assignments.filter((assignment) => assignment.autoTimedOutAt !== undefined)).toHaveLength(3);
@@ -1502,8 +1496,95 @@ describe.each([
     expect(allocation.count).toBe(1);
     expect(Object.values(allocation.rowCounts).reduce((total, count) => total + count, 0)).toBe(1);
     expect(Object.values(allocation.combinationCounts).reduce((total, count) => total + count, 0)).toBe(1);
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'later-participant');
+    await storageEngine.releaseExpiredAssignments();
+    expect(historyReads).toHaveBeenCalledTimes(legacy ? 1 : 0);
   });
 
+  test.each(['early finish', 'recovered renewal', 'lost ownership'])('lock refresh handles %s', async (scenario) => {
+    vi.useFakeTimers();
+    try {
+      let finish!: (value: string) => void;
+      let started!: () => void;
+      const ready = new Promise<void>((resolve) => { started = resolve; });
+      // @ts-expect-error Exercise the distributed lock boundary.
+      const pending = storageEngine._runWithLock('review', () => {
+        started();
+        return new Promise<string>((resolve) => { finish = resolve; });
+      });
+      await ready;
+      if (scenario === 'lost ownership') {
+        firestoreData[`dev-${studyId}/locks`].review = { token: 'another-owner', expiresAt: Date.now() + 60_000 };
+      } else {
+        vi.mocked(runTransaction).mockRejectedValueOnce(new Error('temporary network failure'));
+      }
+      await vi.advanceTimersByTimeAsync(20_000);
+      if (scenario === 'recovered renewal') await vi.advanceTimersByTimeAsync(20_000);
+      const result = scenario === 'lost ownership'
+        ? expect(pending).rejects.toThrow('Study update lock was lost')
+        : expect(pending).resolves.toBe('saved');
+      finish('saved');
+      await result;
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  test('admission continues after restoring an unkeyed legacy row with timeout disabled', async () => {
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'legacy-restored');
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'expired');
+    await storageEngine.rejectParticipant('legacy-restored', 'test');
+    // @ts-expect-error Simulate an assignment written before order keys existed.
+    await storageEngine._updateSequenceAssignmentFields('legacy-restored', { sequenceKey: undefined, sequenceIndex: undefined });
+    // @ts-expect-error Exercise the timeout operation without a wall-clock wait.
+    await storageEngine._markSequenceAssignmentTimedOut('expired', Date.now());
+    await storageEngine.undoRejectParticipant('legacy-restored');
+    const history = vi.spyOn(storageEngine, 'getAllSequenceAssignments');
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'newcomer');
+    const bootstrapReads = history.mock.calls.length;
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'next-newcomer');
+    expect(history).toHaveBeenCalledTimes(bootstrapReads);
+    expect(await storageEngine.getSequenceAssignment(studyId, 'legacy-restored')).toMatchObject({ rejected: false });
+  });
+
+  test('rejecting a restored timed-out replacement does not release its source twice', async () => {
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'source');
+    await storageEngine.rejectParticipant('source', 'test');
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'replacement');
+    // @ts-expect-error Exercise the timeout operation without a wall-clock wait.
+    await storageEngine._markSequenceAssignmentTimedOut('replacement', Date.now());
+    await storageEngine.rejectParticipant('replacement', 'test');
+    expect(await storageEngine.getSequenceAssignment(studyId, 'source')).toMatchObject({ claimed: true });
+    await storageEngine.undoRejectParticipant('replacement');
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'newcomer');
+    await storageEngine.rejectParticipant('replacement', 'test again');
+    expect(await storageEngine.getSequenceAssignment(studyId, 'source')).toMatchObject({ claimed: true });
+    expect((await storageEngine.getSequenceAssignment(studyId, 'newcomer'))?.claimedParticipantId).not.toBe('source');
+  });
+
+  test('an expired enabled condition is released when only a disabled condition has room', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    try {
+      vi.spyOn(storageEngine as unknown as { _getServerTimeMs: typeof storageEngine['_getServerTimeMs'] }, '_getServerTimeMs').mockImplementation(async () => Date.now());
+      vi.setSystemTime(new Date('2026-01-01T00:00:00Z'));
+      const config: StudyConfig = { ...configSimple, factors: { group: ['A', 'B'] }, betweenSubjects: ['group'] };
+      await storageEngine.saveConfig(config);
+      await storageEngine.setSequenceArray(generateSequenceArray(config));
+      const [a, b] = ['A', 'B'].map((group) => getBetweenSubjectsCombinationKey({ group }, ['group']));
+      await storageEngine.setStageDesiredParticipants(studyId, 'DEFAULT', a, 1, { [a]: 1, [b]: 1 });
+      await storageEngine.setStageCombinationEnabled(studyId, 'DEFAULT', b, false);
+      await storageEngine.setAutoTimeoutMinutes(studyId, 1);
+      await storageEngine.initializeParticipantSession({}, config, participantMetadata, 'expired');
+      await storageEngine.releaseExpiredAssignments();
+      vi.setSystemTime(new Date('2026-01-01T00:02:00Z'));
+      await storageEngine.initializeParticipantSession({}, config, participantMetadata, 'newcomer');
+      expect((await storageEngine.getSequenceAssignment(studyId, 'expired'))?.autoTimedOutAt).toBeDefined();
+      expect((await storageEngine.getSequenceAssignment(studyId, 'newcomer'))?.betweenSubjectsCombinationKey).toBe(a);
+      await storageEngine.releaseExpiredAssignments();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
   test('restoring a rejected, timed-out participant succeeds after a newcomer reuses their slot', async () => {
     await storageEngine.setCurrentStage(studyId, 'LIMITED', '#ff0000', 1);
     await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'timed-out');
@@ -1543,8 +1624,7 @@ describe.each([
   test('progress updates do not take the participant lock', async () => {
     await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'progressing');
     await storageEngine.releaseExpiredAssignments();
-    // @ts-expect-error protected
-    const locks = vi.spyOn(storageEngine, '_runWithLock');
+    const locks = vi.spyOn(storageEngine as unknown as { _runWithLock: typeof storageEngine['_runWithLock'] }, '_runWithLock');
     await storageEngine.updateProgressData({ total: 3, answered: ['testComponent_0'], isDynamic: false }, 'progressing');
     expect(locks).not.toHaveBeenCalled();
     expect(await storageEngine.getSequenceAssignment(studyId, 'progressing')).toMatchObject({ total: 3, answered: ['testComponent_0'] });

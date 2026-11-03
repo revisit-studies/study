@@ -1,6 +1,7 @@
 import {
   ComponentType, Suspense, useCallback, useEffect, useMemo, useState,
 } from 'react';
+import { useGlobalStore, useGlobalStoreUpdaterRegistration } from '../store/hooks/useGlobalStore';
 import { ParticipantData, ReactComponent } from '../parser/types';
 import { StimulusParams, TrrackedProvenance } from '../store/types';
 import { ResourceNotFound } from '../ResourceNotFound';
@@ -28,6 +29,8 @@ const modules = import.meta.glob<{ default: ComponentType<StimulusParams<ReactCo
 );
 
 export function ReactComponentController({ currentConfig, provState, answers }: { currentConfig: ReactComponent; provState?: unknown, answers: ParticipantData['answers'] }) {
+  const globalVariables = useGlobalStore();
+  const registerGlobalStoreUpdater = useGlobalStoreUpdaterRegistration();
   const studyConfig = useStudyConfig();
   const templateData = useTemplateAnswerContext();
   const templatedPath = templateData ? compileTemplate(currentConfig.path, currentConfig.parameters ?? {}, { noEscape: true, data: templateData }) : undefined;
@@ -119,6 +122,8 @@ export function ReactComponentController({ currentConfig, provState, answers }: 
               >
                 {(useTrrack) => (
                   <StimulusComponent
+                    globalVariables={globalVariables}
+                    registerGlobalStoreUpdater={registerGlobalStoreUpdater}
                     parameters={currentConfig.parameters}
                     setAnswer={setAnswer}
                     answers={answers}

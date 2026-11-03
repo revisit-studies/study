@@ -463,3 +463,12 @@ test('a required scorer with no grade keeps mixed component correctness unknown'
     responses,
   )).toBeNull();
 });
+
+test('grading honors a global visibility condition using that trial entry projection', () => {
+  const responses: Response[] = [{
+    id: 'q', prompt: '', type: 'shortText', visibleIf: { globalVariable: 'eligible', comparison: 'equals', value: true },
+  }];
+  const correct = [{ id: 'q', answer: 'right' }];
+  expect(componentAnswersAreCorrect({ q: 'wrong' }, correct, responses, undefined, { eligible: true })).toBe(false);
+  expect(componentAnswersAreCorrect({}, correct, responses, undefined, { eligible: false })).toBe(true);
+});

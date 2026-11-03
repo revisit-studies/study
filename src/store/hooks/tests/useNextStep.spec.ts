@@ -50,7 +50,8 @@ vi.mock('react-router', () => ({
   useParams: () => ({ funcIndex: mockFuncIndex }),
 }));
 
-vi.mock('../../store', () => ({
+vi.mock('../../store', async (importOriginal) => ({
+  ...(await importOriginal() as object),
   useStoreSelector: <T>(selector: (s: StoreState) => T) => selector({
     trialValidation: mockTrialValidation,
     sequence: mockSequence,
@@ -269,6 +270,7 @@ describe('useNextStep', () => {
   test.each<{ status: AssetStatus | undefined; disabled: boolean }>([
     { status: 'loading', disabled: true },
     { status: 'error', disabled: true },
+    { status: 'missing', disabled: false },
     { status: 'ready', disabled: false },
     { status: undefined, disabled: false },
   ])('asset status $status sets disabled=$disabled and guards navigation', async ({ status, disabled }) => {
@@ -1000,3 +1002,5 @@ describe('useNextStep', () => {
     expect(mockNavigate).toHaveBeenCalledWith('/test-study/2');
   });
 });
+
+vi.mock('../useGlobalStore', () => ({ useGlobalStore: () => ({}), useGlobalStoreUpdaterRegistration: () => () => () => undefined }));

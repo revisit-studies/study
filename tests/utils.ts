@@ -151,6 +151,19 @@ export async function nextClick(page: Page, timeout = 10000) {
   throw new Error('Timed out clicking Next button');
 }
 
+export async function advanceStudyStep(page: Page, advance = () => nextClick(page)) {
+  const previousPath = new URL(page.url()).pathname;
+  const previousMain = await page.getByRole('main').elementHandle();
+  await advance();
+  await page.waitForURL((url) => url.pathname !== previousPath, { waitUntil: 'commit', timeout: 30000 });
+  await expect(page.getByTestId('study-interface')).toHaveAttribute('aria-busy', 'false', { timeout: 30000 });
+  if (previousMain) {
+    await expect.poll(() => previousMain.evaluate((node) => node.isConnected), { timeout: 30000 }).toBe(false);
+    await previousMain.dispose();
+  }
+  await expect(page.getByRole('main')).toBeVisible({ timeout: 30000 });
+}
+
 export async function moveRankingItem(
   page: Page,
   item: string,
@@ -167,6 +180,7 @@ export async function moveRankingItem(
   const targetZone = zone(to);
   const itemIn = (z: Locator) => z.getByText(item, { exact: true });
 
+  await expect(page.locator('.ranking-drag-overlay')).toHaveCount(0);
   await expect(async () => {
     const source = itemIn(sourceZone).first()
       .locator('xpath=ancestor::div[contains(@class,"mantine-Paper-root")][1]');
@@ -200,7 +214,7 @@ export async function moveRankingItem(
     await expect(itemIn(sourceZone)).toHaveCount(0, { timeout: 2000 });
   }).toPass({ timeout: 15000 });
 
-  await page.waitForTimeout(250);
+  await expect(page.locator('.ranking-drag-overlay')).toHaveCount(0);
 }
 
 export async function waitForStudyEndMessage(page: Page, timeout = 30000) {

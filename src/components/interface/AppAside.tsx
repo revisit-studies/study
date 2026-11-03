@@ -38,6 +38,7 @@ function InfoHover({ text }: { text: string }) {
 }
 
 export function AppAside() {
+  const globalGraph = useStoreSelector((state) => state.globalStoreGraph);
   const sequence = useStoreSelector((state) => state.sequence);
   const answers = useStoreSelector((state) => state.answers);
   const { toggleStudyBrowser } = useStoreActions();
@@ -212,7 +213,7 @@ export function AppAside() {
           </Box>
 
           <Tabs.Panel value="participant" style={{ flex: 1, overflow: 'hidden' }}>
-            <StepsPanel participantSequence={sequence} participantAnswers={answers} studyConfig={studyConfig} />
+            <StepsPanel globalGraph={globalGraph} participantSequence={sequence} participantAnswers={answers} studyConfig={studyConfig} />
           </Tabs.Panel>
           <Tabs.Panel value="allTrials" style={{ flex: 1, overflow: 'hidden' }}>
             <StepsPanel participantAnswers={{}} studyConfig={studyConfig} />

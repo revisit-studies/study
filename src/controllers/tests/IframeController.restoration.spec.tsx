@@ -17,6 +17,7 @@ import { studyStoreCreator, StudyStoreContext } from '../../store/store';
 import { makeStudyConfig, makeStoredAnswer } from '../../tests/utils';
 import type { WebsiteComponent } from '../../parser/types';
 import type { Sequence, StoredProvenance } from '../../store/types';
+import { getPersistedAnswersFromAllLocations } from '../../utils/getAnswersFromAllLocations';
 
 const { getProvenance, preview } = vi.hoisted(() => ({ getProvenance: vi.fn(), preview: { enabled: false } }));
 vi.mock('../../store/hooks/useDesignerPreview', () => ({ useDesignerPreview: () => preview.enabled }));
@@ -100,14 +101,15 @@ async function restore(provenance: Partial<StoredProvenance>, answer = { control
   return studyStore;
 }
 
-function connectWebsite(iframe: HTMLIFrameElement) {
+function connectWebsite(iframe: HTMLIFrameElement, documentId = 'document') {
   const listeners: Record<string, (event: unknown) => void> = {};
   const frameId = new URL(iframe.src).searchParams.get('id');
   const parent = { postMessage: (data: unknown) => window.dispatchEvent(new MessageEvent('message', { source: iframe.contentWindow, data })) };
   const helperWindow = { parent, location: { search: `?id=${frameId}` }, addEventListener: (tag: string, fn: (event: unknown) => void) => { listeners[tag] = fn; } };
-  vi.spyOn(iframe.contentWindow!, 'postMessage').mockImplementation((data: unknown) => { listeners.message?.({ source: parent, data }); });
+  const activate = () => vi.spyOn(iframe.contentWindow!, 'postMessage').mockImplementation((data: unknown) => { listeners.message?.({ source: parent, data }); });
+  activate();
   runInNewContext(readFileSync('public/revisitUtilities/revisit-communicate.js', 'utf8'), {
-    window: helperWindow, URLSearchParams, structuredClone, crypto: { randomUUID: () => 'document' }, Date, console,
+    window: helperWindow, URLSearchParams, structuredClone, crypto: { randomUUID: () => documentId }, Date, console,
   });
   const api = (helperWindow as unknown as { Revisit: {
     beginRegistration: () => void;
@@ -116,8 +118,38 @@ function connectWebsite(iframe: HTMLIFrameElement) {
     onRestore: (cb: (state: { answers: { controller: string } }) => void) => void;
     completeRegistration: () => void;
   } }).Revisit;
-  return { api, listeners };
+  return { api, listeners, activate };
 }
+
+test('cached website restoration preserves edited host answers and full restoration context', async () => {
+  const store = await restore({ sidebar: formGraph({ controller: 'yes' }), belowStimulus: formGraph({ dependent: 'University' }) });
+  const iframe = document.querySelector('iframe')!;
+  fireEvent.load(iframe);
+  const original = connectWebsite(iframe);
+  const restored = vi.fn();
+  await act(async () => {
+    original.api.onRestore(restored);
+    original.api.completeRegistration();
+  });
+  expect(restored).toHaveBeenCalledWith(expect.objectContaining({ answers: { controller: 'yes', dependent: 'University' } }));
+  act(() => original.listeners.pagehide({ persisted: true }));
+  const other = connectWebsite(iframe, 'other-document');
+  await act(async () => {
+    other.api.onRestore(() => {});
+    other.api.completeRegistration();
+  });
+  fireEvent.change(screen.getByRole('textbox'), { target: { value: 'Edited university' } });
+  act(() => {
+    other.listeners.pagehide({ persisted: true });
+    original.activate();
+    original.listeners.pageshow({ persisted: true });
+  });
+  const validation = store.store.getState().trialValidation.trial_0;
+  expect(validation.stimulus.values).toEqual({ controller: 'yes' });
+  expect(getPersistedAnswersFromAllLocations(validation, component.response)).toEqual({ controller: 'yes', dependent: 'Edited university' });
+  expect((screen.getByRole('textbox') as HTMLInputElement).value).toBe('Edited university');
+  expect(restored).toHaveBeenCalledTimes(1);
+});
 
 test('late website restoration preserves dependent answers and history across asynchronous initialization', async () => {
   const sidebar = formGraph({ controller: 'yes' });

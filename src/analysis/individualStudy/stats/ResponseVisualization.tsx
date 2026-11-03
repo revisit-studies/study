@@ -87,6 +87,7 @@ export function ResponseVisualization({
               {},
               participantCorrectAnswers,
               persistedScores,
+              value.globalStoreEntry,
             );
             if (!visibleIds.has(response.id)) return null;
           }
@@ -222,10 +223,9 @@ export function ResponseVisualization({
       let max: number | undefined;
 
       if (response.type === 'numerical') {
-        // eslint-disable-next-line prefer-destructuring
-        min = response.min;
-        // eslint-disable-next-line prefer-destructuring
-        max = response.max;
+        min = typeof response.min === 'number' ? response.min : undefined;
+
+        max = typeof response.max === 'number' ? response.max : undefined;
       }
 
       if (response.type === 'slider') {

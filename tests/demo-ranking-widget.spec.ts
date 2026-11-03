@@ -22,6 +22,7 @@ async function dragWithMouse(
   target: Locator,
   dropOnTargetCenter = false,
 ) {
+  await expect(page.locator('.ranking-drag-overlay')).toHaveCount(0);
   await expect(source).toBeVisible();
   await expect(target).toBeVisible();
 
@@ -34,16 +35,26 @@ async function dragWithMouse(
   const sourceX = (sourceBox as { x: number; width: number }).x + ((sourceBox as { width: number }).width / 2);
   const sourceY = (sourceBox as { y: number; height: number }).y + ((sourceBox as { height: number }).height / 2);
 
-  const targetX = (targetBox as { x: number; width: number }).x + ((targetBox as { width: number }).width / 2);
+  let targetX = (targetBox as { x: number; width: number }).x + ((targetBox as { width: number }).width / 2);
   const targetHeight = (targetBox as { height: number }).height;
-  const targetY = dropOnTargetCenter
+  let targetY = dropOnTargetCenter
     ? (targetBox as { y: number }).y + (targetHeight / 2)
     : (targetBox as { y: number }).y + Math.max(32, Math.min(targetHeight - 8, targetHeight * 0.65));
 
+  const isZoneTitle = await target.evaluate((element) => element.matches('p.mantine-Text-root'));
+  if (isZoneTitle) {
+    const zoneBox = await target.locator('..').boundingBox();
+    expect(zoneBox).not.toBeNull();
+    targetX = zoneBox!.x + 12;
+    targetY = zoneBox!.y + 12;
+  }
   await page.mouse.move(sourceX, sourceY);
   await page.mouse.down();
   await page.mouse.move(sourceX + 8, sourceY + 8);
   await page.mouse.move(targetX, targetY, { steps: 12 });
+  if (isZoneTitle) {
+    await expect(target.locator('..')).toHaveAttribute('style', /background-color: var\(--mantine-color-blue-light\)/);
+  }
   await page.mouse.up();
 }
 
@@ -93,7 +104,7 @@ async function dragFromAvailableInPairwise(
 }
 
 async function settleAfterDrag(page: Page) {
-  await page.waitForTimeout(250);
+  await expect(page.locator('.ranking-drag-overlay')).toHaveCount(0);
 }
 
 test('Test ranking response(sublist, categorical, pairwise) and validation', async ({ page }) => {

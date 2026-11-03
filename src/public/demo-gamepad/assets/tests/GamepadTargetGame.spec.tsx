@@ -44,7 +44,7 @@ test('restored and subsequent targets measure their presentation without changin
   render(
     <MantineProvider>
       <RevisitProvenanceProvider provenance={saved} onProvenanceChange={vi.fn()}>
-        {(useTrrack) => <GamepadTargetGame parameters={{ targetCount: 2 }} answers={{}} setAnswer={setAnswer} useTrrack={useTrrack} />}
+        {(useTrrack) => <GamepadTargetGame globalVariables={{}} registerGlobalStoreUpdater={vi.fn()} parameters={{ targetCount: 2 }} answers={{}} setAnswer={setAnswer} useTrrack={useTrrack} />}
       </RevisitProvenanceProvider>
     </MantineProvider>,
   );
@@ -71,7 +71,7 @@ test('answer-only restoration completes only the remaining targets', async () =>
         value={{ answers: { hits: 4, misses: 2, completed: false }, register: () => () => {} }}
       >
         <RevisitProvenanceProvider onProvenanceChange={vi.fn()}>
-          {(useTrrack) => <GamepadTargetGame parameters={{ targetCount: 6 }} answers={{}} setAnswer={setAnswer} useTrrack={useTrrack} />}
+          {(useTrrack) => <GamepadTargetGame globalVariables={{}} registerGlobalStoreUpdater={vi.fn()} parameters={{ targetCount: 6 }} answers={{}} setAnswer={setAnswer} useTrrack={useTrrack} />}
         </RevisitProvenanceProvider>
       </StudyStateContext.Provider>
     </MantineProvider>,

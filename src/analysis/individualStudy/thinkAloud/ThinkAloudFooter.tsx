@@ -17,6 +17,7 @@ import * as d3 from 'd3';
 import {
   IconArrowLeft, IconArrowRight, IconDeviceDesktopDown, IconInfoCircle, IconMusicDown, IconPalette, IconPlayerPauseFilled, IconPlayerPlayFilled, IconRestore,
 } from '@tabler/icons-react';
+import type { ParticipantData } from '../../../storage/types';
 import { useAsync } from '../../../store/hooks/useAsync';
 import { useAuth } from '../../../store/hooks/useAuth';
 import {
@@ -36,7 +37,7 @@ import {
   buildProvenanceLegendEntries,
 } from '../../../components/audioAnalysis/provenanceColors';
 import { revisitPageId, syncChannel } from '../../../utils/syncReplay';
-import { getLegacyStoredAnswerProvenance } from '../../../store/provenance';
+import { getCombinedProvenance, getLegacyStoredAnswerProvenance } from '../../../store/provenance';
 import { buildTaskNavigationTarget } from './taskNavigation';
 
 const margin = {
@@ -68,7 +69,7 @@ async function getTaskProvenance(
   }
 
   try {
-    return await storageEngine.getProvenance(currentTrial, participantId) ?? legacyProvenance;
+    return await getCombinedProvenance(storageEngine, currentTrial, participantId) ?? legacyProvenance;
   } catch {
     return legacyProvenance;
   }
@@ -103,8 +104,9 @@ function getBrowser(ua: string) {
 }
 
 export function ThinkAloudFooter({
-  visibleParticipants, rawTranscript, currentShownTranscription, width, onTimeUpdate, isReplay, editedTranscript, currentTrial, saveProvenance, jumpedToLine = 0, studyId, setHasAudio, storageEngine, footerRef,
+  replayAnswers, visibleParticipants, rawTranscript, currentShownTranscription, width, onTimeUpdate, isReplay, editedTranscript, currentTrial, saveProvenance, jumpedToLine = 0, studyId, setHasAudio, storageEngine, footerRef,
 }: {
+  replayAnswers?: ParticipantData['answers'],
   visibleParticipants: string[], rawTranscript: TranscribedAudio | null, currentShownTranscription: number | null, width: number, onTimeUpdate: (n: number) => void, isReplay: boolean, editedTranscript?: EditedText[], currentTrial: string, saveProvenance: (prov: unknown) => void, jumpedToLine?: number, studyId: string, setHasAudio: (b: boolean) => void, storageEngine: StorageEngine | undefined, footerRef?: Ref<HTMLElement>,
 }) {
   const auth = useAuth();
@@ -115,7 +117,8 @@ export function ThinkAloudFooter({
 
   const participantId = useMemo(() => searchParams.get('participantId') || '', [searchParams]);
 
-  const { value: participant } = useAsync(getParticipantData, [participantId, storageEngine]);
+  const { value: storedParticipant } = useAsync(getParticipantData, [participantId, storageEngine]);
+  const participant = useMemo(() => (storedParticipant && replayAnswers ? { ...storedParticipant, answers: replayAnswers } : storedParticipant), [storedParticipant, replayAnswers]);
   const { value: provenanceGraph } = useAsync(getTaskProvenance, [storageEngine, participantId, currentTrial, participant?.answers[currentTrial]]);
 
   const { value: taskTags, execute: pullTags } = useAsync(getTags, [storageEngine, 'task']);
@@ -126,7 +129,8 @@ export function ThinkAloudFooter({
     isPlaying, setIsPlaying, speed, setSpeed, setSeekTime, hasEnded,
   } = useReplayContext();
 
-  const assetKey = `${participantId}\u0000${currentTrial}`;
+  const assetIdentifier = participant?.answers[currentTrial]?.assetIdentifier ?? currentTrial;
+  const assetKey = `${participantId}\u0000${assetIdentifier}`;
   const [audio, setAudio] = useState<{ key: string; url: string | null }>({ key: '', url: null });
   const [screenRecording, setScreenRecording] = useState<{ key: string; url: string | null }>({ key: '', url: null });
   const [webcamRecording, setWebcamRecording] = useState<{ key: string; url: string | null }>({ key: '', url: null });
@@ -164,7 +168,7 @@ export function ThinkAloudFooter({
       }
 
       try {
-        const url = await storageEngine.getAudioUrl(currentTrial, participantId);
+        const url = await storageEngine.getAudioUrl(assetIdentifier, participantId);
         setLoadedAsset(setAudio, url);
       } catch {
         if (!cancelled) {
@@ -173,7 +177,7 @@ export function ThinkAloudFooter({
       }
 
       try {
-        const url = await storageEngine.getScreenRecording(currentTrial, participantId);
+        const url = await storageEngine.getScreenRecording(assetIdentifier, participantId);
         setLoadedAsset(setScreenRecording, url);
       } catch {
         if (!cancelled) {
@@ -182,7 +186,7 @@ export function ThinkAloudFooter({
       }
 
       try {
-        const url = await storageEngine.getWebcamRecording(currentTrial, participantId);
+        const url = await storageEngine.getWebcamRecording(assetIdentifier, participantId);
         setLoadedAsset(setWebcamRecording, url);
       } catch {
         if (!cancelled) {
@@ -197,7 +201,7 @@ export function ThinkAloudFooter({
       cancelled = true;
       loadedUrls.forEach(releaseUrl);
     };
-  }, [assetKey, currentTrial, participantId, storageEngine]);
+  }, [assetKey, assetIdentifier, currentTrial, participantId, storageEngine]);
 
   const handleDownloadAudio = useCallback(async () => {
     if (!storageEngine || !participantId || !currentTrial) {
@@ -207,10 +211,10 @@ export function ThinkAloudFooter({
     await handleTaskAudio({
       storageEngine,
       participantId,
-      identifier: currentTrial,
+      identifier: assetIdentifier,
       audioUrl,
     });
-  }, [storageEngine, participantId, currentTrial, audioUrl]);
+  }, [assetIdentifier, storageEngine, participantId, currentTrial, audioUrl]);
 
   const handleDownloadRecordings = useCallback(async () => {
     if (!storageEngine || !participantId || !currentTrial) {
@@ -220,13 +224,13 @@ export function ThinkAloudFooter({
     await handleTaskRecordings({
       storageEngine,
       participantId,
-      identifier: currentTrial,
+      identifier: assetIdentifier,
       includeScreen: !!screenRecordingUrl,
       includeWebcam: !!webcamRecordingUrl,
       screenRecordingUrl,
       webcamRecordingUrl,
     });
-  }, [storageEngine, participantId, currentTrial, screenRecordingUrl, webcamRecordingUrl]);
+  }, [assetIdentifier, storageEngine, participantId, currentTrial, screenRecordingUrl, webcamRecordingUrl]);
 
   const [transcriptLines, setTranscriptLines] = useState<TranscriptLinesWithTimes[] | null>(null);
 
@@ -302,6 +306,7 @@ export function ThinkAloudFooter({
 
     setSearchParams((params) => {
       params.set('participantId', visibleParticipants[index] || '');
+      params.delete('globalStoreNode');
       return params;
     });
   }, [participantId, setSearchParams, visibleParticipants]);
@@ -556,6 +561,7 @@ export function ThinkAloudFooter({
               onChange={(e: string | null) => {
                 setSearchParams((params) => {
                   params.set('participantId', e || '');
+                  params.delete('globalStoreNode');
                   return params;
                 });
                 syncChannel.postMessage({

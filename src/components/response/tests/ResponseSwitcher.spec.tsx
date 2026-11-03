@@ -348,3 +348,5 @@ describe('ResponseSwitcher dynamic loading', () => {
     expect(container.querySelector('[data-testid="string-input"]')).toBeNull();
   });
 });
+
+vi.mock('../../../store/hooks/useGlobalStore', () => ({ useGlobalStore: () => ({}), useGlobalStoreUpdaterRegistration: () => () => () => undefined }));

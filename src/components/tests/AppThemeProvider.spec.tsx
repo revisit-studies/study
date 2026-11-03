@@ -187,7 +187,7 @@ describe('AppThemeProvider', () => {
   test('cross-tab changes do not override a forced study or write the event back to storage', () => {
     const view = render(<AppThemeProvider><Study colorMode="dark" /></AppThemeProvider>);
     localStorage.setItem(preferenceKey, 'light');
-    const setItem = vi.spyOn(localStorage, 'setItem');
+    const setItem = vi.spyOn(Storage.prototype, 'setItem');
     setItem.mockClear();
     act(() => {
       window.dispatchEvent(Object.assign(new Event('storage'), {

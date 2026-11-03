@@ -904,9 +904,9 @@ describe('factor sequence actions', () => {
     });
   });
 
-  test('parses the factorized visualization guardrails demo', async () => {
+  test('parses the factorized visualization guardrails study', async () => {
     const config = readFileSync(
-      'public/demo-max-study2/config.json',
+      'public/test-max-study2/config.json',
       'utf8',
     );
 

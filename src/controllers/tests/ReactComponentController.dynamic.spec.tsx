@@ -22,6 +22,7 @@ const mocks = vi.hoisted(() => ({
     pushToFuncSequence: vi.fn(), updateProvenance: vi.fn(), updateResponseBlockValidation: vi.fn(), setReactiveAnswers: vi.fn(),
   },
 }));
+vi.mock('../../store/hooks/useGlobalStore', () => ({ useGlobalStore: () => ({}), useGlobalStoreUpdaterRegistration: () => vi.fn() }));
 vi.mock('react-router', () => ({
   useNavigate: () => mocks.navigate,
   useParams: () => ({ studyId: 'test', index: '0', funcIndex: mocks.funcIndex }),

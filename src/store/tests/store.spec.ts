@@ -1,9 +1,13 @@
 import { createElement } from 'react';
 import { Provider } from 'react-redux';
+import { initializeTrrack, Registry } from '@trrack/core';
 import { renderHook } from '@testing-library/react';
 import {
   describe, expect, test, vi,
 } from 'vitest';
+import { createGlobalStoreSubmission } from '../globalStoreProvenance';
+import { initializeResumedTrrack } from '../resumeProvenance';
+import { createEmptyProvenance } from '../provenance';
 import {
   studyStoreCreator, useAreResponsesValid, useFlatSequence, useStoreActions, StudyStoreContext,
 } from '../store';
@@ -90,6 +94,26 @@ const metadata = {
 // ── tests ─────────────────────────────────────────────────────────────────────
 
 describe('studyStoreCreator', () => {
+  test('invalidating a visited unsubmitted trial reinitializes its context and retains its old provenance', async () => {
+    const later = makeStoredAnswer({
+      identifier: 'later_1', componentName: 'intro', trialOrder: '1', endTime: -1,
+    });
+    const earlier = makeStoredAnswer({
+      identifier: 'intro_0', componentName: 'intro', trialOrder: '0', answer: { cost: 10 },
+    });
+    const { store, actions } = await studyStoreCreator('test', minimalConfig, minimalSequence, metadata, { later_1: later }, modes, 'p1', false, false);
+    const saved = initializeTrrack({ registry: Registry.create(), initialState: { budgetAtEntry: 70 } }).graph.backend;
+    store.dispatch(actions.restoreTrialProvenance({ identifier: 'later_1', provenance: { ...createEmptyProvenance(), stimulus: saved }, responseValues: {} }));
+    const revised = createGlobalStoreSubmission(undefined, { budget: 100 }, earlier, { budget: 90 }, [], {});
+    store.dispatch(actions.acceptGlobalStoreSubmission({
+      graph: revised.graph, revision: 1, answers: { intro_0: earlier, later_1: later }, invalidateAfter: '0',
+    }));
+    const retained = store.getState().trialValidation.later_1.provenanceGraph.stimulus!;
+    const resumed = initializeResumedTrrack({ registry: Registry.create(), initialState: { budgetAtEntry: 90 } }, retained);
+    expect(resumed.getState()).toEqual({ budgetAtEntry: 90 });
+    expect(resumed.graph.backend.nodes[saved.root]).toMatchObject({ id: saved.root, state: saved.nodes[saved.root].state, createdOn: saved.nodes[saved.root].createdOn });
+  });
+
   test('creates a store with dispatch and getState', async () => {
     const { store } = await studyStoreCreator(
       'test-study',

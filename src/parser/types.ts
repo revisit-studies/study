@@ -8,6 +8,42 @@ export interface JsonObject {
 }
 export type JsonArray = JsonValue[];
 
+/** Primitive values in a participant's declared global store. Types are inferred from initialValue. */
+export type GlobalStoreValue = string | number | boolean;
+export type GlobalStoreValues = Record<string, GlobalStoreValue>;
+export interface GlobalVariableDeclaration extends Pick<ShortTextResponse, 'minCharLength' | 'maxCharLength' | 'minWordLength' | 'maxWordLength' | 'textValidation' | 'builtInValidation'> {
+  initialValue: GlobalStoreValue;
+  /** Inclusive bound, valid only for a numeric initialValue. */
+  min?: number;
+  /** Inclusive bound, valid only for a numeric initialValue. */
+  max?: number;
+  strictMin?: number;
+  strictMax?: number;
+}
+export type GlobalVariableDeclarations = Record<string, GlobalVariableDeclaration | GlobalStoreValue>;
+export type GlobalStoreOperation = 'set' | 'add' | 'subtract' | 'multiply' | 'divide' | 'append' | 'prepend' | 'and' | 'or' | 'toggle';
+/** Transform the operand before applying the action; reverse operations use value op operand. */
+export type GlobalStoreOperandTransform = {
+  operation: 'add' | 'subtract' | 'multiply' | 'divide' | 'subtractFrom' | 'divideInto';
+  value: number;
+} | { operation: 'not' };
+export type GlobalStoreOperand = ({
+  /** Defaults to the current response's submitted answer. */
+  source?: 'answer';
+  value?: never;
+} | {
+  source: 'literal';
+  value: GlobalStoreValue;
+}) & { transforms?: GlobalStoreOperandTransform[] };
+export interface GlobalStoreAction {
+  variable: string;
+  operation: GlobalStoreOperation;
+  /** Omit to use the current answer directly. Not applicable to toggle. */
+  operand?: GlobalStoreOperand;
+}
+/** A numeric literal or an exact reference to a declared numeric store value. */
+export type GlobalStoreNumber = number | `{{globalVariables.${string}}}`;
+
 /**
  * The GlobalConfig is used to generate the list of available studies in the UI.
  * This list is displayed on the landing page when running the app.
@@ -427,8 +463,9 @@ export type ValueCondition =
  * List equality comparisons ignore selection order.
  * Unanswered or conditionally hidden controlling responses never satisfy a condition.
  */
-export type ResponseVisibilityCondition = {
+export type ResponseVisibilityCondition = ({ globalVariable: string; responseId?: never } & ValueCondition) | {
   responseId: string;
+  globalVariable?: never;
 } & (
   | ValueCondition
   | {
@@ -443,6 +480,8 @@ export type ResponseVisibilityCondition = {
  * Therefore, all responses must include these properties.
  */
 export interface BaseResponse {
+  /** Apply these actions to the final submitted answer, in declared order. */
+  onSubmit?: GlobalStoreAction[];
   /** The id of the response. This is used to identify the response in the data file. */
   id: string;
   /** Path under `src/public/` to response code. Custom responses require a default React component. Any response code module may export `validate(value, values, response)` to return an error message, a boolean validity result, or null for valid input. It may separately export `score(value, values, response, expected?)` to return a boolean or a score from 0 to 1; null uses ordinary correct-answer matching. `expected` is the configured correct answer when correctness is checked. */
@@ -504,13 +543,13 @@ export interface NumericalResponse extends BaseResponse {
   /** The default value of the response. Specify a numeric value such as `25` or `3.14`. */
   default?: number;
   /** The minimum value that is accepted in the input. */
-  min?: number;
+  min?: GlobalStoreNumber;
   /** The maximum value that is accepted in the input. */
-  max?: number;
+  max?: GlobalStoreNumber;
   /** Only values above this minimum value are accepted in the input. */
-  strictMin?: number;
+  strictMin?: GlobalStoreNumber;
   /** Only values below this maximum value are accepted in the input. */
-  strictMax?: number;
+  strictMax?: GlobalStoreNumber;
 }
 
 /** The validation operations available for short and long text responses. */
@@ -1894,7 +1933,7 @@ export interface IndividualComponentAllResponsesCondition {
 
 /** The ComponentBlockCondition interface is used to define a SkipCondition based on the number of correct or incorrect components in a block. All answers on all components in the block are checked.
  *
- * Answers are checked against the correct answers defined in the IndividualComponent's [CorrectAnswer](../Answer). If no correct answers are defined, the component is considered correct by default.
+ * Answers are checked against the correct answers defined in the IndividualComponent's {@link Answer}. If no correct answers are defined, the component is considered correct by default.
  *
  * You might use this if a participant answers two questions in a block incorrectly. Here's an example of how to use the ComponentBlockCondition:
  *
@@ -1928,7 +1967,7 @@ export interface ComponentBlockCondition {
   to: string;
 }
 
-/** The RepeatedComponentBlockCondition interface is used to define a SkipCondition based on the number of correct or incorrect repeated components. You might use this if you need to check if an attention check was failed multiple times. This is similar to the [ComponentBlockCondition](../ComponentBlockCondition), but it only checks a specific repeated component.
+/** The RepeatedComponentBlockCondition interface is used to define a SkipCondition based on the number of correct or incorrect repeated components. You might use this if you need to check if an attention check was failed multiple times. This is similar to {@link ComponentBlockCondition}, but it only checks a specific repeated component.
  *
  * Here's an example of how to use the RepeatedComponentBlockCondition:
  *
@@ -1971,7 +2010,9 @@ export interface RepeatedComponentBlockCondition {
  *
  * Please see the interface definitions for more specific information on the different types of skip conditions.
 */
-export type SkipConditions = (IndividualComponentSingleResponseCondition | IndividualComponentAllResponsesCondition | ComponentBlockCondition | RepeatedComponentBlockCondition)[];
+export type GlobalVariableCondition = { check: 'globalVariable'; variable: string; to: string } & ValueCondition;
+
+export type SkipConditions = (GlobalVariableCondition | IndividualComponentSingleResponseCondition | IndividualComponentAllResponsesCondition | ComponentBlockCondition | RepeatedComponentBlockCondition)[];
 
 /**
  * The DynamicBlock interface is used to define a block where displayed components are controlled by a function. This is useful when you want to generate the sequence based on answers to previous questions or other factors.
@@ -2105,9 +2146,9 @@ export interface DynamicBlock {
  * ]
  * ```
  *
- * The interruptions property specifies an array of interruptions. These can be used for breaks or attention checks. Interruptions can be deterministic or random. Please see [InterruptionBlock](../../type-aliases/InterruptionBlock) for more specific information.
+ * The interruptions property specifies an array of interruptions. These can be used for breaks or attention checks. Interruptions can be deterministic or random. Please see {@link InterruptionBlock} for more specific information.
  *
- * The skip property is used to define skip conditions. This is used to skip to a different component or block based on the response to a component or the number of correct or incorrect responses in a block. Please see [SkipConditions](../../type-aliases/SkipConditions) for more specific information.
+ * The skip property is used to define skip conditions. This is used to skip to a different component or block based on the response to a component or the number of correct or incorrect responses in a block. Please see {@link SkipConditions} for more specific information.
 */
 export type ComponentOrder = 'random' | 'latinSquare' | 'fixed';
 
@@ -2159,19 +2200,22 @@ export type FactorAction = 'cross' | 'zip' | 'concat' | 'keep' | 'remove' | 'sam
 /** A named factor reference or another inline factor expression. */
 export type FactorOption = string | FactorExpression;
 
-interface FactorCombinationExpression {
+/** Combine factors with a Cartesian product (`cross`) or pair corresponding levels (`zip`). */
+export interface FactorCombinationExpression {
   action: 'cross' | 'zip';
   factors: FactorOption[];
   /** Optional output parameter names, one for each input factor. */
   as?: string[];
 }
 
-interface FactorConcatExpression {
+/** Append the conditions from each input factor in order. */
+export interface FactorConcatExpression {
   action: 'concat';
   factors: FactorOption[];
 }
 
-interface FactorSampleExpression {
+/** Select random conditions from the input factors for each participant. */
+export interface FactorSampleExpression {
   action: 'sample';
   factors: FactorOption[];
   /** Whether selected conditions may repeat. */
@@ -2184,7 +2228,8 @@ interface FactorSampleExpression {
   numSamples: number;
 }
 
-interface FactorRepeatExpression {
+/** Repeat the concatenated input conditions a fixed number of times. */
+export interface FactorRepeatExpression {
   action: 'repeat';
   factors: FactorOption[];
   /**
@@ -2195,7 +2240,8 @@ interface FactorRepeatExpression {
   numRepeats: number;
 }
 
-interface FactorKeepRemoveExpressionBase {
+/** Select conditions either by matching parameter values or by matching complete items. */
+export interface FactorKeepRemoveExpressionBase {
   /** Named factor or expression whose conditions are selected. */
   factor: FactorOption;
   /** Parameter values used to select matching conditions. */
@@ -2204,11 +2250,13 @@ interface FactorKeepRemoveExpressionBase {
   items?: FactorObject[] | FactorOption;
 }
 
-interface FactorKeepExpression extends FactorKeepRemoveExpressionBase {
+/** Retain the selected conditions from a factor. */
+export interface FactorKeepExpression extends FactorKeepRemoveExpressionBase {
   action: 'keep';
 }
 
-interface FactorRemoveExpression extends FactorKeepRemoveExpressionBase {
+/** Exclude the selected conditions from a factor. */
+export interface FactorRemoveExpression extends FactorKeepRemoveExpressionBase {
   action: 'remove';
 }
 
@@ -2220,14 +2268,16 @@ export type FactorExpression = FactorCombinationExpression
   | FactorSampleExpression
   | FactorRepeatExpression;
 
+/** A named factor definition: explicit levels, ordered levels, or an expression over other factors. */
 export type Factor = FactorValue[] | OrderedFactorValues | FactorExpression;
 
+/** Materialize components for each condition selected from a factor. */
 export interface FactorBlock {
   type: 'factor';
   id: string;
   /** Named factor or inline factor expression to materialize at this sequence location. */
   factor: FactorOption;
-  /** One or more base components materialized for every factor condition. */
+  /** One or more base components materialized for every factor condition. Names may include factor parameter templates. */
   components: string | string[];
   order?: ComponentOrder;
   interruptions?: InterruptionBlock[];
@@ -2310,6 +2360,8 @@ export type BaseComponents = Record<string, Partial<IndividualComponent>>;
  * The `$schema` line is used to verify the schema. If you're using VSCode (or other similar IDEs), including this line will allow for autocomplete and helpful suggestions when writing the study configuration.
  */
 export interface StudyConfig {
+  /** Participant-wide values committed with accepted trial submissions. */
+  globalVariables?: GlobalVariableDeclarations;
   /** A required json schema property. This should point to the github link for the version of the schema you would like. The `$schema` line is used to verify the schema. If you're using VSCode (or other similar IDEs), including this line will allow for autocomplete and helpful suggestions when writing the study configuration. See examples for more information */
   $schema: string;
   /** The metadata for the study. This is used to identify the study and version in the data file. */
@@ -2320,7 +2372,7 @@ export interface StudyConfig {
   studyRules?: StudyRules;
   /** A list of libraries that are used in the study. This is used to import external libraries into the study. Library names are valid namespaces to be used later. */
   importedLibraries?: string[];
-  /** The base components that are used in the study. These components can be used to template other components. See [BaseComponents](../../type-aliases/BaseComponents) for more information. */
+  /** The base components that are used in the study. These components can be used to template other components. See {@link BaseComponents} for more information. */
   baseComponents?: BaseComponents;
   /** The components that are used in the study. They must be fully defined here with all properties. Some properties may be inherited from baseComponents. */
   components: Record<string, IndividualComponent | InheritedComponent>
@@ -2367,7 +2419,7 @@ export interface LibraryConfig {
   doi?: string;
   /** The external link to the paper/website where the content of the library is based on. */
   externalLink?: string;
-  /** The base components that are used in the study. These components can be used to template other components. See [BaseComponents](../../type-aliases/BaseComponents) for more information. */
+  /** The base components that are used in the study. These components can be used to template other components. See {@link BaseComponents} for more information. */
   baseComponents?: BaseComponents;
 }
 

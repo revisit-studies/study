@@ -11,10 +11,12 @@ import { useStoredAnswer } from '../../store/hooks/useStoredAnswer';
 import { InputLabel } from './InputLabel';
 import { OptionLabel } from './OptionLabel';
 import { parseStringOptions } from '../../utils/stringOptions';
+import ClearSelectionButton from './ClearSelectionButton';
 
 export function CheckBoxInput({
   response,
   disabled,
+  clearDisabled = disabled,
   answer,
   error,
   index,
@@ -24,6 +26,7 @@ export function CheckBoxInput({
 }: {
   response: CheckboxResponse;
   disabled: boolean;
+  clearDisabled?: boolean;
   answer: { value?: string[]; onChange?: (value: string[]) => void };
   error?: string | null;
   index: number;
@@ -74,7 +77,26 @@ export function CheckBoxInput({
 
   return (
     <Checkbox.Group
-      label={prompt.length > 0 && <InputLabel prompt={prompt} required={required} index={index} enumerateQuestions={enumerateQuestions} infoText={infoText} />}
+      label={prompt.length > 0 && (
+        <InputLabel
+          prompt={prompt}
+          required={required}
+          index={index}
+          enumerateQuestions={enumerateQuestions}
+          infoText={infoText}
+          clearSelectionButton={(
+            <ClearSelectionButton
+              onClick={() => {
+                answer.onChange?.([]);
+                dontKnowCheckbox?.onChange?.(false);
+                setOtherSelected(false);
+              }}
+              disabled={clearDisabled}
+              visible={selectedValues.length > 0 || !!dontKnowCheckbox?.checked}
+            />
+          )}
+        />
+      )}
       description={secondaryText}
       {...answer}
       value={selectedValues}

@@ -11,6 +11,7 @@ import {
 import { useStorageEngine } from '../../storage/storageEngineHooks';
 import { useStudyConfig } from '../../store/hooks/useStudyConfig';
 import { useDeviceRules } from '../../utils/useDeviceRules';
+import { useStartupInteractionBlocked } from '../StartupContext';
 
 export function DeviceWarning({
   developmentModeEnabled,
@@ -22,6 +23,7 @@ export function DeviceWarning({
   const navigate = useNavigate();
   const [timeLeft, setTimeLeft] = useState(60);
   const [isRejected, setIsRejected] = useState(false);
+  const startupInteractionBlocked = useStartupInteractionBlocked();
   const countdownIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const storageEngineRef = useRef(storageEngine);
   const navigateRef = useRef(navigate);
@@ -67,7 +69,8 @@ export function DeviceWarning({
     (display?.minWidth !== undefined && currentDisplay.width < display.minWidth)
     || (display?.minHeight !== undefined && currentDisplay.height < display.minHeight)
   );
-  const shouldRunDisplayCountdown = !developmentModeEnabled && !isRejected && isDisplayRequirementNotMet;
+  const shouldRunDisplayCountdown = !startupInteractionBlocked
+    && !developmentModeEnabled && !isRejected && isDisplayRequirementNotMet;
 
   useEffect(() => {
     if (shouldRunDisplayCountdown) {
@@ -120,7 +123,7 @@ export function DeviceWarning({
     };
   }, [shouldRunDisplayCountdown]);
 
-  if (developmentModeEnabled || (!isRejected && !hasAnyViolation)) {
+  if (startupInteractionBlocked || developmentModeEnabled || (!isRejected && !hasAnyViolation)) {
     return null;
   }
 

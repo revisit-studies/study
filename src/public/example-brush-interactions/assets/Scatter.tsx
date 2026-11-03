@@ -185,7 +185,7 @@ export function Scatter({
     return () => { targets.forEach((element) => d3.select(element).on('.brush', null)); };
   }, [initializeBrushes]);
 
-  const brushedSet = useMemo(() => (brushedPoints.length === 0 ? null : new Set(brushedPoints)), [brushedPoints]);
+  const brushedSet = useMemo(() => (brushState.hasBrush ? new Set(brushedPoints) : null), [brushState.hasBrush, brushedPoints]);
 
   const circles = useMemo(() => {
     if (!xScale || !yScale) {

@@ -32,6 +32,24 @@ function setup(query = '?id=frame', uuidAvailable = true) {
 }
 const resume = { protocolVersion: 1, documentId: 'document', requestId: 'request', isAnalysis: false, answers: { count: 2 } };
 
+test('invalidated managed HTML state uses the replacement initial values and retains old history', async () => {
+  const original = initializeTrrack({ registry: Registry.create(), initialState: { budgetAtEntry: 70 } });
+  original.record({ label: 'Old purchase', state: { budgetAtEntry: 50 }, eventType: 'purchase' });
+  const saved = structuredClone(original.graph.backend);
+  const helper = setup();
+  const revised = helper.api.createTrrack({ initializeTrrack, registry: Registry.create(), initialState: { budgetAtEntry: 90 } });
+  helper.api.onRestore(() => helper.api.postAnswers(revised.getState() as Record<string, unknown>));
+  helper.api.completeRegistration();
+  helper.send('RESUME', { ...resume, answers: {}, provenanceGraph: { ...saved, current: saved.root, resetToInitialState: true } });
+  await vi.waitFor(() => expect(helper.messages('RESTORED')).toHaveLength(1));
+  expect(revised.getState()).toEqual({ budgetAtEntry: 90 });
+  expect(helper.messages('ANSWERS').at(-1)?.message).toEqual({ budgetAtEntry: 90 });
+  const published = helper.messages('PROVENANCE').at(-1)?.message;
+  expect(published.root).toBe(saved.root);
+  expect(published.nodes[saved.current]).toEqual(saved.nodes[saved.current]);
+  expect(published).not.toHaveProperty('resetToInitialState');
+});
+
 test('buffers initialization, imports full history and renders before acknowledging and publishing', async () => {
   const helper = setup();
   const registry = Registry.create();

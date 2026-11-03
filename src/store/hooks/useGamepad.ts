@@ -1,6 +1,7 @@
 import {
   useEffect, useLayoutEffect, useRef, useState,
 } from 'react';
+import { useStartupInteractionBlocked } from '../../components/StartupContext';
 import { getButtonName } from '../../utils/gamepadButtons';
 
 /** Identifying information for the gamepad currently being polled. */
@@ -121,17 +122,22 @@ export function useGamepad(options: UseGamepadOptions = {}): {
     enabled = true,
   } = options;
 
+  const startupInteractionBlocked = useStartupInteractionBlocked();
+  const pollingEnabled = enabled && !startupInteractionBlocked;
+  const pollingEnabledRef = useRef(pollingEnabled);
+
   // Held in a ref so the polling loop always calls the latest handlers without
   // needing to be torn down and restarted on every render.
   const handlersRef = useRef(options);
   useLayoutEffect(() => {
     handlersRef.current = options;
+    pollingEnabledRef.current = pollingEnabled;
   });
 
   const [device, setDevice] = useState<GamepadDevice | null>(null);
 
   useEffect(() => {
-    if (!enabled) {
+    if (!pollingEnabled) {
       return undefined;
     }
 
@@ -148,6 +154,7 @@ export function useGamepad(options: UseGamepadOptions = {}): {
     };
 
     const poll = () => {
+      if (!pollingEnabledRef.current) return;
       frameHandle = requestAnimationFrame(poll);
 
       const now = performance.now();
@@ -218,7 +225,7 @@ export function useGamepad(options: UseGamepadOptions = {}): {
     // `gamepadconnected` / `gamepaddisconnected` are deliberately not used: the
     // polling loop already detects both, and listening as well would report each
     // connection twice.
-  }, [enabled, deadzone, axisEpsilon]);
+  }, [pollingEnabled, deadzone, axisEpsilon]);
 
   return { device, connected: device !== null };
 }

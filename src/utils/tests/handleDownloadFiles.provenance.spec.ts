@@ -1,7 +1,8 @@
 import {
   afterEach, describe, expect, test, vi,
 } from 'vitest';
-import { downloadParticipantsProvenanceZip } from '../handleDownloadFiles';
+import { createGlobalStoreSubmission, GLOBAL_STORE_TASK } from '../../store/globalStoreProvenance';
+import { downloadParticipantsAudioZip, downloadParticipantsProvenanceZip } from '../handleDownloadFiles';
 import type { StorageEngine } from '../../storage/engines/types';
 import type { StoredAnswer } from '../../store/types';
 
@@ -125,4 +126,41 @@ describe('provenance downloads', () => {
     expect(anchor.download).toBe('study-1_provenance.zip');
     expect(anchor.click).toHaveBeenCalled();
   });
+});
+
+test('provenance archives include the global graph and assets for invalidated trials', async () => {
+  const anchor = { click: vi.fn() };
+  vi.stubGlobal('document', { createElement: () => anchor });
+  URL.createObjectURL = vi.fn(() => 'blob:zip');
+  URL.revokeObjectURL = vi.fn();
+  const original = createGlobalStoreSubmission(undefined, { budget: { initialValue: 100 } }, makeStoredAnswer({ identifier: 'original_0', componentName: 'original' }), { budget: 70 }, [], {});
+  const later = createGlobalStoreSubmission(original.graph, { budget: { initialValue: 100 } }, makeStoredAnswer({ identifier: 'removed_1', trialOrder: '1', componentName: 'removed' }), { budget: 50 }, [], {});
+  const revised = createGlobalStoreSubmission(later.graph, { budget: { initialValue: 100 } }, makeStoredAnswer({ identifier: 'original_0', componentName: 'original', answer: { cost: 10 } }), { budget: 90 }, [], {});
+  const stored = { globalStore: revised.graph };
+  const getProvenance = vi.fn(async (task: string) => (task === GLOBAL_STORE_TASK ? stored : { stimulus: { root: 'retained' } }));
+  await downloadParticipantsProvenanceZip({
+    storageEngine: { getProvenance } as unknown as StorageEngine,
+    participants: [{ participantId: 'p1', answers: { original_0: makeStoredAnswer({ identifier: 'original_0' }) } }],
+    studyId: 'budget',
+  });
+  expect(getProvenance).toHaveBeenCalledWith('removed_1', 'p1');
+  const { files } = (mockZipState.instances.at(-1)!);
+  expect(files['budget_p1___globalStore_provenance.json']).toBe(JSON.stringify(stored, null, 2));
+  expect(files['budget_p1_removed_1_provenance.json']).toBeDefined();
+});
+
+test('media exports follow the retained recording references for original and revised submissions', async () => {
+  vi.stubGlobal('document', { createElement: () => ({ click: vi.fn() }) });
+  URL.createObjectURL = vi.fn(() => 'blob:zip');
+  URL.revokeObjectURL = vi.fn();
+  const originalAnswer = makeStoredAnswer({ assetIdentifier: 'original-recording', answer: { cost: 30 } });
+  const first = createGlobalStoreSubmission(undefined, { budget: { initialValue: 100 } }, originalAnswer, { budget: 70 }, [], {});
+  const revisedAnswer = makeStoredAnswer({ assetIdentifier: 'revised-recording', answer: { cost: 10 } });
+  const revised = createGlobalStoreSubmission(first.graph, { budget: { initialValue: 100 } }, revisedAnswer, { budget: 90 }, [], {});
+  const getAudioUrl = vi.fn(async () => null);
+  const storageEngine = { getAudioUrl, getTranscriptUrl: vi.fn(async () => null), getProvenance: vi.fn(async () => ({ globalStore: revised.graph })) } as unknown as StorageEngine;
+  await downloadParticipantsAudioZip({ storageEngine, participants: [{ participantId: 'p1', answers: { intro_0: revisedAnswer } }], studyId: 'budget' });
+  expect(getAudioUrl).toHaveBeenCalledWith('original-recording', 'p1');
+  expect(getAudioUrl).toHaveBeenCalledWith('revised-recording', 'p1');
+  expect(getAudioUrl).toHaveBeenCalledTimes(2);
 });

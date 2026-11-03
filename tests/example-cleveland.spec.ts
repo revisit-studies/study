@@ -1,6 +1,6 @@
 /* eslint-disable no-await-in-loop */
 import { test, expect } from '@playwright/test';
-import { nextClick, waitForStudyEndMessage } from './utils';
+import { advanceStudyStep as nextClick, waitForStudyEndMessage } from './utils';
 
 test('Test example cleveland', async ({ page }) => {
   await page.goto('/');
@@ -12,6 +12,7 @@ test('Test example cleveland', async ({ page }) => {
     .getByText('Go to Study')
     .click();
 
+  await expect(page.getByTestId('study-interface')).toHaveAttribute('aria-busy', 'false', { timeout: 30000 });
   await expect(page.getByRole('heading', { name: 'Introduction' })).toBeVisible();
 
   // Click on the next button
@@ -47,8 +48,7 @@ test('Test example cleveland', async ({ page }) => {
     // Check that the visualization is visible
     const vis = await page.getByRole('main').getByRole('img');
     await expect(vis).toBeVisible();
-    const visChildren = await page.locator(visSearchArray[idx]);
-    await expect(await visChildren.count()).toBeGreaterThan(0);
+    await expect(vis.locator(visSearchArray[idx]).first()).toBeVisible();
 
     // Fill in answer guess
     await page.getByPlaceholder('0-100').fill('66');
@@ -62,7 +62,6 @@ test('Test example cleveland', async ({ page }) => {
 
     // Click on the next button
     await nextClick(page);
-    await page.waitForTimeout(100);
   }
 
   // The separate Check Answer button is absent
@@ -79,15 +78,13 @@ test('Test example cleveland', async ({ page }) => {
     // Check that the visualization is visible
     const vis = await page.getByRole('main').getByRole('img');
     await expect(vis).toBeVisible();
-    const visChildren = await page.locator(visSearchArray2[idx]);
-    await expect(await visChildren.count()).toBeGreaterThan(0);
+    await expect(vis.locator(visSearchArray2[idx]).first()).toBeVisible();
 
     // Fill in answer
     await page.getByPlaceholder('0-100').fill('66');
 
     // Click on the next button
     await nextClick(page);
-    await page.waitForTimeout(200);
   }
 
   // Check for the post study survey and fill it out

@@ -396,6 +396,7 @@ export function ResponseSwitcher({
       <CheckBoxInput
         response={withTemplatedFields(response)}
         disabled={isDisabled || dontKnowChecked}
+        clearDisabled={isDisabled}
         answer={ans as { value: string[] }}
         error={responseError}
         index={index}

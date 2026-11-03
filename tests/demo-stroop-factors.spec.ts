@@ -8,7 +8,7 @@ import {
 } from './utils';
 
 const MARKDOWN_COLORS = ['RED', 'YELLOW', 'GREEN', 'BLUE', 'BLACK'];
-const HTML_COLORS = ['RED', 'ORANGE', 'YELLOW', 'GREEN', 'BLUE', 'PURPLE', 'PINK', 'BROWN', 'GRAY', 'BLACK'];
+const HTML_COLORS = MARKDOWN_COLORS;
 
 test('completes all 25 Markdown Stroop pairs with one assigned font size', async ({ page }) => {
   await resetClientStudyState(page);
@@ -54,15 +54,15 @@ test('completes all 25 Markdown Stroop pairs with one assigned font size', async
   await waitForStudyEndMessage(page);
 });
 
-test('completes all 20 HTML Stroop conditions using number shortcuts', async ({ page }) => {
+test('completes all 10 HTML Stroop conditions using number shortcuts', async ({ page }) => {
   await resetClientStudyState(page);
   await openStudyFromLanding(page, 'Factor-demos', 'Stroop Test in HTML with Factors');
   await nextClick(page);
 
   const stimulus = page.frameLocator('#root iframe').locator('#stimuli');
   const seenConditions = new Set<string>();
-  for (let trialIndex = 0; trialIndex < 20; trialIndex += 1) {
-    await expect(stimulus).toHaveText(/RED|ORANGE|YELLOW|GREEN|BLUE|PURPLE|PINK|BROWN|GRAY|BLACK/);
+  for (let trialIndex = 0; trialIndex < 10; trialIndex += 1) {
+    await expect(stimulus).toHaveText(/RED|YELLOW|GREEN|BLUE|BLACK/);
     const { word, inkColor } = await stimulus.evaluate((element) => ({
       word: element.textContent?.trim(),
       inkColor: element.style.color.toUpperCase(),
@@ -74,16 +74,16 @@ test('completes all 20 HTML Stroop conditions using number shortcuts', async ({ 
     seenConditions.add(condition);
 
     const previousUrl = page.url();
-    await page.keyboard.press(String((HTML_COLORS.indexOf(inkColor) + 1) % 10));
+    await page.keyboard.press(String(HTML_COLORS.indexOf(inkColor) + 1));
     await expect(page.getByRole('radio', { name: new RegExp(`${inkColor}`) })).toBeChecked();
     const previousStimulus = await page.locator('#root iframe').elementHandle();
     await nextClick(page);
     await previousStimulus?.waitForElementState('hidden');
-    if (trialIndex < 19) {
+    if (trialIndex < 9) {
       await expect.poll(() => page.url()).not.toBe(previousUrl);
     }
   }
 
-  expect(seenConditions.size).toBe(20);
+  expect(seenConditions.size).toBe(10);
   await waitForStudyEndMessage(page);
 });

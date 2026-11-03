@@ -70,7 +70,8 @@ vi.mock('react-router', () => ({
   useParams: () => ({ funcIndex: undefined }),
 }));
 
-vi.mock('../../store', () => ({
+vi.mock('../../store', async (importOriginal) => ({
+  ...(await importOriginal() as object),
   useStoreSelector: (selector: (state: Record<string, unknown>) => unknown) => selector({
     trialValidation: mockTrialValidation,
     sequence: mockSequence,
@@ -115,6 +116,8 @@ vi.mock('../useStoredAnswer', () => ({
 vi.mock('../useWindowEvents', () => ({
   useWindowEvents: () => ({ current: [] }),
 }));
+
+vi.mock('../useGlobalStore', () => ({ useGlobalStore: () => ({}) }));
 
 vi.mock('../useStudyConfig', () => ({
   useStudyConfig: () => mockStudyConfig,
