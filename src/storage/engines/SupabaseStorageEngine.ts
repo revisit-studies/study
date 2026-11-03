@@ -1721,7 +1721,7 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
       reusableSequenceIndex = await this.getLegacySequenceIndex(reusableTimestamp);
     }
 
-    if (reusableRow && reusableAssignment && reusableSequenceIndex !== undefined) {
+    if (reusableRow && reusableAssignment && reusableSequenceIndex !== undefined && !this.heldLocks.has('participant-assignment')) {
       const { data: claimedRows, error: claimError } = await this.supabase
         .from('revisit')
         .update({

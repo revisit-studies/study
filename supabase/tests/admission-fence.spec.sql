@@ -35,3 +35,25 @@ DO $$ BEGIN
     RAISE EXCEPTION 'Rejected reservations wrote assignments';
   END IF;
 END $$;
+
+RESET ROLE;
+INSERT INTO public.revisit ("studyId", "docId", data) VALUES ('test','sequenceAssignment_source','{"rejected":true,"claimed":false}');
+SET ROLE anon;
+DO $$ BEGIN
+  BEGIN
+    PERFORM public.revisit_reserve_assignment('test','denied','{"claimedParticipantId":"source","sequenceIndex":0}','live');
+    RAISE EXCEPTION 'Expired replacement was accepted';
+  EXCEPTION WHEN raise_exception THEN
+    IF SQLERRM NOT LIKE 'Admission lease expired%' THEN RAISE; END IF;
+  END;
+  IF EXISTS (SELECT FROM public.revisit WHERE "docId"='sequenceAssignment_source' AND data->>'claimed'='true') THEN
+    RAISE EXCEPTION 'Denied reservation claimed its source';
+  END IF;
+END $$;
+UPDATE public.revisit SET data = jsonb_build_object('token','live','expiresAt',extract(epoch FROM clock_timestamp())*1000+60000) WHERE "docId"='lock_participant-assignment';
+SELECT public.revisit_reserve_assignment('test','replacement','{"claimedParticipantId":"source","sequenceIndex":0}','live');
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT FROM public.revisit WHERE "docId"='sequenceAssignment_source' AND data->>'claimed'='true') THEN
+    RAISE EXCEPTION 'Accepted replacement did not claim its source';
+  END IF;
+END $$;

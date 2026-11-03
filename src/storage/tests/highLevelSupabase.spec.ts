@@ -293,6 +293,19 @@ vi.mock('@supabase/supabase-js', () => {
       rpc: async (_name: string, args: { p_study_id: string; p_participant_id: string; p_assignment: RowData; p_token: string; p_created_at: string | null }) => {
         const lock = revisitRows.find((row) => row.studyId === args.p_study_id && row.docId === 'lock_participant-assignment')?.data as RowData | undefined;
         if (lock?.token !== args.p_token || Number(lock?.expiresAt) <= Date.now()) return { error: { message: 'Admission lease expired' } };
+        if (args.p_assignment.claimedParticipantId) {
+          const result = await makeQueryBuilder(() => revisitRows).update({
+            data: {
+              ...(revisitRows.find((row) => row.docId === `sequenceAssignment_${args.p_assignment.claimedParticipantId}`)?.data as RowData),
+              claimed: true,
+              sequenceIndex: args.p_assignment.sequenceIndex,
+            },
+          }).eq('studyId', args.p_study_id).eq('docId', `sequenceAssignment_${args.p_assignment.claimedParticipantId}`)
+            .eq('data->rejected', true)
+            .eq('data->claimed', false)
+            .select('data');
+          if (result.error || !(result.data as RowData[])?.length) return { error: result.error ?? { message: 'Reusable assignment unavailable' } };
+        }
         return makeQueryBuilder(() => revisitRows).upsert({
           studyId: args.p_study_id, docId: `sequenceAssignment_${args.p_participant_id}`, data: args.p_assignment, ...(args.p_created_at ? { createdAt: args.p_created_at } : {}),
         });
@@ -1224,7 +1237,7 @@ describe.each([
     await expect(storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'replacement'))
       .rejects.toThrow(operation === 'lookup'
         ? 'Failed to retrieve rejected sequence assignment'
-        : 'Failed to claim rejected sequence assignment');
+        : 'Failed to create sequence assignment for participant replacement');
     expect(revisitRows.some((row) => row.docId === 'sequenceAssignment_replacement')).toBe(false);
     const original = revisitRows.find((row) => row.docId === 'sequenceAssignment_original')!;
     expect((original.data as SequenceAssignment).claimed).toBe(false);
@@ -2381,6 +2394,18 @@ describe.each([
     const allocation = await retry.getStageAllocation('LIMITED');
     expect(allocation.count).toBe(2);
     expect(allocation.rowCounts['new-row']).toBe(1);
+  });
+
+  test('followup: a denied reservation leaves its rejected source available', async () => {
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'source');
+    await storageEngine.rejectParticipant('source', 'test');
+    await storageEngine.clearCurrentParticipantId();
+    const client = storageEngine as unknown as { supabase: { rpc: (...args: unknown[]) => Promise<unknown> } };
+    vi.spyOn(client.supabase, 'rpc').mockResolvedValueOnce({ error: { message: 'Admission lease expired' } });
+    await expect(storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'denied')).rejects.toThrow();
+    const source = (await storageEngine.getAllSequenceAssignments(studyId)).find((assignment) => assignment.participantId === 'source');
+    expect(source?.claimed).toBe(false);
+    expect((await storageEngine.getAllParticipantsData(studyId)).some((participant) => participant.participantId === 'denied')).toBe(false);
   });
 
   test('followup: an expired admission cannot reserve after another participant fills the stage', async () => {

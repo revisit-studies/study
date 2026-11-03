@@ -196,6 +196,19 @@ vi.mock('@supabase/supabase-js', () => {
       rpc: async (_name: string, args: { p_study_id: string; p_participant_id: string; p_assignment: RowData; p_token: string; p_created_at: string | null }) => {
         const lock = revisitRows.find((row) => row.studyId === args.p_study_id && row.docId === 'lock_participant-assignment')?.data as RowData | undefined;
         if (lock?.token !== args.p_token || Number(lock?.expiresAt) <= Date.now()) return { error: { message: 'Admission lease expired' } };
+        if (args.p_assignment.claimedParticipantId) {
+          const result = await makeQueryBuilder(() => revisitRows).update({
+            data: {
+              ...(revisitRows.find((row) => row.docId === `sequenceAssignment_${args.p_assignment.claimedParticipantId}`)?.data as RowData),
+              claimed: true,
+              sequenceIndex: args.p_assignment.sequenceIndex,
+            },
+          }).eq('studyId', args.p_study_id).eq('docId', `sequenceAssignment_${args.p_assignment.claimedParticipantId}`)
+            .eq('data->rejected', true)
+            .eq('data->claimed', false)
+            .select('data');
+          if (result.error || !(result.data as RowData[])?.length) return { error: result.error ?? { message: 'Reusable assignment unavailable' } };
+        }
         return makeQueryBuilder(() => revisitRows).upsert({
           studyId: args.p_study_id, docId: `sequenceAssignment_${args.p_participant_id}`, data: args.p_assignment, ...(args.p_created_at ? { createdAt: args.p_created_at } : {}),
         });
