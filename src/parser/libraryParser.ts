@@ -168,10 +168,11 @@ type FactorResolutionMode = 'standard' | 'materialize' | 'runtime';
 export type FactorOrderContext = {
   sequenceIndex: number;
   sampledConditions: Map<string, FactorCondition[]>;
+  orderedValues: Map<string, FactorValue[]>;
 };
 
 export function createFactorOrderContext(sequenceIndex: number): FactorOrderContext {
-  return { sequenceIndex, sampledConditions: new Map() };
+  return { sequenceIndex, sampledConditions: new Map(), orderedValues: new Map() };
 }
 
 function isOrderedFactorValues(factor: Factor): factor is OrderedFactorValues {
@@ -284,6 +285,9 @@ function orderFactorValues(
     return [...factor.values];
   }
 
+  const cacheKey = JSON.stringify([factorName, factor]);
+  const cached = context.orderedValues.get(cacheKey);
+  if (cached) return cached;
   let values = [...factor.values];
   if (order === 'random') {
     values = shuffleValues(values);
@@ -298,6 +302,7 @@ function orderFactorValues(
     );
   }
   const selectedValues = values.slice(0, factor.numSamples);
+  context.orderedValues.set(cacheKey, selectedValues);
   return selectedValues;
 }
 
@@ -986,6 +991,9 @@ function compileFactorBlock(
   let order = block.order ?? 'fixed';
 
   if (resolution.hasRuntimeOrder || resolution.hasRuntimeSample) {
+    if (block.order !== undefined) {
+      addFactorError(errors, `Factor block \`${block.id}\` uses runtime factor ordering or sampling and cannot also define \`order\``, '/sequence/');
+    }
     conditions.forEach((condition) => materializeCondition(condition));
     return {
       sequence: withFactorLabels({
@@ -1132,6 +1140,7 @@ export function validateBetweenSubjects(
   const betweenSubjectsObjectFactors: Array<{ factorName: string; index: number; levels: FactorObject[] }> = [];
   const namespaceOwners = new Map<string, string>();
   const seenFactors = new Set<string>();
+  let combinationCount = 1;
 
   config.betweenSubjects?.forEach((factorName, index) => {
     const instancePath = `/betweenSubjects/${index}`;
@@ -1150,6 +1159,7 @@ export function validateBetweenSubjects(
     if (errors.length > beforeResolutionErrors) {
       return;
     }
+    combinationCount *= levels?.length || 1;
     const isObjectFactor = levels !== undefined
       && levels.length > 0
       && levels.every((level) => level !== null && typeof level === 'object' && !Array.isArray(level));
@@ -1204,6 +1214,15 @@ export function validateBetweenSubjects(
       }
     });
   });
+
+  if ((config.uiConfig.numSequences || 1000) < combinationCount) {
+    errors.push({
+      message: `numSequences must be at least ${combinationCount} to cover every between-subjects combination`,
+      instancePath: '/uiConfig/numSequences',
+      params: { action: 'Increase numSequences to cover every between-subjects combination' },
+      category: 'sequence-validation',
+    });
+  }
 
   betweenSubjectsObjectFactors.forEach((factor, factorIndex) => {
     betweenSubjectsObjectFactors.slice(factorIndex + 1).forEach((otherFactor) => {

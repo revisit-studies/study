@@ -5,7 +5,7 @@ import {
 import { generateSequenceArray } from '../../utils/handleRandomSequences';
 import { getSequenceFlatMap } from '../../utils/getSequenceFlatMap';
 import {
-  compileFactorBlocks, createFactorOrderContext, materializeParticipantConfig, resolveFactorConditions, resolveOrderedFactorConditions,
+  compileFactorBlocks, createFactorOrderContext, materializeParticipantConfig, resolveFactorConditions, resolveOrderedFactorConditions, validateBetweenSubjects,
 } from '../libraryParser';
 import { parseStudyConfig } from '../parser';
 import {
@@ -1054,5 +1054,41 @@ describe('factor sequence actions', () => {
       expect(interfaceByTask.C2).toBe(interfaceByTask.E2);
       expect(new Set(Object.values(interfaceByTask))).toEqual(new Set(['FFL', 'LaTeX']));
     });
+  });
+});
+
+describe('release regressions: factor allocation', () => {
+  test('reuses a random ordered factor selection in the same sequence', () => {
+    const random = vi.spyOn(Math, 'random')
+      .mockReturnValueOnce(0).mockReturnValueOnce(0)
+      .mockReturnValue(0.999);
+    try {
+      const factors = { tasks: { values: ['A', 'B', 'C'], order: 'random' as const, numSamples: 1 } };
+      const context = createFactorOrderContext(0);
+      const first = resolveOrderedFactorConditions('tasks', factors, context);
+      expect(first).toHaveLength(1);
+      expect(resolveOrderedFactorConditions('tasks', factors, context)).toEqual(first);
+    } finally { random.mockRestore(); }
+  });
+
+  test('rejects a sequence count that cannot cover every between-subject combination', () => {
+    const config = factorConfig();
+    config.factors = { group: ['A', 'B', 'C'] };
+    config.betweenSubjects = ['group'];
+    config.uiConfig.numSequences = 2;
+    const errors: ParserErrorWarning[] = [];
+    validateBetweenSubjects(config, [], errors);
+    expect(errors).toContainEqual(expect.objectContaining({ instancePath: '/uiConfig/numSequences' }));
+  });
+
+  test('rejects explicit block ordering that conflicts with runtime factor ordering', () => {
+    const config = factorConfig();
+    config.factors = { tasks: { values: ['A', 'B', 'C'], order: 'latinSquare' } };
+    config.sequence = {
+      type: 'factor', id: 'trial', factor: 'tasks', order: 'random', components: 'trial',
+    };
+    const errors: ParserErrorWarning[] = [];
+    compileFactorBlocks(config.sequence, config, errors);
+    expect(errors).toContainEqual(expect.objectContaining({ message: expect.stringMatching(/order/) }));
   });
 });

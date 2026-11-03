@@ -511,3 +511,33 @@ describe('MetaCell', () => {
     expect(html).toContain('User Agent');
   });
 });
+
+test('release regression: grades a visible response with its saved global store context', () => {
+  const studyConfig = createMockStudyConfig({
+    components: {
+      trial1: {
+        type: 'questionnaire',
+        response: [{
+          id: 'q1', type: 'shortText', prompt: 'Q', visibleIf: { globalVariable: 'show', comparison: 'equals', value: true },
+        }],
+        correctAnswer: [{ id: 'q1', answer: 'right' }],
+      },
+    },
+  });
+  const participant = makeParticipant({
+    answers: {
+      trial1_0: makeStoredAnswer({
+        componentName: 'trial1',
+        answer: { q1: 'wrong' },
+        endTime: 100,
+        correctAnswer: [{ id: 'q1', answer: 'right' }],
+        globalStoreEntry: { show: true },
+      }),
+    },
+  });
+  try {
+    render(<TableView {...defaultProps} studyConfig={studyConfig} allConfigs={{ hash1: studyConfig }} visibleParticipants={[participant]} />);
+    const column = capturedTableOptions!.columns.find(({ header }) => header === 'Correct Answers')!;
+    expect(column.accessorFn!(participant)).toEqual([false]);
+  } finally { cleanup(); }
+});

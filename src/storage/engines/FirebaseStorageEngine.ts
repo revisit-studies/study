@@ -601,9 +601,11 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
     const lockDocument = doc(this.studyCollection, 'locks');
     const token = uuidv4();
     const expiresInMs = 60_000;
+    // Backend time governs shared expiry; a monotonic clock bounds our local lease.
     let lockExpiresAt = 0;
     const acquireLock = async (attempt: number): Promise<void> => {
-      const now = Date.now();
+      const leaseStartedAt = performance.now();
+      const now = await this._getServerTimeMs();
       try {
         await runTransaction(this.firestore, async (transaction) => {
           const snapshot = await transaction.get(lockDocument);
@@ -619,7 +621,7 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
             [lockKey]: { token, expiresAt: now + expiresInMs },
           }, { merge: true });
         });
-        lockExpiresAt = now + expiresInMs;
+        lockExpiresAt = leaseStartedAt + expiresInMs;
       } catch (error) {
         if (!(error instanceof Error) || error.message !== 'Study lock is held') {
           throw error;
@@ -639,7 +641,8 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
     let lockRefreshError: unknown;
     let lockLost = false;
     const refreshLock = async () => {
-      const now = Date.now();
+      const leaseStartedAt = performance.now();
+      const now = await this._getServerTimeMs();
       await runTransaction(this.firestore, async (transaction) => {
         const snapshot = await transaction.get(lockDocument);
         const existingLock = snapshot.data()?.[lockKey] as { token?: string } | undefined;
@@ -649,7 +652,7 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
         }
         transaction.update(lockDocument, new FieldPath(lockKey), { token, expiresAt: now + expiresInMs });
       });
-      lockExpiresAt = now + expiresInMs;
+      lockExpiresAt = leaseStartedAt + expiresInMs;
       lockRefreshError = undefined;
     };
     const refreshTimer = setInterval(() => {
@@ -659,10 +662,11 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
     }, expiresInMs / 3);
 
     try {
+      if (performance.now() >= lockExpiresAt) throw new Error('Study update lock expired before the operation started');
       const result = await operation();
       // A transient refresh failure does not undo a successful operation while
       // our last acknowledged lease is still valid. Confirmed loss still fails.
-      if (lockLost || Date.now() >= lockExpiresAt) {
+      if (lockLost || performance.now() >= lockExpiresAt) {
         throw lockRefreshError || new Error('Study update lock was lost');
       }
       return result;

@@ -160,3 +160,13 @@ test('the accepted answer uses the same unique visit key as the recorder', async
   expect(mocks.save.mock.calls[0][0].purchase_0.assetIdentifier).toBe(key);
   expect(mocks.context.store.getState().answers.purchase_0.assetIdentifier).toBe(key);
 });
+
+test.each(['ready', 'missing'] as const)('release regression: saves and advances with a %s video asset', async (status) => {
+  const { store, actions } = mocks.context;
+  store.dispatch(actions.setAssetStatus({ identifier: 'purchase_0', status }));
+  const hook = mount();
+  expect(hook.result.current.isNextDisabled).toBe(false);
+  await act(async () => { await hook.result.current.goToNextStep(); });
+  expect(mocks.save).toHaveBeenCalledTimes(1);
+  expect(mocks.navigate).toHaveBeenCalledTimes(1);
+});

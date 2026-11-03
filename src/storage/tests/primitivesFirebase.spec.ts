@@ -130,11 +130,21 @@ vi.mock('firebase/firestore', () => {
     direction?: 'asc' | 'desc';
   };
 
+  class MockTimestamp {
+    constructor(public seconds: number, public nanoseconds: number) { }
+
+    toMillis() { return this.seconds * 1000 + Math.floor(this.nanoseconds / 1e6); }
+
+    static fromMillis(milliseconds: number) {
+      return new MockTimestamp(Math.floor(milliseconds / 1000), (milliseconds % 1000) * 1e6);
+    }
+  }
+
   function resolveSentinels(data: DocData): DocData {
     const now = Date.now();
     const result: DocData = {};
     for (const [k, v] of Object.entries(data)) {
-      result[k] = v === SERVER_TS_SENTINEL ? now : v;
+      result[k] = v === SERVER_TS_SENTINEL ? (k === 'readAt' ? MockTimestamp.fromMillis(now) : now) : v;
     }
     return result;
   }
@@ -311,16 +321,6 @@ vi.mock('firebase/firestore', () => {
       delete: (docRef: { _path: string }) => { delete firestoreData[docRef._path]; },
     };
     return updateFunction(transaction);
-  }
-
-  class MockTimestamp {
-    constructor(public seconds: number, public nanoseconds: number) { }
-
-    toMillis() { return this.seconds * 1000 + Math.floor(this.nanoseconds / 1e6); }
-
-    static fromMillis(milliseconds: number) {
-      return new MockTimestamp(Math.floor(milliseconds / 1000), (milliseconds % 1000) * 1e6);
-    }
   }
 
   return {

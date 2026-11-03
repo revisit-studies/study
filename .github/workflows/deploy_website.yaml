@@ -35,16 +35,20 @@ jobs:
           if [ "$GITHUB_REPOSITORY" = "revisit-studies/study" ]; then
             VITE_STORAGE_ENGINE=firebase VITE_REPO_URL=https://github.com/revisit-studies/study/tree/main/public/ yarn build
           else
+            if [ -z "$VITE_STORAGE_ENGINE" ]; then unset VITE_STORAGE_ENGINE; fi
             yarn build
           fi
         env:
+          VITE_STORAGE_ENGINE: ${{ vars.VITE_STORAGE_ENGINE }}
           VITE_BASE_PATH: "/${{ github.event.repository.name }}/"
 
       - uses: actions/checkout@v7
         with:
-          ref: gh-pages
           path: .pages
           fetch-depth: 1
+
+      - name: Prepare publishing branch
+        run: .github/scripts/checkout-pages-branch.sh ./.pages
 
       - name: Deploy current-only main snapshot
         run: .github/scripts/publish-pages-snapshot.sh ./dist '' ./.pages
@@ -81,16 +85,20 @@ jobs:
           if [ "$GITHUB_REPOSITORY" = "revisit-studies/study" ]; then
             VITE_STORAGE_ENGINE=firebase VITE_REPO_URL=https://github.com/revisit-studies/study/tree/dev/public/ yarn build
           else
+            if [ -z "$VITE_STORAGE_ENGINE" ]; then unset VITE_STORAGE_ENGINE; fi
             yarn build
           fi
         env:
+          VITE_STORAGE_ENGINE: ${{ vars.VITE_STORAGE_ENGINE }}
           VITE_BASE_PATH: "/${{ github.event.repository.name }}/dev/"
 
       - uses: actions/checkout@v7
         with:
-          ref: gh-pages
           path: .pages
           fetch-depth: 1
+
+      - name: Prepare publishing branch
+        run: .github/scripts/checkout-pages-branch.sh ./.pages
 
       - name: Deploy current-only dev snapshot
         run: .github/scripts/publish-pages-snapshot.sh ./dist dev ./.pages
@@ -135,8 +143,11 @@ jobs:
 
       - name: Build PR deployment
         if: ${{ github.repository != 'revisit-studies/study' }}
-        run: yarn build
+        run: |
+          if [ -z "$VITE_STORAGE_ENGINE" ]; then unset VITE_STORAGE_ENGINE; fi
+          yarn build
         env:
+          VITE_STORAGE_ENGINE: ${{ vars.VITE_STORAGE_ENGINE }}
           VITE_BASE_PATH: "/${{ github.event.repository.name }}/PR${{ github.event.number }}/"
 
       - name: Build with github environment variables
@@ -148,9 +159,11 @@ jobs:
 
       - uses: actions/checkout@v7
         with:
-          ref: gh-pages
           path: .pages
           fetch-depth: 1
+
+      - name: Prepare publishing branch
+        run: .github/scripts/checkout-pages-branch.sh ./.pages
 
       - name: Push current-only PR deploy preview
         run: .github/scripts/publish-pages-snapshot.sh ./dist "PR${{ github.event.number }}" ./.pages

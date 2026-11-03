@@ -76,6 +76,29 @@ vi.mock('../StringInput', () => ({
   },
 }));
 
+vi.mock('../DateInput', () => ({
+  DateResponseInput: ({ response: value }: { response: Response }) => (
+    <div data-testid="templated-input">
+      {value.prompt}
+      |
+      {value.secondaryText}
+      |
+      {value.infoText}
+    </div>
+  ),
+}));
+vi.mock('../TimeInput', () => ({
+  TimeResponseInput: ({ response: value }: { response: Response }) => (
+    <div data-testid="templated-input">
+      {value.prompt}
+      |
+      {value.secondaryText}
+      |
+      {value.infoText}
+    </div>
+  ),
+}));
+
 // ── fixtures ──────────────────────────────────────────────────────────────────
 
 const response = {
@@ -350,3 +373,15 @@ describe('ResponseSwitcher dynamic loading', () => {
 });
 
 vi.mock('../../../store/hooks/useGlobalStore', () => ({ useGlobalStore: () => ({}), useGlobalStoreUpdaterRegistration: () => () => () => undefined }));
+
+test.each(['date', 'time'] as const)('release regression: templates every display field for %s responses', (type) => {
+  const view = render(<ResponseSwitcher
+    response={{
+      id: 'visit', type, prompt: 'Visit {{visit}}', secondaryText: 'Date for {{visit}}', infoText: 'Help for {{visit}}',
+    }}
+    form={{ value: '', onChange: vi.fn() }}
+    index={1}
+    config={{ type: 'questionnaire', response: [], parameters: { visit: 'Follow-up' } }}
+  />);
+  expect(view.getByTestId('templated-input').textContent).toBe('Visit Follow-up|Date for Follow-up|Help for Follow-up');
+});
