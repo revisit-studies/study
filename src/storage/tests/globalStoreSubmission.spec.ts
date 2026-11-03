@@ -330,7 +330,11 @@ test.each(['submission', 'recovery'] as const)('an interleaved %s cannot overwri
     const competing = revisedPurchase(first.graph, retained, 20);
     await b.saveGlobalStoreSubmission({ purchase_0: competing.revisedAnswer }, competing.graph, 2, 'purchase_0', competing.provenance);
   } else {
-    await b.initializeParticipantSession({}, makeStudyConfig(), participant.metadata);
+    const initializing = b.initializeParticipantSession({}, makeStudyConfig(), participant.metadata);
+    // Finish the locked startup read before interleaving the recovered uploads.
+    await vi.waitFor(() => expect(b.jobs.length).toBeGreaterThan(0));
+    await b.runNext();
+    await initializing;
   }
   await vi.waitFor(() => { expect(a.jobs.length).toBeGreaterThan(0); expect(b.jobs.length).toBeGreaterThan(0); });
   // Alternate complete lock acquisitions, the ordering that previously split matching graphs.

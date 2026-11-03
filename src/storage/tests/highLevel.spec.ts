@@ -505,6 +505,43 @@ describe.each([
     expect(await storageEngine.getCurrentConfigHash(studyId)).toBe(configHash);
   });
 
+  test.each(['finalized cache', 'newer unuploaded cache'] as const)(
+    'regression: reopening a completed session reconciles its %s without publishing',
+    async (cache) => {
+      const definitions = { budget: { initialValue: 100 } };
+      const config: StudyConfig = { ...configSimple, globalVariables: definitions };
+      const { participantId } = await storageEngine.initializeParticipantSession({}, config, participantMetadata);
+      const answer = { ...makeStoredAnswer('testComponent_0', 10), componentName: 'testComponent', answer: { cost: 30 } };
+      const provenance = createEmptyProvenance();
+      const first = createGlobalStoreSubmission(undefined, definitions, answer, { budget: 70 }, [], provenance);
+      await storageEngine.saveGlobalStoreSubmission({ testComponent_0: answer }, first.graph, 1, 'testComponent_0', provenance);
+      await storageEngine.flushPendingParticipantData();
+      const stale = new TestEngine(true);
+      await stale.connect();
+      await stale.initializeStudyDb(studyId);
+      await stale.initializeParticipantSession({}, config, participantMetadata, participantId);
+      await stale.flushPendingParticipantData();
+      expect(await storageEngine.finalizeParticipant()).toEqual({ status: 'complete' });
+
+      if (cache === 'newer unuploaded cache') {
+        const edited = { ...answer, answer: { cost: 60 } };
+        const revised = createGlobalStoreSubmission(first.graph, definitions, edited, { budget: 40 }, [], provenance);
+        await stale.saveGlobalStoreSubmission({ testComponent_0: edited }, revised.graph, 2, 'testComponent_0', provenance);
+        await expect(stale.flushPendingParticipantData()).rejects.toThrow('completed');
+      }
+
+      const resumed = new TestEngine(true);
+      await resumed.connect();
+      await resumed.initializeStudyDb(studyId);
+      const writes = vi.spyOn(resumed as unknown as { _pushToStorage: StorageEngine['_pushToStorage'] }, '_pushToStorage');
+      const restored = await resumed.initializeParticipantSession({}, config, participantMetadata, participantId);
+      expect(await resumed.finalizeParticipant()).toEqual({ status: 'complete' });
+      expect(restored).toMatchObject({ answers: { testComponent_0: answer }, globalStoreRevision: 1, finalized: true });
+      expect(await resumed.getProvenance(GLOBAL_STORE_TASK)).toMatchObject({ globalStore: { current: first.graph.current } });
+      expect(writes).not.toHaveBeenCalled();
+    },
+  );
+
   test.each(['submission', 'answers', 'global provenance', 'trial provenance', 'unsubmitted trial provenance'] as const)(
     'regression: another open session cannot publish %s after completion',
     async (publication) => {

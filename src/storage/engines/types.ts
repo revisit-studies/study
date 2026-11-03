@@ -961,7 +961,7 @@ export abstract class StorageEngine {
       this.participantDataWriteError = null;
       try {
         if (snapshot.globalStoreRevision !== undefined) await this.provenanceWriteChains.get(publicationKey);
-        const uploaded = await this._runWithLock(`participant-${participantId}`, async () => {
+        await this._runWithLock(`participant-${participantId}`, async () => {
           // An admin can reject a participant in another browser while this
           // client still has a debounced full-record write pending. The same
           // lock is held by rejectParticipant, so the check and write cannot
@@ -996,15 +996,11 @@ export abstract class StorageEngine {
             'participantData',
             snapshot,
           );
+          if (cache && snapshot.globalStoreRevision === undefined) {
+            await this._cacheStorageObject(`participants/${participantId}`, 'participantData');
+          }
           return true;
         });
-
-        if (uploaded && cache && snapshot.globalStoreRevision === undefined) {
-          await this._cacheStorageObject(
-            `participants/${participantId}`,
-            'participantData',
-          );
-        }
       } catch (error) {
         this.recordParticipantDataWriteError(error);
         throw this.participantDataWriteError;
@@ -1721,8 +1717,14 @@ export abstract class StorageEngine {
     }
     if (cachedParticipant && (cachedParticipant.globalStoreRevision !== undefined || config.globalVariables !== undefined)
       && (await this.getModes(this.studyId!)).dataCollectionEnabled) {
-      const remote = await this._getFromStorage(`participants/${this.currentParticipantId}`, 'participantData', undefined, true, true);
-      if (isParticipantData(remote) && isStaleGlobalStoreSnapshot(cachedParticipant, remote)) {
+      const participantId = this.currentParticipantId;
+      const remote = await this._runWithLock(`participant-${participantId}`, async () => {
+        const assignment = await this._getSequenceAssignment(participantId);
+        const latest = await this._getFromStorage(`participants/${participantId}`, 'participantData', undefined, true, true);
+        return isParticipantData(latest) && assignment && assignment.completed !== null
+          ? { ...latest, finalized: true } : latest;
+      });
+      if (isParticipantData(remote) && (remote.finalized || isStaleGlobalStoreSnapshot(cachedParticipant, remote))) {
         // Trial assets have logical keys, so an older local copy must not shadow the new history.
         const prefix = this.localProvenanceKey('', this.currentParticipantId);
         const keys = await this.participantStore.keys();
@@ -2313,7 +2315,7 @@ export abstract class StorageEngine {
 
   /** Rebuild upload work from accepted local history after a reload loses in-memory retries. */
   private async restoreGlobalStoreUploads(participant: ParticipantData) {
-    if (!participant.globalStoreRevision || !this.studyId) return;
+    if (participant.finalized || !participant.globalStoreRevision || !this.studyId) return;
     const { studyId, currentParticipantId } = this;
     const saved = await this.participantStore.getItem<StoredProvenance>(
       this.localProvenanceKey(`${GLOBAL_STORE_TASK}/${participant.globalStoreRevision}`, participant.participantId),
@@ -2682,7 +2684,18 @@ export abstract class StorageEngine {
         throw new Error('Data collection is disabled for this study');
       }
 
-      const upload = (provenance = provenanceToSave) => this._pushToStorage(`provenance/${participantId}`, taskName, provenance as unknown as StorageObject<typeof taskName>);
+      const upload = async (provenance = provenanceToSave) => {
+        await this._pushToStorage(`provenance/${participantId}`, taskName, provenance as unknown as StorageObject<typeof taskName>);
+        if (progress?.globalStoreRevision === undefined) {
+          try {
+            // Supabase refreshes headers by reuploading bytes, so keep this
+            // mutation inside the same protection as the original upload.
+            await this._cacheStorageObject(`provenance/${participantId}`, taskName);
+          } catch (error) {
+            console.warn(`Failed to update cache headers for provenance ${taskName}:`, error);
+          }
+        }
+      };
       if (progress) {
         await this._runWithLock(`participant-${participantId}`, async () => {
           let uploadProgress = progress;
@@ -2735,14 +2748,6 @@ export abstract class StorageEngine {
         });
       } else {
         await upload();
-      }
-
-      if (progress?.globalStoreRevision === undefined) {
-        try {
-          await this._cacheStorageObject(`provenance/${participantId}`, taskName);
-        } catch (error) {
-          console.warn(`Failed to update cache headers for provenance ${taskName}:`, error);
-        }
       }
     });
     this.provenanceWriteChains.set(queueKey, write);
