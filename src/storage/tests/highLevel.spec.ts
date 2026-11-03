@@ -1151,6 +1151,7 @@ describe.each([
       vi.setSystemTime(new Date('2026-01-01T00:00:00.000Z'));
       await storageEngine.setAutoTimeoutMinutes(studyId, 1);
       await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'abandoned');
+      await storageEngine.releaseExpiredAssignments();
       vi.setSystemTime(new Date('2026-01-01T00:02:00.000Z'));
       let releaseTimeout!: () => void;
       const timeoutHeld = new Promise<void>((resolve) => { releaseTimeout = resolve; });
@@ -1243,6 +1244,13 @@ describe.each([
     } finally {
       vi.useRealTimers();
     }
+  });
+
+  test('a sweep does not save a default stage', async () => {
+    await storageEngine.setAutoTimeoutMinutes(studyId, 1);
+    expect((await storageEngine.getModes(studyId)).stage).toBeUndefined();
+    await storageEngine.releaseExpiredAssignments();
+    expect((await storageEngine.getModes(studyId)).stage).toBeUndefined();
   });
 
   test('a sweep requested during another sweep gets its own pass', async () => {

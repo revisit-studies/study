@@ -1469,11 +1469,13 @@ export abstract class StorageEngine {
     }
   }
 
+  // Reads modes directly: `getModesAndStageData` saves a default stage when none
+  // exists, which could overwrite a stage a designer saves meanwhile.
   private async readTimeoutSettings(studyId: string) {
-    const { modes, stageData } = await this.getModesAndStageData(studyId);
+    const modes = await this.getModes(studyId);
     return {
       timeoutMinutes: modes.dataCollectionEnabled ? modes.autoTimeoutMinutes : undefined,
-      stage: stageData.currentStage.stageName,
+      stage: modes.stage?.currentStage.stageName ?? 'DEFAULT',
     };
   }
 
