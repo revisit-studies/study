@@ -176,7 +176,7 @@ export function VegaController({ currentConfig, provState }: { currentConfig: Ve
     const signals = vegaConfig?.config?.signals;
     if (!signals) return {};
 
-    return signals.reduce((listeners, signal) => {
+    return signals.reduce((listeners: Listeners, signal: { name: string }) => {
       if (signal.name === 'revisitAnswer') {
         listeners[signal.name] = handleRevisitAnswer;
       } else {
