@@ -12,6 +12,7 @@ import type { StorageEngine } from '../../../storage/engines/types';
 import type { ParticipantDataWithStatus } from '../../../storage/types';
 import type { StoredAnswer } from '../../../store/types';
 import testConfigSimple from '../../../storage/tests/testConfigSimple.json';
+import { generateSequenceArray } from '../../../utils/handleRandomSequences';
 
 const storageEngineHookMock = vi.hoisted(() => ({
   storageEngine: undefined as StorageEngine | undefined,
@@ -738,6 +739,29 @@ describe('DownloadTidy', () => {
     cleanup();
     storageEngineHookMock.storageEngine = undefined;
     vi.clearAllMocks();
+  });
+
+  test('regression: previews generated object-valued factor parameters', async () => {
+    const config: StudyConfig = {
+      ...configSimple,
+      uiConfig: { ...configSimple.uiConfig, numSequences: 2 },
+      factors: { data: [{ stimulus: 'a' }, { stimulus: 'b' }] },
+      betweenSubjects: ['data'],
+      sequence: { order: 'fixed', components: ['testComponent'] },
+    };
+    const sequence = generateSequenceArray(config)[0];
+    const participant = makeParticipant({ sequence });
+    participant.answers.testComponent_0.parameters = sequence.parameters!;
+    storageEngineHookMock.storageEngine = makeStorageEngine({ 'hash-1': config });
+
+    render(
+      <MantineProvider>
+        <DownloadTidy opened close={vi.fn()} filename="test-study_tidy.csv" data={[participant]} studyId="test-study" />
+      </MantineProvider>,
+    );
+
+    expect(await screen.findByText('{"stimulus":"a"}')).not.toBeNull();
+    expect(screen.getByRole('button', { name: 'Download' }).hasAttribute('disabled')).toBe(false);
   });
 
   test('exposes window events as an unselected optional property', async () => {

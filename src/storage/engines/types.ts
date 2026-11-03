@@ -932,6 +932,10 @@ export abstract class StorageEngine {
       ? await this._getFromStorage(`participants/${participantId}`, 'participantData', undefined, true, true)
       : remoteParticipant;
     if (snapshot.globalStoreRevision === undefined && (!isParticipantData(remote) || remote.globalStoreRevision === undefined)) return;
+    // Finalization marks the assignment under this same participant lock; its
+    // completion is authoritative even when another browser still has an open session.
+    const assignment = await this._getSequenceAssignment(participantId);
+    if (assignment && assignment.completed !== null) throw new Error('This participant has already completed the study. Reload before continuing.');
     const conflict = () => new Error('This session has newer progress in another browser. Reload before continuing.');
     if (isParticipantData(remote) && isStaleGlobalStoreSnapshot(snapshot, remote)) throw conflict();
     if (!snapshot.globalStoreRevision) return;
@@ -1097,6 +1101,7 @@ export abstract class StorageEngine {
   }
 
   async retryFailedWrites() {
+    if (this.participantData?.finalized) return;
     await this.connect();
     if (!this.isConnected()) {
       throw new Error(`Failed to reconnect to ${this.getEngine()} storage engine`);
@@ -1376,15 +1381,13 @@ export abstract class StorageEngine {
       if (!this.studyId) throw new Error('Study ID is not set');
       const currentConfigHash = await this._getCurrentConfigHash();
       const configHash = await hash(JSON.stringify(config));
-      if (currentConfigHash === configHash) return;
-      const keys = getConfigConditionKeys(config);
-      await this.validateStageConditions(this.studyId, keys);
       const storedConfig = currentConfigHash === configHash
         ? await this._getFromStorage(`configs/${configHash}`, 'config') : null;
-      if (!storedConfig || Object.keys(storedConfig).length === 0) {
-        await this._pushToStorage(`configs/${configHash}`, 'config', config);
-        await this._cacheStorageObject(`configs/${configHash}`, 'config');
-      }
+      if (storedConfig && Object.keys(storedConfig).length > 0) return;
+      const keys = getConfigConditionKeys(config);
+      await this.validateStageConditions(this.studyId, keys);
+      await this._pushToStorage(`configs/${configHash}`, 'config', config);
+      await this._cacheStorageObject(`configs/${configHash}`, 'config');
       // Failed uploads must not advance the append-only condition definitions.
       await this.activateConfig(configHash, keys);
     });
@@ -2680,7 +2683,7 @@ export abstract class StorageEngine {
       }
 
       const upload = (provenance = provenanceToSave) => this._pushToStorage(`provenance/${participantId}`, taskName, provenance as unknown as StorageObject<typeof taskName>);
-      if (progress?.globalStoreRevision !== undefined) {
+      if (progress) {
         await this._runWithLock(`participant-${participantId}`, async () => {
           let uploadProgress = progress;
           let provenance = provenanceToSave;

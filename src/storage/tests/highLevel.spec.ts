@@ -3,6 +3,7 @@ import {
   afterEach,
   vi,
 } from 'vitest';
+import { initializeTrrack, Registry } from '@trrack/core';
 import { ParticipantMetadata, StudyConfig } from '../../parser/types';
 import testConfigSimple from './testConfigSimple.json';
 import testConfigSimple2 from './testConfigSimple2.json';
@@ -15,6 +16,8 @@ import {
 } from '../engines/types';
 import { filterSequenceByCondition } from '../../utils/handleConditionLogic';
 import { getParticipantDataStatus } from '../participantStatus';
+import { createEmptyProvenance } from '../../store/provenance';
+import { createGlobalStoreSubmission, GLOBAL_STORE_TASK } from '../../store/globalStoreProvenance';
 
 const studyId = 'test-study';
 const configSimple = testConfigSimple as StudyConfig;
@@ -475,17 +478,89 @@ describe.each([
     expect(setHashSpy).not.toHaveBeenCalled();
   });
 
-  test('saveConfig skips storage reads when the hash pointer is unchanged', async () => {
+  test('saveConfig checks the existing blob without scanning assignments when the hash is unchanged', async () => {
     await storageEngine.saveConfig(configSimple);
+    const configHash = await hash(JSON.stringify(configSimple));
     const getFromStorageSpy = vi.spyOn(
       storageEngine as unknown as { _getFromStorage: (...args: unknown[]) => Promise<unknown> },
       '_getFromStorage',
     );
+    const assignmentsSpy = vi.spyOn(storageEngine, 'getAllSequenceAssignments');
 
     await storageEngine.saveConfig(configSimple);
 
-    expect(getFromStorageSpy).not.toHaveBeenCalled();
+    expect(getFromStorageSpy).toHaveBeenCalledExactlyOnceWith(`configs/${configHash}`, 'config');
+    expect(assignmentsSpy).not.toHaveBeenCalled();
   });
+
+  test('regression: saving an unchanged config repairs its missing active blob', async () => {
+    await storageEngine.saveConfig(configSimple);
+    const configHash = await hash(JSON.stringify(configSimple));
+    // @ts-expect-error remove the archived blob while retaining the active pointer
+    await storageEngine._deleteFromStorage(`configs/${configHash}`, 'config');
+
+    await storageEngine.saveConfig(configSimple);
+
+    expect((await storageEngine.getAllConfigsFromHash([configHash], studyId))[configHash]).toEqual(configSimple);
+    expect(await storageEngine.getCurrentConfigHash(studyId)).toBe(configHash);
+  });
+
+  test.each(['submission', 'answers', 'global provenance', 'trial provenance', 'unsubmitted trial provenance'] as const)(
+    'regression: another open session cannot publish %s after completion',
+    async (publication) => {
+      const definitions = { budget: { initialValue: 100 } };
+      const config: StudyConfig = { ...configSimple, globalVariables: definitions };
+      const { participantId } = await storageEngine.initializeParticipantSession({}, config, participantMetadata);
+      const second = new TestEngine(true);
+      const openSecondSession = async () => {
+        await second.connect();
+        await second.initializeStudyDb(studyId);
+        await second.initializeParticipantSession({}, config, participantMetadata, participantId);
+        await second.flushPendingParticipantData();
+      };
+      if (publication === 'unsubmitted trial provenance') await openSecondSession();
+      const answer = { ...makeStoredAnswer('testComponent_0', 10), componentName: 'testComponent', answer: { cost: 30 } };
+      const trrack = initializeTrrack({ registry: Registry.create(), initialState: { cost: 30 } });
+      const provenance = { ...createEmptyProvenance(), stimulus: structuredClone(trrack.graph.backend) };
+      const first = createGlobalStoreSubmission(undefined, definitions, answer, { budget: 70 }, [], provenance);
+      await storageEngine.saveGlobalStoreSubmission({ testComponent_0: answer }, first.graph, 1, 'testComponent_0', provenance);
+      await storageEngine.flushPendingParticipantData();
+
+      if (publication !== 'unsubmitted trial provenance') await openSecondSession();
+      expect(await storageEngine.finalizeParticipant()).toEqual({ status: 'complete' });
+      expect(await storageEngine.finalizeParticipant()).toEqual({ status: 'complete' });
+
+      const observer = new TestEngine(true);
+      await observer.connect();
+      await observer.initializeStudyDb(studyId);
+      const persisted = await observer.getParticipantData(participantId);
+      const originalHistory = await observer.getProvenance(GLOBAL_STORE_TASK, participantId, true);
+      trrack.record({
+        label: 'Edit', state: { cost: 60 }, eventType: 'edit', sideEffects: { do: [], undo: [] },
+      });
+      const revisedProvenance = { ...provenance, stimulus: trrack.graph.backend };
+      const revisedAnswer = { ...answer, answer: { cost: 60 } };
+      const revised = createGlobalStoreSubmission(first.graph, definitions, revisedAnswer, { budget: 40 }, [], revisedProvenance);
+
+      if (publication === 'submission') {
+        await second.saveGlobalStoreSubmission({ testComponent_0: revisedAnswer }, revised.graph, 2, 'testComponent_0', revisedProvenance);
+        await expect(second.flushPendingParticipantData()).rejects.toThrow('completed');
+      } else if (publication === 'answers') {
+        await second.saveAnswers({ testComponent_0: revisedAnswer });
+        await expect(second.flushPendingParticipantData()).rejects.toThrow('completed');
+      } else {
+        const task = publication === 'global provenance' ? GLOBAL_STORE_TASK : 'testComponent_0';
+        const asset = publication === 'global provenance' ? { ...createEmptyProvenance(), globalStore: revised.graph } : revisedProvenance;
+        await expect(second.saveProvenance(asset, task)).rejects.toThrow('completed');
+      }
+
+      expect(await observer.getParticipantData(participantId)).toEqual(persisted);
+      expect(await observer.getProvenance(GLOBAL_STORE_TASK, participantId, true)).toEqual(originalHistory);
+      expect(await observer.getProvenance('testComponent_0', participantId, true)).toEqual(provenance);
+      expect(await observer.getParticipantCompletionStatus(participantId)).toBe(true);
+      await expect(storageEngine.retryFailedWrites()).resolves.toBeUndefined();
+    },
+  );
 
   test('getCurrentParticipantId returns the current participant ID', async () => {
     const participantSession = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
