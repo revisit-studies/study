@@ -431,7 +431,7 @@ describe.each([
     const started = new Promise<void>((resolve) => { uploading = resolve; });
     // @ts-expect-error Pause publication while the other client observes the missing array.
     const upload = storageEngine._pushToStorage.bind(storageEngine);
-    // @ts-expect-error Exercise the actual distributed lock.
+    // Exercise the actual distributed lock.
     vi.spyOn(storageEngine, '_pushToStorage').mockImplementationOnce(async (path, type, data) => {
       uploading();
       await new Promise<void>((resolve) => { release = resolve; });
@@ -471,7 +471,7 @@ describe.each([
     await storageEngine.setSequenceArray(canonical, configHash);
     if (lockedRecheck) vi.spyOn(storageEngine, 'getSequenceArray').mockResolvedValueOnce(null);
     const generate = vi.fn(() => generateSequenceArray(configSimple2));
-    // @ts-expect-error Failed reads must never result in a replacement upload.
+    // Failed reads must never result in a replacement upload.
     const upload = vi.spyOn(storageEngine, '_pushToStorage');
     failSequenceReads = true;
     try {
@@ -489,7 +489,7 @@ describe.each([
     const canonical = generateSequenceArray(configSimple);
     await storageEngine.setSequenceArray(canonical, configHash);
     const generate = vi.fn(() => generateSequenceArray(configSimple2));
-    // @ts-expect-error Existing arrays must take the normal read path without a lock.
+    // Existing arrays must take the normal read path without a lock.
     const lock = vi.spyOn(storageEngine, '_runWithLock');
     expect(await storageEngine.getOrCreateSequenceArray(configHash, generate)).toEqual(canonical);
     expect(generate).not.toHaveBeenCalled();
@@ -499,7 +499,7 @@ describe.each([
   test('failed publication releases the preparation lock for a retry', async () => {
     const configHash = await hash(JSON.stringify(configSimple));
     const canonical = generateSequenceArray(configSimple);
-    // @ts-expect-error A failed first upload must not leave the preparation lock held.
+    // A failed first upload must not leave the preparation lock held.
     vi.spyOn(storageEngine, '_pushToStorage').mockRejectedValueOnce(new Error('upload failed'));
     await expect(storageEngine.getOrCreateSequenceArray(configHash, () => canonical)).rejects.toThrow('upload failed');
     await expect(storageEngine.getOrCreateSequenceArray(configHash, () => canonical)).resolves.toEqual(canonical);
@@ -547,7 +547,7 @@ describe.each([
     await storageEngine.saveConfig(original);
     await storageEngine.setSequenceArray(generateSequenceArray(original));
     await storageEngine.initializeParticipantSession({}, original, participantMetadata, 'first');
-    // @ts-expect-error Inject an upload failure after append-only validation.
+    // Inject an upload failure after append-only validation.
     vi.spyOn(storageEngine, '_pushToStorage').mockRejectedValueOnce(new Error('config upload failed'));
     await expect(storageEngine.saveConfig(appended)).rejects.toThrow('config upload failed');
     await expect(storageEngine.saveConfig(original)).resolves.toBeUndefined();
@@ -706,7 +706,7 @@ describe.each([
   test('retrying a failed replacement never claims its own rejected assignment', async () => {
     await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'original');
     await storageEngine.rejectParticipant('original', 'review');
-    // @ts-expect-error Inject a failed initial participant upload.
+    // Inject a failed initial participant upload.
     vi.spyOn(storageEngine, '_pushToStorage').mockRejectedValueOnce(new Error('upload failed'));
     await expect(storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'replacement')).rejects.toThrow('upload failed');
     await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'claims-original');
@@ -740,7 +740,7 @@ describe.each([
   test('an orphan recheck read failure leaves the assignment reserved', async () => {
     await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'recheck-active');
     await storageEngine.clearCurrentParticipantId();
-    // @ts-expect-error Simulate an initially absent blob followed by a failing admission-lock recheck.
+    // Simulate an initially absent blob followed by a failing admission-lock recheck.
     vi.spyOn(storageEngine, '_getFromStorage').mockResolvedValueOnce({});
     failParticipantReads = true;
     try {
@@ -793,7 +793,7 @@ describe.each([
     await storageEngine.saveConfig(config);
     const stage = (await storageEngine.getStageData(studyId)).allStages[0];
     const a = getBetweenSubjectsCombinationKey({ group: 'A' }, ['group']);
-    // @ts-expect-error Do not fall back to stale keys if the authoritative config is unavailable.
+    // Do not fall back to stale keys if the authoritative config is unavailable.
     vi.spyOn(storageEngine, '_getFromStorage').mockResolvedValueOnce({});
     await expect(storageEngine.setStageDesiredParticipants(studyId, 'DEFAULT', a, 6, { [a]: 5 })).rejects.toThrow(/configuration could not be loaded/);
     expect((await storageEngine.getStageData(studyId)).allStages[0]).toEqual(stage);

@@ -94,7 +94,7 @@
     "use-deep-compare-effect": "^1.8.1",
     "uuid": "^14.0.3",
     "vega": "^6.2.0",
-    "vega-lite": "^5.23.0",
+    "vega-lite": "^6.4.3",
     "vite": "^8.2.4",
     "wavesurfer-react": "^3.0.4",
     "wavesurfer.js": "^7.10.1",
@@ -119,7 +119,7 @@
     "@typescript-eslint/parser": "^8.65.0",
     "@typescript/native": "npm:typescript@^7.0.2",
     "@vitejs/plugin-react-swc": "^4.3.2",
-    "@vitest/coverage-v8": "4.1.10",
+    "@vitest/coverage-v8": "5.0.5",
     "eslint": "^9.39.5",
     "eslint-import-resolver-typescript": "^4.4.5",
     "eslint-plugin-import": "^2.32.0",
@@ -131,7 +131,6 @@
     "jsdom": "^30.0.1",
     "lint-staged": "^17.2.0",
     "typescript": "npm:@typescript/typescript6@^6.0.2",
-    "vitest": "^4.1.10",
-    "vitest-localstorage-mock": "^0.1.2"
+    "vitest": "^5.0.5"
   }
 }
