@@ -7,7 +7,7 @@ import {
   deleteObject, getBlob, getDownloadURL, getStorage, ref, uploadBytes, listAll, FirebaseStorage, updateMetadata,
 } from 'firebase/storage';
 import {
-  CollectionReference, DocumentData, Firestore, FieldPath, Query, Transaction, Timestamp, collection, deleteField, doc, enableNetwork, getDoc, getDocs, getDocsFromServer, initializeFirestore, onSnapshot, runTransaction, serverTimestamp, setDoc, updateDoc, getCountFromServer, limit, orderBy, query, where,
+  CollectionReference, DocumentData, Firestore, Query, Transaction, Timestamp, collection, deleteField, doc, enableNetwork, getDoc, getDocs, getDocsFromServer, initializeFirestore, onSnapshot, runTransaction, serverTimestamp, setDoc, updateDoc, getCountFromServer, limit, orderBy, query, where,
 } from 'firebase/firestore';
 import { ReCaptchaV3Provider, ReCaptchaEnterpriseProvider, initializeAppCheck } from '@firebase/app-check';
 import {
@@ -37,6 +37,8 @@ type AllocationState = {
 
 export class FirebaseStorageEngine extends CloudStorageEngine {
   protected override hasAtomicSequenceReservation = true;
+
+  private readonly serverClockId = uuidv4();
 
   private assignmentReference(participantId: string) {
     return doc(collection(doc(this.studyCollection, 'sequenceAssignment'), 'sequenceAssignment'), participantId);
@@ -598,7 +600,9 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
       throw new Error('Study ID is not set');
     }
 
-    const lockDocument = doc(this.studyCollection, 'locks');
+    // Equal keys still coordinate across browsers; unrelated keys must not
+    // invalidate one another's Firestore transactions.
+    const lockDocument = doc(collection(doc(this.studyCollection, 'locks'), 'keys'), sha256(lockKey).toString());
     const token = uuidv4();
     const expiresInMs = 60_000;
     // Backend time governs shared expiry; a monotonic clock bounds our local lease.
@@ -609,7 +613,7 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
       try {
         await runTransaction(this.firestore, async (transaction) => {
           const snapshot = await transaction.get(lockDocument);
-          const existingLock = snapshot.data()?.[lockKey] as {
+          const existingLock = snapshot.data() as {
             token?: string;
             expiresAt?: number;
           } | undefined;
@@ -617,9 +621,7 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
             throw new Error('Study lock is held');
           }
 
-          transaction.set(lockDocument, {
-            [lockKey]: { token, expiresAt: now + expiresInMs },
-          }, { merge: true });
+          transaction.set(lockDocument, { token, expiresAt: now + expiresInMs });
         });
         lockExpiresAt = leaseStartedAt + expiresInMs;
       } catch (error) {
@@ -645,12 +647,12 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
       const now = await this._getServerTimeMs();
       await runTransaction(this.firestore, async (transaction) => {
         const snapshot = await transaction.get(lockDocument);
-        const existingLock = snapshot.data()?.[lockKey] as { token?: string } | undefined;
+        const existingLock = snapshot.data() as { token?: string } | undefined;
         if (existingLock?.token !== token) {
           lockLost = true;
           throw new Error('Study update lock was lost');
         }
-        transaction.update(lockDocument, new FieldPath(lockKey), { token, expiresAt: now + expiresInMs });
+        transaction.set(lockDocument, { token, expiresAt: now + expiresInMs });
       });
       lockExpiresAt = leaseStartedAt + expiresInMs;
       lockRefreshError = undefined;
@@ -674,9 +676,9 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
       clearInterval(refreshTimer);
       await runTransaction(this.firestore, async (transaction) => {
         const snapshot = await transaction.get(lockDocument);
-        const existingLock = snapshot.data()?.[lockKey] as { token?: string } | undefined;
+        const existingLock = snapshot.data() as { token?: string } | undefined;
         if (existingLock?.token === token) {
-          transaction.update(lockDocument, new FieldPath(lockKey), deleteField());
+          transaction.delete(lockDocument);
         }
       }).catch((error) => {
         console.warn('Failed to release study update lock:', error);
@@ -820,8 +822,9 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
   protected async _getServerTimeMs(): Promise<number> {
     await this.verifyStudyDatabase();
     // Firestore has no clock to query, so stamp a document with the server's
-    // time and read the committed value back.
-    const serverTimeDocument = doc(this.studyCollection, 'serverTime');
+    // time and read the committed value back. Each engine uses its own document
+    // so independent browsers don't write one study-wide clock hotspot.
+    const serverTimeDocument = doc(collection(doc(this.studyCollection, 'serverTime'), 'clients'), this.serverClockId);
     await setDoc(serverTimeDocument, { readAt: serverTimestamp() }, { merge: true });
     const snapshot = await getDoc(serverTimeDocument);
     const readAt = snapshot.data()?.readAt;
