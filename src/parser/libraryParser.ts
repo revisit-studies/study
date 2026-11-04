@@ -172,15 +172,26 @@ type FactorResolution = {
   hasVariableMembership?: boolean;
 };
 type FactorResolutionMode = 'standard' | 'materialize' | 'runtime';
+type FactorDefinition = {
+  resolution: FactorResolution;
+  errors: ParserErrorWarning[];
+  warnings: ParserErrorWarning[];
+};
 
 export type FactorOrderContext = {
   sequenceIndex: number;
   sampledConditions: Map<string, ResolvedFactorCondition[]>;
   orderedValues: Map<string, FactorValue[]>;
+  definitions: WeakMap<Record<string, Factor>, Map<string, FactorDefinition>>;
 };
 
-export function createFactorOrderContext(sequenceIndex: number): FactorOrderContext {
-  return { sequenceIndex, sampledConditions: new Map(), orderedValues: new Map() };
+export function createFactorOrderContext(
+  sequenceIndex: number,
+  definitions: FactorOrderContext['definitions'] = new WeakMap(),
+): FactorOrderContext {
+  return {
+    sequenceIndex, sampledConditions: new Map(), orderedValues: new Map(), definitions,
+  };
 }
 
 function isOrderedFactorValues(factor: Factor): factor is OrderedFactorValues {
@@ -597,12 +608,9 @@ function getFactorRuntimeCount(resolution: FactorResolution) {
   return resolution.runtimeCount === undefined ? resolution.conditions.length : resolution.runtimeCount;
 }
 
-type FactorDrawIdentity = string | {
-  action: string;
-  inputs?: FactorDrawIdentity[];
-  length?: number;
-  numRepeats?: number;
-};
+type FactorDrawIdentity = string
+  | { action: 'fixed' | 'latinSquare'; length: number }
+  | { action: 'cross' | 'zip' | 'concat'; inputs: FactorDrawIdentity[] };
 
 function getFactorDrawIdentity(
   source: FactorOption,
@@ -623,8 +631,23 @@ function getFactorDrawIdentity(
   if (factor.action === 'sample' || factor.action === 'keep' || factor.action === 'remove') return named;
   const inputs = factor.factors.map((input) => getFactorDrawIdentity(input, factors, named ? [...stack, named] : stack));
   if (!inputs.every((input): input is FactorDrawIdentity => input !== undefined)) return named;
-  if (inputs.length === 1 && (factor.action !== 'repeat' || factor.numRepeats === 1)) return inputs[0];
-  return { action: factor.action, inputs, ...(factor.action === 'repeat' ? { numRepeats: factor.numRepeats } : {}) };
+  if (factor.action === 'zip' && inputs.length > 0 && inputs.every((input) => isEqual(input, inputs[0]))) return inputs[0];
+  if (factor.action === 'concat' || factor.action === 'repeat') {
+    const repetitions = factor.action === 'repeat' ? factor.numRepeats : 1;
+    if (!Number.isInteger(repetitions) || repetitions < 1) return named;
+    const flattened = inputs.flatMap((input) => (
+      typeof input !== 'string' && input.action === 'concat' ? input.inputs : [input]
+    ));
+    const sequence = Array.from({ length: repetitions }, () => flattened).flat();
+    return sequence.length === 1 ? sequence[0] : { action: 'concat', inputs: sequence };
+  }
+  if (inputs.length === 1) return inputs[0];
+  return {
+    action: factor.action,
+    inputs: inputs.flatMap((input) => (
+      typeof input !== 'string' && input.action === factor.action ? input.inputs : [input]
+    )),
+  };
 }
 
 function getFactorPublicNames(
@@ -660,6 +683,36 @@ function getRelevantFactorAssignment(
     key === name || (key.startsWith(`${name}_`) && /^\d+$/.test(key.slice(name.length + 1)))
   )));
   return entries.length ? Object.fromEntries(entries) : undefined;
+}
+
+function getFactorDefinition(
+  source: FactorOption,
+  factors: Record<string, Factor>,
+  errors: ParserErrorWarning[],
+  stack: string[],
+  expressionName: string,
+  warnings: ParserErrorWarning[],
+  context?: FactorOrderContext,
+): FactorResolution {
+  let definitions = context?.definitions.get(factors);
+  if (context && !definitions) {
+    definitions = new Map();
+    context.definitions.set(factors, definitions);
+  }
+  const key = context ? JSON.stringify([source, stack, expressionName]) : '';
+  let definition = definitions?.get(key);
+  if (!definition) {
+    const definitionErrors: ParserErrorWarning[] = [];
+    const definitionWarnings: ParserErrorWarning[] = [];
+    // Materialization and resolution are mutually recursive.
+    // eslint-disable-next-line no-use-before-define
+    const resolution = resolveFactor(source, factors, definitionErrors, stack, expressionName, 'materialize', undefined, undefined, definitionWarnings);
+    definition = { resolution, errors: definitionErrors, warnings: definitionWarnings };
+    definitions?.set(key, definition);
+  }
+  definition.errors.forEach((error) => addFactorError(errors, error.message, error.instancePath));
+  definition.warnings.forEach((warning) => addFactorWarning(warnings, warning.message, warning.instancePath));
+  return definition.resolution;
 }
 
 function resolveFactor(
@@ -766,13 +819,14 @@ function resolveFactor(
     if (mode === 'runtime' && hasItems && !Array.isArray(factor.items) && (sourceAssignment || eligibleConditions !== undefined)) {
       // Project eligibility from the full source domain, not the source's
       // sampled result, so independent draws remain independent.
-      const definition = resolveFactor(
+      const definition = getFactorDefinition(
         factor.factor,
         factors,
         errors,
         typeof factorSource === 'string' ? [...stack, factorSource] : stack,
         `${factorName}.${factor.action}`,
-        'materialize',
+        [],
+        orderContext,
       );
       const eligible = filterFactorConditionsByAssignment(definition.conditions, sourceAssignment, errors, eligibleConditions);
       if (eligible.length !== definition.conditions.length) {
@@ -871,19 +925,15 @@ function resolveFactor(
   const constrained = assignment !== undefined || eligibleConditions !== undefined;
   let inputDefinitions: FactorResolution[] | undefined;
   if (aliasNames !== undefined || constrained || sharedDrawZip) {
-    const definitionErrors: ParserErrorWarning[] = [];
-    inputDefinitions = inputs.map((input, index) => resolveFactor(
+    inputDefinitions = inputs.map((input, index) => getFactorDefinition(
       input,
       factors,
-      definitionErrors,
+      errors,
       typeof factorSource === 'string' ? [...stack, factorSource] : stack,
       `${factorName}.${action}[${index}]`,
-      'materialize',
-      undefined,
-      undefined,
       warnings,
+      orderContext,
     ));
-    definitionErrors.forEach((error) => addFactorError(errors, error.message, error.instancePath));
   }
   if (aliasNames !== undefined && !validateFactorAliases(inputDefinitions!, aliasNames, factorName, errors)) {
     return { conditions: [] };

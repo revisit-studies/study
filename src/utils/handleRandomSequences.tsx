@@ -11,7 +11,7 @@ import {
   StudyConfig,
 } from '../parser/types';
 import {
-  createFactorOrderContext, createFactorConditionId, resolveBetweenSubjectsFactorLevels, resolveOrderedFactorConditions,
+  createFactorOrderContext, createFactorConditionId, FactorOrderContext, resolveBetweenSubjectsFactorLevels, resolveOrderedFactorConditions,
 } from '../parser/libraryParser';
 import { Sequence } from '../store/types';
 import {
@@ -518,13 +518,14 @@ function componentBlockToSequence(
   latinSquareRowIndex: number,
   assignmentParameters?: Record<string, unknown>,
   warnings: ParserErrorWarning[] = [],
+  definitions?: FactorOrderContext['definitions'],
 ): Sequence {
   return _componentBlockToSequence(
     order,
     latinSquareObject,
     latinSquareRowIndex,
     'root',
-    createFactorOrderContext(latinSquareRowIndex),
+    createFactorOrderContext(latinSquareRowIndex, definitions),
     assignmentParameters,
     warnings,
   );
@@ -656,6 +657,9 @@ export function generateSequenceArray(
   });
 
   const sequenceArray: Sequence[] = [];
+  // Static unassigned definitions belong to this generation; participant draws
+  // and ordering caches are still created afresh for every sequence.
+  const factorDefinitions: FactorOrderContext['definitions'] = new WeakMap();
   Array.from({ length: numSequences }).forEach((_, sequenceIndex) => {
     const assignmentIndex = sequenceIndex % assignmentCount;
     const betweenSubjectsAssignment = betweenSubjectsAssignments[assignmentIndex] || {};
@@ -671,6 +675,7 @@ export function generateSequenceArray(
       latinSquareRowIndex,
       getBetweenSubjectsRuntimeParameters(betweenSubjectsAssignment),
       warnings,
+      factorDefinitions,
     );
     if (Object.keys(betweenSubjectsAssignment).length > 0) {
       sequence = filterSequenceByBetweenSubjectsAssignment(

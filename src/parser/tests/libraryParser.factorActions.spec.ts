@@ -41,6 +41,160 @@ function factorConfig(): StudyConfig {
 }
 
 describe('factor sequence actions', () => {
+  test.each(['cross', 'zip'] as const)('preserves shared pairing across equivalent %s groupings', async (action) => {
+    const config = factorConfig();
+    config.factors = {
+      a: [1, 2],
+      p: {
+        action: 'sample', factors: ['a'], numSamples: 2, samplingStrategy: 'withoutReplacement',
+      },
+      left: { action, factors: [{ action, factors: ['p', 'p'] }, 'p'] },
+      right: { action, factors: ['p', { action, factors: ['p', 'p'] }] },
+      selected: { action: 'zip', factors: ['left', 'right'] },
+      assignment: [{ a_0: 1, a_3: 2 }],
+    };
+    config.betweenSubjects = ['assignment'];
+    config.baseComponents!.trial = { type: 'questionnaire', response: [] };
+    config.sequence = {
+      type: 'factor', id: 'associativePairing', factor: 'selected', components: 'trial',
+    };
+    const parsed = await parseStudyConfig(JSON.stringify(config));
+    expect(parsed.errors).toEqual([]);
+    generateSequenceArray(parsed).forEach((sequence) => expect(getSequenceFlatMap(sequence)).toEqual(['end']));
+  });
+
+  test('materializes only surviving templates for equivalent repeat and concat draws', async () => {
+    const config = factorConfig();
+    config.factors = {
+      a: [1, 2],
+      p: {
+        action: 'sample', factors: ['a'], numSamples: 2, samplingStrategy: 'withoutReplacement',
+      },
+      left: { action: 'repeat', factors: ['p'], numRepeats: 2 },
+      right: { action: 'concat', factors: ['p', 'p'] },
+      source: { action: 'cross', factors: ['a', 'a'], as: ['x', 'y'] },
+      selected: { action: 'remove', factor: 'source', items: { action: 'zip', factors: ['left', 'right'], as: ['x', 'y'] } },
+    };
+    config.baseComponents = {
+      trial12: { type: 'questionnaire', response: [] }, trial21: { type: 'questionnaire', response: [] },
+    };
+    config.sequence = {
+      type: 'factor', id: 'equivalentRemoval', factor: 'selected', components: 'trial{{x}}{{y}}',
+    };
+    const parsed = await parseStudyConfig(JSON.stringify(config));
+    expect(parsed.errors).toEqual([]);
+    generateSequenceArray(parsed).forEach((sequence) => {
+      const rows = getSequenceFlatMap(sequence).filter((id) => id !== 'end').map((id) => parsed.components[id].parameters);
+      expect(rows).toEqual([{ x: 1, y: 2 }, { x: 2, y: 1 }]);
+    });
+  });
+
+  test('keeps static definitions isolated by factor set', () => {
+    const { definitions } = createFactorOrderContext(0);
+    const first: NonNullable<StudyConfig['factors']> = {
+      a: [1, 2],
+      p: {
+        action: 'sample', factors: ['a'], numSamples: 2, samplingStrategy: 'withoutReplacement',
+      },
+      selected: { action: 'zip', factors: ['p', 'p'], as: ['left', 'right'] },
+    };
+    const second: NonNullable<StudyConfig['factors']> = {
+      ...first,
+      a: [3, 4],
+      p: {
+        action: 'sample', factors: ['a'], numSamples: 1, samplingStrategy: 'withoutReplacement',
+      },
+    };
+    const errors: ParserErrorWarning[] = [];
+    expect(resolveOrderedFactorConditions('selected', first, createFactorOrderContext(0, definitions), errors)).toHaveLength(2);
+    expect(resolveOrderedFactorConditions('selected', second, createFactorOrderContext(0, definitions), errors, 'inline', { left: 3, right: 4 })).toEqual([{ left: 3, right: 4 }]);
+    expect(errors).toEqual([]);
+  });
+
+  test.each(['repeatConcat', 'groupedConcat', 'nestedRepeat'] as const)('normalizes equivalent shared draw compositions (%s)', async (kind) => {
+    const config = factorConfig();
+    const repeat = (factor: FactorOption, numRepeats: number): Exclude<FactorOption, string> => ({ action: 'repeat', factors: [factor], numRepeats });
+    const concat = (...factors: FactorOption[]): Exclude<FactorOption, string> => ({ action: 'concat', factors });
+    const left = kind === 'repeatConcat' ? repeat('p', 2)
+      : kind === 'groupedConcat' ? concat('p', concat('p', 'p')) : repeat(repeat('p', 2), 2);
+    const right = kind === 'repeatConcat' ? concat('p', 'p')
+      : kind === 'groupedConcat' ? concat(concat('p', 'p'), 'p') : repeat('p', 4);
+    config.factors = {
+      a: [1, 2],
+      p: {
+        action: 'sample', factors: ['a'], numSamples: 2, samplingStrategy: 'withoutReplacement',
+      },
+      left,
+      right,
+      selected: { action: 'zip', factors: ['left', 'right'], as: ['x', 'y'] },
+      assignment: [{ x: 1, y: 2 }],
+    };
+    config.betweenSubjects = ['assignment'];
+    config.baseComponents!.trial = { type: 'questionnaire', response: [] };
+    config.sequence = {
+      type: 'factor', id: 'equivalentDraws', factor: 'selected', components: 'trial',
+    };
+    const parsed = await parseStudyConfig(JSON.stringify(config));
+    expect(parsed.errors).toEqual([]);
+    generateSequenceArray(parsed).forEach((sequence) => expect(getSequenceFlatMap(sequence)).toEqual(['end']));
+  });
+
+  test('reuses unassigned membership metadata across generated sequences', async () => {
+    const levelCount = 20;
+    const sequenceCount = 20;
+    const config = factorConfig();
+    config.uiConfig.numSequences = sequenceCount;
+    config.factors = {
+      a: { values: Array.from({ length: levelCount }, (_, index) => index), order: 'random' },
+      b: { values: Array.from({ length: levelCount }, (_, index) => index), order: 'random' },
+      p: { action: 'keep', factor: { action: 'zip', factors: ['a', 'b'] }, condition: { a: 1 } },
+      left: { action: 'concat', factors: ['p'] },
+      right: { action: 'concat', factors: ['p'] },
+      selected: { action: 'zip', factors: ['left', 'right'] },
+    };
+    config.baseComponents!.trial = { type: 'questionnaire', response: [] };
+    config.sequence = {
+      type: 'factor', id: 'membershipWork', factor: 'selected', components: 'trial',
+    };
+    const parsed = await parseStudyConfig(JSON.stringify(config));
+    expect(parsed.errors).toEqual([]);
+    let visits = 0;
+    const original = Object.entries;
+    const traversal = vi.spyOn(Object, 'entries').mockImplementation((value) => {
+      if (Object.hasOwn(value, 'a') && Object.hasOwn(value, 'b')) visits += 1;
+      return original(value);
+    });
+    try {
+      const sequences = generateSequenceArray(parsed);
+      expect(sequences).toHaveLength(sequenceCount);
+      sequences.forEach((sequence) => expect(getSequenceFlatMap(sequence)).toHaveLength(2));
+      // One static domain expansion, then linear runtime work per sequence.
+      expect(visits).toBeLessThan(levelCount ** 2 * 6 + sequenceCount * levelCount * 10);
+    } finally { traversal.mockRestore(); }
+  });
+
+  test('keeps participant draws separate while sharing static definitions', async () => {
+    const config = factorConfig();
+    config.factors = {
+      a: [1, 2],
+      p: {
+        action: 'sample', factors: ['a'], numSamples: 1, samplingStrategy: 'withoutReplacement',
+      },
+      selected: { action: 'zip', factors: ['p', 'p'], as: ['left', 'right'] },
+    };
+    config.baseComponents!.trial = { type: 'questionnaire', response: [] };
+    config.sequence = {
+      type: 'factor', id: 'freshDraws', factor: 'selected', components: 'trial',
+    };
+    const parsed = await parseStudyConfig(JSON.stringify(config));
+    expect(parsed.errors).toEqual([]);
+    const random = vi.spyOn(Math, 'random').mockReturnValueOnce(0).mockReturnValue(0.99);
+    try {
+      const rows = generateSequenceArray(parsed).map((sequence) => getSequenceFlatMap(sequence).filter((id) => id !== 'end').map((id) => parsed.components[id].parameters));
+      expect(rows).toEqual([[{ left: 2, right: 2 }], [{ left: 1, right: 1 }]]);
+    } finally { random.mockRestore(); }
+  });
+
   test.each([false, true])('preserves full-draw pairing through mixed wrappers (unknownCount=%s)', async (unknownCount) => {
     const config = factorConfig();
     config.factors = {
