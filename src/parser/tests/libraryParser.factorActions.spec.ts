@@ -179,6 +179,39 @@ describe('factor sequence actions', () => {
     expect(getSequenceFlatMap(armB)).toEqual(['end']);
   });
 
+  test.each([
+    { samplingStrategy: 'withoutReplacement' as const, ordered: false },
+    { samplingStrategy: 'withReplacement' as const, ordered: false },
+    { samplingStrategy: 'withoutReplacement' as const, ordered: true },
+    { samplingStrategy: 'withReplacement' as const, ordered: true },
+  ])('allows a sampled factor with no eligible trials for one arm ($samplingStrategy, ordered=$ordered)', async ({ samplingStrategy, ordered }) => {
+    const config = factorConfig();
+    const tasks = [{ arm: 'A', task: 'only-A' }];
+    config.factors = {
+      arm: ['A', 'B'],
+      tasks: ordered ? { values: tasks, order: 'random' } : tasks,
+      sampled: {
+        action: 'sample', factors: ['tasks'], numSamples: 1, samplingStrategy,
+      },
+    };
+    config.betweenSubjects = ['arm'];
+    config.sequence = {
+      type: 'factor', id: 'tasks', factor: 'sampled', components: 'trial',
+    };
+    config.baseComponents!.trial = { type: 'questionnaire', response: [] };
+    const parsed = await parseStudyConfig(JSON.stringify(config));
+    expect(parsed.errors).toEqual([]);
+
+    const sequences = generateSequenceArray(parsed);
+    expect(sequences).toHaveLength(2);
+    const armA = sequences.find((sequence) => sequence.parameters?.arm === 'A')!;
+    const armB = sequences.find((sequence) => sequence.parameters?.arm === 'B')!;
+    const armATrials = getSequenceFlatMap(armA);
+    expect(armATrials).toHaveLength(2);
+    expect(parsed.components[armATrials[0]].parameters).toMatchObject({ arm: 'A', task: 'only-A' });
+    expect(getSequenceFlatMap(armB)).toEqual(['end']);
+  });
+
   test('still rejects an originally empty ordered factor', () => {
     const errors: ParserErrorWarning[] = [];
     expect(resolveFactorConditions('tasks', { tasks: { values: [], order: 'random' } }, errors)).toEqual([]);

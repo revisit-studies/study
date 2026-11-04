@@ -814,6 +814,13 @@ function resolveFactor(
     return { conditions: [] };
   }
 
+  // The definition was validated before participant eligibility filtering.
+  if (mode === 'runtime' && conditions.length === 0) {
+    return {
+      conditions: [], runtimeCount: 0, parameterNames, hasRuntimeOrder,
+    };
+  }
+
   if (
     factor.samplingStrategy === 'withoutReplacement'
     && factor.numSamples > conditions.length
