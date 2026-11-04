@@ -41,6 +41,76 @@ function factorConfig(): StudyConfig {
 }
 
 describe('factor sequence actions', () => {
+  test.each(['keep', 'remove'] as const)('materializes possible survivors of %s with sampled items', async (action) => {
+    const config = factorConfig();
+    config.factors = {
+      a: [1, 2],
+      selected: {
+        action,
+        factor: 'a',
+        items: {
+          action: 'sample', factors: ['a'], numSamples: 1, samplingStrategy: 'withoutReplacement',
+        },
+      },
+    };
+    config.baseComponents!.trial = { type: 'questionnaire', response: [] };
+    config.sequence = {
+      type: 'factor', id: 'sampledSelector', factor: 'selected', components: 'trial',
+    };
+    const parsed = await parseStudyConfig(JSON.stringify(config));
+    expect(parsed.errors).toEqual([]);
+    generateSequenceArray(parsed).forEach((sequence) => {
+      const trials = getSequenceFlatMap(sequence).filter((id) => id !== 'end');
+      expect(trials).toHaveLength(1);
+      expect([1, 2]).toContain(parsed.components[trials[0]].parameters!.a);
+    });
+  });
+
+  test.each(['fixed', 'latinSquare'] as const)('retains assigned fixed-zip rows inside a %s cross', async (order) => {
+    const config = factorConfig();
+    config.factors = {
+      a: ['A', 'B', 'A'],
+      b: [1, 1, 2],
+      paired: { action: 'zip', factors: ['a', 'b'] },
+      c: { values: [0], order },
+      selected: { action: 'cross', factors: ['paired', 'c'] },
+      assignment: [{ a: 'A' }],
+    };
+    config.betweenSubjects = ['assignment'];
+    config.baseComponents!.trial = { type: 'questionnaire', response: [] };
+    config.sequence = {
+      type: 'factor', id: 'fixedPairs', factor: 'selected', components: 'trial',
+    };
+    const parsed = await parseStudyConfig(JSON.stringify(config));
+    expect(parsed.errors).toEqual([]);
+    generateSequenceArray(parsed).forEach((sequence) => {
+      const parameters = getSequenceFlatMap(sequence).filter((id) => id !== 'end').map((id) => parsed.components[id].parameters);
+      expect(parameters).toEqual([{ a: 'A', b: 1, c: 0 }, { a: 'A', b: 2, c: 0 }]);
+    });
+  });
+
+  test.each(['fixed', 'latinSquare'] as const)('keeps independent aliased values with a %s source selector', async (order) => {
+    const config = factorConfig();
+    config.factors = {
+      a: { values: [1, 2], order },
+      aliased: { action: 'cross', factors: ['a'], as: ['x'] },
+      selected: { action: 'keep', factor: 'aliased', items: 'a' },
+      assignment: [{ a: 1 }],
+    };
+    config.betweenSubjects = ['assignment'];
+    config.baseComponents!.trial = { type: 'questionnaire', response: [] };
+    config.sequence = {
+      type: 'factor', id: 'independentSelector', factor: 'selected', components: 'trial',
+    };
+    const parsed = await parseStudyConfig(JSON.stringify(config));
+    expect(parsed.errors).toEqual([]);
+    generateSequenceArray(parsed).forEach((sequence) => {
+      const parameters = getSequenceFlatMap(sequence).filter((id) => id !== 'end').map((id) => parsed.components[id].parameters);
+      expect(parameters).toHaveLength(2);
+      expect(parameters).toEqual(expect.arrayContaining([{ x: 1 }, { x: 2 }]));
+    });
+  });
+
   test('prunes assigned prefixes before constructing a large cross', () => {
     const levelCount = 20;
     const factors: NonNullable<StudyConfig['factors']> = {
@@ -133,7 +203,7 @@ describe('factor sequence actions', () => {
     });
   });
 
-  test('does not visit Cartesian definitions for empty-assignment runtime samples', () => {
+  test.each([{}, { arm: 'control' }])('does not expand runtime samples for irrelevant assignments (%j)', (assignment) => {
     const levelCount = 20;
     const factors: NonNullable<StudyConfig['factors']> = {
       a: { values: Array.from({ length: levelCount }, (_, index) => index), order: 'latinSquare' },
@@ -151,7 +221,7 @@ describe('factor sequence actions', () => {
     try {
       for (let index = 0; index < 3; index += 1) {
         const errors: ParserErrorWarning[] = [];
-        expect(resolveOrderedFactorConditions('sample', factors, createFactorOrderContext(index), errors, 'sample', {})).toHaveLength(5);
+        expect(resolveOrderedFactorConditions('sample', factors, createFactorOrderContext(index), errors, 'sample', assignment)).toHaveLength(5);
         expect(errors).toEqual([]);
       }
       // Bound pair-record traversals by runtime list size, not its Cartesian square.

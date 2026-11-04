@@ -585,6 +585,41 @@ function getFactorRuntimeCount(resolution: FactorResolution) {
   return resolution.runtimeCount === undefined ? resolution.conditions.length : resolution.runtimeCount;
 }
 
+function getFactorPublicNames(
+  source: FactorOption,
+  factors: Record<string, Factor>,
+  stack: string[] = [],
+): Set<string> {
+  if (typeof source === 'string' && stack.includes(source)) return new Set();
+  const factor = typeof source === 'string' ? factors[source] : source;
+  if (!factor) return new Set();
+  if (Array.isArray(factor) || isOrderedFactorValues(factor)) {
+    const values = Array.isArray(factor) ? factor : factor.values;
+    return new Set(values.flatMap((value) => (
+      typeof value === 'object' && !Array.isArray(value) ? Object.keys(value) : [source as string]
+    )));
+  }
+  const nextStack = typeof source === 'string' ? [...stack, source] : stack;
+  if (factor.action === 'keep' || factor.action === 'remove') {
+    return getFactorPublicNames(factor.factor, factors, nextStack);
+  }
+  if ((factor.action === 'cross' || factor.action === 'zip') && factor.as) {
+    return new Set(factor.as);
+  }
+  return new Set(factor.factors.flatMap((input) => [...getFactorPublicNames(input, factors, nextStack)]));
+}
+
+function getRelevantFactorAssignment(
+  assignment: Record<string, unknown> | undefined,
+  names: Set<string>,
+): Record<string, unknown> | undefined {
+  if (!assignment) return undefined;
+  const entries = Object.entries(assignment).filter(([key]) => [...names].some((name) => (
+    key === name || (key.startsWith(`${name}_`) && /^\d+$/.test(key.slice(name.length + 1)))
+  )));
+  return entries.length ? Object.fromEntries(entries) : undefined;
+}
+
 function resolveFactor(
   factorSource: FactorOption,
   factors: Record<string, Factor>,
@@ -692,7 +727,7 @@ function resolveFactor(
         `${factorName}.${factor.action}.items`,
         mode,
         orderContext,
-        assignmentParameters,
+        getRelevantFactorAssignment(assignmentParameters, getFactorPublicNames(factor.factor, factors)),
         warnings,
       )
       : undefined;
@@ -722,7 +757,11 @@ function resolveFactor(
       });
     };
 
-    const conditions = resolution.conditions.filter((sourceCondition) => (
+    // A runtime selector's materialized values are possibilities, not definite
+    // removals. Keep every potential survivor available for sequence generation.
+    const runtimeRemoval = mode === 'materialize' && factor.action === 'remove' && itemResolution
+      && (itemResolution.hasRuntimeOrder || itemResolution.hasRuntimeSample || itemResolution.numSamples !== undefined);
+    const conditions = resolution.conditions.filter((sourceCondition) => runtimeRemoval || (
       factor.action === 'keep'
         ? matchesSelection(sourceCondition)
         : !matchesSelection(sourceCondition)
@@ -747,8 +786,9 @@ function resolveFactor(
   }
 
   const aliasNames = (factor.action === 'cross' || factor.action === 'zip') ? factor.as : undefined;
-  const constrained = (assignmentParameters !== undefined && Object.keys(assignmentParameters).length > 0)
-    || eligibleConditions !== undefined;
+  const assignment = assignmentParameters && Object.keys(assignmentParameters).length > 0
+    ? getRelevantFactorAssignment(assignmentParameters, getFactorPublicNames(factorSource, factors)) : undefined;
+  const constrained = assignment !== undefined || eligibleConditions !== undefined;
   let inputDefinitions: FactorResolution[] | undefined;
   if (aliasNames !== undefined || constrained) {
     const definitionErrors: ParserErrorWarning[] = [];
@@ -769,7 +809,7 @@ function resolveFactor(
     return { conditions: [] };
   }
   const tuples = constrained
-    ? getEligibleInputTuples(inputDefinitions!, action, aliasNames, assignmentParameters, eligibleConditions, errors)
+    ? getEligibleInputTuples(inputDefinitions!, action, aliasNames, assignment, eligibleConditions, errors)
     : undefined;
   const resolveInput = (index: number, eligible?: MaterializedFactorCondition[]) => resolveFactor(
     inputs[index],
@@ -808,7 +848,12 @@ function resolveFactor(
     };
   }
 
-  const resolutions = mode === 'materialize' && !constrained && inputDefinitions
+  // Fixed zip rows must be paired before eligibility filtering. Filtering each
+  // input independently changes row positions when the same level occurs twice.
+  const fixedZip = action === 'zip' && inputDefinitions && inputDefinitions.every((resolution) => (
+    !resolution.hasRuntimeOrder && !resolution.hasRuntimeSample && resolution.numSamples === undefined
+  ));
+  const resolutions = ((mode === 'materialize' && !constrained) || fixedZip) && inputDefinitions
     ? inputDefinitions : inputs.map((_, index) => resolveInput(index, tuples && getInputEligibility(tuples, index, errors)));
   const conditionSets = resolutions.map((resolution, index) => (
     resolution.conditions.map((condition) => aliasFactorCondition(condition, aliasNames?.[index]))
