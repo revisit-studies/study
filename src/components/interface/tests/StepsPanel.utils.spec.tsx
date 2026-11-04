@@ -286,6 +286,50 @@ describe('StepsPanel skip summaries', () => {
 });
 
 describe('StepsPanel skipped trial detection', () => {
+  test.each([
+    { score: 0, threshold: 1, skipped: [1] },
+    { score: 1, threshold: 1, skipped: [] },
+    { score: 0.8, threshold: 0.7, skipped: [] },
+  ])('uses saved scoring evidence without changing participant data ($score, threshold=$threshold)', ({ score, threshold, skipped }) => {
+    const sequence: Sequence = {
+      order: 'fixed',
+      orderPath: 'root',
+      components: [
+        {
+          order: 'fixed',
+          orderPath: 'root-0',
+          components: ['trial1'],
+          skip: [{ name: 'trial1', check: 'responses', to: 'targetComponent' }],
+        },
+        'middle',
+        'targetComponent',
+      ],
+      skip: [],
+    };
+    const config = buildStudyConfig(sequence);
+    config.components.trial1 = {
+      type: 'questionnaire',
+      response: [{
+        id: 'q1', type: 'numerical', prompt: 'Score', path: 'archived-study/scorer.ts',
+      }],
+      correctAnswer: [{ id: 'q1', answer: 10 }],
+    };
+    const answer = buildStoredAnswer('trial1', 0, { q1: 8 });
+    answer.correctAnswer = [{ id: 'q1', answer: 10, correctnessThreshold: threshold }];
+    answer.checkAnswer = {
+      attemptsUsed: 1,
+      correct: score >= threshold,
+      responses: { q1: score >= threshold },
+      scores: { q1: score },
+      answerSnapshot: { q1: 8 },
+    };
+    const participantAnswers = { trial1_0: answer };
+    const originalAnswers = structuredClone(participantAnswers);
+
+    expect([...getSkippedTrialOrders(sequence, participantAnswers, config)]).toEqual(skipped);
+    expect(participantAnswers).toEqual(originalAnswers);
+  });
+
   test('marks only rows omitted by a triggered skip as skipped', () => {
     const sequence: Sequence = {
       order: 'fixed',

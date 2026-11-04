@@ -123,6 +123,8 @@ function getAnswersForSkipEvaluation(participantAnswers: ParticipantData['answer
       acc[key] = {
         answer: responseObj.answer,
         timedOut: false,
+        checkAnswer: responseObj.checkAnswer,
+        correctAnswer: responseObj.correctAnswer,
         store: responseObj.globalStoreEntry,
       };
     }
