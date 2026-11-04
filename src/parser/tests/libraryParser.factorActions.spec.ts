@@ -41,6 +41,66 @@ function factorConfig(): StudyConfig {
 }
 
 describe('factor sequence actions', () => {
+  test.each(['cross', 'zip'] as const)('composes nested %s aliases from their original source', (action) => {
+    const factors: StudyConfig['factors'] = {
+      stimulus: [1, 2],
+      inner: { action, factors: ['stimulus'], as: ['innerArm'] },
+      outer: { action, factors: ['inner'], as: ['arm'] },
+    };
+
+    expect(resolveFactorConditions('stimulus', factors)).toEqual([{ stimulus: 1 }, { stimulus: 2 }]);
+    expect(resolveFactorConditions('inner', factors)).toEqual([{ innerArm: 1 }, { innerArm: 2 }]);
+    expect(resolveFactorConditions('outer', factors)).toEqual([{ arm: 1 }, { arm: 2 }]);
+  });
+
+  test('aliases repeated inputs that already have different public names', () => {
+    const factors: StudyConfig['factors'] = {
+      stimulus: [1, 2],
+      left: { action: 'cross', factors: ['stimulus'], as: ['leftArm'] },
+      right: { action: 'cross', factors: ['stimulus'], as: ['rightArm'] },
+    };
+
+    expect(resolveFactorConditions({
+      action: 'cross', factors: ['left', 'right'], as: ['first', 'second'],
+    }, factors)).toEqual([
+      { first: 1, second: 1 },
+      { first: 1, second: 2 },
+      { first: 2, second: 1 },
+      { first: 2, second: 2 },
+    ]);
+  });
+
+  test('materializes nested aliases in stimulus paths and participant parameters', async () => {
+    const config = factorConfig();
+    config.factors = {
+      stimulus: ['pcp', 'scatter'],
+      inner: { action: 'cross', factors: ['stimulus'], as: ['innerArm'] },
+      outer: { action: 'cross', factors: ['inner'], as: ['arm'] },
+    };
+    config.betweenSubjects = ['outer'];
+    config.baseComponents!.trial = {
+      type: 'markdown', path: 'incentives-corr/assets/help-{{arm}}.md', response: [],
+    };
+    config.sequence = {
+      type: 'factor', id: 'nested', factor: 'outer', components: 'trial',
+    };
+
+    const parsed = await parseStudyConfig(JSON.stringify(config));
+    expect(parsed.errors).toEqual([]);
+    const sequences = generateSequenceArray(parsed);
+    expect(sequences.map((sequence) => sequence.parameters)).toEqual([
+      { arm: 'pcp', outer: { arm: 'pcp' } },
+      { arm: 'scatter', outer: { arm: 'scatter' } },
+    ]);
+    sequences.forEach((sequence) => {
+      const componentId = getSequenceFlatMap(sequence)[0];
+      expect(parsed.components[componentId]).toMatchObject({
+        path: `incentives-corr/assets/help-${sequence.parameters?.arm}.md`,
+        parameters: { arm: sequence.parameters?.arm },
+      });
+    });
+  });
+
   test('subtracts congruent Stroop conditions from one crossed color factor', () => {
     const factors = {
       color: ['RED', 'GREEN', 'BLUE'],
@@ -404,10 +464,14 @@ describe('factor sequence actions', () => {
     });
     random.mockRestore();
 
+    expect(sequences.map((sequence) => sequence.parameters)).toEqual([
+      { arm: 1, assignment: { arm: 1 } },
+      { arm: 2, assignment: { arm: 2 } },
+    ]);
     sequences.forEach((sequence) => {
       const componentId = sequence.components.find((component): component is string => component !== 'end');
       expect(componentId).toBeDefined();
-      expect(compiled.components[componentId!].parameters?.arm).toBe(sequence.parameters?.arm);
+      expect(compiled.components[componentId!].parameters).toEqual({ arm: sequence.parameters?.arm });
     });
   });
 

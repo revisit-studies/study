@@ -22,6 +22,7 @@ export function usePreviousStep() {
   const storeDispatch = useStoreDispatch();
   const { deleteDynamicBlockAnswers } = useStoreActions();
   const answers = useStoreSelector((state) => state.answers);
+  const sequence = useStoreSelector((state) => state.sequence);
 
   // Status of the previous button. If true, the previous button should be disabled
   const isPreviousDisabled = typeof currentStep !== 'number' || isAnalysis || completed || !!submitting || (currentStep <= 0 && (!funcIndex || decryptIndex(funcIndex) <= 0));
@@ -44,7 +45,7 @@ export function usePreviousStep() {
       return;
     }
     const previousStep = currentStep - 1;
-    const flatSequence = getSequenceFlatMap(studyConfig.sequence);
+    const flatSequence = getSequenceFlatMap(sequence);
 
     // Dynamic block component
     if (funcIndex) {
@@ -63,7 +64,7 @@ export function usePreviousStep() {
 
     for (let stepIndex = previousStep; stepIndex >= 0; stepIndex -= 1) {
       const previousComponentId = flatSequence[stepIndex];
-      const isDynamicBlock = findFuncBlock(previousComponentId, studyConfig.sequence);
+      const isDynamicBlock = findFuncBlock(previousComponentId, sequence);
 
       if (!isDynamicBlock) {
         navigate(`/${studyId}/${encryptIndex(stepIndex)}${buildSearch()}`);
@@ -82,7 +83,7 @@ export function usePreviousStep() {
         return;
       }
     }
-  }, [graph, completed, submitting, answers, buildSearch, currentStep, deleteDynamicBlockAnswers, funcIndex, isAnalysis, navigate, storeDispatch, studyConfig, studyId]);
+  }, [graph, completed, submitting, answers, buildSearch, currentStep, deleteDynamicBlockAnswers, funcIndex, isAnalysis, navigate, sequence, storeDispatch, studyConfig, studyId]);
 
   return {
     isPreviousDisabled,

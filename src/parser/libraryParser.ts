@@ -383,7 +383,8 @@ function createFactorParameterNames(
       );
       return undefined;
     }
-    return inputName;
+    // Conditions retain their original source keys until final materialization.
+    return Object.keys(firstCondition)[0];
   });
   if (inputNames.some((name) => name === undefined)) {
     return undefined;

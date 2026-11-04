@@ -7,6 +7,53 @@ import {
   waitForStudyEndMessage,
 } from './utils';
 
+test('Previous follows the assigned sequence after between-subject filtering', async ({ page }) => {
+  await page.route('**/demo-dynamic/config.json', async (route) => {
+    const response = await route.fetch();
+    const config = await response.json();
+    config.factors = { arm: ['A', 'B'] };
+    config.betweenSubjects = ['arm'];
+    config.uiConfig.numSequences = 2;
+    config.baseComponents = {
+      assignedTrial: {
+        type: 'questionnaire', instruction: 'Assigned trial {{arm}}', instructionLocation: 'aboveStimulus', response: [],
+      },
+    };
+    config.components.HSLColorCodes.previousButton = true;
+    config.components.final = {
+      type: 'questionnaire', instruction: 'After the dynamic block', instructionLocation: 'aboveStimulus', response: [], previousButton: true,
+    };
+    config.sequence.components.splice(1, 0, {
+      type: 'factor', id: 'assigned', factor: 'arm', components: 'assignedTrial',
+    });
+    config.sequence.components.push('final');
+    await route.fulfill({ response, json: config });
+  });
+  await resetClientStudyState(page);
+  await openStudyFromLanding(page, 'Demo Studies', 'Dynamic Blocks');
+  await nextClick(page);
+  await expect(page.getByText(/^Assigned trial [AB]$/)).toBeVisible();
+  await nextClick(page);
+
+  const dynamicUrls: string[] = [];
+  for (const choice of ['Right', 'Right', 'Same']) {
+    await expect(page.getByRole('heading', { name: 'Dynamic Blocks' })).toBeVisible();
+    dynamicUrls.push(page.url());
+    await page.getByRole('radio', { name: choice, exact: true }).click();
+    await page.getByRole('button', { name: 'Check Answer', exact: true }).click();
+    await nextClick(page);
+    await expect.poll(() => page.url()).not.toBe(dynamicUrls.at(-1));
+  }
+
+  await expect(page.getByText('After the dynamic block', { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Previous', exact: true }).click();
+  await expect(page).toHaveURL(dynamicUrls[2]);
+  await expect(page.getByText('Left square saturation: 50%', { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Previous', exact: true }).click();
+  await expect(page).toHaveURL(dynamicUrls[1]);
+  await expect(page.getByText('Left square saturation: 40%', { exact: true })).toBeVisible();
+});
+
 test('Test dynamic block', async ({ page }) => {
   const trialLen = 10;
   await resetClientStudyState(page);
