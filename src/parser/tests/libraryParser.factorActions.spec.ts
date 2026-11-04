@@ -41,6 +41,82 @@ function factorConfig(): StudyConfig {
 }
 
 describe('factor sequence actions', () => {
+  test.each([undefined, 1])('projects assigned slots per concatenated shape before sampling (%s)', async (numSamples) => {
+    const config = factorConfig();
+    config.uiConfig.numSequences = 1;
+    config.factors = {
+      x: { values: [1, 2], order: 'random', ...(numSamples ? { numSamples } : {}) },
+      pair: { action: 'cross', factors: ['x', 'x'] },
+      joined: { action: 'concat', factors: ['x', 'pair'] },
+      selected: { action: 'cross', factors: ['joined', 'x'] },
+      assignment: [{ x_0: 1, x_1: 2, x_2: 1 }],
+    };
+    config.betweenSubjects = ['assignment'];
+    config.baseComponents!.trial = { type: 'questionnaire', response: [] };
+    config.sequence = {
+      type: 'factor', id: 'shapes', factor: 'selected', components: 'trial',
+    };
+    const parsed = await parseStudyConfig(JSON.stringify(config));
+    expect(parsed.errors).toEqual([]);
+    const sequence = generateSequenceArray(parsed)[0];
+    const parameters = getSequenceFlatMap(sequence).filter((id) => id !== 'end').map((id) => parsed.components[id].parameters);
+    expect(parameters).toEqual(expect.arrayContaining([
+      { x_0: 1, x_1: 2 },
+      { x_0: 1, x_1: 2, x_2: 1 },
+    ]));
+    expect(parameters).toHaveLength(2);
+  });
+
+  test.each(['keep', 'remove'] as const)('ignores ambiguous hidden source names in %s fallback', async (action) => {
+    const config = factorConfig();
+    config.factors = {
+      a: [1],
+      a_0: [2],
+      b: [3],
+      aliased: { action: 'cross', factors: ['a', 'a', 'a_0'], as: ['x', 'y', 'z'] },
+      joined: { action: 'concat', factors: ['aliased', 'b'] },
+      selected: { action, factor: 'joined', items: [{ b: 3 }] },
+    };
+    config.baseComponents!.trial = { type: 'questionnaire', response: [] };
+    config.sequence = {
+      type: 'factor', id: 'hiddenSources', factor: 'selected', components: 'trial',
+    };
+    const parsed = await parseStudyConfig(JSON.stringify(config));
+    expect(parsed.errors).toEqual([]);
+    generateSequenceArray(parsed).forEach((sequence) => {
+      const parameters = getSequenceFlatMap(sequence).filter((id) => id !== 'end').map((id) => parsed.components[id].parameters);
+      expect(parameters).toEqual(action === 'keep' ? [{ b: 3 }] : [{ x: 1, y: 1, z: 2 }]);
+    });
+  });
+
+  test('does not visit Cartesian definitions for empty-assignment runtime samples', () => {
+    const levelCount = 20;
+    const factors: NonNullable<StudyConfig['factors']> = {
+      a: { values: Array.from({ length: levelCount }, (_, index) => index), order: 'latinSquare' },
+      b: { values: Array.from({ length: levelCount }, (_, index) => index), order: 'latinSquare' },
+      sample: {
+        action: 'sample', factors: [{ action: 'zip', factors: ['a', 'b'] }], numSamples: 5, samplingStrategy: 'withoutReplacement',
+      },
+    };
+    let visits = 0;
+    const { entries } = Object;
+    const traversal = vi.spyOn(Object, 'entries').mockImplementation((value) => {
+      if (Object.hasOwn(value, 'a') && Object.hasOwn(value, 'b')) visits += 1;
+      return entries(value);
+    });
+    try {
+      for (let index = 0; index < 3; index += 1) {
+        const errors: ParserErrorWarning[] = [];
+        expect(resolveOrderedFactorConditions('sample', factors, createFactorOrderContext(index), errors, 'sample', {})).toHaveLength(5);
+        expect(errors).toEqual([]);
+      }
+      // Bound pair-record traversals by runtime list size, not its Cartesian square.
+      expect(visits).toBeLessThan(levelCount * 3 * 10);
+    } finally {
+      traversal.mockRestore();
+    }
+  });
+
   test.each(['keep', 'remove'] as const)('preserves nested repeated source-name %s selectors', async (action) => {
     const config = factorConfig();
     config.factors = {

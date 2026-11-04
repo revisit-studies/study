@@ -4,7 +4,7 @@ import merge from 'lodash.merge';
 import librarySchema from './LibraryConfigSchema.json';
 import studySchema from './StudyConfigSchema.json';
 import {
-  ComponentBlock, ComponentOrder, Factor, FactorBlock, FactorObject, FactorObjectValue, FactorOption, FactorValue, IndividualComponent, LibraryConfig, OrderedFactorValues, ParsedConfig, ParserErrorWarning, StudyConfig,
+  ComponentBlock, ComponentOrder, Factor, FactorAction, FactorBlock, FactorObject, FactorObjectValue, FactorOption, FactorValue, IndividualComponent, LibraryConfig, OrderedFactorValues, ParsedConfig, ParserErrorWarning, StudyConfig,
 } from './types';
 import {
   FactorPlanBlock, isDynamicBlock, isFactorBlock, isInheritedComponent,
@@ -358,37 +358,6 @@ function validateFactorAliases(
   });
 }
 
-function getInputAssignments(
-  resolutions: FactorResolution[],
-  assignment: Record<string, unknown>,
-  combinesInputs: boolean,
-  aliasNames?: string[],
-): Record<string, unknown>[] {
-  // Project only public outputs, then translate repeated slots into child names.
-  // Hidden source names must not constrain independently aliased inputs.
-  const arities = resolutions.map((resolution) => (
-    resolution.conditions.reduce<Record<string, number>>((counts, { values }) => {
-      Object.entries(values).forEach(([name, value]) => {
-        counts[name] = Math.max(counts[name] || 0, isRepeatedFactorValues(value) ? value.values.length : 1);
-      });
-      return counts;
-    }, {})
-  ));
-  return arities.map((counts, index) => {
-    const mapped: Record<string, unknown> = {};
-    Object.entries(counts).forEach(([name, count]) => {
-      const offset = combinesInputs ? arities.slice(0, index).reduce((sum, input) => sum + (input[name] || 0), 0) : 0;
-      const total = combinesInputs ? arities.reduce((sum, input) => sum + (input[name] || 0), 0) : count;
-      for (let occurrence = 0; occurrence < count; occurrence += 1) {
-        const outputName = aliasNames?.[index] ?? (total > 1 ? `${name}_${offset + occurrence}` : name);
-        const inputName = count > 1 ? `${name}_${occurrence}` : name;
-        if (Object.hasOwn(assignment, outputName)) mapped[inputName] = assignment[outputName];
-      }
-    });
-    return mapped;
-  });
-}
-
 function mergeFactorConditions(
   left: FactorCondition,
   right: FactorCondition,
@@ -491,20 +460,84 @@ function materializeFactorCondition(
   );
 }
 
+function matchesFactorEligibility(
+  values: MaterializedFactorCondition,
+  assignment?: Record<string, unknown>,
+  eligibleConditions?: MaterializedFactorCondition[],
+): boolean {
+  return Object.entries(assignment || {}).every(([name, value]) => (
+    values[name] === undefined || isEqual(values[name], value)
+  )) && (eligibleConditions === undefined || eligibleConditions.some((eligible) => isEqual(values, eligible)));
+}
+
+function aliasFactorCondition(condition: ResolvedFactorCondition, alias?: string): ResolvedFactorCondition {
+  return alias === undefined ? condition : {
+    values: { [alias]: Object.values(materializeConditionForParameterNames(condition.values))[0] },
+    sourceValues: condition.sourceValues || condition.values,
+  };
+}
+
+type FactorInputTuple = (ResolvedFactorCondition | undefined)[];
+
+function getEligibleInputTuples(
+  resolutions: FactorResolution[],
+  action: FactorAction,
+  aliasNames: string[] | undefined,
+  assignment: Record<string, unknown> | undefined,
+  eligibleConditions: MaterializedFactorCondition[] | undefined,
+  errors: ParserErrorWarning[],
+): FactorInputTuple[] {
+  let tuples: FactorInputTuple[];
+  if (action === 'cross' || (action === 'zip' && resolutions.some((resolution) => (
+    resolution.hasRuntimeOrder || resolution.hasRuntimeSample || resolution.numSamples !== undefined
+  )))) {
+    tuples = resolutions.reduce<FactorInputTuple[]>((prefixes, resolution) => (
+      prefixes.flatMap((prefix) => resolution.conditions.map((condition) => [...prefix, condition]))
+    ), [[]]);
+  } else if (action === 'zip') {
+    tuples = Array.from({ length: Math.min(...resolutions.map((resolution) => resolution.conditions.length)) }, (_, index) => (
+      resolutions.map((resolution) => resolution.conditions[index])
+    ));
+  } else {
+    tuples = resolutions.flatMap((resolution, inputIndex) => resolution.conditions.map((condition) => (
+      resolutions.map((_, index) => (index === inputIndex ? condition : undefined))
+    )));
+  }
+  return tuples.filter((tuple) => {
+    const values = tuple.reduce<FactorCondition>((combined, condition, index) => (
+      condition ? mergeFactorConditions(combined, aliasFactorCondition(condition, aliasNames?.[index]).values) : combined
+    ), {});
+    return matchesFactorEligibility(materializeFactorCondition(values, errors), assignment, eligibleConditions);
+  });
+}
+
+function getInputEligibility(
+  tuples: FactorInputTuple[],
+  index: number,
+  errors: ParserErrorWarning[],
+): MaterializedFactorCondition[] {
+  const values = new Map<string, MaterializedFactorCondition>();
+  tuples.forEach((tuple) => {
+    if (!tuple[index]) return;
+    const condition = materializeFactorCondition(tuple[index]!.values, errors);
+    values.set(JSON.stringify(condition), condition);
+  });
+  return [...values.values()];
+}
+
 function filterFactorConditionsByAssignment(
   conditions: ResolvedFactorCondition[],
   assignmentParameters: Record<string, unknown> | undefined,
   errors: ParserErrorWarning[],
+  eligibleConditions?: MaterializedFactorCondition[],
 ): ResolvedFactorCondition[] {
-  if (!assignmentParameters) {
+  if ((!assignmentParameters || Object.keys(assignmentParameters).length === 0) && eligibleConditions === undefined) {
     return conditions;
   }
 
   return conditions.filter((condition) => {
     const materialized = materializeFactorCondition(condition.values, errors);
-    return Object.entries(assignmentParameters).every(([name, value]) => (
-      materialized[name] === undefined || isEqual(materialized[name], value)
-    ));
+    return matchesFactorEligibility(materialized, assignmentParameters, eligibleConditions);
   });
 }
 
@@ -522,6 +555,7 @@ function resolveFactor(
   orderContext?: FactorOrderContext,
   assignmentParameters?: Record<string, unknown>,
   warnings: ParserErrorWarning[] = [],
+  eligibleConditions?: MaterializedFactorCondition[],
 ): FactorResolution {
   if (typeof factorSource === 'string') {
     if (stack.includes(factorSource)) {
@@ -546,7 +580,7 @@ function resolveFactor(
         : { [factorName]: value },
     }));
     return {
-      conditions: filterFactorConditionsByAssignment(conditions, assignmentParameters, errors),
+      conditions: filterFactorConditionsByAssignment(conditions, assignmentParameters, errors, eligibleConditions),
     };
   }
 
@@ -560,7 +594,7 @@ function resolveFactor(
       const condition = typeof value === 'object' && !Array.isArray(value)
         ? { ...value }
         : { [factorName]: value };
-      return filterFactorConditionsByAssignment([{ values: condition }], assignmentParameters, errors).length > 0;
+      return filterFactorConditionsByAssignment([{ values: condition }], assignmentParameters, errors, eligibleConditions).length > 0;
     });
     const values = orderFactorValues(
       factorName,
@@ -606,6 +640,7 @@ function resolveFactor(
       orderContext,
       assignmentParameters,
       warnings,
+      eligibleConditions,
     );
 
     const itemResolution = hasItems && !Array.isArray(factor.items)
@@ -641,10 +676,9 @@ function resolveFactor(
         const publicKeys = Object.keys(publicValues);
         if (item.sourceValues || (publicKeys.length === Object.keys(itemValues).length
           && publicKeys.every((key) => Object.hasOwn(itemValues, key)))) return false;
-        return isEqual(
-          materializeFactorCondition(sourceCondition.sourceValues || sourceCondition.values, errors),
-          itemValues,
-        );
+        const sourceErrors: ParserErrorWarning[] = [];
+        const sourceValues = materializeFactorCondition(sourceCondition.sourceValues || sourceCondition.values, sourceErrors);
+        return sourceErrors.length === 0 && isEqual(sourceValues, itemValues);
       });
     };
 
@@ -673,8 +707,10 @@ function resolveFactor(
   }
 
   const aliasNames = (factor.action === 'cross' || factor.action === 'zip') ? factor.as : undefined;
+  const constrained = (assignmentParameters !== undefined && Object.keys(assignmentParameters).length > 0)
+    || eligibleConditions !== undefined;
   let inputDefinitions: FactorResolution[] | undefined;
-  if (aliasNames !== undefined || assignmentParameters !== undefined) {
+  if (aliasNames !== undefined || constrained) {
     const definitionErrors: ParserErrorWarning[] = [];
     inputDefinitions = inputs.map((input, index) => resolveFactor(
       input,
@@ -689,34 +725,53 @@ function resolveFactor(
     ));
     definitionErrors.forEach((error) => addFactorError(errors, error.message, error.instancePath));
   }
-  const inputAssignmentParameters = assignmentParameters === undefined
-    ? inputs.map(() => undefined)
-    : getInputAssignments(inputDefinitions!, assignmentParameters, action === 'cross' || action === 'zip', aliasNames);
-
-  const resolutions = mode === 'materialize' && assignmentParameters === undefined && inputDefinitions
-    ? inputDefinitions : inputs.map((input, index) => (
-      resolveFactor(
-        input,
-        factors,
-        errors,
-        typeof factorSource === 'string' ? [...stack, factorSource] : stack,
-        `${factorName}.${action}[${index}]`,
-        mode,
-        orderContext,
-        inputAssignmentParameters[index],
-        warnings,
-      )
-    ));
-
-  if (aliasNames !== undefined && !validateFactorAliases(inputDefinitions || resolutions, aliasNames, factorName, errors)) {
+  if (aliasNames !== undefined && !validateFactorAliases(inputDefinitions!, aliasNames, factorName, errors)) {
     return { conditions: [] };
   }
-  // Apply aliases before combining while retaining each condition's origins.
+  const tuples = constrained
+    ? getEligibleInputTuples(inputDefinitions!, action, aliasNames, assignmentParameters, eligibleConditions, errors)
+    : undefined;
+  const resolveInput = (index: number, eligible?: MaterializedFactorCondition[]) => resolveFactor(
+    inputs[index],
+    factors,
+    errors,
+    typeof factorSource === 'string' ? [...stack, factorSource] : stack,
+    `${factorName}.${action}[${index}]`,
+    mode,
+    orderContext,
+    undefined,
+    warnings,
+    eligible,
+  );
+
+  if (mode === 'runtime' && action === 'cross' && tuples) {
+    let hasRuntimeOrder = false;
+    let hasRuntimeSample = false;
+    // Later inputs use the actual selected prefix shape, not a maximum arity.
+    // Narrow their eligible values before sampling to keep compatible branches.
+    const extend = (index: number, prefix: ResolvedFactorCondition, candidates: FactorInputTuple[]): ResolvedFactorCondition[] => {
+      if (index === inputs.length) return [prefix];
+      const resolution = resolveInput(index, getInputEligibility(candidates, index, errors));
+      hasRuntimeOrder ||= !!resolution.hasRuntimeOrder;
+      hasRuntimeSample ||= !!resolution.hasRuntimeSample || resolution.numSamples !== undefined;
+      return resolution.conditions.flatMap((condition) => {
+        const values = materializeFactorCondition(condition.values, errors);
+        const remaining = candidates.filter((tuple) => (
+          tuple[index] && isEqual(materializeFactorCondition(tuple[index]!.values, errors), values)
+        ));
+        return extend(index + 1, mergeResolvedFactorConditions(prefix, aliasFactorCondition(condition, aliasNames?.[index])), remaining);
+      });
+    };
+    const conditions = extend(0, { values: {} }, tuples);
+    return {
+      conditions, runtimeCount: conditions.length, hasRuntimeOrder, hasRuntimeSample,
+    };
+  }
+
+  const resolutions = mode === 'materialize' && !constrained && inputDefinitions
+    ? inputDefinitions : inputs.map((_, index) => resolveInput(index, tuples && getInputEligibility(tuples, index, errors)));
   const conditionSets = resolutions.map((resolution, index) => (
-    aliasNames === undefined ? resolution.conditions : resolution.conditions.map((condition) => ({
-      values: { [aliasNames[index]]: Object.values(materializeFactorCondition(condition.values, errors))[0] },
-      sourceValues: condition.sourceValues || condition.values,
-    }))
+    resolution.conditions.map((condition) => aliasFactorCondition(condition, aliasNames?.[index]))
   ));
 
   const counts = resolutions.map(getFactorRuntimeCount);
@@ -738,11 +793,13 @@ function resolveFactor(
     if (mode === 'materialize' && runtimeCounts && (hasRuntimeOrder || hasRuntimeSample)) {
       warnZipLengths(runtimeCounts, factorName, warnings);
     }
+    const combined = mode === 'materialize' && (hasRuntimeOrder || hasRuntimeSample)
+      ? crossFactorConditions(conditionSets)
+      : zipFactorConditions(conditionSets, factorName, errors, warnings);
+    const conditions = filterFactorConditionsByAssignment(combined, assignmentParameters, errors, eligibleConditions);
     return {
-      conditions: mode === 'materialize' && (hasRuntimeOrder || hasRuntimeSample)
-        ? crossFactorConditions(conditionSets)
-        : zipFactorConditions(conditionSets, factorName, errors, warnings),
-      runtimeCount: runtimeCounts ? Math.min(...runtimeCounts) : null,
+      conditions,
+      runtimeCount: mode === 'runtime' ? conditions.length : runtimeCounts ? Math.min(...runtimeCounts) : null,
       hasRuntimeOrder,
       hasRuntimeSample,
     };
