@@ -221,22 +221,25 @@ describe('factor sequence actions', () => {
   });
 
   test('reports invalid between-subjects factors as parser errors', async () => {
-    const invalidFactors: Array<[string, StudyConfig['factors']]> = [
-      ['missing', {}],
-      ['empty', { empty: [] }],
-      ['ordered', { ordered: { values: ['A'], order: 'fixed' } }],
+    const invalidFactors: Array<[string, StudyConfig['factors'], string]> = [
+      ['missing', {}, 'Between-subjects factor `missing` is not defined in factors'],
+      ['empty', { empty: [] }, 'Between-subjects factor `empty` must be a non-empty factor with either all primitive levels or all object levels'],
+      ['ordered', { ordered: { values: ['A'], order: 'fixed' } }, 'Between-subjects factor `ordered` must be a list of levels or a factor expression'],
     ];
 
-    await Promise.all(invalidFactors.map(async ([factorName, factors]) => {
+    await Promise.all(invalidFactors.map(async ([factorName, factors, message]) => {
       const result = await parseStudyConfig(JSON.stringify({
         ...factorConfig(),
         factors,
         betweenSubjects: [factorName],
+        baseComponents: {},
+        sequence: { order: 'fixed', components: [] },
       }));
 
       expect(result.errors).toEqual(expect.arrayContaining([
         expect.objectContaining({
-          message: expect.stringContaining(`Between-subjects factor \`${factorName}\``),
+          message,
+          instancePath: '/betweenSubjects/0',
           category: 'sequence-validation',
         }),
       ]));

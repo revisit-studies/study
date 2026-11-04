@@ -1210,9 +1210,12 @@ export function validateBetweenSubjects(
       || levels.length === 0
       || (!isPrimitiveFactor && !isObjectFactor)
     ) {
+      const unresolvedFactorMessage = Object.hasOwn(config.factors || {}, factorName)
+        ? `Between-subjects factor \`${factorName}\` must be a list of levels or a factor expression`
+        : `Between-subjects factor \`${factorName}\` is not defined in factors`;
       errors.push({
         message: levels === undefined
-          ? `Between-subjects factor \`${factorName}\` is not defined in factors`
+          ? unresolvedFactorMessage
           : `Between-subjects factor \`${factorName}\` must be a non-empty factor with either all primitive levels or all object levels`,
         instancePath,
         params: { action: 'Use a non-empty primitive or object factor defined in factors' },
