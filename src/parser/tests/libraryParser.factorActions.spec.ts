@@ -101,6 +101,165 @@ describe('factor sequence actions', () => {
     });
   });
 
+  test.each(['cross', 'zip'] as const)('aliases every branch of a concatenation in %s', (action) => {
+    const factors: StudyConfig['factors'] = {
+      a: [1],
+      b: [2],
+      left: { action: 'cross', factors: ['a'], as: ['value'] },
+      right: { action: 'cross', factors: ['b'], as: ['value'] },
+      joined: { action: 'concat', factors: ['left', 'right'] },
+      outer: { action, factors: ['joined'], as: ['arm'] },
+    };
+    const errors: ParserErrorWarning[] = [];
+
+    expect(resolveFactorConditions('outer', factors, errors)).toEqual([{ arm: 1 }, { arm: 2 }]);
+    expect(resolveFactorConditions({
+      action, factors: [{ action: 'concat', factors: ['a', 'b'] }], as: ['arm'],
+    }, factors, errors)).toEqual([{ arm: 1 }, { arm: 2 }]);
+    expect(errors).toEqual([]);
+  });
+
+  test.each(['cross', 'zip'] as const)('preserves child aliases over a shared source in %s', (action) => {
+    const factors: StudyConfig['factors'] = {
+      stimulus: [1, 2],
+      left: { action: 'cross', factors: ['stimulus'], as: ['leftArm'] },
+      right: { action: 'cross', factors: ['stimulus'], as: ['rightArm'] },
+    };
+    const errors: ParserErrorWarning[] = [];
+    const pairs = action === 'cross' ? [[1, 1], [1, 2], [2, 1], [2, 2]] : [[1, 1], [2, 2]];
+
+    expect(resolveFactorConditions({ action, factors: ['left', 'stimulus'] }, factors, errors)).toEqual(
+      pairs.map(([leftArm, stimulus]) => ({ leftArm, stimulus })),
+    );
+    expect(resolveFactorConditions({ action, factors: ['left', 'right'] }, factors, errors)).toEqual(
+      pairs.map(([leftArm, rightArm]) => ({ leftArm, rightArm })),
+    );
+    expect(errors).toEqual([]);
+  });
+
+  test('keeps unaliased selectors working through nested and combined aliases', () => {
+    const factors: StudyConfig['factors'] = {
+      a: [1, 2],
+      b: ['x', 'y'],
+      left: { action: 'cross', factors: ['a'], as: ['leftArm'] },
+      outer: { action: 'cross', factors: ['left'], as: ['arm'] },
+      right: { action: 'cross', factors: ['b'], as: ['rightArm'] },
+      combined: { action: 'cross', factors: ['left', 'right'] },
+    };
+
+    expect(resolveFactorConditions({
+      action: 'keep', factor: 'outer', items: [{ a: 1 }],
+    }, factors)).toEqual([{ arm: 1 }]);
+    expect(resolveFactorConditions({
+      action: 'keep', factor: 'combined', items: [{ a: 1, b: 'y' }],
+    }, factors)).toEqual([{ leftArm: 1, rightArm: 'y' }]);
+    expect(resolveFactorConditions({
+      action: 'keep',
+      factor: { action: 'cross', factors: ['left', 'left'], as: ['first', 'second'] },
+      items: { action: 'zip', factors: ['a', 'a'] },
+    }, factors)).toEqual([{ first: 1, second: 1 }, { first: 2, second: 2 }]);
+    expect(resolveFactorConditions({
+      action: 'keep',
+      factor: { action: 'cross', factors: ['left', 'a'] },
+      items: { action: 'zip', factors: ['a', 'a'] },
+    }, factors)).toEqual([{ leftArm: 1, a: 1 }, { leftArm: 2, a: 2 }]);
+  });
+
+  test('aliases alternative source keys independently in each crossed input', () => {
+    const factors: StudyConfig['factors'] = { a: [1], b: [2], c: [3] };
+    const errors: ParserErrorWarning[] = [];
+    expect(resolveFactorConditions({
+      action: 'cross',
+      factors: [
+        { action: 'concat', factors: ['a', 'b'] },
+        { action: 'concat', factors: ['a', 'c'] },
+      ],
+      as: ['first', 'second'],
+    }, factors, errors)).toEqual([
+      { first: 1, second: 1 },
+      { first: 1, second: 3 },
+      { first: 2, second: 1 },
+      { first: 2, second: 3 },
+    ]);
+    expect(errors).toEqual([]);
+  });
+
+  test('filters every concatenated source before sampling an aliased assignment', async () => {
+    const config = factorConfig();
+    config.factors = {
+      arm: [1, 2],
+      a: [1],
+      b: [2],
+      sampled: {
+        action: 'sample', factors: ['a', 'b'], numSamples: 1, samplingStrategy: 'withoutReplacement',
+      },
+      assignment: { action: 'cross', factors: ['sampled'], as: ['arm'] },
+    };
+    config.betweenSubjects = ['arm'];
+    config.baseComponents!.trial = { type: 'questionnaire', response: [] };
+    config.sequence = {
+      type: 'factor', id: 'sampled', factor: 'assignment', components: 'trial',
+    };
+    const parsed = await parseStudyConfig(JSON.stringify(config));
+    expect(parsed.errors).toEqual([]);
+    const sequences = generateSequenceArray(parsed);
+    expect(sequences.map((sequence) => sequence.parameters?.arm)).toEqual([1, 2]);
+    sequences.forEach((sequence) => {
+      expect(getSequenceFlatMap(sequence)).toHaveLength(2);
+      expect(parsed.components[getSequenceFlatMap(sequence)[0]].parameters).toEqual({ arm: sequence.parameters?.arm });
+    });
+  });
+
+  test.each(['concat', 'cross'] as const)('materializes composed %s aliases in templates and assigned parameters', async (action) => {
+    const config = factorConfig();
+    config.factors = action === 'concat' ? {
+      a: ['pcp'],
+      b: ['scatter'],
+      left: { action: 'cross', factors: ['a'], as: ['value'] },
+      right: { action: 'cross', factors: ['b'], as: ['value'] },
+      joined: { action: 'concat', factors: ['left', 'right'] },
+      assignment: { action: 'cross', factors: ['joined'], as: ['arm'] },
+    } : {
+      stimulus: ['pcp', 'scatter'],
+      left: { action: 'cross', factors: ['stimulus'], as: ['leftArm'] },
+      assignment: { action: 'cross', factors: ['left', 'stimulus'] },
+    };
+    const parameterName = action === 'concat' ? 'arm' : 'leftArm';
+    config.baseComponents!.trial = {
+      type: 'markdown',
+      path: `incentives-corr/assets/help-{{${parameterName}}}.md`,
+      response: [],
+      instruction: action === 'concat' ? 'Arm {{arm}}' : '{{leftArm}} versus {{stimulus}}',
+    };
+    config.betweenSubjects = ['assignment'];
+    config.uiConfig.numSequences = action === 'concat' ? 2 : 4;
+    config.sequence = {
+      type: 'factor', id: 'composed', factor: 'assignment', components: 'trial',
+    };
+
+    const parsed = await parseStudyConfig(JSON.stringify(config));
+    expect(parsed.errors).toEqual([]);
+    const sequences = generateSequenceArray(parsed);
+    const expectedParameters: Record<string, string>[] = action === 'concat'
+      ? [{ arm: 'pcp' }, { arm: 'scatter' }]
+      : [
+        { leftArm: 'pcp', stimulus: 'pcp' },
+        { leftArm: 'pcp', stimulus: 'scatter' },
+        { leftArm: 'scatter', stimulus: 'pcp' },
+        { leftArm: 'scatter', stimulus: 'scatter' },
+      ];
+    expect(sequences.map((sequence) => sequence.parameters?.assignment)).toEqual(expectedParameters);
+    sequences.forEach((sequence, index) => {
+      const parameters = expectedParameters[index];
+      expect(getSequenceFlatMap(sequence)).toHaveLength(2);
+      expect(parsed.components[getSequenceFlatMap(sequence)[0]]).toMatchObject({
+        parameters,
+        path: `incentives-corr/assets/help-${parameters[parameterName]}.md`,
+        instruction: action === 'concat' ? `Arm ${parameters.arm}` : `${parameters.leftArm} versus ${parameters.stimulus}`,
+      });
+    });
+  });
+
   test('subtracts congruent Stroop conditions from one crossed color factor', () => {
     const factors = {
       color: ['RED', 'GREEN', 'BLUE'],

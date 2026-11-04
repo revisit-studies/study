@@ -162,7 +162,8 @@ type FactorResolution = {
   runtimeCount?: number | null;
   numSamples?: number;
   samplingStrategy?: 'withoutReplacement' | 'withReplacement';
-  parameterNames?: FactorParameterNames;
+  // Retain source names for unaliased keep/remove selectors after composition.
+  selectionParameterNames?: FactorParameterNames;
   hasRuntimeOrder?: boolean;
   hasRuntimeSample?: boolean;
 };
@@ -306,38 +307,15 @@ function orderFactorValues(
   return selectedValues;
 }
 
-function mergeFactorParameterNames(
-  resolutions: FactorResolution[],
-  factorName: string,
-  errors: ParserErrorWarning[],
-): FactorParameterNames | undefined {
-  const parameterNames = resolutions.reduce<FactorParameterNames>((names, resolution) => {
-    Object.entries(resolution.parameterNames || {}).forEach(([sourceName, outputName]) => {
-      if (Object.hasOwn(names, sourceName) && names[sourceName] !== outputName) {
-        addFactorError(
-          errors,
-          `Factor expression \`${factorName}\` assigns multiple names to parameter \`${sourceName}\``,
-        );
-      } else {
-        names[sourceName] = outputName;
-      }
-    });
-    return names;
-  }, {});
-
-  return Object.keys(parameterNames).length > 0 ? parameterNames : undefined;
-}
-
 function materializeConditionForParameterNames(
   condition: FactorCondition,
-  parameterNames: FactorParameterNames = {},
 ): MaterializedFactorCondition {
   return Object.entries(condition).reduce<MaterializedFactorCondition>(
     (materialized, [factorName, value]) => {
       const values = isRepeatedFactorValues(value) ? value.values : [value];
       values.forEach((factorValue, index) => {
         const sourceName = values.length === 1 ? factorName : `${factorName}_${index}`;
-        materialized[parameterNames[sourceName] || sourceName] = factorValue;
+        materialized[sourceName] = factorValue;
       });
       return materialized;
     },
@@ -345,7 +323,49 @@ function materializeConditionForParameterNames(
   );
 }
 
-function createFactorParameterNames(
+function mergeFactorSelectionParameterNames(
+  resolutions: FactorResolution[],
+  combinesInputs: boolean,
+  parameterNames: FactorParameterNames = {},
+): FactorParameterNames | undefined {
+  if (Object.keys(parameterNames).length === 0 && !resolutions.some((resolution) => resolution.selectionParameterNames)) {
+    return undefined;
+  }
+  const publicNames = resolutions.map((resolution) => (
+    [...new Set(resolution.conditions.flatMap((condition) => Object.keys(materializeConditionForParameterNames(condition))))]
+  ));
+  const sourceNames = resolutions.map((resolution, index) => (
+    resolution.selectionParameterNames || Object.fromEntries(publicNames[index].map((name) => [name, name]))
+  ));
+  const qualifyName = (name: string, index: number, inputs: string[][]) => {
+    if (!combinesInputs || inputs.filter((names) => names.includes(name)).length < 2) return name;
+    return `${name}_${inputs.slice(0, index).filter((names) => names.includes(name)).length}`;
+  };
+  const sourceKeys = sourceNames.map(Object.keys);
+  const names = { ...parameterNames };
+  const ambiguous = new Set<string>();
+  sourceNames.forEach((sources, index) => {
+    Object.entries(sources).forEach(([sourceName, outputName]) => {
+      const sourceKey = qualifyName(sourceName, index, sourceKeys);
+      const outputKey = qualifyName(outputName, index, publicNames);
+      const name = Object.keys(parameterNames).length > 0
+        ? parameterNames[outputKey]
+        : outputKey;
+      if (!name || ambiguous.has(sourceKey)) return;
+      if (Object.hasOwn(names, sourceKey) && names[sourceKey] !== name) {
+        // The source is shared by differently named inputs; select by public name.
+        delete names[sourceKey];
+        ambiguous.add(sourceKey);
+        return;
+      }
+      names[sourceKey] = name;
+    });
+  });
+
+  return names;
+}
+
+function createFactorSelectionParameterNames(
   resolutions: FactorResolution[],
   outputNames: string[],
   factorName: string,
@@ -368,13 +388,12 @@ function createFactorParameterNames(
     if (!firstCondition) {
       return undefined;
     }
-    const materializedFirstCondition = materializeConditionForParameterNames(firstCondition, resolution.parameterNames);
+    const materializedFirstCondition = materializeConditionForParameterNames(firstCondition);
     const factorNames = Object.keys(materializedFirstCondition);
-    const inputName = factorNames[0];
     const hasOneScalarInput = factorNames.length === 1
       && resolution.conditions.every((condition) => (
-        Object.keys(materializeConditionForParameterNames(condition, resolution.parameterNames)).length === 1
-        && !Array.isArray(materializeConditionForParameterNames(condition, resolution.parameterNames)[inputName])
+        Object.keys(materializeConditionForParameterNames(condition)).length === 1
+        && !Array.isArray(Object.values(materializeConditionForParameterNames(condition))[0])
       ));
     if (!hasOneScalarInput) {
       addFactorError(
@@ -383,40 +402,38 @@ function createFactorParameterNames(
       );
       return undefined;
     }
-    // Conditions retain their original source keys until final materialization.
-    return Object.keys(firstCondition)[0];
+    return [...new Set(resolution.conditions.flatMap((condition) => Object.keys(condition)))];
   });
   if (inputNames.some((name) => name === undefined)) {
     return undefined;
   }
 
-  const names = inputNames as string[];
-  const totals = names.reduce<Record<string, number>>((counts, name) => ({
-    ...counts,
-    [name]: (counts[name] || 0) + 1,
+  const names = inputNames as string[][];
+  const totals = names.flat().reduce<Record<string, number>>((counts, name) => ({
+    ...counts, [name]: (counts[name] || 0) + 1,
   }), {});
   const seen: Record<string, number> = {};
-  return names.reduce<FactorParameterNames>((parameterNames, name, index) => {
-    const occurrence = seen[name] || 0;
-    seen[name] = occurrence + 1;
-    const sourceName = totals[name] > 1 ? `${name}_${occurrence}` : name;
-    parameterNames[sourceName] = outputNames[index];
+  return names.reduce<FactorParameterNames>((parameterNames, input, index) => {
+    input.forEach((name) => {
+      const occurrence = seen[name] || 0;
+      seen[name] = occurrence + 1;
+      const sourceName = totals[name] > 1 ? `${name}_${occurrence}` : name;
+      parameterNames[sourceName] = outputNames[index];
+    });
     return parameterNames;
   }, {});
 }
 
-function getSingleFactorParameterName(
+function getScalarFactorParameterNames(
   resolution: FactorResolution,
-): string | undefined {
-  const parameterNames = resolution.conditions.length > 0
-    ? Object.keys(materializeConditionForParameterNames(resolution.conditions[0], resolution.parameterNames))
-    : [];
-  if (parameterNames.length !== 1 || resolution.conditions.some((condition) => (
-    Object.keys(materializeConditionForParameterNames(condition, resolution.parameterNames)).length !== 1
-  ))) {
+): string[] | undefined {
+  const parameterNames = resolution.conditions.map((condition) => (
+    Object.keys(materializeConditionForParameterNames(condition))
+  ));
+  if (parameterNames.length === 0 || parameterNames.some((names) => names.length !== 1)) {
     return undefined;
   }
-  return parameterNames[0];
+  return [...new Set(parameterNames.flat())];
 }
 
 function mergeFactorConditions(
@@ -514,14 +531,13 @@ function filterFactorConditionsByAssignment(
   conditions: FactorCondition[],
   assignmentParameters: Record<string, unknown> | undefined,
   errors: ParserErrorWarning[],
-  parameterNames?: FactorParameterNames,
 ): FactorCondition[] {
   if (!assignmentParameters) {
     return conditions;
   }
 
   return conditions.filter((condition) => {
-    const materialized = materializeFactorCondition(condition, errors, parameterNames);
+    const materialized = materializeFactorCondition(condition, errors);
     return Object.entries(assignmentParameters).every(([name, value]) => (
       materialized[name] === undefined || isEqual(materialized[name], value)
     ));
@@ -646,7 +662,6 @@ function resolveFactor(
       const materializedSource = materializeFactorCondition(
         sourceCondition,
         errors,
-        resolution.parameterNames,
       );
 
       if (hasCondition) {
@@ -661,7 +676,7 @@ function resolveFactor(
         materializeFactorCondition(
           item as FactorCondition,
           errors,
-          itemResolution?.parameterNames || resolution.parameterNames,
+          itemResolution?.selectionParameterNames ? {} : resolution.selectionParameterNames,
         ),
       ));
     };
@@ -676,7 +691,7 @@ function resolveFactor(
     return {
       conditions,
       runtimeCount: completeInputs ? conditions.length : null,
-      parameterNames: resolution.parameterNames,
+      selectionParameterNames: resolution.selectionParameterNames,
       hasRuntimeOrder: resolution.hasRuntimeOrder || itemResolution?.hasRuntimeOrder,
       hasRuntimeSample: resolution.hasRuntimeSample
         || itemResolution?.hasRuntimeSample
@@ -712,16 +727,18 @@ function resolveFactor(
     parameterErrors.forEach((error) => addFactorError(errors, error.message, error.instancePath));
 
     const parameterNames = parameterNameResolutions.map((resolution) => (
-      getSingleFactorParameterName(resolution)
+      getScalarFactorParameterNames(resolution)
     ));
-    if (parameterNames.every((name): name is string => name !== undefined)) {
-      inputAssignmentParameters = parameterNames.map((inputName, index) => {
+    if (parameterNames.every((names): names is string[] => names !== undefined)) {
+      inputAssignmentParameters = parameterNames.map((inputNames, index) => {
         if (!assignmentParameters || !Object.hasOwn(assignmentParameters, aliasNames[index])) {
           return assignmentParameters;
         }
         const mappedAssignment = { ...assignmentParameters };
         delete mappedAssignment[aliasNames[index]];
-        mappedAssignment[inputName] = assignmentParameters[aliasNames[index]];
+        inputNames.forEach((inputName) => {
+          mappedAssignment[inputName] = assignmentParameters[aliasNames[index]];
+        });
         return mappedAssignment;
       });
     }
@@ -741,7 +758,16 @@ function resolveFactor(
     )
   ));
 
-  const conditionSets = resolutions.map((resolution) => resolution.conditions);
+  const parameterNames = aliasNames !== undefined
+    ? createFactorSelectionParameterNames(parameterNameResolutions || resolutions, aliasNames, factorName, errors)
+    : undefined;
+  if (aliasNames !== undefined && !parameterNames) return { conditions: [] };
+  // Apply names to each input before combining, so aliases stay with their values.
+  const conditionSets = resolutions.map((resolution, index) => (
+    aliasNames === undefined ? resolution.conditions : resolution.conditions.map((condition) => ({
+      [aliasNames[index]]: Object.values(materializeFactorCondition(condition, errors))[0],
+    }))
+  ));
   const counts = resolutions.map(getFactorRuntimeCount);
   const runtimeCounts = counts.every((count): count is number => count !== null) ? counts : null;
   const concatenatedCount = runtimeCounts?.reduce((total, count) => total + count, 0) ?? null;
@@ -749,15 +775,12 @@ function resolveFactor(
   const hasRuntimeSample = resolutions.some((resolution) => (
     resolution.hasRuntimeSample || resolution.numSamples !== undefined
   ));
-  const parameterNames = (factor.action === 'cross' || factor.action === 'zip')
-    && aliasNames !== undefined
-    ? createFactorParameterNames(parameterNameResolutions || resolutions, aliasNames, factorName, errors)
-    : mergeFactorParameterNames(resolutions, factorName, errors);
+  const selectionParameterNames = mergeFactorSelectionParameterNames(resolutions, action === 'cross' || action === 'zip', parameterNames);
   if (action === 'cross') {
     return {
       conditions: crossFactorConditions(conditionSets),
       runtimeCount: runtimeCounts?.reduce((total, count) => total * count, 1) ?? null,
-      parameterNames,
+      selectionParameterNames,
       hasRuntimeOrder,
       hasRuntimeSample,
     };
@@ -771,7 +794,7 @@ function resolveFactor(
         ? crossFactorConditions(conditionSets)
         : zipFactorConditions(conditionSets, factorName, errors, warnings),
       runtimeCount: runtimeCounts ? Math.min(...runtimeCounts) : null,
-      parameterNames,
+      selectionParameterNames,
       hasRuntimeOrder,
       hasRuntimeSample,
     };
@@ -780,7 +803,7 @@ function resolveFactor(
   const conditions = conditionSets.flat();
   if (action === 'concat') {
     return {
-      conditions, runtimeCount: concatenatedCount, parameterNames, hasRuntimeOrder, hasRuntimeSample,
+      conditions, runtimeCount: concatenatedCount, selectionParameterNames, hasRuntimeOrder, hasRuntimeSample,
     };
   }
   if (factor.action === 'repeat') {
@@ -791,7 +814,7 @@ function resolveFactor(
     return {
       conditions: Array.from({ length: factor.numRepeats }, () => conditions).flat(),
       runtimeCount: concatenatedCount === null ? null : concatenatedCount * factor.numRepeats,
-      parameterNames,
+      selectionParameterNames,
       hasRuntimeOrder,
       hasRuntimeSample,
     };
@@ -818,7 +841,7 @@ function resolveFactor(
   // The definition was validated before participant eligibility filtering.
   if (mode === 'runtime' && conditions.length === 0) {
     return {
-      conditions: [], runtimeCount: 0, parameterNames, hasRuntimeOrder,
+      conditions: [], runtimeCount: 0, selectionParameterNames, hasRuntimeOrder,
     };
   }
 
@@ -859,7 +882,7 @@ function resolveFactor(
         factor.samplingStrategy,
         orderContext,
       ),
-      parameterNames,
+      selectionParameterNames,
       hasRuntimeOrder,
     };
   }
@@ -870,7 +893,7 @@ function resolveFactor(
     runtimeCount: runtimeCount === null ? null : Math.min(factor.numSamples, runtimeCount),
     numSamples: factor.numSamples,
     samplingStrategy: factor.samplingStrategy,
-    parameterNames,
+    selectionParameterNames,
     hasRuntimeOrder,
     hasRuntimeSample: hasRuntimeSample || factor.samplingStrategy === 'withReplacement',
   };
@@ -893,7 +916,7 @@ export function resolveFactorConditions(
     return [];
   }
   return resolution.conditions.map((condition) => (
-    materializeFactorCondition(condition, errors, resolution.parameterNames)
+    materializeFactorCondition(condition, errors)
   ));
 }
 
@@ -922,7 +945,7 @@ export function resolveOrderedFactorConditions(
     return [];
   }
   return resolution.conditions.map((condition) => (
-    materializeFactorCondition(condition, errors, resolution.parameterNames)
+    materializeFactorCondition(condition, errors)
   ));
 }
 
@@ -1024,7 +1047,7 @@ function compileFactorBlock(
     warnings,
   );
   const conditions = resolution.conditions.map((condition) => (
-    materializeFactorCondition(condition, errors, resolution.parameterNames)
+    materializeFactorCondition(condition, errors)
   ));
   let sequenceComponents: ComponentBlock['components'];
   let order = block.order ?? 'fixed';
