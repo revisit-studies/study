@@ -1,6 +1,7 @@
 /* eslint-disable no-await-in-loop */
 import { test, expect } from '@playwright/test';
 import {
+  advanceStudyStep,
   nextClick,
   openStudyFromLanding,
   resetClientStudyState,
@@ -41,8 +42,7 @@ test('Previous follows the assigned sequence after between-subject filtering', a
     dynamicUrls.push(page.url());
     await page.getByRole('radio', { name: choice, exact: true }).click();
     await page.getByRole('button', { name: 'Check Answer', exact: true }).click();
-    await nextClick(page);
-    await expect.poll(() => page.url()).not.toBe(dynamicUrls.at(-1));
+    await advanceStudyStep(page);
   }
 
   await expect(page.getByText('After the dynamic block', { exact: true })).toBeVisible();
