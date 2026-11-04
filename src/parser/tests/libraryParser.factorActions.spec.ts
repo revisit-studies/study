@@ -41,6 +41,50 @@ function factorConfig(): StudyConfig {
 }
 
 describe('factor sequence actions', () => {
+  test('prunes assigned prefixes before constructing a large cross', () => {
+    const levelCount = 20;
+    const factors: NonNullable<StudyConfig['factors']> = {
+      x: { values: Array.from({ length: levelCount }, (_, index) => index), order: 'latinSquare' },
+      selected: { action: 'cross', factors: ['x', 'x', 'x'] },
+    };
+    let visits = 0;
+    const { entries } = Object;
+    const traversal = vi.spyOn(Object, 'entries').mockImplementation((value) => {
+      if (Object.hasOwn(value, 'x')) visits += 1;
+      return entries(value);
+    });
+    try {
+      const errors: ParserErrorWarning[] = [];
+      expect(resolveOrderedFactorConditions('selected', factors, createFactorOrderContext(0), errors, 'selected', {
+        x_0: 1, x_1: 2, x_2: 3,
+      })).toEqual([{ x_0: 1, x_1: 2, x_2: 3 }]);
+      expect(errors).toEqual([]);
+      expect(visits).toBeLessThan(levelCount * 3 * 20);
+    } finally {
+      traversal.mockRestore();
+    }
+  });
+
+  test('retains prefixes when a later branch may change a singleton name', () => {
+    const factors: NonNullable<StudyConfig['factors']> = {
+      x: { values: [1, 2], order: 'latinSquare' },
+      y: [3],
+      joined: { action: 'concat', factors: ['x', 'y'] },
+      selected: { action: 'cross', factors: ['x', 'joined'] },
+    };
+    const errors: ParserErrorWarning[] = [];
+    expect(resolveOrderedFactorConditions('selected', factors, createFactorOrderContext(0), errors, 'selected', {
+      x: 1, y: 3,
+    })).toEqual([
+      { x_0: 1, x_1: 1 },
+      { x_0: 1, x_1: 2 },
+      { x: 1, y: 3 },
+      { x_0: 2, x_1: 1 },
+      { x_0: 2, x_1: 2 },
+    ]);
+    expect(errors).toEqual([]);
+  });
+
   test.each([undefined, 1])('projects assigned slots per concatenated shape before sampling (%s)', async (numSamples) => {
     const config = factorConfig();
     config.uiConfig.numSequences = 1;

@@ -479,6 +479,33 @@ function aliasFactorCondition(condition: ResolvedFactorCondition, alias?: string
 
 type FactorInputTuple = (ResolvedFactorCondition | undefined)[];
 
+type FactorInputFields = { possible: Set<string>; required: Set<string> };
+
+function canExtendFactorPrefix(
+  values: FactorCondition,
+  remaining: FactorInputFields[],
+  assignment?: Record<string, unknown>,
+  eligibleConditions?: MaterializedFactorCondition[],
+): boolean {
+  const compatible = (parameters: Record<string, unknown>, requireFields: boolean) => (
+    Object.entries(values).every(([name, value]) => {
+      const entries = isRepeatedFactorValues(value) ? value.values : [value];
+      const mayRepeat = remaining.some((input) => input.possible.has(name));
+      const mustRepeat = remaining.some((input) => input.required.has(name));
+      return entries.every((entry, index) => {
+        // Appending values preserves existing repeated-slot indices. A singleton
+        // can retain its name or become slot zero when a later branch repeats it.
+        const names = entries.length > 1 || mustRepeat ? [`${name}_${index}`]
+          : mayRepeat ? [name, `${name}_0`] : [name];
+        return names.some((key) => (Object.hasOwn(parameters, key)
+          ? isEqual(parameters[key], entry) : !requireFields));
+      });
+    })
+  );
+  return (!assignment || compatible(assignment, false))
+    && (eligibleConditions === undefined || eligibleConditions.some((eligible) => compatible(eligible, true)));
+}
+
 function getEligibleInputTuples(
   resolutions: FactorResolution[],
   action: FactorAction,
@@ -491,9 +518,22 @@ function getEligibleInputTuples(
   if (action === 'cross' || (action === 'zip' && resolutions.some((resolution) => (
     resolution.hasRuntimeOrder || resolution.hasRuntimeSample || resolution.numSamples !== undefined
   )))) {
-    tuples = resolutions.reduce<FactorInputTuple[]>((prefixes, resolution) => (
-      prefixes.flatMap((prefix) => resolution.conditions.map((condition) => [...prefix, condition]))
-    ), [[]]);
+    if (resolutions.some((resolution) => resolution.conditions.length === 0)) return [];
+    const projected = resolutions.map((resolution, index) => (
+      resolution.conditions.map((condition) => aliasFactorCondition(condition, aliasNames?.[index]).values)
+    ));
+    const fields = projected.map((conditions): FactorInputFields => ({
+      possible: new Set(conditions.flatMap(Object.keys)),
+      required: new Set(Object.keys(conditions[0] || {}).filter((name) => conditions.every((values) => Object.hasOwn(values, name)))),
+    }));
+    const prefixes = resolutions.reduce<{ tuple: FactorInputTuple; values: FactorCondition }[]>((current, resolution, index) => (
+      current.flatMap((prefix) => resolution.conditions.flatMap((condition, conditionIndex) => {
+        const values = mergeFactorConditions(prefix.values, projected[index][conditionIndex]);
+        return canExtendFactorPrefix(values, fields.slice(index + 1), assignment, eligibleConditions)
+          ? [{ tuple: [...prefix.tuple, condition], values }] : [];
+      }))
+    ), [{ tuple: [], values: {} }]);
+    tuples = prefixes.map((prefix) => prefix.tuple);
   } else if (action === 'zip') {
     tuples = Array.from({ length: Math.min(...resolutions.map((resolution) => resolution.conditions.length)) }, (_, index) => (
       resolutions.map((resolution) => resolution.conditions[index])
