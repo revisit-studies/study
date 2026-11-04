@@ -9,7 +9,7 @@ import {
 } from '../libraryParser';
 import { parseStudyConfig } from '../parser';
 import {
-  ComponentBlock, ParserErrorWarning, StudyConfig,
+  ComponentBlock, FactorOption, ParserErrorWarning, StudyConfig,
 } from '../types';
 
 function factorConfig(): StudyConfig {
@@ -41,6 +41,127 @@ function factorConfig(): StudyConfig {
 }
 
 describe('factor sequence actions', () => {
+  test.each((['concat', 'repeat', 'cross', 'zip'] as const).flatMap((wrapper) => (
+    (['withoutReplacement', 'withReplacement'] as const).map((samplingStrategy) => ({ wrapper, samplingStrategy }))
+  )))('retains possible survivors through $wrapper with $samplingStrategy', async ({ wrapper, samplingStrategy }) => {
+    const config = factorConfig();
+    const sampled: FactorOption = {
+      action: 'sample', factors: ['pool'], numSamples: samplingStrategy === 'withReplacement' ? 2 : 1, samplingStrategy,
+    };
+    config.factors = {
+      a: [1, 2, 3],
+      pool: [{ a: 1 }, { a: 2 }],
+      selected: {
+        action: 'remove',
+        factor: 'a',
+        items: wrapper === 'repeat' ? { action: wrapper, factors: [sampled], numRepeats: 1 } : { action: wrapper, factors: [sampled] },
+      },
+    };
+    config.baseComponents!.trial = { type: 'questionnaire', response: [] };
+    config.sequence = {
+      type: 'factor', id: 'variableRemoval', factor: 'selected', components: 'trial',
+    };
+    const random = vi.spyOn(Math, 'random').mockReturnValue(0);
+    try {
+      const parsed = await parseStudyConfig(JSON.stringify(config));
+      expect(parsed.errors).toEqual([]);
+      generateSequenceArray(parsed).forEach((sequence) => {
+        const values = getSequenceFlatMap(sequence).filter((id) => id !== 'end').map((id) => parsed.components[id].parameters!.a);
+        expect(values).toEqual(samplingStrategy === 'withReplacement' ? [2, 3] : [1, 3]);
+      });
+    } finally { random.mockRestore(); }
+  });
+
+  test('preserves possible survivors when runtime zip changes pair membership', async () => {
+    const config = factorConfig();
+    config.factors = {
+      a: { values: [1, 2], order: 'latinSquare' },
+      b: { values: ['x', 'y'], order: 'latinSquare' },
+      source: { action: 'cross', factors: ['a', 'b'] },
+      selected: { action: 'remove', factor: 'source', items: { action: 'zip', factors: ['a', 'b'] } },
+    };
+    config.baseComponents!.trial = { type: 'questionnaire', response: [] };
+    config.sequence = {
+      type: 'factor', id: 'zipRemoval', factor: 'selected', components: 'trial',
+    };
+    const parsed = await parseStudyConfig(JSON.stringify(config));
+    expect(parsed.errors).toEqual([]);
+    generateSequenceArray(parsed).forEach((sequence) => {
+      const rows = getSequenceFlatMap(sequence).filter((id) => id !== 'end').map((id) => parsed.components[id].parameters);
+      expect(rows).toEqual(expect.arrayContaining([{ a: 1, b: 'y' }, { a: 2, b: 'x' }]));
+      expect(rows).toHaveLength(2);
+    });
+  });
+
+  test.each(['cross', 'zip'] as const)('rejects %s aliases overlapping another input namespace at parse time', async (action) => {
+    const config = factorConfig();
+    config.factors = {
+      a: [1, 2],
+      b: [3, 4],
+      selected: { action, factors: ['a', 'b'], as: ['x', 'a'] },
+    };
+    config.baseComponents!.trial = { type: 'questionnaire', response: [] };
+    config.sequence = {
+      type: 'factor', id: 'aliasCollision', factor: 'selected', components: 'trial',
+    };
+    const parsed = await parseStudyConfig(JSON.stringify(config));
+    expect(parsed.errors.map((error) => error.message)).toContain(
+      'Factor expression `selected` as name `a` conflicts with another input parameter namespace',
+    );
+  });
+
+  test('rejects aliases hiding another input original source namespace', () => {
+    const factors: NonNullable<StudyConfig['factors']> = {
+      a: [1],
+      b: [2],
+      inner: { action: 'cross', factors: ['a'], as: ['x'] },
+      selected: { action: 'cross', factors: ['inner', 'b'], as: ['y', 'a'] },
+    };
+    const errors: ParserErrorWarning[] = [];
+    resolveFactorConditions('selected', factors, errors);
+    expect(errors.map((error) => error.message)).toContain(
+      'Factor expression `selected` as name `a` conflicts with another input parameter namespace',
+    );
+  });
+
+  test.each([['a', 'b'], ['x', 'y']])('preserves identity and disjoint aliases (%j, %j)', (first, second) => {
+    const errors: ParserErrorWarning[] = [];
+    expect(resolveFactorConditions({ action: 'cross', factors: ['a', 'b'], as: [first, second] }, { a: [1], b: [2] }, errors)).toEqual([
+      { [first]: 1, [second]: 2 },
+    ]);
+    expect(errors).toEqual([]);
+  });
+
+  test.each(['direct', 'concat', 'repeat', 'cross', 'zip', 'keep', 'remove'] as const)('preserves definite removal membership through %s', async (wrapper) => {
+    const full: FactorOption = {
+      action: 'sample', factors: ['pool'], numSamples: 2, samplingStrategy: 'withoutReplacement',
+    };
+    const selector: FactorOption = wrapper === 'direct' ? full
+      : wrapper === 'repeat' ? { action: wrapper, factors: [full], numRepeats: 1 }
+        : wrapper === 'keep' ? { action: wrapper, factor: full, condition: { a: 1 } }
+          : wrapper === 'remove' ? { action: wrapper, factor: full, items: [{ a: 2 }] }
+            : { action: wrapper, factors: [full] };
+    const config = factorConfig();
+    config.factors = {
+      a: [1, 2, 3],
+      pool: [{ a: 1 }, { a: 2 }],
+      selected: { action: 'remove', factor: 'a', items: selector },
+    };
+    config.baseComponents = {
+      trial3: { type: 'questionnaire', response: [] },
+      ...(['keep', 'remove'].includes(wrapper) ? { trial2: { type: 'questionnaire' as const, response: [] } } : {}),
+    };
+    config.sequence = {
+      type: 'factor', id: 'wrappedRemoval', factor: 'selected', components: 'trial{{a}}',
+    };
+    const parsed = await parseStudyConfig(JSON.stringify(config));
+    expect(parsed.errors).toEqual([]);
+    generateSequenceArray(parsed).forEach((sequence) => {
+      const rows = getSequenceFlatMap(sequence).filter((id) => id !== 'end').map((id) => parsed.components[id].parameters!.a);
+      expect(rows).toEqual(['keep', 'remove'].includes(wrapper) ? [2, 3] : [3]);
+    });
+  });
+
   test('retains possible survivors when a full-size selector samples with replacement', async () => {
     const config = factorConfig();
     config.factors = {
@@ -475,12 +596,12 @@ describe('factor sequence actions', () => {
 
   test.each(['keep', 'remove'] as const)('gives public literal %s items precedence over source aliases', async (action) => {
     const config = factorConfig();
-    const target = { b: 1, a: 2 };
+    const target = { x: 1, y: 2 };
     config.factors = {
       a: [1, 2],
       b: [1, 2],
-      swapped: { action: 'cross', factors: ['a', 'b'], as: ['b', 'a'] },
-      selected: { action, factor: 'swapped', items: [target] },
+      aliased: { action: 'cross', factors: ['a', 'b'], as: ['x', 'y'] },
+      selected: { action, factor: 'aliased', items: [target] },
     };
     config.baseComponents!.trial = { type: 'questionnaire', response: [] };
     config.sequence = {

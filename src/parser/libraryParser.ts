@@ -168,6 +168,8 @@ type FactorResolution = {
   samplingStrategy?: 'withoutReplacement' | 'withReplacement';
   hasRuntimeOrder?: boolean;
   hasRuntimeSample?: boolean;
+  // Runtime execution can change order without changing the selected values.
+  hasVariableMembership?: boolean;
 };
 type FactorResolutionMode = 'standard' | 'materialize' | 'runtime';
 
@@ -340,6 +342,16 @@ function validateFactorAliases(
   }
   if (outputNames.some((name) => name.length === 0) || new Set(outputNames).size !== outputNames.length) {
     addFactorError(errors, `Factor expression \`${factorName}\` requires unique, non-empty as names`);
+    return false;
+  }
+  const overlap = outputNames.find((name, index) => resolutions.some((resolution, otherIndex) => (
+    otherIndex !== index && resolution.conditions.some((condition) => (
+      Object.hasOwn(materializeConditionForParameterNames(condition.values), name)
+      || (condition.sourceValues && Object.hasOwn(materializeConditionForParameterNames(condition.sourceValues), name))
+    ))
+  )));
+  if (overlap !== undefined) {
+    addFactorError(errors, `Factor expression \`${factorName}\` as name \`${overlap}\` conflicts with another input parameter namespace`);
     return false;
   }
   return resolutions.every((resolution, index) => {
@@ -685,6 +697,7 @@ function resolveFactor(
           : { [factorName]: value },
       })),
       runtimeCount: Math.min(eligibleValues.length, factor.numSamples ?? eligibleValues.length),
+      hasVariableMembership: factor.numSamples !== undefined && factor.numSamples < eligibleValues.length,
       hasRuntimeOrder: (
         (factor.order !== undefined && factor.order !== 'fixed')
         || factor.numSamples !== undefined
@@ -788,7 +801,7 @@ function resolveFactor(
     // Retain possible survivors only when selector membership can vary. Merely
     // reordering a complete pool still removes every value in that pool.
     const runtimeRemoval = mode === 'materialize' && factor.action === 'remove' && itemResolution
-      && (itemResolution.hasRuntimeSample || getFactorRuntimeCount(itemResolution) !== itemResolution.conditions.length);
+      && itemResolution.hasVariableMembership;
     const conditions = resolution.conditions.filter((sourceCondition) => runtimeRemoval || (
       factor.action === 'keep'
         ? matchesSelection(sourceCondition)
@@ -804,6 +817,7 @@ function resolveFactor(
         || itemResolution?.hasRuntimeSample
         || resolution.numSamples !== undefined
         || itemResolution?.numSamples !== undefined,
+      hasVariableMembership: resolution.hasVariableMembership || itemResolution?.hasVariableMembership,
     };
   }
 
@@ -855,6 +869,7 @@ function resolveFactor(
   if (mode === 'runtime' && action === 'cross' && tuples) {
     let hasRuntimeOrder = false;
     let hasRuntimeSample = false;
+    let hasVariableMembership = false;
     // Later inputs use the actual selected prefix shape, not a maximum arity.
     // Narrow their eligible values before sampling to keep compatible branches.
     const extend = (index: number, prefix: ResolvedFactorCondition, candidates: FactorInputTuple[]): ResolvedFactorCondition[] => {
@@ -862,6 +877,7 @@ function resolveFactor(
       const resolution = resolveInput(index, getInputEligibility(candidates, index, errors));
       hasRuntimeOrder ||= !!resolution.hasRuntimeOrder;
       hasRuntimeSample ||= !!resolution.hasRuntimeSample || resolution.numSamples !== undefined;
+      hasVariableMembership ||= !!resolution.hasVariableMembership;
       return resolution.conditions.flatMap((condition) => {
         const values = materializeFactorCondition(condition.values, errors);
         const remaining = candidates.filter((tuple) => (
@@ -872,7 +888,7 @@ function resolveFactor(
     };
     const conditions = extend(0, { values: {} }, tuples);
     return {
-      conditions, runtimeCount: conditions.length, hasRuntimeOrder, hasRuntimeSample,
+      conditions, runtimeCount: conditions.length, hasRuntimeOrder, hasRuntimeSample, hasVariableMembership,
     };
   }
 
@@ -894,12 +910,14 @@ function resolveFactor(
   const hasRuntimeSample = resolutions.some((resolution) => (
     resolution.hasRuntimeSample || resolution.numSamples !== undefined
   ));
+  const hasVariableMembership = resolutions.some((resolution) => resolution.hasVariableMembership);
   if (action === 'cross') {
     return {
       conditions: crossFactorConditions(conditionSets),
       runtimeCount: runtimeCounts?.reduce((total, count) => total * count, 1) ?? null,
       hasRuntimeOrder,
       hasRuntimeSample,
+      hasVariableMembership,
     };
   }
   if (action === 'zip') {
@@ -915,13 +933,15 @@ function resolveFactor(
       runtimeCount: mode === 'runtime' ? conditions.length : runtimeCounts ? Math.min(...runtimeCounts) : null,
       hasRuntimeOrder,
       hasRuntimeSample,
+      hasVariableMembership: hasVariableMembership || ((hasRuntimeOrder || hasRuntimeSample)
+        && (runtimeCounts === null || Math.min(...runtimeCounts) !== conditions.length)),
     };
   }
 
   const conditions = conditionSets.flat();
   if (action === 'concat') {
     return {
-      conditions, runtimeCount: concatenatedCount, hasRuntimeOrder, hasRuntimeSample,
+      conditions, runtimeCount: concatenatedCount, hasRuntimeOrder, hasRuntimeSample, hasVariableMembership,
     };
   }
   if (factor.action === 'repeat') {
@@ -934,6 +954,7 @@ function resolveFactor(
       runtimeCount: concatenatedCount === null ? null : concatenatedCount * factor.numRepeats,
       hasRuntimeOrder,
       hasRuntimeSample,
+      hasVariableMembership,
     };
   }
 
@@ -1000,6 +1021,8 @@ function resolveFactor(
         orderContext,
       ),
       hasRuntimeOrder,
+      hasVariableMembership: hasVariableMembership || factor.numSamples < conditions.length
+        || (factor.samplingStrategy === 'withReplacement' && conditions.length > 1),
     };
   }
   const runtimeCount = factor.samplingStrategy === 'withReplacement'
@@ -1011,6 +1034,8 @@ function resolveFactor(
     samplingStrategy: factor.samplingStrategy,
     hasRuntimeOrder,
     hasRuntimeSample: hasRuntimeSample || factor.samplingStrategy === 'withReplacement',
+    hasVariableMembership: hasVariableMembership || factor.numSamples < conditions.length
+      || (factor.samplingStrategy === 'withReplacement' && conditions.length > 1),
   };
 }
 
