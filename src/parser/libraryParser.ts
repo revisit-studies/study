@@ -843,12 +843,13 @@ function resolveFactor(
   }
 
   const aliasNames = (factor.action === 'cross' || factor.action === 'zip') ? factor.as : undefined;
-  const correlatedZip = action === 'zip' && hasCorrelatedZipOrder(inputs, factors);
+  const sharedNamedZip = action === 'zip' && inputs.length > 1
+    && inputs.every((input) => typeof input === 'string' && input === inputs[0]);
   const assignment = assignmentParameters && Object.keys(assignmentParameters).length > 0
     ? getRelevantFactorAssignment(assignmentParameters, getFactorPublicNames(factorSource, factors)) : undefined;
   const constrained = assignment !== undefined || eligibleConditions !== undefined;
   let inputDefinitions: FactorResolution[] | undefined;
-  if (aliasNames !== undefined || constrained) {
+  if (aliasNames !== undefined || constrained || sharedNamedZip) {
     const definitionErrors: ParserErrorWarning[] = [];
     inputDefinitions = inputs.map((input, index) => resolveFactor(
       input,
@@ -866,6 +867,13 @@ function resolveFactor(
   if (aliasNames !== undefined && !validateFactorAliases(inputDefinitions!, aliasNames, factorName, errors)) {
     return { conditions: [] };
   }
+  // A complete named draw is cached once even when its runtime pool contains
+  // more rows than its materialized definition. Partial draws remain eligible
+  // for independent input filtering before sampling.
+  const correlatedZip = action === 'zip' && (hasCorrelatedZipOrder(inputs, factors)
+    || (sharedNamedZip && inputDefinitions!.every((resolution) => (
+      !resolution.hasVariableMembership && getFactorRuntimeCount(resolution) !== null
+    ))));
   const tuples = constrained && (!correlatedZip || inputs.length === 1)
     ? getEligibleInputTuples(inputDefinitions!, action, aliasNames, assignment, eligibleConditions, errors)
     : undefined;

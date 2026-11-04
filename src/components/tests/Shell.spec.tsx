@@ -554,7 +554,7 @@ describe('Shell', () => {
     const { getByRole } = render(<Shell globalConfig={globalConfig} />);
 
     await waitFor(() => expect(getByRole('alert')).toBeDefined());
-    expect(startupErrorWasBlocked).toBe(false);
+    await waitFor(() => expect(startupErrorWasBlocked).toBe(false));
     expect(vi.mocked(studyStoreCreator)).toHaveBeenCalledTimes(1);
   });
 

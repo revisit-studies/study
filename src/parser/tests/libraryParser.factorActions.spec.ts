@@ -41,6 +41,86 @@ function factorConfig(): StudyConfig {
 }
 
 describe('factor sequence actions', () => {
+  test.each([false, true])('preserves full named sample zip membership (expanded=%s)', async (expanded) => {
+    const config = factorConfig();
+    config.factors = {
+      a: [1, 2],
+      one: [{ a: 1 }],
+      two: [{ a: 2 }],
+      p: {
+        action: 'sample',
+        factors: expanded ? ['one', {
+          action: 'sample', factors: ['two'], numSamples: 3, samplingStrategy: 'withReplacement',
+        }] : ['a'],
+        numSamples: expanded ? 4 : 2,
+        samplingStrategy: 'withoutReplacement',
+      },
+      source: { action: 'cross', factors: ['a', 'a'] },
+      selected: { action: 'remove', factor: 'source', items: { action: 'zip', factors: ['p', 'p'] } },
+    };
+    config.baseComponents = {
+      trial12: { type: 'questionnaire', response: [] }, trial21: { type: 'questionnaire', response: [] },
+    };
+    config.sequence = {
+      type: 'factor', id: 'namedZip', factor: 'selected', components: 'trial{{a_0}}{{a_1}}',
+    };
+    const parsed = await parseStudyConfig(JSON.stringify(config));
+    expect(parsed.errors).toEqual([]);
+    generateSequenceArray(parsed).forEach((sequence) => {
+      const rows = getSequenceFlatMap(sequence).filter((id) => id !== 'end').map((id) => parsed.components[id].parameters);
+      expect(rows).toEqual([{ a_0: 1, a_1: 2 }, { a_0: 2, a_1: 1 }]);
+    });
+  });
+
+  test.each([1, 2])('filters paired rows of a shared full named sample (right=%i)', async (right) => {
+    const config = factorConfig();
+    config.factors = {
+      a: [1, 2],
+      p: {
+        action: 'sample', factors: ['a'], numSamples: 2, samplingStrategy: 'withoutReplacement',
+      },
+      selected: { action: 'zip', factors: ['p', 'p'], as: ['left', 'right'] },
+      assignment: [{ left: 1, right }],
+    };
+    config.betweenSubjects = ['assignment'];
+    config.baseComponents!.trial = { type: 'questionnaire', response: [] };
+    config.sequence = {
+      type: 'factor', id: 'assignedNamedZip', factor: 'selected', components: 'trial',
+    };
+    const parsed = await parseStudyConfig(JSON.stringify(config));
+    expect(parsed.errors).toEqual([]);
+    generateSequenceArray(parsed).forEach((sequence) => {
+      const rows = getSequenceFlatMap(sequence).filter((id) => id !== 'end').map((id) => parsed.components[id].parameters);
+      expect(rows).toEqual(right === 1 ? [{ left: 1, right: 1 }] : []);
+    });
+  });
+
+  test('keeps partial named samples eligible before zip selection', () => {
+    const factors: NonNullable<StudyConfig['factors']> = {
+      a: [1, 2],
+      p: {
+        action: 'sample', factors: ['a'], numSamples: 1, samplingStrategy: 'withoutReplacement',
+      },
+      selected: { action: 'zip', factors: ['p', 'p'], as: ['left', 'right'] },
+    };
+    const errors: ParserErrorWarning[] = [];
+    expect(resolveOrderedFactorConditions('selected', factors, createFactorOrderContext(0), errors, 'selected', { left: 1, right: 2 })).toEqual([{ left: 1, right: 2 }]);
+    expect(errors).toEqual([]);
+  });
+
+  test('keeps independent inline full samples uncorrelated', () => {
+    const draw: FactorOption = {
+      action: 'sample', factors: ['a'], numSamples: 2, samplingStrategy: 'withoutReplacement',
+    };
+    const factors: NonNullable<StudyConfig['factors']> = { a: [1, 2], selected: { action: 'zip', factors: [draw, draw], as: ['left', 'right'] } };
+    const random = vi.spyOn(Math, 'random').mockReturnValueOnce(0).mockReturnValue(0.99);
+    try {
+      const errors: ParserErrorWarning[] = [];
+      expect(resolveOrderedFactorConditions('selected', factors, createFactorOrderContext(0), errors, 'selected')).toEqual([{ left: 2, right: 1 }, { left: 1, right: 2 }]);
+      expect(errors).toEqual([]);
+    } finally { random.mockRestore(); }
+  });
+
   test.each(['singleInput', 'sharedPartial'] as const)('applies eligibility before partial sampling in a %s zip', (kind) => {
     const factors: NonNullable<StudyConfig['factors']> = {
       a: { values: [1, 2], order: 'random', numSamples: 1 },
