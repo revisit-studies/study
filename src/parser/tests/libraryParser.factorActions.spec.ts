@@ -41,6 +41,129 @@ function factorConfig(): StudyConfig {
 }
 
 describe('factor sequence actions', () => {
+  test.each(['keep', 'remove'] as const)('preserves nested repeated source-name %s selectors', async (action) => {
+    const config = factorConfig();
+    config.factors = {
+      a: [1, 2],
+      left: { action: 'cross', factors: ['a'], as: ['x'] },
+      pair: { action: 'cross', factors: ['left', 'left'] },
+      triple: { action: 'cross', factors: ['pair', 'left'] },
+      selected: { action, factor: 'triple', items: [{ a_0: 1, a_1: 2, a_2: 1 }] },
+    };
+    config.baseComponents!.trial = { type: 'questionnaire', response: [] };
+    config.sequence = {
+      type: 'factor', id: 'nestedSelector', factor: 'selected', components: 'trial',
+    };
+    const parsed = await parseStudyConfig(JSON.stringify(config));
+    expect(parsed.errors).toEqual([]);
+    const sequences = generateSequenceArray(parsed);
+    const target = { x_0: 1, x_1: 2, x_2: 1 };
+    sequences.forEach((sequence) => {
+      const parameters = getSequenceFlatMap(sequence).filter((id) => id !== 'end').map((id) => parsed.components[id].parameters);
+      if (action === 'keep') expect(parameters).toEqual([target]);
+      else {
+        expect(parameters).toHaveLength(7);
+        expect(parameters).not.toContainEqual(target);
+      }
+    });
+  });
+
+  test('matches source selectors against each concatenated condition rather than possible keys', () => {
+    const factors: StudyConfig['factors'] = {
+      a: [1],
+      b: [2],
+      left: { action: 'cross', factors: ['a'], as: ['arm'] },
+      right: { action: 'cross', factors: ['b'], as: ['arm'] },
+      joined: { action: 'concat', factors: ['left', 'right'] },
+      combined: { action: 'cross', factors: ['joined', 'a'] },
+    };
+    expect(resolveFactorConditions({
+      action: 'keep', factor: 'combined', items: [{ b: 2, a: 1 }],
+    }, factors)).toEqual([{ arm: 2, a: 1 }]);
+  });
+
+  test.each([false, true])('filters repeated assignments before inner sampling (explicit aliases=%s)', async (explicit) => {
+    const random = vi.spyOn(Math, 'random').mockReturnValue(0);
+    try {
+      const config = factorConfig();
+      config.uiConfig.numSequences = 4;
+      config.factors = {
+        stimulus: { values: [1, 2], order: 'random', numSamples: 1 },
+        aliased: { action: 'cross', factors: ['stimulus'], as: ['arm'] },
+        selected: {
+          action: 'cross', factors: ['aliased', 'aliased'], ...(explicit ? { as: ['arm_0', 'arm_1'] } : {}),
+        },
+      };
+      config.betweenSubjects = ['selected'];
+      config.baseComponents!.trial = { type: 'questionnaire', response: [] };
+      config.sequence = {
+        type: 'factor', id: 'sampledRepeated', factor: 'selected', components: 'trial',
+      };
+      const parsed = await parseStudyConfig(JSON.stringify(config));
+      expect(parsed.errors).toEqual([]);
+      const sequences = generateSequenceArray(parsed);
+      expect(sequences.map((sequence) => sequence.parameters?.selected)).toEqual([
+        { arm_0: 1, arm_1: 1 }, { arm_0: 1, arm_1: 2 }, { arm_0: 2, arm_1: 1 }, { arm_0: 2, arm_1: 2 },
+      ]);
+      sequences.forEach((sequence) => {
+        expect(getSequenceFlatMap(sequence)).toHaveLength(2);
+        expect(parsed.components[getSequenceFlatMap(sequence)[0]].parameters).toEqual(sequence.parameters?.selected);
+      });
+    } finally {
+      random.mockRestore();
+    }
+  });
+
+  test.each(['fixed', 'random', 'latinSquare'] as const)('keeps independently aliased values when the original is assigned (%s)', async (order) => {
+    const config = factorConfig();
+    config.factors = {
+      stimulus: { values: [1, 2], order },
+      assignment: { action: 'cross', factors: ['stimulus'] },
+      left: { action: 'cross', factors: ['stimulus'], as: ['leftArm'] },
+      selected: { action: 'cross', factors: ['left', 'stimulus'] },
+    };
+    config.betweenSubjects = ['assignment'];
+    config.baseComponents!.trial = { type: 'questionnaire', response: [] };
+    config.sequence = {
+      type: 'factor', id: 'independent', factor: 'selected', components: 'trial',
+    };
+    const parsed = await parseStudyConfig(JSON.stringify(config));
+    expect(parsed.errors).toEqual([]);
+    generateSequenceArray(parsed).forEach((sequence) => {
+      const parameters = getSequenceFlatMap(sequence).filter((id) => id !== 'end').map((id) => parsed.components[id].parameters);
+      expect(parameters).toHaveLength(2);
+      expect(parameters).toEqual(expect.arrayContaining([
+        { leftArm: 1, stimulus: sequence.parameters?.stimulus },
+        { leftArm: 2, stimulus: sequence.parameters?.stimulus },
+      ]));
+    });
+  });
+
+  test.each(['keep', 'remove'] as const)('gives public literal %s items precedence over source aliases', async (action) => {
+    const config = factorConfig();
+    const target = { b: 1, a: 2 };
+    config.factors = {
+      a: [1, 2],
+      b: [1, 2],
+      swapped: { action: 'cross', factors: ['a', 'b'], as: ['b', 'a'] },
+      selected: { action, factor: 'swapped', items: [target] },
+    };
+    config.baseComponents!.trial = { type: 'questionnaire', response: [] };
+    config.sequence = {
+      type: 'factor', id: 'publicSelector', factor: 'selected', components: 'trial',
+    };
+    const parsed = await parseStudyConfig(JSON.stringify(config));
+    expect(parsed.errors).toEqual([]);
+    generateSequenceArray(parsed).forEach((sequence) => {
+      const parameters = getSequenceFlatMap(sequence).filter((id) => id !== 'end').map((id) => parsed.components[id].parameters);
+      if (action === 'keep') expect(parameters).toEqual([target]);
+      else {
+        expect(parameters).toHaveLength(3);
+        expect(parameters).not.toContainEqual(target);
+      }
+    });
+  });
+
   test.each(['cross', 'zip'] as const)('composes nested %s aliases from their original source', (action) => {
     const factors: StudyConfig['factors'] = {
       stimulus: [1, 2],
