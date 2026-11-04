@@ -277,15 +277,11 @@ function orderFactorValues(
   warnings: ParserErrorWarning[] = [],
 ): FactorValue[] {
   const order: ComponentOrder = factor.order || 'fixed';
-  if (factor.values.length === 0) {
-    addFactorError(errors, `Factor \`${factorName}\` must contain at least one value`);
-    return [];
-  }
   if (factor.numSamples !== undefined && (!Number.isInteger(factor.numSamples) || factor.numSamples < 1)) {
     addFactorError(errors, `Factor \`${factorName}\` numSamples must be a positive integer`);
     return [];
   }
-  if (!context) {
+  if (!context || factor.values.length === 0) {
     return [...factor.values];
   }
 
@@ -574,6 +570,11 @@ function resolveFactor(
   }
 
   if (isOrderedFactorValues(factor)) {
+    // Validate the definition before filtering; an assignment may have no trials.
+    if (factor.values.length === 0) {
+      addFactorError(errors, `Factor \`${factorName}\` must contain at least one value`);
+      return { conditions: [] };
+    }
     const eligibleValues = factor.values.filter((value) => {
       const condition = typeof value === 'object' && !Array.isArray(value)
         ? { ...value }

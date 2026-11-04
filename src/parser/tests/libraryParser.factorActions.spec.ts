@@ -148,6 +148,45 @@ describe('factor sequence actions', () => {
     expect(sequences.map((sequence) => sequence.components[0])).toEqual(['numericArm', 'stringArm']);
   });
 
+  test.each([
+    { order: 'fixed' as const },
+    { order: 'random' as const },
+    { order: 'latinSquare' as const },
+    { order: 'random' as const, numSamples: 1 },
+  ])('allows an ordered factor with no eligible trials for one arm ($order, $numSamples)', async (ordering) => {
+    const config = factorConfig();
+    config.factors = {
+      arm: ['A', 'B'],
+      tasks: { values: [{ arm: 'A', task: 'only-A' }], ...ordering },
+    };
+    config.betweenSubjects = ['arm'];
+    config.sequence = {
+      type: 'factor', id: 'tasks', factor: 'tasks', components: 'trial',
+    };
+    // Use a bundled asset so this exercises the complete parser contract.
+    config.baseComponents!.trial = {
+      type: 'markdown', path: 'demo-html-trrack/assets/introduction.md', response: [],
+    };
+    const parsed = await parseStudyConfig(JSON.stringify(config));
+    expect(parsed.errors).toEqual([]);
+
+    const sequences = generateSequenceArray(parsed);
+    expect(sequences).toHaveLength(2);
+    const armA = sequences.find((sequence) => sequence.parameters?.arm === 'A')!;
+    const armB = sequences.find((sequence) => sequence.parameters?.arm === 'B')!;
+    expect(getSequenceFlatMap(armA)).toHaveLength(2);
+    expect(parsed.components[getSequenceFlatMap(armA)[0]].parameters).toMatchObject({ arm: 'A', task: 'only-A' });
+    expect(getSequenceFlatMap(armB)).toEqual(['end']);
+  });
+
+  test('still rejects an originally empty ordered factor', () => {
+    const errors: ParserErrorWarning[] = [];
+    expect(resolveFactorConditions('tasks', { tasks: { values: [], order: 'random' } }, errors)).toEqual([]);
+    expect(errors).toEqual(expect.arrayContaining([
+      expect.objectContaining({ message: 'Factor `tasks` must contain at least one value' }),
+    ]));
+  });
+
   test('reports invalid between-subjects factors as parser errors', async () => {
     const invalidFactors: Array<[string, StudyConfig['factors']]> = [
       ['missing', {}],
