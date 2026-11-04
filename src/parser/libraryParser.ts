@@ -597,17 +597,34 @@ function getFactorRuntimeCount(resolution: FactorResolution) {
   return resolution.runtimeCount === undefined ? resolution.conditions.length : resolution.runtimeCount;
 }
 
-function hasCorrelatedZipOrder(inputs: FactorOption[], factors: Record<string, Factor>): boolean {
-  if (inputs.length === 1) return true;
-  const definitions = inputs.map((input) => (typeof input === 'string' ? factors[input] : undefined));
-  // Partial selections still need participant eligibility before sampling.
-  if (!definitions.every((factor) => factor && (Array.isArray(factor)
-    || (isOrderedFactorValues(factor) && (factor.numSamples === undefined || factor.numSamples >= factor.values.length))))) return false;
-  if (inputs.every((input) => typeof input === 'string' && input === inputs[0])) return true;
-  const first = definitions[0];
-  return !!first && isOrderedFactorValues(first) && first.order === 'latinSquare'
-    && definitions.every((factor) => factor && isOrderedFactorValues(factor)
-      && factor.order === 'latinSquare' && factor.values.length === first.values.length);
+type FactorDrawIdentity = string | {
+  action: string;
+  inputs?: FactorDrawIdentity[];
+  length?: number;
+  numRepeats?: number;
+};
+
+function getFactorDrawIdentity(
+  source: FactorOption,
+  factors: Record<string, Factor>,
+  stack: string[] = [],
+): FactorDrawIdentity | undefined {
+  const named = typeof source === 'string' ? source : undefined;
+  if (named && stack.includes(named)) return undefined;
+  const factor = named ? factors[named] : source as Exclude<FactorOption, string>;
+  if (!factor) return undefined;
+  if (Array.isArray(factor)) return { action: 'fixed', length: factor.length };
+  if (isOrderedFactorValues(factor)) {
+    if (factor.order === 'random') return named;
+    return { action: factor.order || 'fixed', length: factor.values.length };
+  }
+  // Sampling owns a cache identity; filtering may change row positions. Do not
+  // equate independently named operations with identical-looking definitions.
+  if (factor.action === 'sample' || factor.action === 'keep' || factor.action === 'remove') return named;
+  const inputs = factor.factors.map((input) => getFactorDrawIdentity(input, factors, named ? [...stack, named] : stack));
+  if (!inputs.every((input): input is FactorDrawIdentity => input !== undefined)) return named;
+  if (inputs.length === 1 && (factor.action !== 'repeat' || factor.numRepeats === 1)) return inputs[0];
+  return { action: factor.action, inputs, ...(factor.action === 'repeat' ? { numRepeats: factor.numRepeats } : {}) };
 }
 
 function getFactorPublicNames(
@@ -843,13 +860,17 @@ function resolveFactor(
   }
 
   const aliasNames = (factor.action === 'cross' || factor.action === 'zip') ? factor.as : undefined;
-  const sharedNamedZip = action === 'zip' && inputs.length > 1
-    && inputs.every((input) => typeof input === 'string' && input === inputs[0]);
+  const zipIdentities = action === 'zip' ? inputs.map((input) => {
+    const identity = getFactorDrawIdentity(input, factors);
+    return identity === undefined ? undefined : JSON.stringify(identity);
+  }) : [];
+  const sharedDrawZip = inputs.length > 1 && zipIdentities[0] !== undefined
+    && zipIdentities.every((identity) => identity === zipIdentities[0]);
   const assignment = assignmentParameters && Object.keys(assignmentParameters).length > 0
     ? getRelevantFactorAssignment(assignmentParameters, getFactorPublicNames(factorSource, factors)) : undefined;
   const constrained = assignment !== undefined || eligibleConditions !== undefined;
   let inputDefinitions: FactorResolution[] | undefined;
-  if (aliasNames !== undefined || constrained || sharedNamedZip) {
+  if (aliasNames !== undefined || constrained || sharedDrawZip) {
     const definitionErrors: ParserErrorWarning[] = [];
     inputDefinitions = inputs.map((input, index) => resolveFactor(
       input,
@@ -867,13 +888,10 @@ function resolveFactor(
   if (aliasNames !== undefined && !validateFactorAliases(inputDefinitions!, aliasNames, factorName, errors)) {
     return { conditions: [] };
   }
-  // A complete named draw is cached once even when its runtime pool contains
-  // more rows than its materialized definition. Partial draws remain eligible
-  // for independent input filtering before sampling.
-  const correlatedZip = action === 'zip' && (hasCorrelatedZipOrder(inputs, factors)
-    || (sharedNamedZip && inputDefinitions!.every((resolution) => (
-      !resolution.hasVariableMembership && getFactorRuntimeCount(resolution) !== null
-    ))));
+  // Shared ordering survives transparent wrappers. Fixed membership is enough
+  // to pair full draws even when duplicate multiplicities make the count unknown.
+  const correlatedZip = action === 'zip' && (inputs.length === 1
+    || (sharedDrawZip && inputDefinitions!.every((resolution) => !resolution.hasVariableMembership)));
   const tuples = constrained && (!correlatedZip || inputs.length === 1)
     ? getEligibleInputTuples(inputDefinitions!, action, aliasNames, assignment, eligibleConditions, errors)
     : undefined;
