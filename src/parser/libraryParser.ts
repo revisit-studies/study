@@ -718,6 +718,33 @@ function resolveFactor(
       eligibleConditions,
     );
 
+    const selectorAssignment = getRelevantFactorAssignment(assignmentParameters, getFactorPublicNames(factor.factor, factors));
+    let selectorEligibility: MaterializedFactorCondition[] | undefined;
+    if (mode === 'runtime' && hasItems && !Array.isArray(factor.items) && (selectorAssignment || eligibleConditions !== undefined)) {
+      // Project eligibility from the full source domain, not the source's
+      // sampled result, so independent draws remain independent.
+      const definition = resolveFactor(
+        factor.factor,
+        factors,
+        errors,
+        typeof factorSource === 'string' ? [...stack, factorSource] : stack,
+        `${factorName}.${factor.action}`,
+        'materialize',
+      );
+      const eligible = filterFactorConditionsByAssignment(definition.conditions, selectorAssignment, errors, eligibleConditions);
+      if (eligible.length !== definition.conditions.length) {
+        selectorEligibility = eligible.flatMap((condition) => {
+          const values = [materializeFactorCondition(condition.values, errors)];
+          const sourceErrors: ParserErrorWarning[] = [];
+          if (condition.sourceValues) {
+            const source = materializeFactorCondition(condition.sourceValues, sourceErrors);
+            if (sourceErrors.length === 0) values.push(source);
+          }
+          return values;
+        });
+      }
+    }
+
     const itemResolution = hasItems && !Array.isArray(factor.items)
       ? resolveFactor(
         factor.items!,
@@ -727,8 +754,9 @@ function resolveFactor(
         `${factorName}.${factor.action}.items`,
         mode,
         orderContext,
-        getRelevantFactorAssignment(assignmentParameters, getFactorPublicNames(factor.factor, factors)),
+        selectorAssignment,
         warnings,
+        selectorEligibility,
       )
       : undefined;
 
@@ -757,10 +785,10 @@ function resolveFactor(
       });
     };
 
-    // A runtime selector's materialized values are possibilities, not definite
-    // removals. Keep every potential survivor available for sequence generation.
+    // Retain possible survivors only when selector membership can vary. Merely
+    // reordering a complete pool still removes every value in that pool.
     const runtimeRemoval = mode === 'materialize' && factor.action === 'remove' && itemResolution
-      && (itemResolution.hasRuntimeOrder || itemResolution.hasRuntimeSample || itemResolution.numSamples !== undefined);
+      && (itemResolution.hasRuntimeSample || getFactorRuntimeCount(itemResolution) !== itemResolution.conditions.length);
     const conditions = resolution.conditions.filter((sourceCondition) => runtimeRemoval || (
       factor.action === 'keep'
         ? matchesSelection(sourceCondition)

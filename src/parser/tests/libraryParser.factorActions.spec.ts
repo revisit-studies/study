@@ -41,6 +41,150 @@ function factorConfig(): StudyConfig {
 }
 
 describe('factor sequence actions', () => {
+  test('retains possible survivors when a full-size selector samples with replacement', async () => {
+    const config = factorConfig();
+    config.factors = {
+      a: [1, 2, 3],
+      pool: [{ a: 1 }, { a: 2 }],
+      selected: {
+        action: 'remove',
+        factor: 'a',
+        items: {
+          action: 'sample', factors: ['pool'], numSamples: 2, samplingStrategy: 'withReplacement',
+        },
+      },
+    };
+    config.baseComponents!.trial = { type: 'questionnaire', response: [] };
+    config.sequence = {
+      type: 'factor', id: 'replacementSelector', factor: 'selected', components: 'trial',
+    };
+    const random = vi.spyOn(Math, 'random').mockReturnValue(0);
+    try {
+      const parsed = await parseStudyConfig(JSON.stringify(config));
+      expect(parsed.errors).toEqual([]);
+      generateSequenceArray(parsed).forEach((sequence) => {
+        const values = getSequenceFlatMap(sequence).filter((id) => id !== 'end').map((id) => parsed.components[id].parameters!.a);
+        expect(values).toEqual([2, 3]);
+      });
+    } finally { random.mockRestore(); }
+  });
+
+  test.each([{ x: 1 }, { a: 1 }])('translates only public eligibility into aliased selector sampling (%j)', (assignment) => {
+    const factors: NonNullable<StudyConfig['factors']> = {
+      a: { values: [1, 2], order: 'latinSquare' },
+      c: [0],
+      aliased: { action: 'cross', factors: ['a'], as: ['x'] },
+      selected: {
+        action: 'keep',
+        factor: 'aliased',
+        items: {
+          action: 'sample', factors: ['a'], numSamples: 1, samplingStrategy: 'withoutReplacement',
+        },
+      },
+      outer: { action: 'cross', factors: ['selected', 'c'] },
+    };
+    const random = vi.spyOn(Math, 'random').mockReturnValue(0);
+    try {
+      const errors: ParserErrorWarning[] = [];
+      expect(resolveOrderedFactorConditions('outer', factors, createFactorOrderContext(0), errors, 'outer', assignment)).toEqual([
+        { x: 'x' in assignment ? 1 : 2, c: 0 },
+      ]);
+      expect(errors).toEqual([]);
+    } finally { random.mockRestore(); }
+  });
+
+  test('does not constrain independent selector draws to a sampled source result', () => {
+    const factors: NonNullable<StudyConfig['factors']> = {
+      a: [1, 2],
+      c: [0],
+      source: {
+        action: 'sample', factors: ['a'], numSamples: 1, samplingStrategy: 'withoutReplacement',
+      },
+      selected: {
+        action: 'keep',
+        factor: 'source',
+        items: {
+          action: 'sample', factors: ['a'], numSamples: 1, samplingStrategy: 'withoutReplacement',
+        },
+      },
+      outer: { action: 'cross', factors: ['selected', 'c'] },
+    };
+    const random = vi.spyOn(Math, 'random').mockReturnValueOnce(0).mockReturnValue(0.99);
+    try {
+      const errors: ParserErrorWarning[] = [];
+      expect(resolveOrderedFactorConditions('outer', factors, createFactorOrderContext(0), errors, 'outer', { c: 0 })).toEqual([]);
+      expect(errors).toEqual([]);
+    } finally { random.mockRestore(); }
+  });
+
+  test.each(['full-sample', 'random', 'latinSquare', 'fixed'] as const)('materializes only definite survivors for a %s selector', async (selector) => {
+    const config = factorConfig();
+    config.factors = {
+      a: [1, 2, 3],
+      pool: { values: [{ a: 1 }, { a: 2 }], order: selector === 'full-sample' ? 'fixed' : selector, numSamples: 2 },
+      selected: {
+        action: 'remove',
+        factor: 'a',
+        items: selector === 'full-sample' ? {
+          action: 'sample', factors: ['pool'], numSamples: 2, samplingStrategy: 'withoutReplacement',
+        } : 'pool',
+      },
+    };
+    config.baseComponents = { trial3: { type: 'questionnaire', response: [] } };
+    config.sequence = {
+      type: 'factor', id: 'definiteRemoval', factor: 'selected', components: 'trial{{a}}',
+    };
+    const parsed = await parseStudyConfig(JSON.stringify(config));
+    expect(parsed.errors).toEqual([]);
+    generateSequenceArray(parsed).forEach((sequence) => {
+      const parameters = getSequenceFlatMap(sequence).filter((id) => id !== 'end').map((id) => parsed.components[id].parameters);
+      expect(parameters).toEqual([{ a: 3 }]);
+    });
+  });
+
+  test.each((['keep', 'remove'] as const).flatMap((action) => (
+    (['direct', 'cross', 'zip', 'concat', 'repeat', 'sample'] as const).map((wrapper) => ({ action, wrapper }))
+  )))('preserves projected eligibility before $action selector sampling in $wrapper', async ({ action, wrapper }) => {
+    const random = vi.spyOn(Math, 'random').mockReturnValue(0);
+    try {
+      const config = factorConfig();
+      config.factors = {
+        a: [1, 2],
+        c: [0],
+        selected: {
+          action,
+          factor: 'a',
+          items: {
+            action: 'sample', factors: ['a'], numSamples: 1, samplingStrategy: 'withoutReplacement',
+          },
+        },
+        assignment: [{ a: 1 }],
+      };
+      if (wrapper !== 'direct') {
+        config.factors.outer = wrapper === 'sample'
+          ? {
+            action: 'sample', factors: ['selected'], numSamples: 1, samplingStrategy: 'withoutReplacement',
+          }
+          : wrapper === 'repeat'
+            ? { action: 'repeat', factors: ['selected'], numRepeats: 1 }
+            : { action: wrapper, factors: wrapper === 'concat' ? ['selected'] : ['selected', 'c'] };
+      }
+      config.betweenSubjects = ['assignment'];
+      config.baseComponents!.trial = { type: 'questionnaire', response: [] };
+      config.sequence = {
+        type: 'factor', id: 'nestedSelector', factor: wrapper === 'direct' ? 'selected' : 'outer', components: 'trial',
+      };
+      const parsed = await parseStudyConfig(JSON.stringify(config));
+      expect(parsed.errors, wrapper).toEqual([]);
+      generateSequenceArray(parsed).forEach((sequence) => {
+        const values = getSequenceFlatMap(sequence).filter((id) => id !== 'end').map((id) => parsed.components[id].parameters!.a);
+        expect(values, wrapper).toEqual(action === 'keep' ? [1] : []);
+      });
+    } finally {
+      random.mockRestore();
+    }
+  });
+
   test.each(['keep', 'remove'] as const)('materializes possible survivors of %s with sampled items', async (action) => {
     const config = factorConfig();
     config.factors = {
