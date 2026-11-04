@@ -41,6 +41,197 @@ function factorConfig(): StudyConfig {
 }
 
 describe('factor sequence actions', () => {
+  test.each(['singleInput', 'sharedPartial'] as const)('applies eligibility before partial sampling in a %s zip', (kind) => {
+    const factors: NonNullable<StudyConfig['factors']> = {
+      a: { values: [1, 2], order: 'random', numSamples: 1 },
+      selected: { action: 'zip', factors: kind === 'singleInput' ? ['a'] : ['a', 'a'], ...(kind === 'singleInput' ? {} : { as: ['left', 'right'] }) },
+    };
+    const random = vi.spyOn(Math, 'random').mockReturnValue(0);
+    try {
+      const errors: ParserErrorWarning[] = [];
+      expect(resolveOrderedFactorConditions('selected', factors, createFactorOrderContext(0), errors, 'selected', kind === 'singleInput' ? { a: 1 } : { left: 1, right: 1 })).toEqual([
+        kind === 'singleInput' ? { a: 1 } : { left: 1, right: 1 },
+      ]);
+      expect(errors).toEqual([]);
+    } finally { random.mockRestore(); }
+  });
+
+  test.each(['random', 'latinSquare'] as const)('filters complete correlated %s zip rows before assigning participants', (order) => {
+    const factors: NonNullable<StudyConfig['factors']> = {
+      a: { values: [1, 2], order },
+      selected: { action: 'zip', factors: ['a', 'a'], as: ['left', 'right'] },
+    };
+    const errors: ParserErrorWarning[] = [];
+    expect(resolveOrderedFactorConditions('selected', factors, createFactorOrderContext(0), errors, 'selected', { left: 1, right: 1 })).toEqual([{ left: 1, right: 1 }]);
+    expect(resolveOrderedFactorConditions('selected', factors, createFactorOrderContext(0), errors, 'selected', { left: 1, right: 2 })).toEqual([]);
+    expect(errors).toEqual([]);
+  });
+
+  test('proves full zip membership when constant inputs cover one varying input', async () => {
+    const config = factorConfig();
+    config.factors = {
+      a: [1, 2],
+      b: [0, 9],
+      zero: [{ b: 0 }],
+      source: { action: 'cross', factors: ['a', 'b'] },
+      selected: {
+        action: 'remove',
+        factor: 'source',
+        items: {
+          action: 'zip',
+          factors: [
+            {
+              action: 'sample', factors: ['a'], numSamples: 2, samplingStrategy: 'withoutReplacement',
+            },
+            {
+              action: 'sample', factors: ['zero'], numSamples: 3, samplingStrategy: 'withReplacement',
+            },
+          ],
+        },
+      },
+    };
+    config.baseComponents = {
+      trial19: { type: 'questionnaire', response: [] }, trial29: { type: 'questionnaire', response: [] },
+    };
+    config.sequence = {
+      type: 'factor', id: 'constantZip', factor: 'selected', components: 'trial{{a}}{{b}}',
+    };
+    const parsed = await parseStudyConfig(JSON.stringify(config));
+    expect(parsed.errors).toEqual([]);
+    generateSequenceArray(parsed).forEach((sequence) => {
+      const rows = getSequenceFlatMap(sequence).filter((id) => id !== 'end').map((id) => parsed.components[id].parameters);
+      expect(rows).toEqual([{ a: 1, b: 9 }, { a: 2, b: 9 }]);
+    });
+  });
+
+  test.each(['sharedRandom', 'latinSquare'] as const)('materializes only survivors of a correlated %s zip', async (kind) => {
+    const config = factorConfig();
+    config.factors = {
+      a: { values: [1, 2], order: kind === 'sharedRandom' ? 'random' : 'latinSquare' },
+      b: { values: [1, 2], order: 'latinSquare' },
+      source: { action: 'cross', factors: kind === 'sharedRandom' ? ['a', 'a'] : ['a', 'b'] },
+      selected: { action: 'remove', factor: 'source', items: { action: 'zip', factors: kind === 'sharedRandom' ? ['a', 'a'] : ['a', 'b'] } },
+    };
+    config.baseComponents = {
+      trial12: { type: 'questionnaire', response: [] }, trial21: { type: 'questionnaire', response: [] },
+    };
+    config.sequence = {
+      type: 'factor', id: 'correlatedZip', factor: 'selected', components: kind === 'sharedRandom' ? 'trial{{a_0}}{{a_1}}' : 'trial{{a}}{{b}}',
+    };
+    const parsed = await parseStudyConfig(JSON.stringify(config));
+    expect(parsed.errors).toEqual([]);
+    generateSequenceArray(parsed).forEach((sequence) => {
+      const rows = getSequenceFlatMap(sequence).filter((id) => id !== 'end').map((id) => parsed.components[id].parameters);
+      expect(rows).toHaveLength(2);
+      expect(rows).toEqual(expect.arrayContaining(kind === 'sharedRandom'
+        ? [{ a_0: 1, a_1: 2 }, { a_0: 2, a_1: 1 }] : [{ a: 1, b: 2 }, { a: 2, b: 1 }]));
+    });
+  });
+
+  test('keeps selector constraints local to each public condition shape', async () => {
+    const config = factorConfig();
+    config.factors = {
+      a: { values: [1, 2], order: 'latinSquare' },
+      left: { action: 'cross', factors: ['a'], as: ['x'] },
+      selected: { action: 'keep', factor: { action: 'concat', factors: ['a', 'left'] }, items: 'a' },
+      assignment: [{ a: 1 }],
+    };
+    config.betweenSubjects = ['assignment'];
+    config.baseComponents!.trial = { type: 'questionnaire', response: [] };
+    config.sequence = {
+      type: 'factor', id: 'selectorShapes', factor: 'selected', components: 'trial',
+    };
+    const parsed = await parseStudyConfig(JSON.stringify(config));
+    expect(parsed.errors).toEqual([]);
+    generateSequenceArray(parsed).forEach((sequence) => {
+      const rows = getSequenceFlatMap(sequence).filter((id) => id !== 'end').map((id) => parsed.components[id].parameters);
+      expect(rows).toEqual(expect.arrayContaining([{ a: 1 }, { x: 1 }, { x: 2 }]));
+      expect(rows).toHaveLength(3);
+    });
+  });
+
+  test('does not apply unrelated generated-slot names inside source selectors', () => {
+    const factors: NonNullable<StudyConfig['factors']> = {
+      a: { values: [1, 2], order: 'latinSquare' },
+      left: { action: 'cross', factors: ['a'], as: ['x'] },
+      source: { action: 'cross', factors: ['a', 'left'] },
+      selected: { action: 'keep', factor: 'source', items: { action: 'cross', factors: ['a', 'a'] } },
+    };
+    const errors: ParserErrorWarning[] = [];
+    expect(resolveOrderedFactorConditions('selected', factors, createFactorOrderContext(0), errors, 'selected', { a_0: 1 })).toHaveLength(4);
+    expect(errors).toEqual([]);
+  });
+
+  test.each([2, 3])('outer sample of %i uses expanded runtime cardinality', async (numSamples) => {
+    const config = factorConfig();
+    config.factors = {
+      a: [1, 2, 3],
+      one: [{ a: 1 }],
+      two: [{ a: 2 }],
+      selector: {
+        action: 'sample',
+        factors: ['one', {
+          action: 'sample', factors: ['two'], numSamples: 3, samplingStrategy: 'withReplacement',
+        }],
+        numSamples,
+        samplingStrategy: 'withoutReplacement',
+      },
+      selected: { action: 'remove', factor: 'a', items: 'selector' },
+    };
+    config.baseComponents!.trial = { type: 'questionnaire', response: [] };
+    config.sequence = {
+      type: 'factor', id: 'expandedPool', factor: 'selected', components: 'trial',
+    };
+    const random = vi.spyOn(Math, 'random').mockReturnValue(0);
+    try {
+      const parsed = await parseStudyConfig(JSON.stringify(config));
+      expect(parsed.errors).toEqual([]);
+      const diagnostics: ParserErrorWarning[] = [];
+      generateSequenceArray(parsed, diagnostics).forEach((sequence) => {
+        const values = getSequenceFlatMap(sequence).filter((id) => id !== 'end').map((id) => parsed.components[id].parameters!.a);
+        expect(values).toEqual([1, 3]);
+      });
+      expect([...parsed.warnings, ...diagnostics].filter((warning) => warning.message.includes('are available'))).toEqual([]);
+    } finally { random.mockRestore(); }
+  });
+
+  test('zip cardinality equality does not prove complete pair membership', async () => {
+    const config = factorConfig();
+    config.factors = {
+      a: [1, 2],
+      b: [1, 2],
+      aOne: [{ a: 1 }],
+      aTwo: [{ a: 2 }],
+      bOne: [{ b: 1 }],
+      bTwo: [{ b: 2 }],
+      aRows: {
+        action: 'concat',
+        factors: ['aOne', {
+          action: 'sample', factors: ['aTwo'], numSamples: 3, samplingStrategy: 'withReplacement',
+        }],
+      },
+      bRows: {
+        action: 'concat',
+        factors: ['bOne', {
+          action: 'sample', factors: ['bTwo'], numSamples: 3, samplingStrategy: 'withReplacement',
+        }],
+      },
+      source: { action: 'cross', factors: ['a', 'b'] },
+      selector: { action: 'zip', factors: ['aRows', 'bRows'] },
+      selected: { action: 'remove', factor: 'source', items: 'selector' },
+    };
+    config.baseComponents!.trial = { type: 'questionnaire', response: [] };
+    config.sequence = {
+      type: 'factor', id: 'duplicateZip', factor: 'selected', components: 'trial',
+    };
+    const parsed = await parseStudyConfig(JSON.stringify(config));
+    expect(parsed.errors).toEqual([]);
+    generateSequenceArray(parsed).forEach((sequence) => {
+      const rows = getSequenceFlatMap(sequence).filter((id) => id !== 'end').map((id) => parsed.components[id].parameters);
+      expect(rows).toEqual([{ a: 1, b: 2 }, { a: 2, b: 1 }]);
+    });
+  });
+
   test.each((['concat', 'repeat', 'cross', 'zip'] as const).flatMap((wrapper) => (
     (['withoutReplacement', 'withReplacement'] as const).map((samplingStrategy) => ({ wrapper, samplingStrategy }))
   )))('retains possible survivors through $wrapper with $samplingStrategy', async ({ wrapper, samplingStrategy }) => {

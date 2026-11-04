@@ -597,6 +597,19 @@ function getFactorRuntimeCount(resolution: FactorResolution) {
   return resolution.runtimeCount === undefined ? resolution.conditions.length : resolution.runtimeCount;
 }
 
+function hasCorrelatedZipOrder(inputs: FactorOption[], factors: Record<string, Factor>): boolean {
+  if (inputs.length === 1) return true;
+  const definitions = inputs.map((input) => (typeof input === 'string' ? factors[input] : undefined));
+  // Partial selections still need participant eligibility before sampling.
+  if (!definitions.every((factor) => factor && (Array.isArray(factor)
+    || (isOrderedFactorValues(factor) && (factor.numSamples === undefined || factor.numSamples >= factor.values.length))))) return false;
+  if (inputs.every((input) => typeof input === 'string' && input === inputs[0])) return true;
+  const first = definitions[0];
+  return !!first && isOrderedFactorValues(first) && first.order === 'latinSquare'
+    && definitions.every((factor) => factor && isOrderedFactorValues(factor)
+      && factor.order === 'latinSquare' && factor.values.length === first.values.length);
+}
+
 function getFactorPublicNames(
   source: FactorOption,
   factors: Record<string, Factor>,
@@ -731,9 +744,9 @@ function resolveFactor(
       eligibleConditions,
     );
 
-    const selectorAssignment = getRelevantFactorAssignment(assignmentParameters, getFactorPublicNames(factor.factor, factors));
+    const sourceAssignment = getRelevantFactorAssignment(assignmentParameters, getFactorPublicNames(factor.factor, factors));
     let selectorEligibility: MaterializedFactorCondition[] | undefined;
-    if (mode === 'runtime' && hasItems && !Array.isArray(factor.items) && (selectorAssignment || eligibleConditions !== undefined)) {
+    if (mode === 'runtime' && hasItems && !Array.isArray(factor.items) && (sourceAssignment || eligibleConditions !== undefined)) {
       // Project eligibility from the full source domain, not the source's
       // sampled result, so independent draws remain independent.
       const definition = resolveFactor(
@@ -744,7 +757,7 @@ function resolveFactor(
         `${factorName}.${factor.action}`,
         'materialize',
       );
-      const eligible = filterFactorConditionsByAssignment(definition.conditions, selectorAssignment, errors, eligibleConditions);
+      const eligible = filterFactorConditionsByAssignment(definition.conditions, sourceAssignment, errors, eligibleConditions);
       if (eligible.length !== definition.conditions.length) {
         selectorEligibility = eligible.flatMap((condition) => {
           const values = [materializeFactorCondition(condition.values, errors)];
@@ -758,6 +771,8 @@ function resolveFactor(
       }
     }
 
+    // Public assignments have already been translated into selector eligibility;
+    // reapplying their names here can constrain unrelated original source keys.
     const itemResolution = hasItems && !Array.isArray(factor.items)
       ? resolveFactor(
         factor.items!,
@@ -767,7 +782,7 @@ function resolveFactor(
         `${factorName}.${factor.action}.items`,
         mode,
         orderContext,
-        selectorAssignment,
+        undefined,
         warnings,
         selectorEligibility,
       )
@@ -828,6 +843,7 @@ function resolveFactor(
   }
 
   const aliasNames = (factor.action === 'cross' || factor.action === 'zip') ? factor.as : undefined;
+  const correlatedZip = action === 'zip' && hasCorrelatedZipOrder(inputs, factors);
   const assignment = assignmentParameters && Object.keys(assignmentParameters).length > 0
     ? getRelevantFactorAssignment(assignmentParameters, getFactorPublicNames(factorSource, factors)) : undefined;
   const constrained = assignment !== undefined || eligibleConditions !== undefined;
@@ -850,7 +866,7 @@ function resolveFactor(
   if (aliasNames !== undefined && !validateFactorAliases(inputDefinitions!, aliasNames, factorName, errors)) {
     return { conditions: [] };
   }
-  const tuples = constrained
+  const tuples = constrained && (!correlatedZip || inputs.length === 1)
     ? getEligibleInputTuples(inputDefinitions!, action, aliasNames, assignment, eligibleConditions, errors)
     : undefined;
   const resolveInput = (index: number, eligible?: MaterializedFactorCondition[]) => resolveFactor(
@@ -924,17 +940,25 @@ function resolveFactor(
     if (mode === 'materialize' && runtimeCounts && (hasRuntimeOrder || hasRuntimeSample)) {
       warnZipLengths(runtimeCounts, factorName, warnings);
     }
-    const combined = mode === 'materialize' && (hasRuntimeOrder || hasRuntimeSample)
+    const combined = mode === 'materialize' && !correlatedZip && (hasRuntimeOrder || hasRuntimeSample)
       ? crossFactorConditions(conditionSets)
       : zipFactorConditions(conditionSets, factorName, errors, warnings);
     const conditions = filterFactorConditionsByAssignment(combined, assignmentParameters, errors, eligibleConditions);
+    const varyingInputs = conditionSets.flatMap((rows, index) => (
+      rows.some((row) => !isEqual(row, rows[0])) ? [index] : []
+    ));
+    // Counts alone cannot prove Cartesian coverage. Exact membership is known
+    // for correlated order, or one complete varying input paired with constants.
+    const completeMembership = correlatedZip || varyingInputs.length === 0
+      || (varyingInputs.length === 1 && runtimeCounts !== null
+        && Math.min(...runtimeCounts) >= runtimeCounts[varyingInputs[0]]);
     return {
       conditions,
       runtimeCount: mode === 'runtime' ? conditions.length : runtimeCounts ? Math.min(...runtimeCounts) : null,
       hasRuntimeOrder,
       hasRuntimeSample,
       hasVariableMembership: hasVariableMembership || ((hasRuntimeOrder || hasRuntimeSample)
-        && (runtimeCounts === null || Math.min(...runtimeCounts) !== conditions.length)),
+        && !completeMembership),
     };
   }
 
@@ -983,25 +1007,26 @@ function resolveFactor(
     };
   }
 
+  const availableCount = mode === 'runtime' ? conditions.length : concatenatedCount;
   if (
     factor.samplingStrategy === 'withoutReplacement'
-    && factor.numSamples > conditions.length
+    && availableCount !== null && factor.numSamples > availableCount
     && mode !== 'runtime'
     && !hasRuntimeSample
   ) {
     addFactorError(
       errors,
-      `Sample factor \`${factorName}\` cannot select ${factor.numSamples} conditions from ${conditions.length}`,
+      `Sample factor \`${factorName}\` cannot select ${factor.numSamples} conditions from ${availableCount}`,
     );
     return { conditions: [] };
   }
   if (
     factor.samplingStrategy === 'withoutReplacement'
-    && factor.numSamples > conditions.length
+    && availableCount !== null && factor.numSamples > availableCount
   ) {
     addFactorWarning(
       warnings,
-      `Sample factor \`${factorName}\` requested ${factor.numSamples} conditions but only ${conditions.length} are available; stopping after the list is exhausted`,
+      `Sample factor \`${factorName}\` requested ${factor.numSamples} conditions but only ${availableCount} are available; stopping after the list is exhausted`,
     );
   }
   if (conditions.length === 0) {
@@ -1034,7 +1059,7 @@ function resolveFactor(
     samplingStrategy: factor.samplingStrategy,
     hasRuntimeOrder,
     hasRuntimeSample: hasRuntimeSample || factor.samplingStrategy === 'withReplacement',
-    hasVariableMembership: hasVariableMembership || factor.numSamples < conditions.length
+    hasVariableMembership: hasVariableMembership || concatenatedCount === null || factor.numSamples < concatenatedCount
       || (factor.samplingStrategy === 'withReplacement' && conditions.length > 1),
   };
 }
