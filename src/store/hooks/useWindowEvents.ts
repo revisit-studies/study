@@ -2,9 +2,11 @@ import React, { createContext, useContext } from 'react';
 import { EventType } from '../types';
 
 // Create a context
-export const WindowEventsContext = createContext<React.Ref<EventType[]>>(null);
+export type WindowEventsRef = React.RefObject<EventType[]> & { flushPending?: () => void };
 
-export function useWindowEvents(): React.Ref<EventType[]> {
+export const WindowEventsContext = createContext<WindowEventsRef | null>(null);
+
+export function useWindowEvents(): WindowEventsRef {
   const context = useContext(WindowEventsContext);
   if (!context) {
     throw new Error('useWindowEvents must be used within a WindowEventsProvider');

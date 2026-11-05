@@ -21,6 +21,7 @@ describe('fetchConfig', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
       text: async () => JSON.stringify({ test: true }),
     });
     const parsedConfig = {
@@ -75,5 +76,57 @@ describe('fetchConfig', () => {
     expect(results['test-config-1.2']).not.toBeNull();
     expect(results['plain-study']).not.toBeNull();
     expect(parseStudyConfig).toHaveBeenCalledTimes(2);
+  });
+
+  it('returns a config error when the config request fails', async () => {
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 404,
+      statusText: 'Not Found',
+      text: async () => '<!doctype html>',
+    });
+
+    const result = await getStudyConfig('test-config-1.2', globalConfig);
+
+    expect(result?.errors).toEqual([expect.objectContaining({
+      message: 'Unable to load study config `test-config-1.2/config.json`: 404 Not Found',
+      category: 'invalid-config',
+    })]);
+    expect(parseStudyConfig).not.toHaveBeenCalled();
+  });
+
+  it('keeps successful configs when another config request fails', async () => {
+    global.fetch = vi.fn().mockImplementation(async (url: string) => {
+      if (url.includes('test-config-1.2')) {
+        return {
+          ok: false,
+          status: 503,
+          statusText: 'Service Unavailable',
+          text: async () => '',
+        };
+      }
+
+      return {
+        ok: true,
+        text: async () => JSON.stringify({ test: true }),
+      };
+    });
+
+    const results = await fetchStudyConfigs(globalConfig);
+
+    expect(results['test-config-1.2']?.errors).toHaveLength(1);
+    expect(results['plain-study']).toEqual(expect.objectContaining({ errors: [], warnings: [] }));
+    expect(parseStudyConfig).toHaveBeenCalledTimes(1);
+  });
+
+  it('returns a config error when fetching the config rejects', async () => {
+    global.fetch = vi.fn().mockRejectedValue(new Error('network unavailable'));
+
+    const result = await getStudyConfig('test-config-1.2', globalConfig);
+
+    expect(result?.errors).toEqual([expect.objectContaining({
+      message: 'Unable to load study config `test-config-1.2/config.json`: network unavailable',
+      category: 'invalid-config',
+    })]);
   });
 });

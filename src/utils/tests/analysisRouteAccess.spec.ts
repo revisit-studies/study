@@ -18,25 +18,35 @@ describe('shouldProtectAnalysisRoute', () => {
 
   it('uses the canonical config key when the route uses a sanitized study slug', async () => {
     const storageEngine = makeStorageEngine({
-      getModes: vi.fn().mockResolvedValue({ dataSharingEnabled: false }),
+      getAccessModes: vi.fn().mockResolvedValue({ dataSharingEnabled: false }),
       isCloudEngine: vi.fn().mockReturnValue(true),
     });
 
     const result = await shouldProtectAnalysisRoute('test-config-1_2', globalConfig, storageEngine);
 
     expect(result).toBe(true);
-    expect(storageEngine.getModes).toHaveBeenCalledWith('test-config-1.2');
+    expect(storageEngine.getAccessModes).toHaveBeenCalledWith('test-config-1.2');
   });
 
   it('protects unknown study routes without creating a modes record', async () => {
     const storageEngine = makeStorageEngine({
-      getModes: vi.fn(),
+      getAccessModes: vi.fn(),
       isCloudEngine: vi.fn().mockReturnValue(true),
     });
 
     const result = await shouldProtectAnalysisRoute('missing-study', globalConfig, storageEngine);
 
     expect(result).toBe(true);
-    expect(storageEngine.getModes).not.toHaveBeenCalled();
+    expect(storageEngine.getAccessModes).not.toHaveBeenCalled();
+  });
+
+  it('protects analysis when sharing is missing or malformed', async () => {
+    const storageEngine = makeStorageEngine({
+      getAccessModes: vi.fn().mockResolvedValue({ dataSharingEnabled: 'true' }),
+      isCloudEngine: vi.fn().mockReturnValue(true),
+    });
+    expect(await shouldProtectAnalysisRoute('test-config-1.2', globalConfig, storageEngine)).toBe(true);
+    vi.mocked(storageEngine.getAccessModes).mockResolvedValueOnce(null);
+    expect(await shouldProtectAnalysisRoute('test-config-1.2', globalConfig, storageEngine)).toBe(true);
   });
 });

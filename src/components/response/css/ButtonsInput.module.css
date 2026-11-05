@@ -1,22 +1,42 @@
+.root,
+.nextButton {
+  --response-button-min-height: 40px;
+  min-height: var(--response-button-min-height);
+  transition: background-color 150ms ease, border-color 150ms ease;
+  background-color: var(--mantine-color-blue-7);
+  border-color: var(--mantine-color-blue-7);
+  color: var(--mantine-color-white);
+}
+
 .root {
   position: relative;
   padding: var(--mantine-spacing-md);
-  transition: border-color 150ms ease;
-  background-color: var(--mantine-color-blue-3);
-  color: var(--mantine-color-white);
+}
 
-  &[data-checked] {
-    background-color: var(--mantine-color-blue-filled);
-  }
+.root:hover:not([disabled]),
+.nextButton:hover:not([disabled]):not([data-disabled]) {
+  background-color: var(--mantine-color-blue-9);
+}
 
-  &[disabled] {
-    background-color: var(--mantine-color-gray-2);
-    color: var(--mantine-color-gray);
-    cursor: default;
+.root[data-checked] {
+  background-color: oklch(from var(--mantine-color-blue-9) calc(l * 0.8) calc(c * 1.2) h);
+}
 
-    &[data-checked] {
-      background-color: var(--mantine-color-blue-6);
+.root:focus-visible,
+.nextButton:focus-visible {
+  outline: 2px solid var(--mantine-color-blue-6);
+  outline-offset: 2px;
+}
+
+.root[disabled],
+.nextButton[disabled],
+.nextButton[data-disabled] {
+  background-color: var(--mantine-color-disabled);
+  border-color: var(--mantine-color-disabled);
+  color: var(--mantine-color-disabled-color);
+  cursor: default;
+      &[data-checked] {
+      background-color: oklch(from var(--mantine-color-blue-9) calc(l * 0.8) calc(c * 1.2) h);
       color: var(--mantine-color-white);
     }
-  }
 }

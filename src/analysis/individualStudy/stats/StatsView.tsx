@@ -51,7 +51,7 @@ export function StatsView(
                 <Divider orientation="vertical" mx="md" />
 
                 {/* Visualization and metadata */}
-                <TrialVisualization participantData={visibleParticipants} studyConfig={studyConfig} trialId={trialId} />
+                <TrialVisualization participantData={visibleParticipants} studyConfig={studyConfig} allConfigs={allConfigs} trialId={trialId} />
               </Flex>
             )
         }

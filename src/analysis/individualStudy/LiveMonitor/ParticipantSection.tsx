@@ -4,6 +4,7 @@ import {
 } from '@mantine/core';
 import { IconChevronDown, IconChevronRight } from '@tabler/icons-react';
 import { SequenceAssignment } from '../../../storage/engines/types';
+import { ParticipantStatus } from '../../../storage/participantStatus';
 import { ProgressHeatmap } from './ProgressHeatmap';
 
 interface ParticipantSectionProps {
@@ -12,8 +13,7 @@ interface ParticipantSectionProps {
   participants: Array<{
     assignment: SequenceAssignment;
     progress: number;
-    isCompleted: boolean;
-    isRejected: boolean;
+    status: ParticipantStatus;
   }>;
   showProgressHeatmap?: boolean;
   showDynamicBadge?: boolean;
@@ -52,7 +52,7 @@ export function ParticipantSection({
           )
         </Title>
       </Group>
-      <Collapse in={isOpen}>
+      <Collapse expanded={isOpen}>
         {participants.length > 0 && (
           <Grid mt="xs">
             {participants.map(({ assignment, progress }, index) => (
@@ -67,7 +67,7 @@ export function ParticipantSection({
                           {assignment.participantId || `#${index + 1}`}
                         </Text>
                         {showDynamicBadge && assignment.isDynamic && (
-                          <Badge size="xs" color="cyan">
+                          <Badge size="xs" color="cyan" variant="light">
                             DYNAMIC
                           </Badge>
                         )}

@@ -7,6 +7,9 @@ import {
   afterEach, beforeAll, beforeEach, describe, expect, test, vi,
 } from 'vitest';
 import * as d3 from 'd3';
+import { DEFAULT_THEME } from '@mantine/core';
+import { WaveSurfer } from 'wavesurfer-react';
+import WaveSurferType from 'wavesurfer.js';
 import { StoredAnswer, StoredProvenance, TrrackedProvenance } from '../../../store/types';
 import { makeStoredAnswer } from '../../../tests/utils';
 import { AudioProvenanceVis } from '../AudioProvenanceVis';
@@ -14,12 +17,18 @@ import { syncChannel, syncEmitter } from '../../../utils/syncReplay';
 
 // ── mocks ────────────────────────────────────────────────────────────────────
 
+let mockColorScheme = 'light';
+let mockSearchParams = new URLSearchParams('participantId=p1');
+
 vi.mock('wavesurfer-react', () => ({
   WaveSurfer: vi.fn(({ children }: { children?: ReactNode }) => <div data-testid="wavesurfer">{children}</div>),
   WaveForm: () => <div data-testid="waveform" />,
 }));
 
-vi.mock('@mantine/core', () => ({
+vi.mock('@mantine/core', async () => ({
+  DEFAULT_THEME: (await vi.importActual<{ DEFAULT_THEME: typeof DEFAULT_THEME }>('@mantine/core')).DEFAULT_THEME,
+  useMantineTheme: () => DEFAULT_THEME,
+  useComputedColorScheme: () => mockColorScheme,
   Box: forwardRef<HTMLDivElement, { children?: ReactNode }>(function Box({ children }, ref) { // eslint-disable-line prefer-arrow-callback
     return <div ref={ref}>{children}</div>;
   }),
@@ -42,7 +51,7 @@ vi.mock('react-router', () => ({
   useNavigate: () => vi.fn(),
   useParams: () => ({ studyId: 'test-study' }),
   useSearchParams: () => {
-    const params = new URLSearchParams('participantId=p1');
+    const params = mockSearchParams;
     const setParams = vi.fn((updater: (p: URLSearchParams) => void) => {
       if (typeof updater === 'function') updater(params);
     });
@@ -159,7 +168,7 @@ function makeNode(
 
 const rootNode = makeNode('root');
 
-beforeEach(() => { vi.clearAllMocks(); });
+beforeEach(() => { vi.clearAllMocks(); mockColorScheme = 'light'; });
 afterEach(() => { cleanup(); });
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -196,7 +205,8 @@ describe('TaskProvenanceTimeline', () => {
       <RealTaskProvenanceTimeline xScale={xScale} provenanceGraph={provenanceGraph} width={500} height={50} currentNode={null} trialName="trial_0" startTime={0} margin={margin} />,
     );
     expect(html).toContain('<line');
-    expect(html).toContain('stroke="black"');
+    expect(html).toContain('data-testid="task-provenance-baseline"');
+    expect(html).toContain('stroke="var(--mantine-color-dimmed)"');
   });
 
   test('skips null provenanceGraph entries gracefully', () => {
@@ -275,13 +285,14 @@ describe('Timer', () => {
 
   test('timeupdate callback calls debounceUpdateTimer', async () => {
     const mockDebounce = vi.fn();
-    await act(async () => render(
+    const { container } = await act(async () => render(
       <RealTimer width={500} height={60} debounceUpdateTimer={mockDebounce} xScale={xScale} />,
     ));
     const entry = mockReplayContext.replayEvent.on.mock.calls.find((call: string[]) => call[0] === 'timeupdate');
     const callback = entry?.[1] as ((t: number) => void) | undefined;
     if (callback) act(() => { callback(2); });
     expect(mockDebounce).toHaveBeenCalledWith(2000, undefined);
+    expect(container.querySelector('[data-testid="replay-timer"]')?.getAttribute('data-replay-time')).toBe('2');
   });
 });
 
@@ -387,6 +398,23 @@ const answersWithStimulus: Record<string, StoredAnswer & { provenanceGraph: Stor
 };
 
 describe('AudioProvenanceVis', () => {
+  test('recolors the mounted waveform when the theme changes without reloading audio', async () => {
+    const { rerender } = render(<AudioProvenanceVis {...defaultProps} answers={answersWithTask} />);
+    const waveform = { setOptions: vi.fn(), load: vi.fn(), destroy: vi.fn() };
+    const { onMount } = vi.mocked(WaveSurfer).mock.calls.at(-1)![0];
+    await act(async () => { onMount?.(waveform as unknown as WaveSurferType); });
+
+    mockColorScheme = 'dark';
+    rerender(<AudioProvenanceVis {...defaultProps} answers={answersWithTask} />);
+    expect(waveform.setOptions).toHaveBeenLastCalledWith({ waveColor: DEFAULT_THEME.colors.dark[2], progressColor: DEFAULT_THEME.colors.blue[4] });
+
+    mockColorScheme = 'light';
+    rerender(<AudioProvenanceVis {...defaultProps} answers={answersWithTask} />);
+    expect(waveform.setOptions).toHaveBeenLastCalledWith({ waveColor: DEFAULT_THEME.colors.gray[7], progressColor: DEFAULT_THEME.colors.blue[7] });
+    expect(waveform.load).not.toHaveBeenCalled();
+    expect(waveform.destroy).not.toHaveBeenCalled();
+  });
+
   test('does not load a stale task that is absent from the participant answers', async () => {
     const { queryByTestId } = await act(async () => render(
       <AudioProvenanceVis {...defaultProps} />,
@@ -434,6 +462,17 @@ describe('AudioProvenanceVis', () => {
 });
 
 describe('AudioProvenanceVis — syncEmitter listeners', () => {
+  test('a synchronized participant switch clears the previous participant history selection', async () => {
+    mockSearchParams = new URLSearchParams('participantId=p1&globalStoreNode=old-node&revisitPageId=shared');
+    await act(async () => render(<AudioProvenanceVis {...defaultProps} answers={answersWithTask} />));
+    const listener = vi.mocked(syncEmitter.on).mock.calls.find(([event]) => event === 'participantId')?.[1];
+    await act(async () => { listener?.('p2'); });
+    expect(mockSearchParams.get('participantId')).toBe('p2');
+    expect(mockSearchParams.has('globalStoreNode')).toBe(false);
+    expect(mockSearchParams.get('revisitPageId')).toBe('shared');
+    mockSearchParams = new URLSearchParams('participantId=p1');
+  });
+
   test('participantId listener is registered', async () => {
     await act(async () => render(
       <AudioProvenanceVis {...defaultProps} answers={answersWithTask} />,

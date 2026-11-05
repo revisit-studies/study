@@ -17,12 +17,12 @@ vi.mock('@mantine/core', () => {
   );
 
   return {
-    Box: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+    Box: ({ children, className, style }: { children: ReactNode; className?: string; style?: React.CSSProperties }) => <div className={className} style={style}>{children}</div>,
     Checkbox: ({ checked, value }: { checked?: boolean; value: string }) => (
       <input readOnly type="checkbox" checked={checked} value={value} />
     ),
     Radio,
-    Text: ({ children }: { children: ReactNode }) => <span>{children}</span>,
+    Text: ({ children, role, ...props }: { children: ReactNode; role?: string; [key: string]: unknown }) => <span role={role} {...props}>{children}</span>,
   };
 });
 
@@ -77,5 +77,34 @@ describe('MatrixInput', () => {
     expect(markup).toContain('Unpleasant');
     expect(markup).toContain('Pleasant');
     expect(markup).toContain('data-radio-value=""');
+  });
+
+  it('renders row feedback below each matrix row label', () => {
+    const response: MatrixResponse = {
+      id: 'matrix',
+      prompt: '',
+      type: 'matrix-checkbox',
+      answerOptions: ['A', 'B'],
+      questionOptions: ['row-1', 'row-2', 'row-3'],
+    };
+    const markup = renderToStaticMarkup(
+      <MatrixInput
+        response={response}
+        answer={{ value: { 'row-1': 'A', 'row-2': 'B', 'row-3': '' } }}
+        index={0}
+        disabled={false}
+        enumerateQuestions={false}
+        rowFeedback={{ 'row-1': 'correct', 'row-2': 'partially correct', 'row-3': 'incorrect' }}
+      />,
+    );
+
+    expect(markup.match(/role="status"/g)).toHaveLength(3);
+    expect(markup).toContain('correct');
+    expect(markup).toContain('partially correct');
+    expect(markup).toContain('incorrect');
+    expect(markup).toContain('grid-template-columns:auto 1fr;');
+    expect(markup).toContain('flex-direction:column');
+    expect(markup).toContain('data-testid="matrix-row-feedback-row-1"');
+    expect(markup).not.toContain('data-testid="matrix-row-feedback"');
   });
 });

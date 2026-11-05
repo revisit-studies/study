@@ -30,7 +30,7 @@ async function goToTraining(page: Page) {
 
 async function answerTrainingTrialCorrectly(page: Page) {
   await page.getByPlaceholder('0-100').fill('66');
-  await page.getByRole('button', { name: 'Check Answer' }).click();
+  await page.getByRole('button', { name: 'Check Answer', exact: true }).click();
   await expect(page.getByText('You have answered the question correctly.')).toBeVisible();
   const nextButton = page.getByRole('button', { name: 'Next', exact: true });
   await expect(nextButton).toBeEnabled();
@@ -51,20 +51,20 @@ test('allowFailedTraining=true enables Next after max failed attempts', async ({
   await expect(page.getByPlaceholder('Choose mark')).toBeVisible();
 
   const nextButton = page.getByRole('button', { name: 'Next', exact: true });
-  const checkAnswerButton = page.getByRole('button', { name: 'Check Answer' });
+  const nextButtonForGrading = page.getByRole('button', { name: 'Check Answer', exact: true });
 
   await expect(nextButton).toBeDisabled();
 
   await selectSimpleDropdownIncorrectly(page);
-  await checkAnswerButton.click();
-  await checkAnswerButton.click();
-  await checkAnswerButton.click();
-  await checkAnswerButton.click();
+  await nextButtonForGrading.click();
+  await nextButtonForGrading.click();
+  await nextButtonForGrading.click();
+  await nextButtonForGrading.click();
 
   await expect(page.getByText('You didn\'t answer this question correctly after 4 attempts. You can continue to the next question.')).toBeVisible();
   await expect(page.getByText('The correct answer was: Bar.')).toBeVisible();
   await expect(nextButton).toBeEnabled();
-  await expect(checkAnswerButton).toBeDisabled();
+  await expect(nextButtonForGrading).toBeDisabled();
   await expect(page.getByPlaceholder('Choose mark')).toBeDisabled();
 });
 
@@ -77,18 +77,18 @@ test('Check Answer reveals unanswered validation without consuming training atte
   await expect(page.getByPlaceholder('Choose mark')).toBeVisible();
 
   const nextButton = page.getByRole('button', { name: 'Next', exact: true });
-  const checkAnswerButton = page.getByRole('button', { name: 'Check Answer' });
+  const nextButtonForGrading = page.getByRole('button', { name: 'Check Answer', exact: true });
 
   await expect(nextButton).toBeDisabled();
 
   // Leave the required dropdown unanswered. Check Answer should reveal validation
   // instead of consuming training attempts.
-  await checkAnswerButton.click();
+  await nextButtonForGrading.click();
 
   await expect(page.getByText('Please review 1 unanswered question to continue.')).toBeVisible();
   await expect(page.getByText('Please answer this question to continue.')).toBeVisible();
   await expect(nextButton).toBeDisabled();
-  await expect(checkAnswerButton).toBeEnabled();
+  await expect(nextButtonForGrading).toBeEnabled();
 });
 
 async function goToClevelandTraining(page: Page) {
@@ -106,13 +106,13 @@ test('blocks a failed participant and lets the next participant pass training', 
 
   // Answer the training question incorrectly
   await page.getByPlaceholder('0-100').fill('50');
-  await page.getByRole('button', { name: 'Check Answer' }).click();
+  await page.getByRole('button', { name: 'Check Answer', exact: true }).click();
   const incorrectAnswer = await page.getByText('Incorrect Answer');
   await expect(incorrectAnswer).toBeVisible();
 
   // Answer the training question incorrectly again
   await page.getByPlaceholder('0-100').fill('52');
-  await page.getByRole('button', { name: 'Check Answer' }).click();
+  await page.getByRole('button', { name: 'Check Answer', exact: true }).click();
   const incorrectAnswer3 = await page.getByText('You didn\'t answer this question correctly after 2 attempts. Unfortunately you have not met the criteria for continuing this study.');
   await expect(incorrectAnswer3).toBeVisible();
 
@@ -134,7 +134,7 @@ test('blocks a failed participant and lets the next participant pass training', 
   await answerTrainingTrialCorrectly(page);
   await answerTrainingTrialCorrectly(page);
 
-  // First non-training trial should not require Check Answer.
+  // The first non-training trial has no separate grading button.
   await expect(page.getByPlaceholder('0-100')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Check Answer' })).toBeHidden();
 });
@@ -144,14 +144,14 @@ test('a failed training survives a mid-trial refresh', async ({ page }) => {
 
   // Fail once and refresh: the attempt is restored from storage, so it cannot be reset
   await page.getByPlaceholder('0-100').fill('50');
-  await page.getByRole('button', { name: 'Check Answer' }).click();
+  await page.getByRole('button', { name: 'Check Answer', exact: true }).click();
   await expect(page.getByText('Please try again. You have 1 attempt left.')).toBeVisible();
   await page.reload();
   await expect(page.getByText('Please try again. You have 1 attempt left.')).toBeVisible();
 
   // Fail the last attempt, then refresh within the 5s delay: the redirect still fires
   await page.getByPlaceholder('0-100').fill('52');
-  await page.getByRole('button', { name: 'Check Answer' }).click();
+  await page.getByRole('button', { name: 'Check Answer', exact: true }).click();
   await expect(page.getByText(/after 2 attempts/)).toBeVisible();
   await page.reload();
   await expect(page.getByText('you are not eligible to participate')).toBeVisible({ timeout: 15000 });
@@ -161,7 +161,7 @@ test('a correct answer survives a mid-trial refresh', async ({ page }) => {
   await goToClevelandTraining(page);
 
   await page.getByPlaceholder('0-100').fill('66');
-  await page.getByRole('button', { name: 'Check Answer' }).click();
+  await page.getByRole('button', { name: 'Check Answer', exact: true }).click();
   await expect(page.getByText('You have answered the question correctly.')).toBeVisible();
 
   await page.reload();

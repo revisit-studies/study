@@ -1,7 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { useResizeObserver } from '@mantine/hooks';
-import { useEffect, useMemo, useState } from 'react';
+import {
+  useCallback, useEffect, useMemo, useRef, useState,
+} from 'react';
 import ColumnTable from 'arquero/dist/types/table/column-table';
 import * as d3 from 'd3';
 import {
@@ -27,6 +29,7 @@ export function Scatter({
   params,
   data,
   brushedPoints,
+  initializeBrush = false,
 }:
     {
         brushedPoints: string[],
@@ -35,12 +38,18 @@ export function Scatter({
         setFilteredTable: (c: ColumnTable | null) => void,
         brushState: BrushState,
         setBrushedSpace: (brush: [[number | null, number | null], [number | null, number | null]], xScale: any, yScale: any, selType: 'drag' | 'handle' | 'clear' | null, ids?: string[]) => void,
-        brushType: BrushNames
+        brushType: BrushNames,
+        initializeBrush?: boolean
     }) {
-  const [ref, { height: originalHeight, width: originalWidth }] = useResizeObserver();
+  const [resizeRef, { height: originalHeight, width: originalWidth }] = useResizeObserver();
+  const scatterRef = useRef<SVGSVGElement | null>(null);
+  const ref = useCallback((element: SVGSVGElement | null) => {
+    resizeRef(element);
+    scatterRef.current = element;
+  }, [resizeRef]);
 
-  const [brushXRef] = useResizeObserver();
-  const [brushYRef] = useResizeObserver();
+  const brushXRef = useRef<SVGGElement | null>(null);
+  const brushYRef = useRef<SVGGElement | null>(null);
 
   const [isPaintbrushSelect, setIsPaintbrushSelect] = useState<boolean>(true);
 
@@ -93,8 +102,9 @@ export function Scatter({
     return d3.scaleLinear([height + margin.top, margin.top]).domain([yMin - range / 10, yMax + range / 10]).nice();
   }, [height, yMax, yMin]);
 
-  // create brushes
-  const clearCallback = useMemo(() => {
+  const clearCallback = useRef<() => void>(() => {});
+  // Programmatic moves restore saved bounds; sourceEvent guards exclude them from recording.
+  const initializeBrushes = useCallback(() => {
     if (!xScale || !yScale) {
       return () => null;
     }
@@ -113,19 +123,25 @@ export function Scatter({
       });
 
       if (brushXRef.current && brushYRef.current) {
-        d3.select(brushYRef.current).call(brushY);
-        d3.select(brushXRef.current).call(brushX);
+        d3.select(brushYRef.current!).call(brushY);
+        d3.select(brushXRef.current!).call(brushX);
 
-        if (!brushState.hasBrush) {
-          d3.select(brushYRef.current).call(brushY.move, [yScale(yMax), yScale(yMin)]);
-          d3.select(brushXRef.current).call(brushX.move, [xScale(new Date('2015-01-02')), xScale(new Date('2015-12-31'))]);
-          setBrushedSpace([[xScale(new Date('2015-01-02')), yScale(yMax)], [xScale(new Date('2015-12-31')), yScale(yMin)]], xScale, yScale, 'drag');
+        if (brushState.hasBrush) {
+          d3.select(brushYRef.current!).call(brushY.move, [brushState.y1, brushState.y2]);
+          d3.select(brushXRef.current!).call(brushX.move, [brushState.x1, brushState.x2]);
+        } else if (initializeBrush) {
+          d3.select(brushYRef.current!).call(brushY.move, [yScale(yMax), yScale(yMin)]);
+          d3.select(brushXRef.current!).call(brushX.move, [xScale(new Date('2015-01-02')), xScale(new Date('2015-12-31'))]);
+          setBrushedSpace([[xScale(new Date('2015-01-02')), yScale(yMax)], [xScale(new Date('2015-12-31')), yScale(yMin)]], xScale, yScale, null);
+        } else {
+          d3.select(brushYRef.current!).call(brushY.move, null);
+          d3.select(brushXRef.current!).call(brushX.move, null);
         }
       }
 
       return () => {
-        d3.select(brushYRef.current).call(brushY.move, [yScale(yMax), yScale(yMin)]);
-        d3.select(brushXRef.current).call(brushX.move, [xScale(new Date('2015-01-02')), xScale(new Date('2015-12-31'))]);
+        d3.select(brushYRef.current!).call(brushY.move, [yScale(yMax), yScale(yMin)]);
+        d3.select(brushXRef.current!).call(brushX.move, [xScale(new Date('2015-01-02')), xScale(new Date('2015-12-31'))]);
         setBrushedSpace([[xScale(new Date('2015-01-02')), yScale(yMax)], [xScale(new Date('2015-12-31')), yScale(yMin)]], xScale, yScale, 'clear');
       };
     }
@@ -136,20 +152,21 @@ export function Scatter({
         }
       }).on('end', (currData) => {
         if (currData.selection === null && currData.sourceEvent !== undefined) {
-          d3.select(ref.current).call(brush.move, null);
+          d3.select(scatterRef.current! as unknown as SVGGElement).call(brush.move, null);
           setFilteredTable(null);
         }
       });
 
-      d3.select(ref.current).call(brush);
+      d3.select(scatterRef.current! as unknown as SVGGElement).call(brush)
+        .call(brush.move, brushState.hasBrush ? [[brushState.x1, brushState.y1], [brushState.x2, brushState.y2]] : null);
 
       return () => {
-        d3.select(ref.current).call(brush.move, null);
+        d3.select(scatterRef.current! as unknown as SVGGElement).call(brush.move, null);
         setBrushedSpace([[null, null], [null, null]], xScale, yScale, 'clear');
       };
     }
     if (brushType === 'Slider Selection') {
-      if (!brushState.hasBrush) {
+      if (!brushState.hasBrush && initializeBrush) {
         setBrushedSpace([[xScale(xMin), yScale(yMax)], [xScale(xMax), yScale(yMin)]], xScale, yScale, null);
       }
 
@@ -160,9 +177,15 @@ export function Scatter({
     }
 
     return () => null;
-  }, [brushState.hasBrush, brushType, brushXRef, brushYRef, height, ref, setBrushedSpace, setFilteredTable, width, xMax, xMin, xScale, yMax, yMin, yScale]);
+  }, [brushState.hasBrush, brushState.x1, brushState.x2, brushState.y1, brushState.y2, brushType, brushXRef, brushYRef, height, initializeBrush, ref, setBrushedSpace, setFilteredTable, width, xMax, xMin, xScale, yMax, yMin, yScale]);
 
-  const brushedSet = useMemo(() => (brushedPoints.length === 0 ? null : new Set(brushedPoints)), [brushedPoints]);
+  useEffect(() => {
+    clearCallback.current = initializeBrushes();
+    const targets = [scatterRef.current, brushXRef.current, brushYRef.current];
+    return () => { targets.forEach((element) => d3.select(element).on('.brush', null)); };
+  }, [initializeBrushes]);
+
+  const brushedSet = useMemo(() => (brushState.hasBrush ? new Set(brushedPoints) : null), [brushState.hasBrush, brushedPoints]);
 
   const circles = useMemo(() => {
     if (!xScale || !yScale) {
@@ -196,7 +219,7 @@ export function Scatter({
           disabled={brushedPoints.length === 0}
           onClick={() => {
             setFilteredTable(null);
-            clearCallback?.();
+            clearCallback.current();
           }}
         >
           Clear Selection

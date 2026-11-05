@@ -3,12 +3,18 @@ import { cleanup, render, waitFor } from '@testing-library/react';
 import {
   afterEach, beforeEach, describe, expect, test, vi,
 } from 'vitest';
-import { GlobalConfigParser } from '../GlobalConfigParser';
+import { GlobalConfigParser, getRequestedParticipantId } from '../GlobalConfigParser';
 import { parseGlobalConfig } from '../parser/parser';
 import { initializeStorageEngine } from '../storage/initialize';
 import { makeGlobalConfig } from './utils';
 
 const setStorageEngine = vi.fn();
+
+test('uses the same participant ID precedence as Shell when selecting storage', () => {
+  expect(getRequestedParticipantId('?participantId=new&id=old', 'id')).toBe('new');
+  expect(getRequestedParticipantId('?id=custom', 'id')).toBe('custom');
+  expect(getRequestedParticipantId('?participantId=&id=custom', 'id')).toBe('custom');
+});
 
 vi.mock('../parser/parser', () => ({
   parseGlobalConfig: vi.fn(),

@@ -287,6 +287,14 @@ describe('StorageEngine edge cases', () => {
       await expect(storageEngine.saveScreenRecording(blob, 'task1')).rejects.toThrow('Data collection is disabled');
     });
 
+    test('saveWebcamRecording throws when data collection is disabled', async () => {
+      await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
+      await storageEngine.setMode(studyId, 'dataCollectionEnabled', false);
+
+      const blob = new Blob(['video'], { type: 'video/webm' });
+      await expect(storageEngine.saveWebcamRecording(blob, 'task1')).rejects.toThrow('Data collection is disabled');
+    });
+
     test('multiple concurrent saveAsset calls are tracked independently', async () => {
       await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
 
@@ -967,6 +975,26 @@ describe('StorageEngine edge cases', () => {
   // ── Reject / undo-reject cycles ──────────────────────────────────────────
 
   describe('reject and undo-reject cycles', () => {
+    test('a pending answer write cannot undo a rejection', async () => {
+      const session = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
+      await storageEngine.saveAnswers({
+        trial_0: makeStoredAnswer({
+          componentName: 'trial', identifier: 'trial_0', answer: { user: 'participant' }, endTime: 100,
+        }),
+      });
+
+      const onRejected = vi.fn();
+      const unsubscribe = storageEngine.subscribeToCurrentParticipantRejection(onRejected);
+      await storageEngine.rejectParticipant(session.participantId, 'Timed out');
+      await flushThrottle(storageEngine);
+      unsubscribe();
+
+      const participant = await storageEngine.getParticipantData(session.participantId);
+      expect(participant!.rejected).not.toBe(false);
+      expect(participant!.answers.trial_0.answer).toEqual({ user: 'participant' });
+      expect(onRejected).toHaveBeenCalledOnce();
+    });
+
     test('undo-reject restores participant and preserves all answers', async () => {
       const session = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
 
@@ -1084,6 +1112,7 @@ describe('StorageEngine edge cases', () => {
 
     test('new participant after config change gets new hash, old keeps old hash', async () => {
       await storageEngine.saveConfig(configSimple);
+      await storageEngine.setSequenceArray(generateSequenceArray(configSimple));
       const session1 = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
       await storageEngine.clearCurrentParticipantId();
 

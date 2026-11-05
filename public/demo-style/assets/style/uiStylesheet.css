@@ -1,5 +1,6 @@
 nav {
-    background: blue;
+    background: var(--mantine-color-blue-light);
+    color: var(--mantine-color-blue-light-color);
 }
 
 .studyTitle {
@@ -7,22 +8,23 @@ nav {
 }
 
 .progressBar {
-    background-color: #eeeeee;
+    background-color: light-dark(var(--mantine-color-gray-2), var(--mantine-color-dark-4));
 }
 
 .progressBar .mantine-Progress-section {
-    background-color: green;
+    background-color: var(--mantine-color-green-filled);
 }
 
 .helpModal p {
-    color: #666666;
+    color: var(--mantine-color-dimmed);
     font-style: italic;
     font-size: 24px;
 }
 
 .response {
-    background-color: white;
-    border: 1px solid #cccccc;
+    background-color: var(--mantine-color-default);
+    color: var(--mantine-color-text);
+    border: 1px solid var(--mantine-color-default-border);
     border-radius: 10px;
     padding: 20px;
     margin-bottom: 20px;

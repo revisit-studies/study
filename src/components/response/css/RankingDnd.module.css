@@ -2,7 +2,7 @@
   display: flex;
   align-items: center;
   border-radius: var(--mantine-radius-md);
-  border: 1px solid light-dark(var(--mantine-color-gray-2), var(--mantine-color-dark-5));
+  border: 1px solid var(--mantine-color-default-border);
   padding: var(--mantine-spacing-sm) var(--mantine-spacing-lg);
   background-color: light-dark(var(--mantine-color-white), var(--mantine-color-dark-5));
   margin-bottom: var(--mantine-spacing-sm);

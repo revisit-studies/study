@@ -2,11 +2,10 @@
 
 import { useEffect, useMemo } from 'react';
 import { initializeTrrack, Registry } from '@trrack/core';
-import { TrrackedProvenance } from '../../store/types';
-import { ResponseBlockLocation } from '../../parser/types';
+import { ProvenanceLocation, TrrackedProvenance } from '../../store/types';
 import { getReplaySelection } from './provenanceReplay';
 
-export function useUpdateProvenance(location: ResponseBlockLocation, playTime: number, provGraph: TrrackedProvenance | undefined, currentNode: string | undefined, setCurrentNode: (node: string | null, _location: ResponseBlockLocation, createdOn?: number) => void, saveProvenance?: (prov: unknown) => void) {
+export function useUpdateProvenance(location: ProvenanceLocation, playTime: number, provGraph: TrrackedProvenance | undefined, currentNode: string | undefined, setCurrentNode: (node: string | null, _location: ProvenanceLocation, createdOn?: number) => void, saveProvenance?: (prov: unknown) => void) {
   const trrackInstance = useMemo(() => {
     const reg = Registry.create();
 

@@ -2,8 +2,10 @@ import { renderHook, act } from '@testing-library/react';
 import {
   beforeEach, describe, expect, test, vi,
 } from 'vitest';
-import type { StudyConfig } from '../../../parser/types';
-import type { Sequence, StoredAnswer, StoreState } from '../../types';
+import type { Response, StudyConfig } from '../../../parser/types';
+import type {
+  AssetStatus, CheckAnswerState, Sequence, StoredAnswer, StoreState, TrialValidation, TrrackedProvenance,
+} from '../../types';
 import { makeStudyConfig } from '../../../tests/utils';
 import { areComponentAnswersCorrect, getSkipConditionCorrectAnswers } from '../useNextStep.utils';
 import { useNextStep } from '../useNextStep';
@@ -20,15 +22,17 @@ let mockCurrentStep: number | string = 0;
 let mockIdentifier = 'trial1_0';
 let mockFlatSequence = ['trial1', 'attentionCheck', 'end'];
 let mockAnswers: Record<string, StoredAnswer> = {};
-let mockTrialValidation: Record<string, Record<string, object>> = {};
-let mockCheckAnswer: Record<string, { attemptsUsed: number; correct: boolean; responses: Record<string, boolean> }> = {};
+let mockTrialValidation: TrialValidation = {};
+let mockCheckAnswer: Record<string, CheckAnswerState> = {};
 let mockSequence = defaultSequence;
 let mockModes = { dataCollectionEnabled: true, developmentModeEnabled: false, dataSharingEnabled: false };
 let mockNavigate = vi.fn();
 let mockFuncIndex: string | null = null;
 let mockAreResponsesValid = true;
+let mockClickedPrevious = false;
 let mockIsAnalysis = false;
 let mockStoredAnswer = defaultStoredAnswer;
+let mockStudyConfig: StudyConfig | null = null;
 let mockSaveAnswers = vi.fn();
 let mockSaveProvenance = vi.fn();
 let mockFlushPendingParticipantData = vi.fn();
@@ -46,13 +50,14 @@ vi.mock('react-router', () => ({
   useParams: () => ({ funcIndex: mockFuncIndex }),
 }));
 
-vi.mock('../../store', () => ({
-  useStoreSelector: (selector: (s: StoreState) => unknown) => selector({
+vi.mock('../../store', async (importOriginal) => ({
+  ...(await importOriginal() as object),
+  useStoreSelector: <T>(selector: (s: StoreState) => T) => selector({
     trialValidation: mockTrialValidation,
     sequence: mockSequence,
     answers: mockAnswers,
     modes: mockModes,
-    clickedPrevious: false,
+    clickedPrevious: mockClickedPrevious,
     responseSubmitAttempted: { [mockIdentifier]: true },
     checkAnswer: mockCheckAnswer,
   } as StoreState),
@@ -135,7 +140,7 @@ function createStudyConfig(): StudyConfig {
 }
 
 vi.mock('../useStudyConfig', () => ({
-  useStudyConfig: () => createStudyConfig(),
+  useStudyConfig: () => mockStudyConfig ?? createStudyConfig(),
 }));
 
 vi.mock('../../../utils/encryptDecryptIndex', () => ({
@@ -243,6 +248,8 @@ describe('useNextStep', () => {
     mockAreResponsesValid = true;
     mockIsAnalysis = false;
     mockStoredAnswer = defaultStoredAnswer;
+    mockClickedPrevious = false;
+    mockStudyConfig = null;
     mockSaveAnswers = vi.fn().mockResolvedValue(undefined);
     mockSaveProvenance = vi.fn().mockResolvedValue(undefined);
     mockFlushPendingParticipantData = vi.fn().mockResolvedValue(undefined);
@@ -258,6 +265,42 @@ describe('useNextStep', () => {
   test('isNextDisabled is false when step is a number, not analysis, and responses are valid', () => {
     const { result } = renderHook(() => useNextStep());
     expect(result.current.isNextDisabled).toBe(false);
+  });
+
+  test.each<{ status: AssetStatus | undefined; disabled: boolean }>([
+    { status: 'loading', disabled: true },
+    { status: 'error', disabled: true },
+    { status: 'missing', disabled: false },
+    { status: 'ready', disabled: false },
+    { status: undefined, disabled: false },
+  ])('asset status $status sets disabled=$disabled and guards navigation', async ({ status, disabled }) => {
+    mockTrialValidation = {
+      trial1_0: {
+        assetStatus: status,
+        stimulus: { valid: true, values: {} },
+        aboveStimulus: { valid: true, values: {} },
+        belowStimulus: { valid: true, values: {} },
+        sidebar: { valid: true, values: {} },
+        provenanceGraph: {
+          aboveStimulus: undefined, belowStimulus: undefined, stimulus: undefined, sidebar: undefined,
+        },
+      },
+    };
+    const { result } = renderHook(() => useNextStep());
+
+    expect(result.current.isNextDisabled).toBe(disabled);
+    await act(async () => { await result.current.goToNextStep(); });
+
+    if (disabled) {
+      // Automatic advancement must respect the same asset gate.
+      await act(async () => { await result.current.goToNextStep(false); });
+      expect(mockNavigate).not.toHaveBeenCalled();
+      expect(mockSaveAnswers).not.toHaveBeenCalled();
+      expect(mockDispatch).not.toHaveBeenCalled();
+    } else {
+      expect(mockNavigate).toHaveBeenCalledWith('/test-study/1');
+      expect(mockSaveAnswers).toHaveBeenCalled();
+    }
   });
 
   test('isNextDisabled is true when currentStep is a string', () => {
@@ -278,6 +321,21 @@ describe('useNextStep', () => {
     expect(result.current.isNextDisabled).toBe(false);
   });
 
+  test('retains original visit timing and window events when saving a later visit', async () => {
+    const originalEvent = [100, 'mousedown', [1, 2]] as StoredAnswer['windowEvents'][number];
+    mockStoredAnswer = {
+      ...defaultStoredAnswer, startTime: 50, endTime: 200, windowEvents: [originalEvent],
+    };
+    // A trial reached through Previous is eligible to be saved again.
+    mockClickedPrevious = true;
+    const { result } = renderHook(() => useNextStep());
+    await act(async () => { result.current.goToNextStep(); });
+    const saved = mockSaveTrialAnswer.mock.calls[0][0] as StoredAnswer;
+    expect(saved.startTime).toBe(50);
+    expect(saved.endTime).toBeGreaterThan(200);
+    expect(saved.windowEvents[0]).toEqual(originalEvent);
+  });
+
   test('goToNextStep navigates to next step', async () => {
     const { result } = renderHook(() => useNextStep());
     await act(async () => { await result.current.goToNextStep(); });
@@ -286,6 +344,7 @@ describe('useNextStep', () => {
 
   test('goToNextStep dispatches saveTrialAnswer and clears form state', async () => {
     mockStoredAnswer = defaultStoredAnswer;
+    mockClickedPrevious = false;
     const { result } = renderHook(() => useNextStep());
     await act(async () => { await result.current.goToNextStep(); });
     expect(mockDispatch).toHaveBeenCalled();
@@ -313,6 +372,513 @@ describe('useNextStep', () => {
     expect(savedPayload.checkAnswer).toEqual({ attemptsUsed: 2, correct: true, responses: { q1: true } });
   });
 
+  test('goToNextStep persists custom scorer results when a correct answer is configured', async () => {
+    mockTrialValidation = {
+      trial1_0: {
+        aboveStimulus: { valid: true, values: {} },
+        belowStimulus: { valid: true, values: { q1: { score: 5 } } },
+        sidebar: { valid: true, values: {} },
+        stimulus: { valid: true, values: {} },
+        provenanceGraph: {
+          aboveStimulus: undefined,
+          belowStimulus: undefined,
+          sidebar: undefined,
+          stimulus: undefined,
+        },
+      },
+    };
+    const response = {
+      id: 'q1', type: 'custom' as const, prompt: 'Score', path: 'test-response-functions/assets/CustomPartialScore.tsx',
+    };
+    const { result } = renderHook(() => useNextStep([response], [{ id: 'q1', answer: { score: 10 } }]));
+    await act(async () => { await result.current.goToNextStep(); });
+
+    const savedPayload = mockSaveTrialAnswer.mock.calls[0][0] as StoredAnswer;
+    expect(savedPayload.checkAnswer).toMatchObject({
+      scores: { q1: 0.5 },
+      answerSnapshot: { q1: { score: 5 } },
+    });
+  });
+
+  test('submission keeps a required scorer-only response unresolved when its scorer returns null', async () => {
+    mockCheckAnswer = {
+      trial1_0: { attemptsUsed: 1, correct: true, responses: { scored: true } },
+    };
+    mockTrialValidation = {
+      trial1_0: {
+        aboveStimulus: { valid: true, values: {} },
+        belowStimulus: { valid: true, values: { scored: 5 } },
+        sidebar: { valid: true, values: {} },
+        stimulus: { valid: true, values: {} },
+        provenanceGraph: {
+          aboveStimulus: undefined,
+          belowStimulus: undefined,
+          sidebar: undefined,
+          stimulus: undefined,
+        },
+      },
+    };
+    const response: Response = {
+      id: 'scored',
+      type: 'numerical',
+      prompt: '',
+      path: 'test-response-functions/assets/PartialScore.response.ts',
+    };
+    const { result } = renderHook(() => useNextStep([response]));
+    await act(async () => { await result.current.goToNextStep(); });
+
+    const savedPayload = mockSaveTrialAnswer.mock.calls[0][0] as StoredAnswer;
+    expect(savedPayload.checkAnswer).toMatchObject({
+      correct: false,
+      responses: { scored: false },
+    });
+  });
+
+  test('goToNextStep persists standalone scorer results without a correct answer', async () => {
+    mockTrialValidation = {
+      trial1_0: {
+        aboveStimulus: { valid: true, values: {} },
+        belowStimulus: { valid: true, values: { q1: { score: 5 } } },
+        sidebar: { valid: true, values: {} },
+        stimulus: { valid: true, values: {} },
+        provenanceGraph: {
+          aboveStimulus: undefined,
+          belowStimulus: undefined,
+          sidebar: undefined,
+          stimulus: undefined,
+        },
+      },
+    };
+    const response = {
+      id: 'q1', type: 'custom' as const, prompt: 'Score', path: 'test-response-functions/assets/CustomPartialScore.tsx',
+    };
+    const { result } = renderHook(() => useNextStep([response], []));
+    await act(async () => { await result.current.goToNextStep(); });
+
+    const savedPayload = mockSaveTrialAnswer.mock.calls[0][0] as StoredAnswer;
+    expect(savedPayload.checkAnswer).toMatchObject({
+      correct: false,
+      responses: {},
+      scores: { q1: 0.5 },
+      answerSnapshot: { q1: { score: 5 } },
+    });
+  });
+
+  test('a scorer failure prevents another correct response from making submission correct', async () => {
+    mockTrialValidation = {
+      trial1_0: {
+        aboveStimulus: { valid: true, values: {} },
+        belowStimulus: { valid: true, values: { ordinary: 'correct', unavailable: 5 } },
+        sidebar: { valid: true, values: {} },
+        stimulus: { valid: true, values: {} },
+        provenanceGraph: {
+          aboveStimulus: undefined,
+          belowStimulus: undefined,
+          sidebar: undefined,
+          stimulus: undefined,
+        },
+      },
+    };
+    const responses: Response[] = [{
+      id: 'ordinary', type: 'shortText', prompt: 'Ordinary answer',
+    }, {
+      id: 'unavailable', type: 'numerical', prompt: 'Scored answer', path: 'missing.response.ts',
+    }];
+    const correctAnswers = [{ id: 'ordinary', answer: 'correct' }, { id: 'unavailable', answer: 5 }];
+    const { result } = renderHook(() => useNextStep(responses, correctAnswers));
+    await act(async () => { await result.current.goToNextStep(); });
+
+    const savedPayload = mockSaveTrialAnswer.mock.calls[0][0] as StoredAnswer;
+    expect(savedPayload.checkAnswer).toMatchObject({
+      correct: false,
+    });
+    expect(savedPayload.checkAnswer?.scores).toBeUndefined();
+  });
+
+  test('a missing standalone scorer cannot be skipped when another response is correct', async () => {
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+    mockTrialValidation = {
+      trial1_0: {
+        aboveStimulus: { valid: true, values: {} },
+        belowStimulus: { valid: true, values: { ordinary: 'correct', unavailable: 5 } },
+        sidebar: { valid: true, values: {} },
+        stimulus: { valid: true, values: {} },
+        provenanceGraph: {
+          aboveStimulus: undefined,
+          belowStimulus: undefined,
+          sidebar: undefined,
+          stimulus: undefined,
+        },
+      },
+    };
+    const responses: Response[] = [{
+      id: 'ordinary', type: 'shortText', prompt: 'Ordinary answer',
+    }, {
+      id: 'unavailable', type: 'numerical', prompt: 'Standalone scorer', path: 'missing.response.ts',
+    }];
+    const { result } = renderHook(() => useNextStep(responses, [{ id: 'ordinary', answer: 'correct' }]));
+    await act(async () => { await result.current.goToNextStep(); });
+
+    const savedPayload = mockSaveTrialAnswer.mock.calls[0][0] as StoredAnswer;
+    expect(savedPayload.checkAnswer).toMatchObject({ correct: false });
+    consoleError.mockRestore();
+  });
+
+  test('submission keeps a required scorer-only I do not know response incorrect', async () => {
+    mockTrialValidation = {
+      trial1_0: {
+        aboveStimulus: { valid: true, values: {} },
+        belowStimulus: {
+          valid: true,
+          values: { ordinary: 'correct', scored: 10, 'scored-dontKnow': true },
+        },
+        sidebar: { valid: true, values: {} },
+        stimulus: { valid: true, values: {} },
+        provenanceGraph: {
+          aboveStimulus: undefined,
+          belowStimulus: undefined,
+          sidebar: undefined,
+          stimulus: undefined,
+        },
+      },
+    };
+    const responses: Response[] = [{
+      id: 'ordinary', type: 'shortText', prompt: 'Ordinary answer',
+    }, {
+      id: 'scored',
+      type: 'numerical',
+      prompt: 'Scored answer',
+      withDontKnow: true,
+      path: 'test-response-functions/assets/GameScore.ts',
+    }];
+    const { result } = renderHook(() => useNextStep(responses, [{ id: 'ordinary', answer: 'correct' }]));
+    await act(async () => { await result.current.goToNextStep(); });
+
+    const savedPayload = mockSaveTrialAnswer.mock.calls[0][0] as StoredAnswer;
+    expect(savedPayload.checkAnswer).toMatchObject({ correct: false });
+  });
+
+  test('keeps Check Answer correctness when only an optional expected response is blank', async () => {
+    mockCheckAnswer = {
+      trial1_0: { attemptsUsed: 1, correct: true, responses: {} },
+    };
+    mockTrialValidation = {
+      trial1_0: {
+        aboveStimulus: { valid: true, values: {} },
+        belowStimulus: { valid: true, values: { optional: '' } },
+        sidebar: { valid: true, values: {} },
+        stimulus: { valid: true, values: {} },
+        provenanceGraph: {
+          aboveStimulus: undefined,
+          belowStimulus: undefined,
+          sidebar: undefined,
+          stimulus: undefined,
+        },
+      },
+    };
+    const response: Response = {
+      id: 'optional', type: 'shortText', prompt: 'Optional answer', required: false,
+    };
+    const { result } = renderHook(() => useNextStep([response], [{ id: 'optional', answer: 'expected' }]));
+    await act(async () => { await result.current.goToNextStep(); });
+
+    const savedPayload = mockSaveTrialAnswer.mock.calls[0][0] as StoredAnswer;
+    expect(savedPayload.checkAnswer).toMatchObject({
+      attemptsUsed: 1,
+      correct: true,
+      responses: {},
+    });
+  });
+
+  test('does not mark a cleared last-scored optional answer correct at submission', async () => {
+    mockCheckAnswer = {
+      trial1_0: {
+        attemptsUsed: 1,
+        correct: true,
+        responses: { optional: true },
+        scores: { optional: 1 },
+        answerSnapshot: { optional: 'previous answer' },
+      },
+    };
+    mockTrialValidation = {
+      trial1_0: {
+        aboveStimulus: { valid: true, values: {} },
+        belowStimulus: { valid: true, values: { optional: '' } },
+        sidebar: { valid: true, values: {} },
+        stimulus: { valid: true, values: {} },
+        provenanceGraph: {
+          aboveStimulus: undefined,
+          belowStimulus: undefined,
+          sidebar: undefined,
+          stimulus: undefined,
+        },
+      },
+    };
+    const response: Response = {
+      id: 'optional', type: 'shortText', prompt: 'Optional answer', required: false,
+    };
+    const { result } = renderHook(() => useNextStep([response], [{ id: 'optional', answer: 'expected' }]));
+    await act(async () => { await result.current.goToNextStep(); });
+
+    const savedPayload = mockSaveTrialAnswer.mock.calls[0][0] as StoredAnswer;
+    expect(savedPayload.checkAnswer).toMatchObject({
+      correct: false,
+      responses: {},
+    });
+    expect(savedPayload.checkAnswer?.scores).toBeUndefined();
+  });
+
+  test.each([
+    { name: 'empty string', values: { q1: '' } },
+    { name: 'empty array', values: { q1: [] } },
+    { name: 'null', values: { q1: null } },
+    { name: 'missing key', values: {} },
+  ])('does not persist standalone scores for unanswered values ($name)', async ({ values }) => {
+    mockTrialValidation = {
+      trial1_0: {
+        aboveStimulus: { valid: true, values: {} },
+        belowStimulus: { valid: true, values },
+        sidebar: { valid: true, values: {} },
+        stimulus: { valid: true, values: {} },
+        provenanceGraph: {
+          aboveStimulus: undefined,
+          belowStimulus: undefined,
+          sidebar: undefined,
+          stimulus: undefined,
+        },
+      },
+    };
+    const response = {
+      id: 'q1', type: 'numerical' as const, prompt: 'Even number', path: 'test-response-functions/assets/EvenNumber.response.ts',
+    };
+    const { result } = renderHook(() => useNextStep([response], []));
+    await act(async () => { await result.current.goToNextStep(); });
+
+    const savedPayload = mockSaveTrialAnswer.mock.calls[0][0] as StoredAnswer;
+    expect(savedPayload.checkAnswer).toBeUndefined();
+  });
+
+  test.each([
+    {
+      name: 'custom object default',
+      response: {
+        id: 'q1',
+        type: 'custom',
+        prompt: 'Custom',
+        required: false,
+        default: {},
+        path: 'test-response-functions/assets/CustomPartialScore.tsx',
+      } as Response,
+      value: {},
+    },
+    {
+      name: 'matrix rows',
+      response: {
+        id: 'q1',
+        type: 'matrix-radio',
+        prompt: 'Matrix',
+        required: false,
+        answerOptions: ['A', 'B'],
+        questionOptions: ['row'],
+        default: { row: '' },
+        path: 'test-response-functions/assets/EvenNumber.response.ts',
+      } as Response,
+      value: { row: '' },
+    },
+  ])('does not persist scores for recursively empty $name values', async ({ response, value }) => {
+    mockTrialValidation = {
+      trial1_0: {
+        aboveStimulus: { valid: true, values: {} },
+        belowStimulus: { valid: true, values: { q1: value } },
+        sidebar: { valid: true, values: {} },
+        stimulus: { valid: true, values: {} },
+        provenanceGraph: {
+          aboveStimulus: undefined,
+          belowStimulus: undefined,
+          sidebar: undefined,
+          stimulus: undefined,
+        },
+      },
+    };
+    const { result } = renderHook(() => useNextStep([response], []));
+    await act(async () => { await result.current.goToNextStep(); });
+
+    const savedPayload = mockSaveTrialAnswer.mock.calls[0][0] as StoredAnswer;
+    expect(savedPayload.checkAnswer).toBeUndefined();
+  });
+
+  test('resubmission preserves a matching saved expected-answer score without a current validator', async () => {
+    mockTrialValidation = {
+      trial1_0: {
+        aboveStimulus: { valid: true, values: {} },
+        belowStimulus: { valid: true, values: { q1: 5, choice: 'A', 'choice-other': '' } },
+        sidebar: { valid: true, values: {} },
+        stimulus: { valid: true, values: {} },
+        provenanceGraph: {
+          aboveStimulus: undefined,
+          belowStimulus: undefined,
+          sidebar: undefined,
+          stimulus: undefined,
+        },
+      },
+    };
+    mockCheckAnswer = {
+      trial1_0: {
+        attemptsUsed: 1,
+        correct: true,
+        responses: { q1: true },
+        scores: { q1: 0.9 },
+        answerSnapshot: { q1: 5, choice: 'A' },
+      },
+    };
+    const responses = [{
+      id: 'q1', type: 'numerical' as const, prompt: 'Answer', path: 'missing.response.ts',
+    }, {
+      id: 'choice', type: 'radio' as const, prompt: 'Choice', options: ['A', 'other'], withOther: true,
+    }];
+    const { result } = renderHook(() => useNextStep(responses, [{ id: 'q1', answer: 10 }]));
+    await act(async () => { await result.current.goToNextStep(); });
+
+    const savedPayload = mockSaveTrialAnswer.mock.calls[0][0] as StoredAnswer;
+    expect(savedPayload.answer).toEqual({ q1: 5, choice: 'A' });
+    expect(savedPayload.checkAnswer).toMatchObject({
+      scores: { q1: 0.9 },
+      answerSnapshot: { q1: 5, choice: 'A' },
+    });
+  });
+
+  test('direct callers preserve an empty dynamic correct-answer override', async () => {
+    const config = createStudyConfig();
+    config.components.trial1 = {
+      type: 'questionnaire',
+      response: [{
+        id: 'q1', type: 'numerical', prompt: 'Answer', path: 'test-response-functions/assets/PartialScore.response.ts',
+      }],
+      correctAnswer: [{ id: 'q1', answer: 10 }],
+    };
+    mockStudyConfig = config;
+    mockStoredAnswer = { ...defaultStoredAnswer, componentName: 'trial1', correctAnswer: [] } as StoredAnswer;
+    mockTrialValidation = {
+      trial1_0: {
+        aboveStimulus: { valid: true, values: {} },
+        belowStimulus: { valid: true, values: { q1: 5 } },
+        sidebar: { valid: true, values: {} },
+        stimulus: { valid: true, values: {} },
+        provenanceGraph: {
+          aboveStimulus: undefined, belowStimulus: undefined, sidebar: undefined, stimulus: undefined,
+        },
+      },
+    };
+
+    const { result } = renderHook(() => useNextStep());
+    await act(async () => { await result.current.goToNextStep(); });
+
+    const savedPayload = mockSaveTrialAnswer.mock.calls[0][0] as StoredAnswer;
+    expect(savedPayload.correctAnswer).toEqual([]);
+    expect(savedPayload.checkAnswer?.scores).toBeUndefined();
+    expect(savedPayload.answer).toEqual({ q1: 5 });
+  });
+
+  test('direct callers resolve configured responses and persist their scores with the answer', async () => {
+    const config = createStudyConfig();
+    config.components.trial1 = {
+      type: 'questionnaire',
+      response: [{
+        id: 'q1',
+        type: 'custom',
+        prompt: 'Score',
+        path: 'test-response-functions/assets/CustomPartialScore.tsx',
+      }],
+      correctAnswer: [],
+    };
+    mockStudyConfig = config;
+    mockStoredAnswer = { ...defaultStoredAnswer, componentName: 'trial1', correctAnswer: [] } as StoredAnswer;
+    mockTrialValidation = {
+      trial1_0: {
+        aboveStimulus: { valid: true, values: {} },
+        belowStimulus: { valid: true, values: { q1: { score: 5 } } },
+        sidebar: { valid: true, values: {} },
+        stimulus: { valid: true, values: {} },
+        provenanceGraph: {
+          aboveStimulus: undefined,
+          belowStimulus: undefined,
+          sidebar: undefined,
+          stimulus: undefined,
+        },
+      },
+    };
+
+    const { result } = renderHook(() => useNextStep());
+    await act(async () => { await result.current.goToNextStep(); });
+
+    const savedPayload = mockSaveTrialAnswer.mock.calls[0][0] as StoredAnswer;
+    expect(savedPayload.answer).toEqual({ q1: { score: 5 } });
+    expect(savedPayload.checkAnswer).toMatchObject({
+      scores: { q1: 0.5 },
+      answerSnapshot: { q1: { score: 5 } },
+    });
+  });
+
+  test('goToNextStep does not persist grading data for ordinary equality responses without Check Answer', async () => {
+    mockTrialValidation = {
+      trial1_0: {
+        aboveStimulus: { valid: true, values: {} },
+        belowStimulus: { valid: true, values: { q1: 'expected' } },
+        sidebar: { valid: true, values: {} },
+        stimulus: { valid: true, values: {} },
+        provenanceGraph: {
+          aboveStimulus: undefined,
+          belowStimulus: undefined,
+          sidebar: undefined,
+          stimulus: undefined,
+        },
+      },
+    };
+    const response = { id: 'q1', type: 'shortText' as const, prompt: 'Answer' };
+    const { result } = renderHook(() => useNextStep([response], [{ id: 'q1', answer: 'expected' }]));
+    await act(async () => { await result.current.goToNextStep(); });
+
+    const savedPayload = mockSaveTrialAnswer.mock.calls[0][0] as StoredAnswer;
+    expect(savedPayload.checkAnswer).toBeUndefined();
+  });
+
+  test('goToNextStep replaces a checked score when the answer changed before submission', async () => {
+    mockTrialValidation = {
+      trial1_0: {
+        aboveStimulus: { valid: true, values: {} },
+        belowStimulus: { valid: true, values: { q1: 5 } },
+        sidebar: { valid: true, values: {} },
+        stimulus: { valid: true, values: {} },
+        provenanceGraph: {
+          aboveStimulus: undefined,
+          belowStimulus: undefined,
+          sidebar: undefined,
+          stimulus: undefined,
+        },
+      },
+    };
+    mockCheckAnswer = {
+      trial1_0: {
+        attemptsUsed: 1, correct: true, responses: { q1: true }, scores: { q1: 1 }, answerSnapshot: { q1: 10 },
+      },
+    };
+    const response = {
+      id: 'q1', type: 'numerical' as const, prompt: 'Score', path: 'test-response-functions/assets/PartialScore.response.ts',
+    };
+    const correctAnswer = [{ id: 'q1', answer: 10 }];
+    const { result } = renderHook(() => useNextStep([response], correctAnswer));
+    await act(async () => { await result.current.goToNextStep(); });
+
+    const savedPayload = mockSaveTrialAnswer.mock.calls[0][0] as StoredAnswer;
+    expect(savedPayload.checkAnswer).toMatchObject({
+      attemptsUsed: 1,
+      correct: false,
+      responses: { q1: false },
+      scores: { q1: 0.5 },
+      answerSnapshot: { q1: 5 },
+    });
+  });
+
   test('goToNextStep(false) marks answer as timed out', async () => {
     const { result } = renderHook(() => useNextStep());
     await act(async () => { await result.current.goToNextStep(false); });
@@ -329,7 +895,7 @@ describe('useNextStep', () => {
         belowStimulus: { valid: true, values: {} },
         sidebar: { valid: true, values: { q2: 'Cat' } },
         provenanceGraph: {
-          aboveStimulus: null, belowStimulus: null, stimulus: null, sidebar: null,
+          aboveStimulus: undefined, belowStimulus: undefined, stimulus: undefined, sidebar: undefined,
         },
       },
     };
@@ -340,7 +906,23 @@ describe('useNextStep', () => {
   });
 
   test('goToNextStep snapshots the provenance graph before saving it', async () => {
-    const liveGraph = { nodes: { a: { id: 'a' } } };
+    const liveGraph: TrrackedProvenance = {
+      root: 'a',
+      current: 'a',
+      nodes: {
+        a: {
+          id: 'a',
+          label: 'Root',
+          event: 'Root',
+          createdOn: 0,
+          artifacts: [],
+          meta: { annotation: [], bookmark: [] },
+          children: [],
+          state: { type: 'checkpoint', val: {} },
+          level: 0,
+        },
+      },
+    };
     mockTrialValidation = {
       trial1_0: {
         stimulus: { valid: true, values: {} },
@@ -348,13 +930,13 @@ describe('useNextStep', () => {
         belowStimulus: { valid: true, values: {} },
         sidebar: { valid: true, values: {} },
         provenanceGraph: {
-          aboveStimulus: liveGraph, belowStimulus: null, stimulus: null, sidebar: null,
+          aboveStimulus: liveGraph, belowStimulus: undefined, stimulus: undefined, sidebar: undefined,
         },
       },
     };
     const { result } = renderHook(() => useNextStep());
     await act(async () => { await result.current.goToNextStep(); });
-    const savedGraph = mockSaveProvenance.mock.calls[0][0] as Record<string, object | null>;
+    const savedGraph = mockSaveProvenance.mock.calls[0][0] as TrialValidation[string]['provenanceGraph'];
     expect(savedGraph.aboveStimulus).toEqual(liveGraph);
     expect(savedGraph.aboveStimulus).not.toBe(liveGraph);
   });
@@ -409,7 +991,7 @@ describe('useNextStep', () => {
         belowStimulus: { valid: true, values: {} },
         sidebar: { valid: true, values: {} },
         provenanceGraph: {
-          aboveStimulus: null, belowStimulus: null, stimulus: null, sidebar: null,
+          aboveStimulus: undefined, belowStimulus: undefined, stimulus: undefined, sidebar: undefined,
         },
       },
     };
@@ -420,3 +1002,5 @@ describe('useNextStep', () => {
     expect(mockNavigate).toHaveBeenCalledWith('/test-study/2');
   });
 });
+
+vi.mock('../useGlobalStore', () => ({ useGlobalStore: () => ({}), useGlobalStoreUpdaterRegistration: () => () => () => undefined }));

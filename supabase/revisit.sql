@@ -1,7 +1,8 @@
 -- Match the existing documented access model; see README.md before applying.
 BEGIN;
 CREATE TABLE public.revisit (
-  "createdAt" timestamp DEFAULT now(),
+  -- The app reads createdAt as UTC, so store it in UTC whatever the server timezone.
+  "createdAt" timestamp DEFAULT (now() AT TIME ZONE 'utc'),
   "studyId" varchar NOT NULL,
   "docId" varchar NOT NULL,
   data jsonb,

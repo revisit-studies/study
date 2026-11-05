@@ -18,7 +18,7 @@ export function TranscriptSegmentsVis({
   const lines = useMemo(() => transcriptLines.map((line) => (
     <g key={line.start}>
       <line
-        stroke={currentShownTranscription >= line.lineStart && currentShownTranscription <= line.lineEnd ? 'cornflowerblue' : 'lightgray'}
+        stroke={currentShownTranscription >= line.lineStart && currentShownTranscription <= line.lineEnd ? 'var(--mantine-color-blue-text)' : 'var(--mantine-color-default-border)'}
         strokeWidth={5}
         y1={margin.top}
         y2={margin.top}

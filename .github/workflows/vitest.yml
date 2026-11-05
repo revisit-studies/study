@@ -12,9 +12,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: lts/*
           cache: "yarn"
@@ -29,3 +29,6 @@ jobs:
         run: |
           python3 supabase/tests/migrate-storage.spec.py
           python3 supabase/tests/prepare-pg17-upgrade.spec.py
+
+      - name: Verify transactional admission fence
+        run: bash supabase/tests/admission-fence.spec.sh

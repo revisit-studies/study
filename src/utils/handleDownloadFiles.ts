@@ -1,8 +1,13 @@
 import JSZip from 'jszip';
+import { GLOBAL_STORE_TASK } from '../store/globalStoreProvenance';
+import { getGlobalStoreHistory } from '../store/globalStoreHistory';
 import { StorageEngine } from '../storage/engines/types';
 import { StudyConfig } from '../parser/types';
 import { getLegacyStoredAnswerProvenance } from '../store/provenance';
 import type { StoredAnswer } from '../store/types';
+
+type DownloadAnswer = Pick<StoredAnswer, 'endTime' | 'startTime' | 'componentName' | 'trialOrder'>
+  & Partial<Pick<StoredAnswer, 'identifier' | 'assetIdentifier'>>;
 
 export async function handleTaskAudio({
   storageEngine,
@@ -44,30 +49,83 @@ export async function handleTaskAudio({
   }
 }
 
-export async function handleTaskScreenRecording({
+type RecordingType = 'screenRecording' | 'webcamRecording';
+
+function recordingArchiveName(includeScreen: boolean, includeWebcam: boolean) {
+  if (includeScreen && !includeWebcam) return 'screenRecording';
+  if (includeWebcam && !includeScreen) return 'webcamRecording';
+  return 'recordings';
+}
+
+async function getTaskRecordingUrl({
   storageEngine,
   participantId,
   identifier,
-  screenRecordingUrl,
+  recordingType,
+  recordingUrl,
 }: {
   storageEngine: StorageEngine;
   participantId: string;
   identifier: string;
-  screenRecordingUrl?: string | null;
+  recordingType: RecordingType;
+  recordingUrl?: string | null;
 }) {
-  const finalScreenRecordingUrl = screenRecordingUrl || await storageEngine.getScreenRecording(identifier, participantId);
-
-  if (finalScreenRecordingUrl) {
-    const blob = await (await fetch(finalScreenRecordingUrl)).blob();
-    const url = URL.createObjectURL(blob);
-
-    Object.assign(document.createElement('a'), {
-      href: url,
-      download: `${participantId}_${identifier}_screenRecording.webm`,
-    }).click();
-
-    URL.revokeObjectURL(url);
+  if (recordingUrl) {
+    return recordingUrl;
   }
+  return recordingType === 'screenRecording'
+    ? storageEngine.getScreenRecording(identifier, participantId)
+    : storageEngine.getWebcamRecording(identifier, participantId);
+}
+
+export async function handleTaskRecordings({
+  storageEngine,
+  participantId,
+  identifier,
+  includeScreen,
+  includeWebcam,
+  screenRecordingUrl,
+  webcamRecordingUrl,
+}: {
+  storageEngine: StorageEngine;
+  participantId: string;
+  identifier: string;
+  includeScreen: boolean;
+  includeWebcam: boolean;
+  screenRecordingUrl?: string | null;
+  webcamRecordingUrl?: string | null;
+}) {
+  const recordings: Array<{ type: RecordingType; url?: string | null }> = [
+    ...(includeScreen ? [{ type: 'screenRecording' as const, url: screenRecordingUrl }] : []),
+    ...(includeWebcam ? [{ type: 'webcamRecording' as const, url: webcamRecordingUrl }] : []),
+  ];
+
+  await Promise.all(recordings.map(async ({ type, url: providedUrl }) => {
+    try {
+      const recordingUrl = await getTaskRecordingUrl({
+        storageEngine,
+        participantId,
+        identifier,
+        recordingType: type,
+        recordingUrl: providedUrl,
+      });
+      if (!recordingUrl) {
+        return;
+      }
+
+      const blob = await (await fetch(recordingUrl)).blob();
+      const objectUrl = URL.createObjectURL(blob);
+
+      Object.assign(document.createElement('a'), {
+        href: objectUrl,
+        download: `${participantId}_${identifier}_${type}.webm`,
+      }).click();
+
+      URL.revokeObjectURL(objectUrl);
+    } catch (error) {
+      console.warn(`Failed to fetch ${type} for ${identifier}:`, error);
+    }
+  }));
 }
 
 async function loadAssetToZip(zip: JSZip, fileName: string, assetUrl: string | null) {
@@ -154,6 +212,20 @@ async function downloadParticipantsAudio({
   }
 }
 
+async function getParticipantRecordingEntries(storageEngine: StorageEngine, participant: { participantId: string; answers: Record<string, DownloadAnswer> }) {
+  const entries = Object.entries(participant.answers).map(([storedIdentifier, answer]) => ({ storedIdentifier, answer }));
+  if (entries.some(({ answer }) => answer.assetIdentifier)) {
+    const graph = (await storageEngine.getProvenance(GLOBAL_STORE_TASK, participant.participantId))?.globalStore;
+    if (graph) {
+      getGlobalStoreHistory(graph).forEach(({ submission }) => {
+        entries.push({ storedIdentifier: submission.answer.identifier, answer: submission.answer });
+      });
+    }
+  }
+  const byAsset = new Map(entries.filter(({ answer }) => answer.endTime > 0).map((entry) => [entry.answer.assetIdentifier || entry.answer.identifier || entry.storedIdentifier, entry]));
+  return [...byAsset.values()].sort((a, b) => a.answer.startTime - b.answer.startTime);
+}
+
 export async function downloadParticipantsAudioZip({
   storageEngine,
   participants,
@@ -161,29 +233,21 @@ export async function downloadParticipantsAudioZip({
   fileName,
 }: {
   storageEngine: StorageEngine;
-  participants: Array<{ participantId: string; answers: Record<string, { endTime: number; startTime: number; componentName: string; trialOrder: string }> }>;
+  participants: Array<{ participantId: string; answers: Record<string, DownloadAnswer> }>;
   studyId: string;
   fileName?: string | null;
 }) {
   const namePrefix = fileName || studyId;
   const zip = new JSZip();
 
-  const audioPromises = participants.flatMap((participant) => {
-    const entries = Object.values(participant.answers)
-      .filter((ans) => ans.endTime > 0)
-      .sort((a, b) => a.startTime - b.startTime);
-
-    return entries.map(async (ans) => {
-      const identifier = `${ans.componentName}_${ans.trialOrder}`;
-
+  const audioPromises = participants.map(async (participant) => {
+    const entries = await getParticipantRecordingEntries(storageEngine, participant);
+    return Promise.all(entries.map(async ({ storedIdentifier, answer }) => {
+      const identifier = answer.assetIdentifier || answer.identifier || storedIdentifier;
       await downloadParticipantsAudio({
-        storageEngine,
-        participantId: participant.participantId,
-        identifier,
-        namePrefix,
-        zip,
+        storageEngine, participantId: participant.participantId, identifier, namePrefix, zip,
       });
-    });
+    }));
   });
 
   await Promise.all(audioPromises);
@@ -191,68 +255,82 @@ export async function downloadParticipantsAudioZip({
   await downloadZip(zip, `${namePrefix}_audio.zip`);
 }
 
-async function downloadParticipantsScreenRecording({
+async function downloadParticipantsRecordings({
   storageEngine,
   participantId,
   identifier,
   namePrefix,
+  includeScreen,
+  includeWebcam,
   zip,
 }: {
   storageEngine: StorageEngine;
   participantId: string;
   identifier: string;
   namePrefix: string;
+  includeScreen: boolean;
+  includeWebcam: boolean;
   zip?: JSZip;
 }) {
-  const screenRecordingZip = zip || new JSZip();
+  const recordingsZip = zip || new JSZip();
+  const recordingTypes: RecordingType[] = [
+    ...(includeScreen ? ['screenRecording' as const] : []),
+    ...(includeWebcam ? ['webcamRecording' as const] : []),
+  ];
 
-  try {
-    const screenRecordingUrl = await storageEngine.getScreenRecording(identifier, participantId);
-    await loadAssetToZip(screenRecordingZip, `${namePrefix}_${participantId}_${identifier}.webm`, screenRecordingUrl);
-
-    if (!zip) {
-      downloadZip(screenRecordingZip, `${namePrefix}_${participantId}_${identifier}_screenRecording.zip`);
+  await Promise.all(recordingTypes.map(async (recordingType) => {
+    try {
+      const recordingUrl = await getTaskRecordingUrl({
+        storageEngine,
+        participantId,
+        identifier,
+        recordingType,
+      });
+      const memberName = includeScreen && !includeWebcam
+        ? `${namePrefix}_${participantId}_${identifier}.webm`
+        : `${namePrefix}_${participantId}_${identifier}_${recordingType}.webm`;
+      await loadAssetToZip(recordingsZip, memberName, recordingUrl);
+    } catch (error) {
+      console.warn(`Failed to fetch ${recordingType} for ${identifier}:`, error);
     }
-  } catch (error) {
-    console.warn(`Failed to fetch files for ${identifier}:`, error);
+  }));
+
+  if (!zip) {
+    downloadZip(recordingsZip, `${namePrefix}_${participantId}_${identifier}_${recordingArchiveName(includeScreen, includeWebcam)}.zip`);
   }
 }
 
-export async function downloadParticipantsScreenRecordingZip({
+export async function downloadParticipantsRecordingsZip({
   storageEngine,
   participants,
   studyId,
+  includeScreen,
+  includeWebcam,
   fileName,
 }: {
   storageEngine: StorageEngine;
-  participants: Array<{ participantId: string; answers: Record<string, { endTime: number; startTime: number; componentName: string; trialOrder: string }> }>;
+  participants: Array<{ participantId: string; answers: Record<string, DownloadAnswer> }>;
   studyId: string;
+  includeScreen: boolean;
+  includeWebcam: boolean;
   fileName?: string | null;
 }) {
   const namePrefix = fileName || studyId;
   const zip = new JSZip();
 
-  const screenRecordingPromises = participants.flatMap((participant) => {
-    const entries = Object.values(participant.answers)
-      .filter((ans) => ans.endTime > 0)
-      .sort((a, b) => a.startTime - b.startTime);
-
-    return entries.map(async (ans) => {
-      const identifier = `${ans.componentName}_${ans.trialOrder}`;
-
-      await downloadParticipantsScreenRecording({
-        storageEngine,
-        participantId: participant.participantId,
-        identifier,
-        namePrefix,
-        zip,
+  const recordingPromises = participants.map(async (participant) => {
+    const entries = await getParticipantRecordingEntries(storageEngine, participant);
+    return Promise.all(entries.map(async ({ storedIdentifier, answer }) => {
+      const identifier = answer.assetIdentifier || answer.identifier || storedIdentifier;
+      await downloadParticipantsRecordings({
+        storageEngine, participantId: participant.participantId, identifier, namePrefix, includeScreen, includeWebcam, zip,
       });
-    });
+    }));
   });
 
-  await Promise.all(screenRecordingPromises);
+  await Promise.all(recordingPromises);
 
-  await downloadZip(zip, `${namePrefix}_screenRecording.zip`);
+  await downloadZip(zip, `${namePrefix}_${recordingArchiveName(includeScreen, includeWebcam)}.zip`);
 }
 
 export async function downloadParticipantsProvenanceZip({
@@ -272,12 +350,18 @@ export async function downloadParticipantsProvenanceZip({
   const namePrefix = fileName || studyId;
   const zip = new JSZip();
 
-  const provenancePromises = participants.flatMap((participant) => {
+  const provenancePromises = participants.map(async (participant) => {
+    const globalProvenance = await storageEngine.getProvenance(GLOBAL_STORE_TASK, participant.participantId);
+    const graph = globalProvenance?.globalStore;
+    const history = graph ? getGlobalStoreHistory(graph) : [];
+    if (graph) zip.file(`${namePrefix}_${participant.participantId}_${GLOBAL_STORE_TASK}_provenance.json`, JSON.stringify(globalProvenance, null, 2));
     const entries = Object.entries(participant.answers)
       .filter(([, ans]) => ans.endTime > 0)
       .sort(([, a], [, b]) => a.startTime - b.startTime);
 
-    return entries.map(async ([identifier, ans]) => {
+    const allAnswers = new Map(entries.map(([identifier, answer]) => [identifier, answer]));
+    history.forEach(({ submission }) => { allAnswers.set(submission.answer.identifier, submission.answer); });
+    return Promise.all([...allAnswers].map(async ([identifier, ans]) => {
       await downloadParticipantsProvenance({
         storageEngine,
         participantId: participant.participantId,
@@ -286,7 +370,7 @@ export async function downloadParticipantsProvenanceZip({
         zip,
         answer: ans,
       });
-    });
+    }));
   });
 
   await Promise.all(provenancePromises);

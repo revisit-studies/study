@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 import {
-  nextClick,
+  advanceStudyStep as nextClick,
   openStudyFromLanding,
   resetClientStudyState,
   waitForStudyEndMessage,
@@ -13,6 +13,7 @@ test('Test image component', async ({ page }) => {
     'Simple Images as Stimuli: Decision-Making with Uncertainty Visualizations',
   ]);
 
+  await expect(page.getByTestId('study-interface')).toHaveAttribute('aria-busy', 'false', { timeout: 30000 });
   await expect(page.getByText(/use images as stimuli/i)).toBeVisible();
 
   // Click on the next button
@@ -40,7 +41,7 @@ test('Test image component', async ({ page }) => {
 
   // Select a response and click next
   await page.getByRole('radio', { name: 'No', exact: true }).check();
-  await page.keyboard.press('Enter');
+  await nextClick(page, () => page.keyboard.press('Enter'));
 
   // Check the page contains the question
   const question3Text = await page.getByText('Will you issue blankets to the alpacas?');

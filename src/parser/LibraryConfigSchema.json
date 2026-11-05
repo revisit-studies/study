@@ -4,8 +4,13 @@
   "definitions": {
     "Answer": {
       "additionalProperties": false,
-      "description": "The Answer interface is used to define the properties of an answer. Answers are used to define the correct answer for a task. These are generally used in training tasks or if skip logic is required based on the answer.\n\nAnswers are used to defined correct answers for a task. These are generally used in training tasks or if skip logic is required based on the answer. The answer field is used to define the correct answer to the question. The acceptableLow and acceptableHigh fields are used to define a range of acceptable answers (these are currently only used for training). For example, if the correct answer is 5, and the acceptableLow is 4 and the acceptableHigh is 6, then any answer between 4 and 6 will be considered correct.\n\nHere's an example of how to use the Answer interface to define the correct answer to a question:\n\n```json {   \"type\": \"markdown\",   \"path\": \"<study-name>/assets/question.md\",   \"response\": [     {       \"id\": \"response1\",       \"prompt\": \"What is 2 + 2?\",       \"location\": \"belowStimulus\",       \"type\": \"numerical\"     }   ],   \"correctAnswer\": [{       \"id\": \"response1\",       \"answer\": 4     }]   } ```\n\nIn this example, the correct answer to the question \"What is 2 + 2?\" is 4. If the participant answers 4, they will be considered correct. If they answer anything other than 4, they will be considered incorrect.",
+      "description": "The Answer interface is used to define the properties of an answer. Answers are used to define the correct answer for a task. These are generally used in training tasks or if skip logic is required based on the answer.\n\nAnswers are used to defined correct answers for a task. These are generally used in training tasks or if skip logic is required based on the answer. The answer field is used to define the correct answer to the question. The acceptableLow and acceptableHigh fields are used to define a range of acceptable answers (inclusive, also used for skip logic and analysis). For example, if the correct answer is 5, and the acceptableLow is 4 and the acceptableHigh is 6, then any answer between 4 and 6 will be considered correct.\n\nHere's an example of how to use the Answer interface to define the correct answer to a question:\n\n```json {   \"type\": \"markdown\",   \"path\": \"<study-name>/assets/question.md\",   \"response\": [     {       \"id\": \"response1\",       \"prompt\": \"What is 2 + 2?\",       \"location\": \"belowStimulus\",       \"type\": \"numerical\"     }   ],   \"correctAnswer\": [{       \"id\": \"response1\",       \"answer\": 4     }]   } ```\n\nIn this example, the correct answer to the question \"What is 2 + 2?\" is 4. If the participant answers 4, they will be considered correct. If they answer anything other than 4, they will be considered incorrect.",
       "properties": {
+        "acceptableAnswers": {
+          "description": "Accepted complete answers, usable on their own or in addition to answer. Each entry is a complete value, such as a checkbox selection array or a ranking value-to-position object.",
+          "items": {},
+          "type": "array"
+        },
         "acceptableHigh": {
           "description": "The acceptable high value for the answer. This is used to define a range of acceptable answers.",
           "type": "number"
@@ -15,7 +20,21 @@
           "type": "number"
         },
         "answer": {
-          "description": "The correct answer to the question."
+          "description": "The exact or preferred answer. Optional when acceptableAnswers or a numeric bound defines accepted answers."
+        },
+        "caseSensitive": {
+          "description": "Whether textual answers must match letter case. Defaults to true.",
+          "type": "boolean"
+        },
+        "correctnessThreshold": {
+          "description": "Minimum score from 0 to 1 required for this answer to be considered correct. Defaults to 1.",
+          "maximum": 1,
+          "minimum": 0,
+          "type": "number"
+        },
+        "feedback": {
+          "$ref": "#/definitions/ResponseFeedback",
+          "description": "Customize correct and incorrect feedback and hints for this response."
         },
         "id": {
           "description": "The id of the answer. This is used to identify the answer in the data file.",
@@ -23,8 +42,7 @@
         }
       },
       "required": [
-        "id",
-        "answer"
+        "id"
       ],
       "type": "object"
     },
@@ -33,12 +51,24 @@
         "additionalProperties": false,
         "properties": {
           "allowFailedTraining": {
-            "description": "Controls whether the component should allow failed training. If present, will override the allow failed training setting in the uiConfig.",
+            "description": "Allow continuing with incorrect answers after attempts are exhausted. Overrides uiConfig.allowFailedTraining. Defaults to true.",
+            "type": "boolean"
+          },
+          "captureGamepad": {
+            "description": "Whether or not to capture game controller input into windowEvents. If present, will override the capture gamepad setting in the uiConfig.",
             "type": "boolean"
           },
           "clickToRecord": {
             "description": "Enables a click-and-hold microphone button instead of continuous recording. When true, audio is muted by default and is recorded only while the button is held. When false, recording starts immediately and can be paused/resumed via the microphone button. Defaults to false.",
             "type": "boolean"
+          },
+          "colorMode": {
+            "description": "The iframe's color scheme. Defaults to the study's color mode. The embedded page must support color schemes.",
+            "enum": [
+              "light",
+              "dark"
+            ],
+            "type": "string"
           },
           "config": {
             "description": "The vega or vega-lite configuration.",
@@ -66,6 +96,10 @@
           "helpTextPath": {
             "description": "The path to the help text file. This is displayed when a participant clicks help. Markdown is supported. If present, will override the help text path set in the uiConfig.",
             "type": "string"
+          },
+          "hideCheckAnswerButton": {
+            "description": "Hide the Check Answer button and grade answers on Next instead. Defaults to false. Feedback must be enabled by provideFeedback or answer-level feedback.",
+            "type": "boolean"
           },
           "instruction": {
             "description": "The instruction of the component. This is used to identify and provide additional information for the component in the admin panel.",
@@ -117,19 +151,9 @@
             "type": "boolean"
           },
           "parameters": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "description": "The parameters that are passed to the react component. These can be used within your react component to render different things.",
-                "type": "object"
-              },
-              {
-                "additionalProperties": {},
-                "description": "The parameters that are passed to the website (iframe). These can be used within your website to render different things.",
-                "type": "object"
-              }
-            ],
-            "description": "The parameters that are passed to the react component. These can be used within your react component to render different things."
+            "additionalProperties": {},
+            "description": "The parameters passed to the component. These can be used for variable substitution: in a react-component, they're available as the `parameters` prop; in this component's instruction field and its responses' prompt, secondaryText, and infoText fields, they're substituted as Handlebars variables (`{{variable}}`). The same substitution also applies inside markdown files, and inside a website component's HTML file when its `templated` field is true.",
+            "type": "object"
           },
           "path": {
             "anyOf": [
@@ -169,7 +193,7 @@
             "type": "string"
           },
           "provideFeedback": {
-            "description": "Controls whether the component should provide feedback to the participant, such as in a training trial. If present, will override the provide feedback setting in the uiConfig.",
+            "description": "Enable answer checking and feedback. Explicit false disables it even with answer-level feedback. When omitted, answer-level feedback enables it before falling back to uiConfig.provideFeedback.",
             "type": "boolean"
           },
           "recordAudio": {
@@ -178,6 +202,10 @@
           },
           "recordScreen": {
             "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig. If true, the uiConfig must have recordScreen set to true or the screen will not be captured. It's also required that the library component, $screen-recording.components.screenRecordingPermission, be included in the study at some point before this component to ensure permissions are granted and screen capture has started.",
+            "type": "boolean"
+          },
+          "recordWebcam": {
+            "description": "Whether or not we want to utilize webcam recording. If present, will override the record webcam setting in the uiConfig. Studies using webcam without screen capture should include the webcam permission component before this component. Studies combining webcam with screen capture should use the screen recording permission component.",
             "type": "boolean"
           },
           "response": {
@@ -218,6 +246,10 @@
           "stylesheetPath": {
             "description": "The path to the external stylesheet file.",
             "type": "string"
+          },
+          "templated": {
+            "description": "Whether the HTML file should be compiled as a Handlebars template before it is rendered, so that `{{parameter}}` placeholders in the file are substituted. Defaults to false. Only applies to HTML files served from the study's public folder; it is ignored for external websites, which cannot be fetched and rewritten.",
+            "type": "boolean"
           },
           "trainingAttempts": {
             "description": "The number of training attempts allowed for the component. If present, will override the training attempts setting in the uiConfig.",
@@ -261,6 +293,41 @@
       "description": "The baseComponents is an optional set of components which can help template other components. For example, suppose you have a single HTML file that you want to display to the user several times. Instead of having the same component twice in the `components` list, you can have a single baseComponent with all the information that the two HTML components will share. A great example is showing the same HTML component but with two different questions;\n\n Using baseComponents:\n\n```json \"baseComponents\": {  \"my-image-component\": {    \"instructionLocation\": \"sidebar\",    \"nextButtonLocation\": \"sidebar\",    \"path\": \"<study-name>/assets/my-image.jpg\",    \"response\": [      {        \"id\": \"my-image-id\",        \"options\": [\"Europe\", \"Japan\", \"USA\"],        \"prompt\": \"Your Selected Answer:\",        \"type\": \"dropdown\"      }    ],    \"type\": \"image\"  } } ``` In the above code snippet, we have a single base component which holds the information about the type of component, the path to the image, and the response (which is a dropdown containing three choices). Any component which contains the `\"baseComponent\":\"my-image-component\"` key-value pair will inherit each of these properties. Thus, if we have three different questions which have the same choices and are concerning the same image, we can define our components like below: ```json \"components\": {  \"q1\": {    \"baseComponent\": \"my-image-component\",    \"description\": \"Choosing section with largest GDP\",    \"instruction\": \"Which region has the largest GDP?\"  },  \"q2\": {    \"baseComponent\": \"my-image-component\",    \"description\": \"Choosing section with lowest GDP\",    \"instruction\": \"Which region has the lowest GDP?\"  },  \"q3\": {    \"baseComponent\": \"my-image-component\",    \"description\": \"Choosing section with highest exports of Wheat\",    \"instruction\": \"Which region had the most Wheat exported in 2022?\"  } } ```",
       "type": "object"
     },
+    "BuiltInValidationType": {
+      "description": "The built-in validation operations available for short text responses.\n\n- `email`: An email in `local@domain.tld` format, such as `test@revisit.dev`.\n- `phoneNumber`: An international phone number containing 7–15 digits, with an optional leading `+` and hyphens between digits.\n- `usPhoneNumber`: A 10-digit US phone number in `000-000-0000` format.\n- `url`: An absolute HTTP or HTTPS URL, such as `https://revisit.dev`.",
+      "enum": [
+        "email",
+        "phoneNumber",
+        "usPhoneNumber",
+        "url"
+      ],
+      "type": "string"
+    },
+    "ButtonOption": {
+      "additionalProperties": false,
+      "properties": {
+        "infoText": {
+          "description": "The description that is displayed when the participant hovers over the option. This does not accept markdown.",
+          "type": "string"
+        },
+        "key": {
+          "description": "Keyboard shortcut for this button (e.g., \"r\", \"ArrowLeft\", or \"Shift+X\").",
+          "type": "string"
+        },
+        "label": {
+          "description": "The label displayed to participants. Markdown is supported.",
+          "type": "string"
+        },
+        "value": {
+          "description": "The value stored in the participant's data. Defaults to label.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "label"
+      ],
+      "type": "object"
+    },
     "ButtonsResponse": {
       "additionalProperties": false,
       "description": "The ButtonsResponse interface is used to define the properties of a buttons response. ButtonsResponses render as a list of buttons that the participant can click. When a button is clicked, the value of the button is stored in the data file. Participants can cycle through the options using the arrow keys. ```json {   \"id\": \"buttonsResponse\",   \"type\": \"buttons\",   \"prompt\": \"Click a button\",   \"location\": \"belowStimulus\",   \"default\": \"Option 2\",   \"options\": [     \"Option 1\",     \"Option 2\",     \"Option 3\"   ] } ``` In this example, the participant can click one of the buttons labeled \"Option 1\", \"Option 2\", or \"Option 3\".",
@@ -269,12 +336,21 @@
           "description": "The default value of the response. Specify one option value as a string.",
           "type": "string"
         },
+        "delay": {
+          "description": "Delay in milliseconds before an element activates. Must be non-negative; defaults to 0 meaning the element is always active.",
+          "minimum": 0,
+          "type": "number"
+        },
         "excludeFromRandomization": {
           "description": "Exclude response from randomization. If present, will override the `responseOrder` randomization setting in the components. Defaults to false.",
           "type": "boolean"
         },
         "hidden": {
           "description": "Controls whether the response is hidden.",
+          "type": "boolean"
+        },
+        "hideKeyVisual": {
+          "description": "Set to true to hide keybinding indicators on buttons. Defaults to false when keymapping is active, else false.",
           "type": "boolean"
         },
         "id": {
@@ -289,6 +365,13 @@
           "$ref": "#/definitions/ConfigResponseBlockLocation",
           "description": "Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus`"
         },
+        "onSubmit": {
+          "description": "Apply these actions to the final submitted answer, in declared order.",
+          "items": {
+            "$ref": "#/definitions/GlobalStoreAction"
+          },
+          "type": "array"
+        },
         "optionOrder": {
           "description": "The order in which the buttons are displayed. Defaults to fixed.",
           "enum": [
@@ -301,7 +384,7 @@
           "items": {
             "anyOf": [
               {
-                "$ref": "#/definitions/StringOption"
+                "$ref": "#/definitions/ButtonOption"
               },
               {
                 "type": "string"
@@ -312,6 +395,10 @@
         },
         "paramCapture": {
           "description": "Use to capture querystring parameters in answers such as participant_name. See the examples for how this is used, but prefer `uiConfig.urlParticipantIdParam` if you are capturing a participant ID.",
+          "type": "string"
+        },
+        "path": {
+          "description": "Path under `src/public/` to response code. Custom responses require a default React component. Any response code module may export `validate(value, values, response)` to return an error message, a boolean validity result, or null for valid input. It may separately export `score(value, values, response, expected?)` to return a boolean or a score from 0 to 1; null uses ordinary correct-answer matching. `expected` is the configured correct answer when correctness is checked.",
           "type": "string"
         },
         "prompt": {
@@ -345,6 +432,10 @@
           "const": "buttons",
           "type": "string"
         },
+        "visibleIf": {
+          "$ref": "#/definitions/ResponseVisibilityCondition",
+          "description": "Show this response only when another response in this component satisfies the condition."
+        },
         "withDivider": {
           "description": "Renders the response with a trailing divider. If present, will override the divider setting in the components or `uiConfig`.",
           "type": "boolean"
@@ -372,6 +463,11 @@
             "type": "string"
           },
           "type": "array"
+        },
+        "delay": {
+          "description": "Delay in milliseconds before an element activates. Must be non-negative; defaults to 0 meaning the element is always active.",
+          "minimum": 0,
+          "type": "number"
         },
         "excludeFromRandomization": {
           "description": "Exclude response from randomization. If present, will override the `responseOrder` randomization setting in the components. Defaults to false.",
@@ -405,6 +501,13 @@
           "description": "The minimum number of selections that are required.",
           "type": "number"
         },
+        "onSubmit": {
+          "description": "Apply these actions to the final submitted answer, in declared order.",
+          "items": {
+            "$ref": "#/definitions/GlobalStoreAction"
+          },
+          "type": "array"
+        },
         "optionOrder": {
           "description": "The order in which the checkboxes are displayed. Defaults to fixed.",
           "enum": [
@@ -429,6 +532,10 @@
         },
         "paramCapture": {
           "description": "Use to capture querystring parameters in answers such as participant_name. See the examples for how this is used, but prefer `uiConfig.urlParticipantIdParam` if you are capturing a participant ID.",
+          "type": "string"
+        },
+        "path": {
+          "description": "Path under `src/public/` to response code. Custom responses require a default React component. Any response code module may export `validate(value, values, response)` to return an error message, a boolean validity result, or null for valid input. It may separately export `score(value, values, response, expected?)` to return a boolean or a score from 0 to 1; null uses ordinary correct-answer matching. `expected` is the configured correct answer when correctness is checked.",
           "type": "string"
         },
         "prompt": {
@@ -462,6 +569,10 @@
           "const": "checkbox",
           "type": "string"
         },
+        "visibleIf": {
+          "$ref": "#/definitions/ResponseVisibilityCondition",
+          "description": "Show this response only when another response in this component satisfies the condition."
+        },
         "withDivider": {
           "description": "Renders the response with a trailing divider. If present, will override the divider setting in the components or `uiConfig`.",
           "type": "boolean"
@@ -485,7 +596,6 @@
     },
     "ComponentBlock": {
       "additionalProperties": false,
-      "description": "The ComponentBlock interface is used to define order properties within the sequence. This is used to define the order of components in a study and the skip logic. It supports random assignment of trials using a pure random assignment and a [latin square](https://en.wikipedia.org/wiki/Latin_square).\n\nThe pure random assignment is a random assignment with no guarantees. For example, one component _could_ show up in the first position 10 times in a row. However, this situation is unlikely.\n\nHere's a snippet that shows how to use the random order:\n\n```json {  \"order\": \"random\",  \"components\": [    \"component1\",    \"component2\",    \"component3\"  ] } ``` This snippet would produce a random order of the components in the sequence array. For example, the resulting sequence array could be :\n\n```json [  [\"component2\", \"component3\", \"component1\"],  [\"component1\", \"component3\", \"component2\"],  [\"component3\", \"component1\", \"component2\"],  ... ] ```\n\nThe latin square assignment is a random assignment with some guarantees. It ensures that each component is shown an equal number of times in each position. Here's a snippet that shows how to use the latin square order:\n\n```json {  \"order\": \"latinSquare\",  \"components\": [    \"component1\",    \"component2\",    \"component3\"  ] } ```\n\nThis snippet would produce a latin square order of the components in the sequence array. Since the latin square guarantees that each component is shown an equal number of times in each position, the resulting sequence array could be:\n\n```json [  [\"component1\", \"component2\", \"component3\"],  [\"component2\", \"component3\", \"component1\"],  [\"component3\", \"component1\", \"component2\"],  ... ] ```\n\nThe fixed assignment is a fixed assignment of components. This is used when you want to show the components in a specific order. Here's a snippet that shows how to use the fixed order:\n\n```json {  \"order\": \"fixed\",  \"components\": [    \"component1\",    \"component2\",    \"component3\"  ] } ```\n\nThis snippet would produce a fixed order of the components in the sequence array. The resulting sequence array would be:\n\n```json [  [\"component1\", \"component2\", \"component3\"],  [\"component1\", \"component2\", \"component3\"],  [\"component1\", \"component2\", \"component3\"],  ... ] ```\n\nIn addition to the order property, the ComponentBlock interface also includes the `\"numSamples\"` property. This is used to reduce the number of components shown to a participant. This property respects the order property and the guarantees provided by the order property. For example, if you have three components in the components array and you set `\"numSamples\"` to 2, you would randomize across the three components while only showing a participant two of them. Here's a snippet that shows how to use the numSamples property:\n\n```json {  \"order\": \"latinSquare\",  \"components\": [    \"component1\",    \"component2\",    \"component3\"  ],  \"numSamples\": 2 } ```\n\nThis snippet would produce a latin square order of the components in the sequence array. Since the latin square guarantees that each component is shown an equal number of times in each position, the resulting sequence array could be:\n\n```json [  [\"component1\", \"component2\"],  [\"component2\", \"component3\"],  [\"component3\", \"component1\"],  ... ] ```\n\nThe interruptions property specifies an array of interruptions. These can be used for breaks or attention checks. Interruptions can be deterministic or random. Please see [InterruptionBlock](../../type-aliases/InterruptionBlock) for more specific information.\n\nThe skip property is used to define skip conditions. This is used to skip to a different component or block based on the response to a component or the number of correct or incorrect responses in a block. Please see [SkipConditions](../../type-aliases/SkipConditions) for more specific information.",
       "properties": {
         "components": {
           "description": "The components that are included in the order.",
@@ -499,6 +609,9 @@
               },
               {
                 "$ref": "#/definitions/DynamicBlock"
+              },
+              {
+                "$ref": "#/definitions/FactorBlock"
               }
             ]
           },
@@ -524,13 +637,8 @@
           "type": "number"
         },
         "order": {
-          "description": "The type of order. This can be random (pure random), latinSquare (random with some guarantees), or fixed.",
-          "enum": [
-            "random",
-            "latinSquare",
-            "fixed"
-          ],
-          "type": "string"
+          "$ref": "#/definitions/ComponentOrder",
+          "description": "The type of order. This can be random (pure random), latinSquare (random with some guarantees), or fixed."
         },
         "skip": {
           "$ref": "#/definitions/SkipConditions",
@@ -545,7 +653,7 @@
     },
     "ComponentBlockCondition": {
       "additionalProperties": false,
-      "description": "The ComponentBlockCondition interface is used to define a SkipCondition based on the number of correct or incorrect components in a block. All answers on all components in the block are checked.\n\nAnswers are checked against the correct answers defined in the IndividualComponent's [CorrectAnswer](../Answer). If no correct answers are defined, the component is considered correct by default.\n\nYou might use this if a participant answers two questions in a block incorrectly. Here's an example of how to use the ComponentBlockCondition:\n\n```json {  ...  \"skip\": [    {      \"check\": \"block\",      \"condition\": \"numIncorrect\",      \"value\": 2,      \"to\": \"end\"    }  ]  ... } ```\n\nIn this example, when the number of components with incorrect responses in the block is two, the participant will be redirected to the end of the study. If the number of incorrect responses is less than two, the participant will continue to the next component in the sequence.\n\nWhen the condition is met, the participant will immediately be redirected to the component or block specified in the `\"to\"` property. If no conditions are met, the participant will continue to the next component in the sequence.",
+      "description": "The ComponentBlockCondition interface is used to define a SkipCondition based on the number of correct or incorrect components in a block. All answers on all components in the block are checked.\n\nAnswers are checked against the correct answers defined in the IndividualComponent's  {@link  Answer } . If no correct answers are defined, the component is considered correct by default.\n\nYou might use this if a participant answers two questions in a block incorrectly. Here's an example of how to use the ComponentBlockCondition:\n\n```json {  ...  \"skip\": [    {      \"check\": \"block\",      \"condition\": \"numIncorrect\",      \"value\": 2,      \"to\": \"end\"    }  ]  ... } ```\n\nIn this example, when the number of components with incorrect responses in the block is two, the participant will be redirected to the end of the study. If the number of incorrect responses is less than two, the participant will continue to the next component in the sequence.\n\nWhen the condition is met, the participant will immediately be redirected to the component or block specified in the `\"to\"` property. If no conditions are met, the participant will continue to the next component in the sequence.",
       "properties": {
         "check": {
           "const": "block",
@@ -577,6 +685,15 @@
       ],
       "type": "object"
     },
+    "ComponentOrder": {
+      "description": "The ComponentBlock interface is used to define order properties within the sequence. This is used to define the order of components in a study and the skip logic. It supports random assignment of trials using a pure random assignment and a [latin square](https://en.wikipedia.org/wiki/Latin_square).\n\nThe pure random assignment is a random assignment with no guarantees. For example, one component _could_ show up in the first position 10 times in a row. However, this situation is unlikely.\n\nHere's a snippet that shows how to use the random order:\n\n```json {  \"order\": \"random\",  \"components\": [    \"component1\",    \"component2\",    \"component3\"  ] } ``` This snippet would produce a random order of the components in the sequence array. For example, the resulting sequence array could be :\n\n```json [  [\"component2\", \"component3\", \"component1\"],  [\"component1\", \"component3\", \"component2\"],  [\"component3\", \"component1\", \"component2\"],  ... ] ```\n\nThe latin square assignment is a random assignment with some guarantees. It ensures that each component is shown an equal number of times in each position. Here's a snippet that shows how to use the latin square order:\n\n```json {  \"order\": \"latinSquare\",  \"components\": [    \"component1\",    \"component2\",    \"component3\"  ] } ```\n\nThis snippet would produce a latin square order of the components in the sequence array. Since the latin square guarantees that each component is shown an equal number of times in each position, the resulting sequence array could be:\n\n```json [  [\"component1\", \"component2\", \"component3\"],  [\"component2\", \"component3\", \"component1\"],  [\"component3\", \"component1\", \"component2\"],  ... ] ```\n\nThe fixed assignment is a fixed assignment of components. This is used when you want to show the components in a specific order. Here's a snippet that shows how to use the fixed order:\n\n```json {  \"order\": \"fixed\",  \"components\": [    \"component1\",    \"component2\",    \"component3\"  ] } ```\n\nThis snippet would produce a fixed order of the components in the sequence array. The resulting sequence array would be:\n\n```json [  [\"component1\", \"component2\", \"component3\"],  [\"component1\", \"component2\", \"component3\"],  [\"component1\", \"component2\", \"component3\"],  ... ] ```\n\nIn addition to the order property, the ComponentBlock interface also includes the `\"numSamples\"` property. This is used to reduce the number of components shown to a participant. This property respects the order property and the guarantees provided by the order property. For example, if you have three components in the components array and you set `\"numSamples\"` to 2, you would randomize across the three components while only showing a participant two of them. Here's a snippet that shows how to use the numSamples property:\n\n```json {  \"order\": \"latinSquare\",  \"components\": [    \"component1\",    \"component2\",    \"component3\"  ],  \"numSamples\": 2 } ```\n\nThis snippet would produce a latin square order of the components in the sequence array. Since the latin square guarantees that each component is shown an equal number of times in each position, the resulting sequence array could be:\n\n```json [  [\"component1\", \"component2\"],  [\"component2\", \"component3\"],  [\"component3\", \"component1\"],  ... ] ```\n\nThe interruptions property specifies an array of interruptions. These can be used for breaks or attention checks. Interruptions can be deterministic or random. Please see  {@link  InterruptionBlock }  for more specific information.\n\nThe skip property is used to define skip conditions. This is used to skip to a different component or block based on the response to a component or the number of correct or incorrect responses in a block. Please see  {@link  SkipConditions }  for more specific information.",
+      "enum": [
+        "random",
+        "latinSquare",
+        "fixed"
+      ],
+      "type": "string"
+    },
     "ConfigResponseBlockLocation": {
       "enum": [
         "sidebar",
@@ -592,6 +709,11 @@
         "default": {
           "$ref": "#/definitions/JsonValue",
           "description": "The default value of the response. Must be JSON-serializable."
+        },
+        "delay": {
+          "description": "Delay in milliseconds before an element activates. Must be non-negative; defaults to 0 meaning the element is always active.",
+          "minimum": 0,
+          "type": "number"
         },
         "excludeFromRandomization": {
           "description": "Exclude response from randomization. If present, will override the `responseOrder` randomization setting in the components. Defaults to false.",
@@ -612,6 +734,13 @@
         "location": {
           "$ref": "#/definitions/ConfigResponseBlockLocation",
           "description": "Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus`"
+        },
+        "onSubmit": {
+          "description": "Apply these actions to the final submitted answer, in declared order.",
+          "items": {
+            "$ref": "#/definitions/GlobalStoreAction"
+          },
+          "type": "array"
         },
         "paramCapture": {
           "description": "Use to capture querystring parameters in answers such as participant_name. See the examples for how this is used, but prefer `uiConfig.urlParticipantIdParam` if you are capturing a participant ID.",
@@ -657,6 +786,10 @@
           "const": "custom",
           "type": "string"
         },
+        "visibleIf": {
+          "$ref": "#/definitions/ResponseVisibilityCondition",
+          "description": "Show this response only when another response in this component satisfies the condition."
+        },
         "withDivider": {
           "description": "Renders the response with a trailing divider. If present, will override the divider setting in the components or `uiConfig`.",
           "type": "boolean"
@@ -669,6 +802,127 @@
       "required": [
         "id",
         "path",
+        "prompt",
+        "type"
+      ],
+      "type": "object"
+    },
+    "DateResponse": {
+      "additionalProperties": false,
+      "description": "The DateResponse interface defines a date entered directly or selected with a date picker, or a month or year selected with the corresponding picker. Values are stored as `MM/DD/YYYY`, `MM/YYYY`, or `YYYY` strings based on `options`. Supported years range from `0100` through `9999`. ```json {   \"id\": \"q-date\",   \"prompt\": \"Select a date.\",   \"location\": \"aboveStimulus\",   \"type\": \"date\",   \"options\": \"date\",   \"default\": \"08/21/2026\",   \"min\": \"08/01/2026\",   \"max\": \"08/31/2026\",   \"placeholder\": \"MM/DD/YYYY\" } ```",
+      "properties": {
+        "default": {
+          "description": "The default value, using the format selected by `options`. Years must be between `0100` and `9999`.",
+          "type": "string"
+        },
+        "delay": {
+          "description": "Delay in milliseconds before an element activates. Must be non-negative; defaults to 0 meaning the element is always active.",
+          "minimum": 0,
+          "type": "number"
+        },
+        "excludeFromRandomization": {
+          "description": "Exclude response from randomization. If present, will override the `responseOrder` randomization setting in the components. Defaults to false.",
+          "type": "boolean"
+        },
+        "hidden": {
+          "description": "Controls whether the response is hidden.",
+          "type": "boolean"
+        },
+        "id": {
+          "description": "The id of the response. This is used to identify the response in the data file.",
+          "type": "string"
+        },
+        "infoText": {
+          "description": "The description that is displayed when the participant hovers over the response. This does not accept markdown.",
+          "type": "string"
+        },
+        "location": {
+          "$ref": "#/definitions/ConfigResponseBlockLocation",
+          "description": "Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus`"
+        },
+        "max": {
+          "description": "The latest value accepted, using the format selected by `options`. Years must be between `0100` and `9999`.",
+          "type": "string"
+        },
+        "min": {
+          "description": "The earliest value accepted, using the format selected by `options`. Years must be between `0100` and `9999`.",
+          "type": "string"
+        },
+        "onSubmit": {
+          "description": "Apply these actions to the final submitted answer, in declared order.",
+          "items": {
+            "$ref": "#/definitions/GlobalStoreAction"
+          },
+          "type": "array"
+        },
+        "options": {
+          "description": "Determines whether participants enter or select a date, or select a month or year with a picker. Defaults to `date`.",
+          "enum": [
+            "date",
+            "month",
+            "year"
+          ],
+          "type": "string"
+        },
+        "paramCapture": {
+          "description": "Use to capture querystring parameters in answers such as participant_name. See the examples for how this is used, but prefer `uiConfig.urlParticipantIdParam` if you are capturing a participant ID.",
+          "type": "string"
+        },
+        "path": {
+          "description": "Path under `src/public/` to response code. Custom responses require a default React component. Any response code module may export `validate(value, values, response)` to return an error message, a boolean validity result, or null for valid input. It may separately export `score(value, values, response, expected?)` to return a boolean or a score from 0 to 1; null uses ordinary correct-answer matching. `expected` is the configured correct answer when correctness is checked.",
+          "type": "string"
+        },
+        "placeholder": {
+          "description": "The placeholder text displayed in the input. Defaults to the format used by `options`.",
+          "type": "string"
+        },
+        "prompt": {
+          "description": "The prompt that is displayed to the participant. You can use markdown here to render images, links, etc.",
+          "type": "string"
+        },
+        "required": {
+          "description": "Controls whether the response is required to be answered. Defaults to true.",
+          "type": "boolean"
+        },
+        "requiredLabel": {
+          "description": "You can provide a required label, which makes it so a participant has to answer with a response that matches label.",
+          "type": "string"
+        },
+        "requiredValue": {
+          "description": "The value required for a correct response, using the format selected by `options`. Years must be between `0100` and `9999`.",
+          "type": "string"
+        },
+        "secondaryText": {
+          "description": "The secondary text that is displayed to the participant under the prompt. This does not accept markdown.",
+          "type": "string"
+        },
+        "style": {
+          "$ref": "#/definitions/Styles",
+          "description": "You can set styles here, using React CSSProperties, for example: `{\"width\": 100}` or `{\"width\": \"50%\"}`"
+        },
+        "stylesheetPath": {
+          "description": "The path to the external stylesheet file.",
+          "type": "string"
+        },
+        "type": {
+          "const": "date",
+          "type": "string"
+        },
+        "visibleIf": {
+          "$ref": "#/definitions/ResponseVisibilityCondition",
+          "description": "Show this response only when another response in this component satisfies the condition."
+        },
+        "withDivider": {
+          "description": "Renders the response with a trailing divider. If present, will override the divider setting in the components or `uiConfig`.",
+          "type": "boolean"
+        },
+        "withDontKnow": {
+          "description": "Renders the response with an option for \"I don't know\". This counts as a completed answer for the validation.",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "id",
         "prompt",
         "type"
       ],
@@ -704,6 +958,11 @@
     "DividerResponse": {
       "additionalProperties": false,
       "properties": {
+        "delay": {
+          "description": "Delay in milliseconds before an element activates. Must be non-negative; defaults to 0 meaning the element is always active.",
+          "minimum": 0,
+          "type": "number"
+        },
         "excludeFromRandomization": {
           "description": "Exclude response from randomization. If present, will override the `responseOrder` randomization setting in the components. Defaults to false.",
           "type": "boolean"
@@ -722,8 +981,19 @@
           "$ref": "#/definitions/ConfigResponseBlockLocation",
           "description": "Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus`"
         },
+        "onSubmit": {
+          "description": "Apply these actions to the final submitted answer, in declared order.",
+          "items": {
+            "$ref": "#/definitions/GlobalStoreAction"
+          },
+          "type": "array"
+        },
         "paramCapture": {
           "not": {}
+        },
+        "path": {
+          "description": "Path under `src/public/` to response code. Custom responses require a default React component. Any response code module may export `validate(value, values, response)` to return an error message, a boolean validity result, or null for valid input. It may separately export `score(value, values, response, expected?)` to return a boolean or a score from 0 to 1; null uses ordinary correct-answer matching. `expected` is the configured correct answer when correctness is checked.",
+          "type": "string"
         },
         "prompt": {
           "not": {}
@@ -752,6 +1022,10 @@
           "const": "divider",
           "type": "string"
         },
+        "visibleIf": {
+          "$ref": "#/definitions/ResponseVisibilityCondition",
+          "description": "Show this response only when another response in this component satisfies the condition."
+        },
         "withDivider": {
           "description": "Renders the response with a trailing divider. If present, will override the divider setting in the components or `uiConfig`.",
           "type": "boolean"
@@ -766,9 +1040,14 @@
       ],
       "type": "object"
     },
+    "DropdownOptionPreset": {
+      "const": "countries",
+      "description": "Predefined option sets available to dropdown responses.",
+      "type": "string"
+    },
     "DropdownResponse": {
       "additionalProperties": false,
-      "description": "The DropdownResponse interface is used to define the properties of a dropdown response. DropdownResponses render as a select input with user specified options. ```json {   \"id\": \"q-color\",   \"prompt\": \"What is your favorite color?\",   \"location\": \"aboveStimulus\",   \"type\": \"dropdown\",   \"default\": \"Blue\",   \"placeholder\": \"Please choose your favorite color\",   \"options\": [\"Red\", \"Blue\"] } ```\n\nHere's an example of a multiselect dropdown with minimum and maximum selections:\n\n```json {   \"id\": \"q-multiselect-dropdown\",   \"prompt\": \"Select the fruits you like.\",   \"location\": \"aboveStimulus\",   \"type\": \"dropdown\",   \"default\": [\"Banana\", \"Orange\"],   \"placeholder\": \"Select your favorite fruits\",   \"options\": [\"Apple\", \"Banana\", \"Cherry\", \"Grape\", \"Orange\", \"Strawberry\", \"Watermelon\", \"Pineapple\"],   \"minSelections\": 2,   \"maxSelections\": 4 } ```",
+      "description": "The DropdownResponse interface is used to define the properties of a dropdown response. DropdownResponses render as a select input with user specified options. ```json {   \"id\": \"q-color\",   \"prompt\": \"What is your favorite color?\",   \"location\": \"aboveStimulus\",   \"type\": \"dropdown\",   \"default\": \"Blue\",   \"placeholder\": \"Please choose your favorite color\",   \"options\": [\"Red\", \"Blue\"] } ```\n\nHere's an example of a multiselect dropdown with minimum and maximum selections:\n\n```json {   \"id\": \"q-multiselect-dropdown\",   \"prompt\": \"Select the fruits you like.\",   \"location\": \"aboveStimulus\",   \"type\": \"dropdown\",   \"default\": [\"Banana\", \"Orange\"],   \"placeholder\": \"Select your favorite fruits\",   \"options\": [\"Apple\", \"Banana\", \"Cherry\", \"Grape\", \"Orange\", \"Strawberry\", \"Watermelon\", \"Pineapple\"],   \"minSelections\": 2,   \"maxSelections\": 4 } ```\n\nA dropdown can alternatively use a predefined option set: ```json {   \"id\": \"q-country\",   \"prompt\": \"Select your country.\",   \"type\": \"dropdown\",   \"options\": \"countries\" } ```",
       "properties": {
         "default": {
           "anyOf": [
@@ -783,6 +1062,11 @@
             }
           ],
           "description": "The default value of the response. Use a string for single-select dropdowns and a string array for multiselect dropdowns."
+        },
+        "delay": {
+          "description": "Delay in milliseconds before an element activates. Must be non-negative; defaults to 0 meaning the element is always active.",
+          "minimum": 0,
+          "type": "number"
         },
         "excludeFromRandomization": {
           "description": "Exclude response from randomization. If present, will override the `responseOrder` randomization setting in the components. Defaults to false.",
@@ -812,26 +1096,44 @@
           "description": "The minimum number of selections that are required. This will make the dropdown a multiselect dropdown.",
           "type": "number"
         },
-        "options": {
-          "description": "The options that are displayed in the dropdown.",
+        "onSubmit": {
+          "description": "Apply these actions to the final submitted answer, in declared order.",
           "items": {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/StringOption"
-              },
-              {
-                "type": "string"
-              }
-            ]
+            "$ref": "#/definitions/GlobalStoreAction"
           },
           "type": "array"
+        },
+        "options": {
+          "anyOf": [
+            {
+              "items": {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/StringOption"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              "type": "array"
+            },
+            {
+              "$ref": "#/definitions/DropdownOptionPreset"
+            }
+          ],
+          "description": "The options that are displayed in the dropdown, or a predefined option set."
         },
         "paramCapture": {
           "description": "Use to capture querystring parameters in answers such as participant_name. See the examples for how this is used, but prefer `uiConfig.urlParticipantIdParam` if you are capturing a participant ID.",
           "type": "string"
         },
+        "path": {
+          "description": "Path under `src/public/` to response code. Custom responses require a default React component. Any response code module may export `validate(value, values, response)` to return an error message, a boolean validity result, or null for valid input. It may separately export `score(value, values, response, expected?)` to return a boolean or a score from 0 to 1; null uses ordinary correct-answer matching. `expected` is the configured correct answer when correctness is checked.",
+          "type": "string"
+        },
         "placeholder": {
-          "description": "The placeholder text that is displayed in the input.",
+          "description": "The placeholder text displayed in the input. Defaults to `Select a country` when `options` is `countries`.",
           "type": "string"
         },
         "prompt": {
@@ -864,6 +1166,10 @@
         "type": {
           "const": "dropdown",
           "type": "string"
+        },
+        "visibleIf": {
+          "$ref": "#/definitions/ResponseVisibilityCondition",
+          "description": "Show this response only when another response in this component satisfies the condition."
         },
         "withDivider": {
           "description": "Renders the response with a trailing divider. If present, will override the divider setting in the components or `uiConfig`.",
@@ -916,12 +1222,572 @@
       ],
       "type": "object"
     },
+    "EqualityComparison": {
+      "enum": [
+        "equals",
+        "doesNotEqual"
+      ],
+      "type": "string"
+    },
+    "FactorBlock": {
+      "additionalProperties": false,
+      "description": "Materialize components for each condition selected from a factor.",
+      "properties": {
+        "components": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          ],
+          "description": "One or more base components materialized for every factor condition. Names may include factor parameter templates."
+        },
+        "conditional": {
+          "type": "boolean"
+        },
+        "factor": {
+          "$ref": "#/definitions/FactorOption",
+          "description": "Named factor or inline factor expression to materialize at this sequence location."
+        },
+        "id": {
+          "type": "string"
+        },
+        "interruptions": {
+          "items": {
+            "$ref": "#/definitions/InterruptionBlock"
+          },
+          "type": "array"
+        },
+        "order": {
+          "$ref": "#/definitions/ComponentOrder"
+        },
+        "skip": {
+          "$ref": "#/definitions/SkipConditions"
+        },
+        "type": {
+          "const": "factor",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "id",
+        "factor",
+        "components"
+      ],
+      "type": "object"
+    },
+    "FactorCombinationExpression": {
+      "additionalProperties": false,
+      "description": "Combine factors with a Cartesian product (`cross`) or pair corresponding levels (`zip`).",
+      "properties": {
+        "action": {
+          "enum": [
+            "cross",
+            "zip"
+          ],
+          "type": "string"
+        },
+        "as": {
+          "description": "Optional output parameter names, one for each input factor.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "factors": {
+          "items": {
+            "$ref": "#/definitions/FactorOption"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "action",
+        "factors"
+      ],
+      "type": "object"
+    },
+    "FactorConcatExpression": {
+      "additionalProperties": false,
+      "description": "Append the conditions from each input factor in order.",
+      "properties": {
+        "action": {
+          "const": "concat",
+          "type": "string"
+        },
+        "factors": {
+          "items": {
+            "$ref": "#/definitions/FactorOption"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "action",
+        "factors"
+      ],
+      "type": "object"
+    },
+    "FactorExpression": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/FactorCombinationExpression"
+        },
+        {
+          "$ref": "#/definitions/FactorConcatExpression"
+        },
+        {
+          "$ref": "#/definitions/FactorKeepExpression"
+        },
+        {
+          "$ref": "#/definitions/FactorRemoveExpression"
+        },
+        {
+          "$ref": "#/definitions/FactorSampleExpression"
+        },
+        {
+          "$ref": "#/definitions/FactorRepeatExpression"
+        }
+      ],
+      "description": "A recursively composable expression over named factors or nested expressions."
+    },
+    "FactorKeepExpression": {
+      "additionalProperties": false,
+      "description": "Retain the selected conditions from a factor.",
+      "properties": {
+        "action": {
+          "const": "keep",
+          "type": "string"
+        },
+        "condition": {
+          "$ref": "#/definitions/FactorObject",
+          "description": "Parameter values used to select matching conditions."
+        },
+        "factor": {
+          "$ref": "#/definitions/FactorOption",
+          "description": "Named factor or expression whose conditions are selected."
+        },
+        "items": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/definitions/FactorObject"
+              },
+              "type": "array"
+            },
+            {
+              "$ref": "#/definitions/FactorOption"
+            }
+          ],
+          "description": "Complete factor conditions, or a factor expression that resolves to them, used to select matching conditions."
+        }
+      },
+      "required": [
+        "action",
+        "factor"
+      ],
+      "type": "object"
+    },
+    "FactorObject": {
+      "additionalProperties": {
+        "$ref": "#/definitions/FactorObjectValue"
+      },
+      "description": "A condition whose properties are materialized together as component parameters. Object levels keep related values, such as a caption and its selected items, atomic.",
+      "type": "object"
+    },
+    "FactorObjectValue": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/FactorPrimitive"
+        },
+        {
+          "items": {
+            "$ref": "#/definitions/FactorPrimitive"
+          },
+          "type": "array"
+        }
+      ],
+      "description": "A parameter value stored in an object-valued factor level."
+    },
+    "FactorOption": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "$ref": "#/definitions/FactorExpression"
+        }
+      ],
+      "description": "A named factor reference or another inline factor expression."
+    },
+    "FactorPrimitive": {
+      "description": "A primitive value stored by a factor or used for between-subjects allocation.",
+      "type": [
+        "string",
+        "number",
+        "boolean"
+      ]
+    },
+    "FactorRemoveExpression": {
+      "additionalProperties": false,
+      "description": "Exclude the selected conditions from a factor.",
+      "properties": {
+        "action": {
+          "const": "remove",
+          "type": "string"
+        },
+        "condition": {
+          "$ref": "#/definitions/FactorObject",
+          "description": "Parameter values used to select matching conditions."
+        },
+        "factor": {
+          "$ref": "#/definitions/FactorOption",
+          "description": "Named factor or expression whose conditions are selected."
+        },
+        "items": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/definitions/FactorObject"
+              },
+              "type": "array"
+            },
+            {
+              "$ref": "#/definitions/FactorOption"
+            }
+          ],
+          "description": "Complete factor conditions, or a factor expression that resolves to them, used to select matching conditions."
+        }
+      },
+      "required": [
+        "action",
+        "factor"
+      ],
+      "type": "object"
+    },
+    "FactorRepeatExpression": {
+      "additionalProperties": false,
+      "description": "Repeat the concatenated input conditions a fixed number of times.",
+      "properties": {
+        "action": {
+          "const": "repeat",
+          "type": "string"
+        },
+        "factors": {
+          "items": {
+            "$ref": "#/definitions/FactorOption"
+          },
+          "type": "array"
+        },
+        "numRepeats": {
+          "description": "Number of times the concatenated condition sequence is repeated.",
+          "minimum": 1,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "action",
+        "factors",
+        "numRepeats"
+      ],
+      "type": "object"
+    },
+    "FactorSampleExpression": {
+      "additionalProperties": false,
+      "description": "Select random conditions from the input factors for each participant.",
+      "properties": {
+        "action": {
+          "const": "sample",
+          "type": "string"
+        },
+        "factors": {
+          "items": {
+            "$ref": "#/definitions/FactorOption"
+          },
+          "type": "array"
+        },
+        "numSamples": {
+          "description": "Number of conditions randomly selected for each participant.",
+          "minimum": 1,
+          "type": "integer"
+        },
+        "samplingStrategy": {
+          "description": "Whether selected conditions may repeat.",
+          "enum": [
+            "withoutReplacement",
+            "withReplacement"
+          ],
+          "type": "string"
+        }
+      },
+      "required": [
+        "action",
+        "factors",
+        "samplingStrategy",
+        "numSamples"
+      ],
+      "type": "object"
+    },
+    "GlobalStoreAction": {
+      "additionalProperties": false,
+      "properties": {
+        "operand": {
+          "$ref": "#/definitions/GlobalStoreOperand",
+          "description": "Omit to use the current answer directly. Not applicable to toggle."
+        },
+        "operation": {
+          "$ref": "#/definitions/GlobalStoreOperation"
+        },
+        "variable": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "variable",
+        "operation"
+      ],
+      "type": "object"
+    },
+    "GlobalStoreNumber": {
+      "description": "A numeric literal or an exact reference to a declared numeric store value.",
+      "type": [
+        "number",
+        "string"
+      ]
+    },
+    "GlobalStoreOperand": {
+      "anyOf": [
+        {
+          "additionalProperties": false,
+          "properties": {
+            "source": {
+              "const": "answer",
+              "description": "Defaults to the current response's submitted answer.",
+              "type": "string"
+            },
+            "transforms": {
+              "items": {
+                "$ref": "#/definitions/GlobalStoreOperandTransform"
+              },
+              "type": "array"
+            }
+          },
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "source": {
+              "const": "literal",
+              "type": "string"
+            },
+            "transforms": {
+              "items": {
+                "$ref": "#/definitions/GlobalStoreOperandTransform"
+              },
+              "type": "array"
+            },
+            "value": {
+              "$ref": "#/definitions/GlobalStoreValue"
+            }
+          },
+          "required": [
+            "source",
+            "value"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "GlobalStoreOperandTransform": {
+      "anyOf": [
+        {
+          "additionalProperties": false,
+          "properties": {
+            "operation": {
+              "enum": [
+                "add",
+                "subtract",
+                "multiply",
+                "divide",
+                "subtractFrom",
+                "divideInto"
+              ],
+              "type": "string"
+            },
+            "value": {
+              "type": "number"
+            }
+          },
+          "required": [
+            "operation",
+            "value"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "operation": {
+              "const": "not",
+              "type": "string"
+            }
+          },
+          "required": [
+            "operation"
+          ],
+          "type": "object"
+        }
+      ],
+      "description": "Transform the operand before applying the action; reverse operations use value op operand."
+    },
+    "GlobalStoreOperation": {
+      "enum": [
+        "set",
+        "add",
+        "subtract",
+        "multiply",
+        "divide",
+        "append",
+        "prepend",
+        "and",
+        "or",
+        "toggle"
+      ],
+      "type": "string"
+    },
+    "GlobalStoreValue": {
+      "description": "Primitive values in a participant's declared global store. Types are inferred from initialValue.",
+      "type": [
+        "string",
+        "number",
+        "boolean"
+      ]
+    },
+    "GlobalVariableCondition": {
+      "anyOf": [
+        {
+          "additionalProperties": false,
+          "properties": {
+            "check": {
+              "const": "globalVariable",
+              "type": "string"
+            },
+            "comparison": {
+              "$ref": "#/definitions/EqualityComparison"
+            },
+            "to": {
+              "type": "string"
+            },
+            "value": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "boolean"
+                },
+                {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                }
+              ]
+            },
+            "variable": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "check",
+            "comparison",
+            "to",
+            "value",
+            "variable"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "check": {
+              "const": "globalVariable",
+              "type": "string"
+            },
+            "comparison": {
+              "$ref": "#/definitions/StringComparison"
+            },
+            "to": {
+              "type": "string"
+            },
+            "value": {
+              "type": "string"
+            },
+            "variable": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "check",
+            "comparison",
+            "to",
+            "value",
+            "variable"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "check": {
+              "const": "globalVariable",
+              "type": "string"
+            },
+            "comparison": {
+              "$ref": "#/definitions/NumericComparison"
+            },
+            "to": {
+              "type": "string"
+            },
+            "value": {
+              "type": "number"
+            },
+            "variable": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "check",
+            "comparison",
+            "to",
+            "value",
+            "variable"
+          ],
+          "type": "object"
+        }
+      ],
+      "description": "The SkipConditions interface is used to define skip conditions. This is used to skip to a different component/block based on the response to a component or based on the number of correct/incorrect responses in a block. Skip conditions work recursively: if you have a nested block, the parent blocks' skip conditions will be considered when computing the skip logic.\n\nSkip conditions are evaluated in the order they are defined in the array. If a condition is met, the participant will be redirected to the component or block specified in the `\"to\"` property. If no conditions are met, the participant will continue to the next component in the sequence.\n\nSkip conditions allow you to jump to a different component or block. If you intend to skip to a block, you should specify a block id in the sequence. If you intend to skip to a component, you should specify a component id. Skipping backwards is not supported. Skipping to a repeated component will skip to the first instance of the component after the component that triggered the skip.\n\nPlease see the interface definitions for more specific information on the different types of skip conditions."
+    },
     "ImageComponent": {
       "additionalProperties": false,
       "description": "The ImageComponent interface is used to define the properties of an image component. This component is used to render an image with optional styling.\n\nFor example, to render an image with a path of `path/to/study/assets/image.jpg` and a max width of 50%, you would use the following snippet: ```json {   \"type\": \"image\",   \"path\": \"<study-name>/assets/image.jpg\",   \"style\": {     \"maxWidth\": \"50%\"   } } ```",
       "properties": {
         "allowFailedTraining": {
-          "description": "Controls whether the component should allow failed training. If present, will override the allow failed training setting in the uiConfig.",
+          "description": "Allow continuing with incorrect answers after attempts are exhausted. Overrides uiConfig.allowFailedTraining. Defaults to true.",
+          "type": "boolean"
+        },
+        "captureGamepad": {
+          "description": "Whether or not to capture game controller input into windowEvents. If present, will override the capture gamepad setting in the uiConfig.",
           "type": "boolean"
         },
         "clickToRecord": {
@@ -946,6 +1812,10 @@
         "helpTextPath": {
           "description": "The path to the help text file. This is displayed when a participant clicks help. Markdown is supported. If present, will override the help text path set in the uiConfig.",
           "type": "string"
+        },
+        "hideCheckAnswerButton": {
+          "description": "Hide the Check Answer button and grade answers on Next instead. Defaults to false. Feedback must be enabled by provideFeedback or answer-level feedback.",
+          "type": "boolean"
         },
         "instruction": {
           "description": "The instruction of the component. This is used to identify and provide additional information for the component in the admin panel.",
@@ -996,6 +1866,11 @@
           "description": "Whether enter key should move to the next question. If present, will override the enter key setting in the uiConfig.",
           "type": "boolean"
         },
+        "parameters": {
+          "additionalProperties": {},
+          "description": "The parameters passed to the component. These can be used for variable substitution: in a react-component, they're available as the `parameters` prop; in this component's instruction field and its responses' prompt, secondaryText, and infoText fields, they're substituted as Handlebars variables (`{{variable}}`). The same substitution also applies inside markdown files, and inside a website component's HTML file when its `templated` field is true.",
+          "type": "object"
+        },
         "path": {
           "description": "The path to the image. This could be a relative path from the public folder or a url to an external image.",
           "type": "string"
@@ -1009,7 +1884,7 @@
           "type": "string"
         },
         "provideFeedback": {
-          "description": "Controls whether the component should provide feedback to the participant, such as in a training trial. If present, will override the provide feedback setting in the uiConfig.",
+          "description": "Enable answer checking and feedback. Explicit false disables it even with answer-level feedback. When omitted, answer-level feedback enables it before falling back to uiConfig.provideFeedback.",
           "type": "boolean"
         },
         "recordAudio": {
@@ -1018,6 +1893,10 @@
         },
         "recordScreen": {
           "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig. If true, the uiConfig must have recordScreen set to true or the screen will not be captured. It's also required that the library component, $screen-recording.components.screenRecordingPermission, be included in the study at some point before this component to ensure permissions are granted and screen capture has started.",
+          "type": "boolean"
+        },
+        "recordWebcam": {
+          "description": "Whether or not we want to utilize webcam recording. If present, will override the record webcam setting in the uiConfig. Studies using webcam without screen capture should include the webcam permission component before this component. Studies combining webcam with screen capture should use the screen recording permission component.",
           "type": "boolean"
         },
         "response": {
@@ -1189,15 +2068,27 @@
       "description": "An InheritedComponent is a component that inherits properties from a baseComponent. This is used to avoid repeating properties in components. This also means that components in the baseComponents object can be partially defined, while components in the components object can inherit from them and must be fully defined and include all properties (after potentially merging with a base component).",
       "properties": {
         "allowFailedTraining": {
-          "description": "Controls whether the component should allow failed training. If present, will override the allow failed training setting in the uiConfig.",
+          "description": "Allow continuing with incorrect answers after attempts are exhausted. Overrides uiConfig.allowFailedTraining. Defaults to true.",
           "type": "boolean"
         },
         "baseComponent": {
           "type": "string"
         },
+        "captureGamepad": {
+          "description": "Whether or not to capture game controller input into windowEvents. If present, will override the capture gamepad setting in the uiConfig.",
+          "type": "boolean"
+        },
         "clickToRecord": {
           "description": "Enables a click-and-hold microphone button instead of continuous recording. When true, audio is muted by default and is recorded only while the button is held. When false, recording starts immediately and can be paused/resumed via the microphone button. Defaults to false.",
           "type": "boolean"
+        },
+        "colorMode": {
+          "description": "The iframe's color scheme. Defaults to the study's color mode. The embedded page must support color schemes.",
+          "enum": [
+            "light",
+            "dark"
+          ],
+          "type": "string"
         },
         "config": {
           "description": "The vega or vega-lite configuration.",
@@ -1225,6 +2116,10 @@
         "helpTextPath": {
           "description": "The path to the help text file. This is displayed when a participant clicks help. Markdown is supported. If present, will override the help text path set in the uiConfig.",
           "type": "string"
+        },
+        "hideCheckAnswerButton": {
+          "description": "Hide the Check Answer button and grade answers on Next instead. Defaults to false. Feedback must be enabled by provideFeedback or answer-level feedback.",
+          "type": "boolean"
         },
         "instruction": {
           "description": "The instruction of the component. This is used to identify and provide additional information for the component in the admin panel.",
@@ -1276,19 +2171,9 @@
           "type": "boolean"
         },
         "parameters": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "description": "The parameters that are passed to the react component. These can be used within your react component to render different things.",
-              "type": "object"
-            },
-            {
-              "additionalProperties": {},
-              "description": "The parameters that are passed to the website (iframe). These can be used within your website to render different things.",
-              "type": "object"
-            }
-          ],
-          "description": "The parameters that are passed to the react component. These can be used within your react component to render different things."
+          "additionalProperties": {},
+          "description": "The parameters passed to the component. These can be used for variable substitution: in a react-component, they're available as the `parameters` prop; in this component's instruction field and its responses' prompt, secondaryText, and infoText fields, they're substituted as Handlebars variables (`{{variable}}`). The same substitution also applies inside markdown files, and inside a website component's HTML file when its `templated` field is true.",
+          "type": "object"
         },
         "path": {
           "anyOf": [
@@ -1328,7 +2213,7 @@
           "type": "string"
         },
         "provideFeedback": {
-          "description": "Controls whether the component should provide feedback to the participant, such as in a training trial. If present, will override the provide feedback setting in the uiConfig.",
+          "description": "Enable answer checking and feedback. Explicit false disables it even with answer-level feedback. When omitted, answer-level feedback enables it before falling back to uiConfig.provideFeedback.",
           "type": "boolean"
         },
         "recordAudio": {
@@ -1337,6 +2222,10 @@
         },
         "recordScreen": {
           "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig. If true, the uiConfig must have recordScreen set to true or the screen will not be captured. It's also required that the library component, $screen-recording.components.screenRecordingPermission, be included in the study at some point before this component to ensure permissions are granted and screen capture has started.",
+          "type": "boolean"
+        },
+        "recordWebcam": {
+          "description": "Whether or not we want to utilize webcam recording. If present, will override the record webcam setting in the uiConfig. Studies using webcam without screen capture should include the webcam permission component before this component. Studies combining webcam with screen capture should use the screen recording permission component.",
           "type": "boolean"
         },
         "response": {
@@ -1377,6 +2266,10 @@
         "stylesheetPath": {
           "description": "The path to the external stylesheet file.",
           "type": "string"
+        },
+        "templated": {
+          "description": "Whether the HTML file should be compiled as a Handlebars template before it is rendered, so that `{{parameter}}` placeholders in the file are substituted. Defaults to false. Only applies to HTML files served from the study's public folder; it is ignored for external websites, which cannot be fetched and rewritten.",
+          "type": "boolean"
         },
         "trainingAttempts": {
           "description": "The number of training attempts allowed for the component. If present, will override the training attempts setting in the uiConfig.",
@@ -1466,7 +2359,7 @@
     },
     "LibraryConfig": {
       "additionalProperties": false,
-      "description": "LibraryConfig is used to define the properties of a library configuration. This is a JSON object with three main components: baseComponents, components, and the sequences. Libraries are useful for defining components and sequences of these components that are to be reused across multiple studies. We (the reVISit team) provide several libraries that can be used in your study configurations. Check the public/libraries folder in the reVISit-studies repository for available libraries. We also plan to accept community contributions for libraries. If you have a library that you think would be useful for others, please reach out to us. We would love to include it in our repository.\n\nBelow is the general template that should be followed when constructing a Library configuration file.\n\n```json {  \"$schema\": \"https://raw.githubusercontent.com/revisit-studies/study/v2.4.4/src/parser/LibraryConfigSchema.json\",  \"baseComponents\": {    // BaseComponents here are defined exactly as is in the StudyConfig  },  \"components\": {    // Components here are defined exactly as is in the StudyConfig  },  \"sequences\": {    // Sequences here are defined as \"key\": \"value\" pairs where the key is the name of the sequence and the value is a ComponentBlock, just like in the StudyConfig  } } ```",
+      "description": "LibraryConfig is used to define the properties of a library configuration. This is a JSON object with three main components: baseComponents, components, and the sequences. Libraries are useful for defining components and sequences of these components that are to be reused across multiple studies. We (the reVISit team) provide several libraries that can be used in your study configurations. Check the public/libraries folder in the reVISit-studies repository for available libraries. We also plan to accept community contributions for libraries. If you have a library that you think would be useful for others, please reach out to us. We would love to include it in our repository.\n\nBelow is the general template that should be followed when constructing a Library configuration file.\n\n```json {  \"$schema\": \"https://raw.githubusercontent.com/revisit-studies/study/v2.4.3/src/parser/LibraryConfigSchema.json\",  \"baseComponents\": {    // BaseComponents here are defined exactly as is in the StudyConfig  },  \"components\": {    // Components here are defined exactly as is in the StudyConfig  },  \"sequences\": {    // Sequences here are defined as \"key\": \"value\" pairs where the key is the name of the sequence and the value is a ComponentBlock, just like in the StudyConfig  } } ```",
       "properties": {
         "$schema": {
           "description": "A required json schema property. This should point to the github link for the version of the schema you would like. The `$schema` line is used to verify the schema. If you're using VSCode (or other similar IDEs), including this line will allow for autocomplete and helpful suggestions when writing the study configuration. See examples for more information",
@@ -1478,7 +2371,7 @@
         },
         "baseComponents": {
           "$ref": "#/definitions/BaseComponents",
-          "description": "The base components that are used in the study. These components can be used to template other components. See [BaseComponents](../../type-aliases/BaseComponents) for more information."
+          "description": "The base components that are used in the study. These components can be used to template other components. See  {@link  BaseComponents }  for more information."
         },
         "components": {
           "additionalProperties": {
@@ -1518,9 +2411,11 @@
               },
               {
                 "$ref": "#/definitions/DynamicBlock"
+              },
+              {
+                "$ref": "#/definitions/FactorBlock"
               }
-            ],
-            "description": "The order of the components in the study. This might include some randomness."
+            ]
           },
           "description": "The order of the components in the study. This might include some randomness.",
           "type": "object"
@@ -1544,6 +2439,11 @@
             "string",
             "number"
           ]
+        },
+        "delay": {
+          "description": "Delay in milliseconds before an element activates. Must be non-negative; defaults to 0 meaning the element is always active.",
+          "minimum": 0,
+          "type": "number"
         },
         "excludeFromRandomization": {
           "description": "Exclude response from randomization. If present, will override the `responseOrder` randomization setting in the components. Defaults to false.",
@@ -1582,8 +2482,19 @@
           "description": "The number of options to render.",
           "type": "number"
         },
+        "onSubmit": {
+          "description": "Apply these actions to the final submitted answer, in declared order.",
+          "items": {
+            "$ref": "#/definitions/GlobalStoreAction"
+          },
+          "type": "array"
+        },
         "paramCapture": {
           "description": "Use to capture querystring parameters in answers such as participant_name. See the examples for how this is used, but prefer `uiConfig.urlParticipantIdParam` if you are capturing a participant ID.",
+          "type": "string"
+        },
+        "path": {
+          "description": "Path under `src/public/` to response code. Custom responses require a default React component. Any response code module may export `validate(value, values, response)` to return an error message, a boolean validity result, or null for valid input. It may separately export `score(value, values, response, expected?)` to return a boolean or a score from 0 to 1; null uses ordinary correct-answer matching. `expected` is the configured correct answer when correctness is checked.",
           "type": "string"
         },
         "prompt": {
@@ -1629,6 +2540,10 @@
           "const": "likert",
           "type": "string"
         },
+        "visibleIf": {
+          "$ref": "#/definitions/ResponseVisibilityCondition",
+          "description": "Show this response only when another response in this component satisfies the condition."
+        },
         "withDivider": {
           "description": "Renders the response with a trailing divider. If present, will override the divider setting in the components or `uiConfig`.",
           "type": "boolean"
@@ -1648,11 +2563,16 @@
     },
     "LongTextResponse": {
       "additionalProperties": false,
-      "description": "The LongTextResponse interface is used to define the properties of a long text response. LongTextResponses render as a text area that accepts any text and can optionally have a placeholder. ```json {   \"id\": \"q-name\",   \"prompt\": \"What is your first name?\",   \"location\": \"aboveStimulus\",   \"type\": \"longText\",   \"default\": \"I enjoyed this study because...\",   \"placeholder\": \"Please enter your first name\" } ```",
+      "description": "The LongTextResponse interface is used to define the properties of a long text response. LongTextResponses render as a text area that accepts any text and can optionally have a placeholder. ```json {   \"id\": \"q-name\",   \"prompt\": \"What is your first name?\",   \"location\": \"aboveStimulus\",   \"type\": \"longText\",   \"default\": \"I enjoyed this study because...\",   \"placeholder\": \"Please enter your comments\",   \"minCharLength\": 20,   \"maxCharLength\": 500,   \"minWordLength\": 4,   \"maxWordLength\": 100,   \"textValidation\": [     {       \"type\": \"doesNotContain\",       \"value\": \"invalid\"     }   ] } ```",
       "properties": {
         "default": {
           "description": "The default value of the response. Specify a string such as `\"I enjoyed this study because...\"`.",
           "type": "string"
+        },
+        "delay": {
+          "description": "Delay in milliseconds before an element activates. Must be non-negative; defaults to 0 meaning the element is always active.",
+          "minimum": 0,
+          "type": "number"
         },
         "excludeFromRandomization": {
           "description": "Exclude response from randomization. If present, will override the `responseOrder` randomization setting in the components. Defaults to false.",
@@ -1674,8 +2594,35 @@
           "$ref": "#/definitions/ConfigResponseBlockLocation",
           "description": "Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus`"
         },
+        "maxCharLength": {
+          "description": "The maximum number of characters accepted in the response. Must be greater than 0 when the response is required.",
+          "type": "number"
+        },
+        "maxWordLength": {
+          "description": "The maximum number of whitespace-separated words accepted in the response. Must be greater than 0 when the response is required.",
+          "type": "number"
+        },
+        "minCharLength": {
+          "description": "The minimum number of characters accepted in the response.",
+          "type": "number"
+        },
+        "minWordLength": {
+          "description": "The minimum number of whitespace-separated words accepted in the response.",
+          "type": "number"
+        },
+        "onSubmit": {
+          "description": "Apply these actions to the final submitted answer, in declared order.",
+          "items": {
+            "$ref": "#/definitions/GlobalStoreAction"
+          },
+          "type": "array"
+        },
         "paramCapture": {
           "description": "Use to capture querystring parameters in answers such as participant_name. See the examples for how this is used, but prefer `uiConfig.urlParticipantIdParam` if you are capturing a participant ID.",
+          "type": "string"
+        },
+        "path": {
+          "description": "Path under `src/public/` to response code. Custom responses require a default React component. Any response code module may export `validate(value, values, response)` to return an error message, a boolean validity result, or null for valid input. It may separately export `score(value, values, response, expected?)` to return a boolean or a score from 0 to 1; null uses ordinary correct-answer matching. `expected` is the configured correct answer when correctness is checked.",
           "type": "string"
         },
         "placeholder": {
@@ -1709,9 +2656,20 @@
           "description": "The path to the external stylesheet file.",
           "type": "string"
         },
+        "textValidation": {
+          "description": "Validation rules applied to the response value in array order.",
+          "items": {
+            "$ref": "#/definitions/TextValidationRule"
+          },
+          "type": "array"
+        },
         "type": {
           "const": "longText",
           "type": "string"
+        },
+        "visibleIf": {
+          "$ref": "#/definitions/ResponseVisibilityCondition",
+          "description": "Show this response only when another response in this component satisfies the condition."
         },
         "withDivider": {
           "description": "Renders the response with a trailing divider. If present, will override the divider setting in the components or `uiConfig`.",
@@ -1734,7 +2692,11 @@
       "description": "The MarkdownComponent interface is used to define the properties of a markdown component. The components can be used to render many different things, such as consent forms, instructions, and debriefs. Additionally, you can use the markdown component to render images, videos, and other media, with supporting text. Markdown components can have responses (e.g. in a consent form), or no responses (e.g. in a help text file). Here's an example with no responses for a simple help text file:\n\n```json {   \"type\": \"markdown\",   \"path\": \"<study-name>/assets/help.md\",   \"response\": [] } ```",
       "properties": {
         "allowFailedTraining": {
-          "description": "Controls whether the component should allow failed training. If present, will override the allow failed training setting in the uiConfig.",
+          "description": "Allow continuing with incorrect answers after attempts are exhausted. Overrides uiConfig.allowFailedTraining. Defaults to true.",
+          "type": "boolean"
+        },
+        "captureGamepad": {
+          "description": "Whether or not to capture game controller input into windowEvents. If present, will override the capture gamepad setting in the uiConfig.",
           "type": "boolean"
         },
         "clickToRecord": {
@@ -1759,6 +2721,10 @@
         "helpTextPath": {
           "description": "The path to the help text file. This is displayed when a participant clicks help. Markdown is supported. If present, will override the help text path set in the uiConfig.",
           "type": "string"
+        },
+        "hideCheckAnswerButton": {
+          "description": "Hide the Check Answer button and grade answers on Next instead. Defaults to false. Feedback must be enabled by provideFeedback or answer-level feedback.",
+          "type": "boolean"
         },
         "instruction": {
           "description": "The instruction of the component. This is used to identify and provide additional information for the component in the admin panel.",
@@ -1809,6 +2775,11 @@
           "description": "Whether enter key should move to the next question. If present, will override the enter key setting in the uiConfig.",
           "type": "boolean"
         },
+        "parameters": {
+          "additionalProperties": {},
+          "description": "The parameters passed to the component. These can be used for variable substitution: in a react-component, they're available as the `parameters` prop; in this component's instruction field and its responses' prompt, secondaryText, and infoText fields, they're substituted as Handlebars variables (`{{variable}}`). The same substitution also applies inside markdown files, and inside a website component's HTML file when its `templated` field is true.",
+          "type": "object"
+        },
         "path": {
           "description": "The path to the markdown file. This should be a relative path from the public folder.",
           "type": "string"
@@ -1822,7 +2793,7 @@
           "type": "string"
         },
         "provideFeedback": {
-          "description": "Controls whether the component should provide feedback to the participant, such as in a training trial. If present, will override the provide feedback setting in the uiConfig.",
+          "description": "Enable answer checking and feedback. Explicit false disables it even with answer-level feedback. When omitted, answer-level feedback enables it before falling back to uiConfig.provideFeedback.",
           "type": "boolean"
         },
         "recordAudio": {
@@ -1831,6 +2802,10 @@
         },
         "recordScreen": {
           "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig. If true, the uiConfig must have recordScreen set to true or the screen will not be captured. It's also required that the library component, $screen-recording.components.screenRecordingPermission, be included in the study at some point before this component to ensure permissions are granted and screen capture has started.",
+          "type": "boolean"
+        },
+        "recordWebcam": {
+          "description": "Whether or not we want to utilize webcam recording. If present, will override the record webcam setting in the uiConfig. Studies using webcam without screen capture should include the webcam permission component before this component. Studies combining webcam with screen capture should use the screen recording permission component.",
           "type": "boolean"
         },
         "response": {
@@ -1948,6 +2923,11 @@
           "description": "The default value of the response by question key. Provide an object where each key is a question value and each value is an array of selected answer option values.",
           "type": "object"
         },
+        "delay": {
+          "description": "Delay in milliseconds before an element activates. Must be non-negative; defaults to 0 meaning the element is always active.",
+          "minimum": 0,
+          "type": "number"
+        },
         "excludeFromRandomization": {
           "description": "Exclude response from randomization. If present, will override the `responseOrder` randomization setting in the components. Defaults to false.",
           "type": "boolean"
@@ -1968,8 +2948,27 @@
           "$ref": "#/definitions/ConfigResponseBlockLocation",
           "description": "Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus`"
         },
+        "max": {
+          "description": "The maximum amount of answers given per row for the matrix.",
+          "type": "number"
+        },
+        "min": {
+          "description": "The minimum amount of answers given per row for the matrix.",
+          "type": "number"
+        },
+        "onSubmit": {
+          "description": "Apply these actions to the final submitted answer, in declared order.",
+          "items": {
+            "$ref": "#/definitions/GlobalStoreAction"
+          },
+          "type": "array"
+        },
         "paramCapture": {
           "description": "Use to capture querystring parameters in answers such as participant_name. See the examples for how this is used, but prefer `uiConfig.urlParticipantIdParam` if you are capturing a participant ID.",
+          "type": "string"
+        },
+        "path": {
+          "description": "Path under `src/public/` to response code. Custom responses require a default React component. Any response code module may export `validate(value, values, response)` to return an error message, a boolean validity result, or null for valid input. It may separately export `score(value, values, response, expected?)` to return a boolean or a score from 0 to 1; null uses ordinary correct-answer matching. `expected` is the configured correct answer when correctness is checked.",
           "type": "string"
         },
         "prompt": {
@@ -2024,6 +3023,10 @@
         "type": {
           "const": "matrix-checkbox",
           "type": "string"
+        },
+        "visibleIf": {
+          "$ref": "#/definitions/ResponseVisibilityCondition",
+          "description": "Show this response only when another response in this component satisfies the condition."
         },
         "withDivider": {
           "description": "Renders the response with a trailing divider. If present, will override the divider setting in the components or `uiConfig`.",
@@ -2118,6 +3121,11 @@
           "description": "The default value of the response by question key. Provide an object where each key is a question value and each value is one answer option value.",
           "type": "object"
         },
+        "delay": {
+          "description": "Delay in milliseconds before an element activates. Must be non-negative; defaults to 0 meaning the element is always active.",
+          "minimum": 0,
+          "type": "number"
+        },
         "excludeFromRandomization": {
           "description": "Exclude response from randomization. If present, will override the `responseOrder` randomization setting in the components. Defaults to false.",
           "type": "boolean"
@@ -2138,8 +3146,19 @@
           "$ref": "#/definitions/ConfigResponseBlockLocation",
           "description": "Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus`"
         },
+        "onSubmit": {
+          "description": "Apply these actions to the final submitted answer, in declared order.",
+          "items": {
+            "$ref": "#/definitions/GlobalStoreAction"
+          },
+          "type": "array"
+        },
         "paramCapture": {
           "description": "Use to capture querystring parameters in answers such as participant_name. See the examples for how this is used, but prefer `uiConfig.urlParticipantIdParam` if you are capturing a participant ID.",
+          "type": "string"
+        },
+        "path": {
+          "description": "Path under `src/public/` to response code. Custom responses require a default React component. Any response code module may export `validate(value, values, response)` to return an error message, a boolean validity result, or null for valid input. It may separately export `score(value, values, response, expected?)` to return a boolean or a score from 0 to 1; null uses ordinary correct-answer matching. `expected` is the configured correct answer when correctness is checked.",
           "type": "string"
         },
         "prompt": {
@@ -2194,6 +3213,10 @@
         "type": {
           "const": "matrix-radio",
           "type": "string"
+        },
+        "visibleIf": {
+          "$ref": "#/definitions/ResponseVisibilityCondition",
+          "description": "Show this response only when another response in this component satisfies the condition."
         },
         "withDivider": {
           "description": "Renders the response with a trailing divider. If present, will override the divider setting in the components or `uiConfig`.",
@@ -2250,12 +3273,26 @@
       ],
       "type": "object"
     },
+    "NumericComparison": {
+      "enum": [
+        "lessThan",
+        "lessThanOrEqual",
+        "greaterThan",
+        "greaterThanOrEqual"
+      ],
+      "type": "string"
+    },
     "NumericalResponse": {
       "additionalProperties": false,
       "description": "The NumericalResponse interface is used to define the properties of a numerical response. NumericalResponses render as a text input that only accepts numbers, and can optionally have a min and max value, or a placeholder. ```json {   \"id\": \"q-numerical\",   \"prompt\": \"Numerical example\",   \"location\": \"aboveStimulus\",   \"type\": \"numerical\",   \"default\": 25,   \"placeholder\": \"Enter your age, range from 0 - 120\",   \"max\": 120,   \"min\": 0 } ```",
       "properties": {
         "default": {
           "description": "The default value of the response. Specify a numeric value such as `25` or `3.14`.",
+          "type": "number"
+        },
+        "delay": {
+          "description": "Delay in milliseconds before an element activates. Must be non-negative; defaults to 0 meaning the element is always active.",
+          "minimum": 0,
           "type": "number"
         },
         "excludeFromRandomization": {
@@ -2279,19 +3316,30 @@
           "description": "Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus`"
         },
         "max": {
-          "description": "The maximum value that is accepted in the input.",
-          "type": "number"
+          "$ref": "#/definitions/GlobalStoreNumber",
+          "description": "The maximum value that is accepted in the input."
         },
         "min": {
-          "description": "The minimum value that is accepted in the input.",
-          "type": "number"
+          "$ref": "#/definitions/GlobalStoreNumber",
+          "description": "The minimum value that is accepted in the input."
+        },
+        "onSubmit": {
+          "description": "Apply these actions to the final submitted answer, in declared order.",
+          "items": {
+            "$ref": "#/definitions/GlobalStoreAction"
+          },
+          "type": "array"
         },
         "paramCapture": {
           "description": "Use to capture querystring parameters in answers such as participant_name. See the examples for how this is used, but prefer `uiConfig.urlParticipantIdParam` if you are capturing a participant ID.",
           "type": "string"
         },
+        "path": {
+          "description": "Path under `src/public/` to response code. Custom responses require a default React component. Any response code module may export `validate(value, values, response)` to return an error message, a boolean validity result, or null for valid input. It may separately export `score(value, values, response, expected?)` to return a boolean or a score from 0 to 1; null uses ordinary correct-answer matching. `expected` is the configured correct answer when correctness is checked.",
+          "type": "string"
+        },
         "placeholder": {
-          "description": "The placeholder text that is displayed in the input.",
+          "description": "The placeholder text displayed in the input.",
           "type": "string"
         },
         "prompt": {
@@ -2313,6 +3361,14 @@
           "description": "The secondary text that is displayed to the participant under the prompt. This does not accept markdown.",
           "type": "string"
         },
+        "strictMax": {
+          "$ref": "#/definitions/GlobalStoreNumber",
+          "description": "Only values below this maximum value are accepted in the input."
+        },
+        "strictMin": {
+          "$ref": "#/definitions/GlobalStoreNumber",
+          "description": "Only values above this minimum value are accepted in the input."
+        },
         "style": {
           "$ref": "#/definitions/Styles",
           "description": "You can set styles here, using React CSSProperties, for example: `{\"width\": 100}` or `{\"width\": \"50%\"}`"
@@ -2324,6 +3380,10 @@
         "type": {
           "const": "numerical",
           "type": "string"
+        },
+        "visibleIf": {
+          "$ref": "#/definitions/ResponseVisibilityCondition",
+          "description": "Show this response only when another response in this component satisfies the condition."
         },
         "withDivider": {
           "description": "Renders the response with a trailing divider. If present, will override the divider setting in the components or `uiConfig`.",
@@ -2346,7 +3406,11 @@
       "description": "A QuestionnaireComponent is used to render simple questions that require a response. The main use case of this component type is to ask participants questions when you don't need to render a stimulus. Please note, that even though we're not using a stimulus, the responses still require a `location`. For example this could be used to collect demographic information from a participant using the following snippet:\n\n```json {   \"type\": \"questionnaire\",   \"response\": [     {       \"id\": \"gender\",       \"prompt\": \"Gender:\",       \"location\": \"belowStimulus\",       \"type\": \"checkbox\",       \"options\": [\"Man\", \"Woman\", \"Genderqueer\", \"Third-gender\", ...]     }   ] } ```",
       "properties": {
         "allowFailedTraining": {
-          "description": "Controls whether the component should allow failed training. If present, will override the allow failed training setting in the uiConfig.",
+          "description": "Allow continuing with incorrect answers after attempts are exhausted. Overrides uiConfig.allowFailedTraining. Defaults to true.",
+          "type": "boolean"
+        },
+        "captureGamepad": {
+          "description": "Whether or not to capture game controller input into windowEvents. If present, will override the capture gamepad setting in the uiConfig.",
           "type": "boolean"
         },
         "clickToRecord": {
@@ -2371,6 +3435,10 @@
         "helpTextPath": {
           "description": "The path to the help text file. This is displayed when a participant clicks help. Markdown is supported. If present, will override the help text path set in the uiConfig.",
           "type": "string"
+        },
+        "hideCheckAnswerButton": {
+          "description": "Hide the Check Answer button and grade answers on Next instead. Defaults to false. Feedback must be enabled by provideFeedback or answer-level feedback.",
+          "type": "boolean"
         },
         "instruction": {
           "description": "The instruction of the component. This is used to identify and provide additional information for the component in the admin panel.",
@@ -2421,6 +3489,11 @@
           "description": "Whether enter key should move to the next question. If present, will override the enter key setting in the uiConfig.",
           "type": "boolean"
         },
+        "parameters": {
+          "additionalProperties": {},
+          "description": "The parameters passed to the component. These can be used for variable substitution: in a react-component, they're available as the `parameters` prop; in this component's instruction field and its responses' prompt, secondaryText, and infoText fields, they're substituted as Handlebars variables (`{{variable}}`). The same substitution also applies inside markdown files, and inside a website component's HTML file when its `templated` field is true.",
+          "type": "object"
+        },
         "previousButton": {
           "description": "Whether to show the previous button. If present, will override the previous button setting in the uiConfig.",
           "type": "boolean"
@@ -2430,7 +3503,7 @@
           "type": "string"
         },
         "provideFeedback": {
-          "description": "Controls whether the component should provide feedback to the participant, such as in a training trial. If present, will override the provide feedback setting in the uiConfig.",
+          "description": "Enable answer checking and feedback. Explicit false disables it even with answer-level feedback. When omitted, answer-level feedback enables it before falling back to uiConfig.provideFeedback.",
           "type": "boolean"
         },
         "recordAudio": {
@@ -2439,6 +3512,10 @@
         },
         "recordScreen": {
           "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig. If true, the uiConfig must have recordScreen set to true or the screen will not be captured. It's also required that the library component, $screen-recording.components.screenRecordingPermission, be included in the study at some point before this component to ensure permissions are granted and screen capture has started.",
+          "type": "boolean"
+        },
+        "recordWebcam": {
+          "description": "Whether or not we want to utilize webcam recording. If present, will override the record webcam setting in the uiConfig. Studies using webcam without screen capture should include the webcam permission component before this component. Studies combining webcam with screen capture should use the screen recording permission component.",
           "type": "boolean"
         },
         "response": {
@@ -2515,6 +3592,11 @@
           "description": "The default value of the response. Specify one option value as a string.",
           "type": "string"
         },
+        "delay": {
+          "description": "Delay in milliseconds before an element activates. Must be non-negative; defaults to 0 meaning the element is always active.",
+          "minimum": 0,
+          "type": "number"
+        },
         "excludeFromRandomization": {
           "description": "Exclude response from randomization. If present, will override the `responseOrder` randomization setting in the components. Defaults to false.",
           "type": "boolean"
@@ -2552,6 +3634,13 @@
           "$ref": "#/definitions/ConfigResponseBlockLocation",
           "description": "Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus`"
         },
+        "onSubmit": {
+          "description": "Apply these actions to the final submitted answer, in declared order.",
+          "items": {
+            "$ref": "#/definitions/GlobalStoreAction"
+          },
+          "type": "array"
+        },
         "optionOrder": {
           "description": "The order in which the radio buttons are displayed. Defaults to fixed.",
           "enum": [
@@ -2576,6 +3665,10 @@
         },
         "paramCapture": {
           "description": "Use to capture querystring parameters in answers such as participant_name. See the examples for how this is used, but prefer `uiConfig.urlParticipantIdParam` if you are capturing a participant ID.",
+          "type": "string"
+        },
+        "path": {
+          "description": "Path under `src/public/` to response code. Custom responses require a default React component. Any response code module may export `validate(value, values, response)` to return an error message, a boolean validity result, or null for valid input. It may separately export `score(value, values, response, expected?)` to return a boolean or a score from 0 to 1; null uses ordinary correct-answer matching. `expected` is the configured correct answer when correctness is checked.",
           "type": "string"
         },
         "prompt": {
@@ -2612,6 +3705,10 @@
         "type": {
           "const": "radio",
           "type": "string"
+        },
+        "visibleIf": {
+          "$ref": "#/definitions/ResponseVisibilityCondition",
+          "description": "Show this response only when another response in this component satisfies the condition."
         },
         "withDivider": {
           "description": "Renders the response with a trailing divider. If present, will override the divider setting in the components or `uiConfig`.",
@@ -2662,16 +3759,24 @@
       ],
       "type": "object"
     },
-    "RankingResponse": {
+    "RankingCategoricalResponse": {
       "additionalProperties": false,
-      "description": "The RankingResponse interface is used to define the properties of a ranking widget response. RankingResponses render as a ranking widget with user specified options.\n\nThere are three types of ranking widgets: Ranking Sublist: The participant is asked to rank a subset of items from a larger list. Ranking Categorical: The participant is asked to rank items within categories: HIGH, MEDIUM, and LOW. Ranking Pairwise: The participant is asked to rank items by comparing them in pairs.\n\n```json {   \"id\": \"ranking-sublist\",   \"type\": \"ranking-sublist\",   \"prompt\": \"Rank your top 2 favorite fruits from the list below\",   \"location\": \"belowStimulus\",   \"options\": [\"Apple\", \"Banana\", \"Orange\", \"Strawberry\", \"Grapes\"],   \"default\": {\"Orange\": \"0\", \"Apple\": \"1\"},   \"numItems\": 2 }, {   \"id\": \"ranking-categorical\",   \"type\": \"ranking-categorical\",   \"prompt\": \"Sort these hobbies into the categories of HIGH, MEDIUM, and LOW based on your level of interest.\",   \"location\": \"belowStimulus\",   \"options\": [\"Drawing\", \"Singing\", \"Hiking\", \"Dancing\", \"Photography\"],   \"default\": {\"Drawing\": \"HIGH\", \"Hiking\": \"MEDIUM\", \"Singing\": \"LOW\"} }, {   \"id\": \"ranking-pairwise\",   \"type\": \"ranking-pairwise\",   \"prompt\": \"Which meal would you prefer\",   \"location\": \"belowStimulus\",   \"options\": [\"Pizza\", \"Sushi\", \"Burger\", \"Pasta\", \"Salad\", \"Tacos\"],   \"default\": {\"Pizza\": \"pair-0-high\", \"Sushi\": \"pair-0-low\"} } ```",
       "properties": {
+        "categorizeAll": {
+          "description": "Whether all items need to be categorized. Defaults to false.",
+          "type": "boolean"
+        },
         "default": {
           "additionalProperties": {
             "type": "string"
           },
           "description": "The default value of the response. Provide an object keyed by option value. Values depend on ranking type: index strings for sublist (e.g. `\"0\"`), category labels for categorical (`\"HIGH\"`, `\"MEDIUM\"`, `\"LOW\"`), and pairwise slots (`\"pair-<n>-high\"` / `\"pair-<n>-low\"`).",
           "type": "object"
+        },
+        "delay": {
+          "description": "Delay in milliseconds before an element activates. Must be non-negative; defaults to 0 meaning the element is always active.",
+          "minimum": 0,
+          "type": "number"
         },
         "excludeFromRandomization": {
           "description": "Exclude response from randomization. If present, will override the `responseOrder` randomization setting in the components. Defaults to false.",
@@ -2693,9 +3798,24 @@
           "$ref": "#/definitions/ConfigResponseBlockLocation",
           "description": "Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus`"
         },
+        "max": {
+          "description": "The maximum number of items to rank. For sublist ranking it is the number of items, for categorical ranking it is items per category, and for pairwise ranking it is the number of pairs.",
+          "type": "number"
+        },
+        "min": {
+          "description": "The minimum number of items to rank. For sublist ranking it is the number of items, for categorical ranking it is items per category, and for pairwise ranking it is the number of pairs.",
+          "type": "number"
+        },
         "numItems": {
           "description": "The number of items to rank. Applies only to sublist and categorical ranking widgets.",
           "type": "number"
+        },
+        "onSubmit": {
+          "description": "Apply these actions to the final submitted answer, in declared order.",
+          "items": {
+            "$ref": "#/definitions/GlobalStoreAction"
+          },
+          "type": "array"
         },
         "options": {
           "description": "The options that are displayed as ranking options, provided as an array of objects, with label and value fields.",
@@ -2713,6 +3833,10 @@
         },
         "paramCapture": {
           "description": "Use to capture querystring parameters in answers such as participant_name. See the examples for how this is used, but prefer `uiConfig.urlParticipantIdParam` if you are capturing a participant ID.",
+          "type": "string"
+        },
+        "path": {
+          "description": "Path under `src/public/` to response code. Custom responses require a default React component. Any response code module may export `validate(value, values, response)` to return an error message, a boolean validity result, or null for valid input. It may separately export `score(value, values, response, expected?)` to return a boolean or a score from 0 to 1; null uses ordinary correct-answer matching. `expected` is the configured correct answer when correctness is checked.",
           "type": "string"
         },
         "prompt": {
@@ -2743,12 +3867,281 @@
           "type": "string"
         },
         "type": {
-          "enum": [
-            "ranking-sublist",
-            "ranking-categorical",
-            "ranking-pairwise"
-          ],
+          "const": "ranking-categorical",
           "type": "string"
+        },
+        "visibleIf": {
+          "$ref": "#/definitions/ResponseVisibilityCondition",
+          "description": "Show this response only when another response in this component satisfies the condition."
+        },
+        "withDivider": {
+          "description": "Renders the response with a trailing divider. If present, will override the divider setting in the components or `uiConfig`.",
+          "type": "boolean"
+        },
+        "withDontKnow": {
+          "description": "Renders the response with an option for \"I don't know\". This counts as a completed answer for the validation.",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "id",
+        "options",
+        "prompt",
+        "type"
+      ],
+      "type": "object"
+    },
+    "RankingPairwiseResponse": {
+      "additionalProperties": false,
+      "properties": {
+        "default": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "The default value of the response. Provide an object keyed by option value. Values depend on ranking type: index strings for sublist (e.g. `\"0\"`), category labels for categorical (`\"HIGH\"`, `\"MEDIUM\"`, `\"LOW\"`), and pairwise slots (`\"pair-<n>-high\"` / `\"pair-<n>-low\"`).",
+          "type": "object"
+        },
+        "delay": {
+          "description": "Delay in milliseconds before an element activates. Must be non-negative; defaults to 0 meaning the element is always active.",
+          "minimum": 0,
+          "type": "number"
+        },
+        "excludeFromRandomization": {
+          "description": "Exclude response from randomization. If present, will override the `responseOrder` randomization setting in the components. Defaults to false.",
+          "type": "boolean"
+        },
+        "hidden": {
+          "description": "Controls whether the response is hidden.",
+          "type": "boolean"
+        },
+        "id": {
+          "description": "The id of the response. This is used to identify the response in the data file.",
+          "type": "string"
+        },
+        "infoText": {
+          "description": "The description that is displayed when the participant hovers over the response. This does not accept markdown.",
+          "type": "string"
+        },
+        "location": {
+          "$ref": "#/definitions/ConfigResponseBlockLocation",
+          "description": "Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus`"
+        },
+        "max": {
+          "description": "The maximum number of items to rank. For sublist ranking it is the number of items, for categorical ranking it is items per category, and for pairwise ranking it is the number of pairs.",
+          "type": "number"
+        },
+        "min": {
+          "description": "The minimum number of items to rank. For sublist ranking it is the number of items, for categorical ranking it is items per category, and for pairwise ranking it is the number of pairs.",
+          "type": "number"
+        },
+        "numItems": {
+          "description": "The number of items to rank. Applies only to sublist and categorical ranking widgets.",
+          "type": "number"
+        },
+        "onSubmit": {
+          "description": "Apply these actions to the final submitted answer, in declared order.",
+          "items": {
+            "$ref": "#/definitions/GlobalStoreAction"
+          },
+          "type": "array"
+        },
+        "options": {
+          "description": "The options that are displayed as ranking options, provided as an array of objects, with label and value fields.",
+          "items": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/StringOption"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "type": "array"
+        },
+        "paramCapture": {
+          "description": "Use to capture querystring parameters in answers such as participant_name. See the examples for how this is used, but prefer `uiConfig.urlParticipantIdParam` if you are capturing a participant ID.",
+          "type": "string"
+        },
+        "path": {
+          "description": "Path under `src/public/` to response code. Custom responses require a default React component. Any response code module may export `validate(value, values, response)` to return an error message, a boolean validity result, or null for valid input. It may separately export `score(value, values, response, expected?)` to return a boolean or a score from 0 to 1; null uses ordinary correct-answer matching. `expected` is the configured correct answer when correctness is checked.",
+          "type": "string"
+        },
+        "prompt": {
+          "description": "The prompt that is displayed to the participant. You can use markdown here to render images, links, etc.",
+          "type": "string"
+        },
+        "required": {
+          "description": "Controls whether the response is required to be answered. Defaults to true.",
+          "type": "boolean"
+        },
+        "requiredLabel": {
+          "description": "You can provide a required label, which makes it so a participant has to answer with a response that matches label.",
+          "type": "string"
+        },
+        "requiredValue": {
+          "description": "You can provide a required value, which makes it so a participant has to answer with that value."
+        },
+        "secondaryText": {
+          "description": "The secondary text that is displayed to the participant under the prompt. This does not accept markdown.",
+          "type": "string"
+        },
+        "style": {
+          "$ref": "#/definitions/Styles",
+          "description": "You can set styles here, using React CSSProperties, for example: `{\"width\": 100}` or `{\"width\": \"50%\"}`"
+        },
+        "stylesheetPath": {
+          "description": "The path to the external stylesheet file.",
+          "type": "string"
+        },
+        "type": {
+          "const": "ranking-pairwise",
+          "type": "string"
+        },
+        "visibleIf": {
+          "$ref": "#/definitions/ResponseVisibilityCondition",
+          "description": "Show this response only when another response in this component satisfies the condition."
+        },
+        "withDivider": {
+          "description": "Renders the response with a trailing divider. If present, will override the divider setting in the components or `uiConfig`.",
+          "type": "boolean"
+        },
+        "withDontKnow": {
+          "description": "Renders the response with an option for \"I don't know\". This counts as a completed answer for the validation.",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "id",
+        "options",
+        "prompt",
+        "type"
+      ],
+      "type": "object"
+    },
+    "RankingResponse": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/RankingSublistResponse"
+        },
+        {
+          "$ref": "#/definitions/RankingPairwiseResponse"
+        },
+        {
+          "$ref": "#/definitions/RankingCategoricalResponse"
+        }
+      ]
+    },
+    "RankingSublistResponse": {
+      "additionalProperties": false,
+      "properties": {
+        "default": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "The default value of the response. Provide an object keyed by option value. Values depend on ranking type: index strings for sublist (e.g. `\"0\"`), category labels for categorical (`\"HIGH\"`, `\"MEDIUM\"`, `\"LOW\"`), and pairwise slots (`\"pair-<n>-high\"` / `\"pair-<n>-low\"`).",
+          "type": "object"
+        },
+        "delay": {
+          "description": "Delay in milliseconds before an element activates. Must be non-negative; defaults to 0 meaning the element is always active.",
+          "minimum": 0,
+          "type": "number"
+        },
+        "excludeFromRandomization": {
+          "description": "Exclude response from randomization. If present, will override the `responseOrder` randomization setting in the components. Defaults to false.",
+          "type": "boolean"
+        },
+        "hidden": {
+          "description": "Controls whether the response is hidden.",
+          "type": "boolean"
+        },
+        "id": {
+          "description": "The id of the response. This is used to identify the response in the data file.",
+          "type": "string"
+        },
+        "infoText": {
+          "description": "The description that is displayed when the participant hovers over the response. This does not accept markdown.",
+          "type": "string"
+        },
+        "location": {
+          "$ref": "#/definitions/ConfigResponseBlockLocation",
+          "description": "Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus`"
+        },
+        "max": {
+          "description": "The maximum number of items to rank. For sublist ranking it is the number of items, for categorical ranking it is items per category, and for pairwise ranking it is the number of pairs.",
+          "type": "number"
+        },
+        "min": {
+          "description": "The minimum number of items to rank. For sublist ranking it is the number of items, for categorical ranking it is items per category, and for pairwise ranking it is the number of pairs.",
+          "type": "number"
+        },
+        "numItems": {
+          "description": "The number of items to rank. Applies only to sublist and categorical ranking widgets.",
+          "type": "number"
+        },
+        "onSubmit": {
+          "description": "Apply these actions to the final submitted answer, in declared order.",
+          "items": {
+            "$ref": "#/definitions/GlobalStoreAction"
+          },
+          "type": "array"
+        },
+        "options": {
+          "description": "The options that are displayed as ranking options, provided as an array of objects, with label and value fields.",
+          "items": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/StringOption"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "type": "array"
+        },
+        "paramCapture": {
+          "description": "Use to capture querystring parameters in answers such as participant_name. See the examples for how this is used, but prefer `uiConfig.urlParticipantIdParam` if you are capturing a participant ID.",
+          "type": "string"
+        },
+        "path": {
+          "description": "Path under `src/public/` to response code. Custom responses require a default React component. Any response code module may export `validate(value, values, response)` to return an error message, a boolean validity result, or null for valid input. It may separately export `score(value, values, response, expected?)` to return a boolean or a score from 0 to 1; null uses ordinary correct-answer matching. `expected` is the configured correct answer when correctness is checked.",
+          "type": "string"
+        },
+        "prompt": {
+          "description": "The prompt that is displayed to the participant. You can use markdown here to render images, links, etc.",
+          "type": "string"
+        },
+        "required": {
+          "description": "Controls whether the response is required to be answered. Defaults to true.",
+          "type": "boolean"
+        },
+        "requiredLabel": {
+          "description": "You can provide a required label, which makes it so a participant has to answer with a response that matches label.",
+          "type": "string"
+        },
+        "requiredValue": {
+          "description": "You can provide a required value, which makes it so a participant has to answer with that value."
+        },
+        "secondaryText": {
+          "description": "The secondary text that is displayed to the participant under the prompt. This does not accept markdown.",
+          "type": "string"
+        },
+        "style": {
+          "$ref": "#/definitions/Styles",
+          "description": "You can set styles here, using React CSSProperties, for example: `{\"width\": 100}` or `{\"width\": \"50%\"}`"
+        },
+        "stylesheetPath": {
+          "description": "The path to the external stylesheet file.",
+          "type": "string"
+        },
+        "type": {
+          "const": "ranking-sublist",
+          "type": "string"
+        },
+        "visibleIf": {
+          "$ref": "#/definitions/ResponseVisibilityCondition",
+          "description": "Show this response only when another response in this component satisfies the condition."
         },
         "withDivider": {
           "description": "Renders the response with a trailing divider. If present, will override the divider setting in the components or `uiConfig`.",
@@ -2769,10 +4162,14 @@
     },
     "ReactComponent": {
       "additionalProperties": false,
-      "description": "The ReactComponent interface is used to define the properties of a react component. This component is used to render react code with certain parameters. These parameters can be used within your react code to render different things.\n\nUnlike other types of components, the path for a React component is relative to the `src/public/` folder. Similar to our standard assets, we suggest creating a folder named `src/public/{studyName}/assets` to house all of the React component assets for a particular study. Your React component which you link to in the path must be default exported from its file.\n\nReact components created this way have a generic prop type passed to the component on render, `<StimulusParams<T>>`, which has the following types.\n\n```ts {   parameters: T;   useTrrack: (options: ConfigureTrrackOptions) => Trrack;   setAnswer: ({ status, answers }: { status: boolean, answers: Record<string, any> }) => void } ```\n\n`parameters` is the same object passed in from the ReactComponent type below, allowing you to pass options in from the config to your component. `setAnswer` is a callback function allowing the creator of the ReactComponent to programmatically set the answer. This can be useful if you don't use the default answer interface, and instead have something more unique. Call the `useTrrack` function supplied in `StimulusParams` when the component needs provenance. It creates the Trrack instance and reports apply, undo, redo, and other traversals automatically.\n\nSo, for example, if I had the following ReactComponent in my config: ```json {   \"type\": \"react-component\",   \"path\": \"my_study/CoolComponent.tsx\",   \"parameters\": {     \"name\": \"Zach\",     \"age\": 26   } } ```\n\nMy react component, CoolComponent.tsx, would exist in src/public/my_study/assets, and look something like this:\n\n```ts export default function CoolComponent({ parameters, setAnswer, useTrrack }: StimulusParams<{name: string, age: number}>) {   // render something } ```\n\nFor in depth examples, see the following studies, and their associated codebases. https://revisit.dev/study/demo-react-trrack (https://github.com/revisit-studies/study/tree/v2.4.4/src/public/demo-react-trrack/assets) https://revisit.dev/study/example-brush-interactions (https://github.com/revisit-studies/study/tree/v2.4.4/src/public/example-brush-interactions/assets)",
+      "description": "The ReactComponent interface is used to define the properties of a react component. This component is used to render react code with certain parameters. These parameters can be used within your react code to render different things.\n\nUnlike other types of components, the path for a React component is relative to the `src/public/` folder. Similar to our standard assets, we suggest creating a folder named `src/public/{studyName}/assets` to house all of the React component assets for a particular study. Your React component which you link to in the path must be default exported from its file.\n\nReact components created this way have a generic prop type passed to the component on render, `<StimulusParams<T>>`, which has the following types.\n\n```ts {   parameters: T;   useTrrack: (options: ConfigureTrrackOptions) => Trrack;   setAnswer: ({ status, answers }: { status: boolean, answers: Record<string, any> }) => void } ```\n\n`parameters` is the same object passed in from the ReactComponent type below, allowing you to pass options in from the config to your component. `setAnswer` is a callback function allowing the creator of the ReactComponent to programmatically set the answer. This can be useful if you don't use the default answer interface, and instead have something more unique. Call the `useTrrack` function supplied in `StimulusParams` when the component needs provenance. It creates the Trrack instance and reports apply, undo, redo, and other traversals automatically.\n\nSo, for example, if I had the following ReactComponent in my config: ```json {   \"type\": \"react-component\",   \"path\": \"my_study/CoolComponent.tsx\",   \"parameters\": {     \"name\": \"Zach\",     \"age\": 26   } } ```\n\nMy react component, CoolComponent.tsx, would exist in src/public/my_study/assets, and look something like this:\n\n```ts export default function CoolComponent({ parameters, setAnswer, useTrrack }: StimulusParams<{name: string, age: number}>) {   // render something } ```\n\nFor in depth examples, see the following studies, and their associated codebases. https://revisit.dev/study/demo-react-trrack (https://github.com/revisit-studies/study/tree/v2.4.3/src/public/demo-react-trrack/assets) https://revisit.dev/study/example-brush-interactions (https://github.com/revisit-studies/study/tree/v2.4.3/src/public/example-brush-interactions/assets)",
       "properties": {
         "allowFailedTraining": {
-          "description": "Controls whether the component should allow failed training. If present, will override the allow failed training setting in the uiConfig.",
+          "description": "Allow continuing with incorrect answers after attempts are exhausted. Overrides uiConfig.allowFailedTraining. Defaults to true.",
+          "type": "boolean"
+        },
+        "captureGamepad": {
+          "description": "Whether or not to capture game controller input into windowEvents. If present, will override the capture gamepad setting in the uiConfig.",
           "type": "boolean"
         },
         "clickToRecord": {
@@ -2797,6 +4194,10 @@
         "helpTextPath": {
           "description": "The path to the help text file. This is displayed when a participant clicks help. Markdown is supported. If present, will override the help text path set in the uiConfig.",
           "type": "string"
+        },
+        "hideCheckAnswerButton": {
+          "description": "Hide the Check Answer button and grade answers on Next instead. Defaults to false. Feedback must be enabled by provideFeedback or answer-level feedback.",
+          "type": "boolean"
         },
         "instruction": {
           "description": "The instruction of the component. This is used to identify and provide additional information for the component in the admin panel.",
@@ -2849,7 +4250,7 @@
         },
         "parameters": {
           "additionalProperties": {},
-          "description": "The parameters that are passed to the react component. These can be used within your react component to render different things.",
+          "description": "The parameters passed to the component. These can be used for variable substitution: in a react-component, they're available as the `parameters` prop; in this component's instruction field and its responses' prompt, secondaryText, and infoText fields, they're substituted as Handlebars variables (`{{variable}}`). The same substitution also applies inside markdown files, and inside a website component's HTML file when its `templated` field is true.",
           "type": "object"
         },
         "path": {
@@ -2865,7 +4266,7 @@
           "type": "string"
         },
         "provideFeedback": {
-          "description": "Controls whether the component should provide feedback to the participant, such as in a training trial. If present, will override the provide feedback setting in the uiConfig.",
+          "description": "Enable answer checking and feedback. Explicit false disables it even with answer-level feedback. When omitted, answer-level feedback enables it before falling back to uiConfig.provideFeedback.",
           "type": "boolean"
         },
         "recordAudio": {
@@ -2874,6 +4275,10 @@
         },
         "recordScreen": {
           "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig. If true, the uiConfig must have recordScreen set to true or the screen will not be captured. It's also required that the library component, $screen-recording.components.screenRecordingPermission, be included in the study at some point before this component to ensure permissions are granted and screen capture has started.",
+          "type": "boolean"
+        },
+        "recordWebcam": {
+          "description": "Whether or not we want to utilize webcam recording. If present, will override the record webcam setting in the uiConfig. Studies using webcam without screen capture should include the webcam permission component before this component. Studies combining webcam with screen capture should use the screen recording permission component.",
           "type": "boolean"
         },
         "response": {
@@ -2947,6 +4352,11 @@
       "additionalProperties": false,
       "description": "The ReactiveResponse interface is used to define the properties of a reactive response. ReactiveResponses render as a list, that is connected to a WebsiteComponent, VegaComponent, or ReactComponent. When data is sent from the components, it is displayed in the list. ```json {   \"id\": \"reactiveResponse\",   \"prompt\": \"Answer clicked in the stimulus\",   \"location\": \"aboveStimulus\",   \"type\": \"reactive\" } ```",
       "properties": {
+        "delay": {
+          "description": "Delay in milliseconds before an element activates. Must be non-negative; defaults to 0 meaning the element is always active.",
+          "minimum": 0,
+          "type": "number"
+        },
         "excludeFromRandomization": {
           "description": "Exclude response from randomization. If present, will override the `responseOrder` randomization setting in the components. Defaults to false.",
           "type": "boolean"
@@ -2967,8 +4377,19 @@
           "$ref": "#/definitions/ConfigResponseBlockLocation",
           "description": "Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus`"
         },
+        "onSubmit": {
+          "description": "Apply these actions to the final submitted answer, in declared order.",
+          "items": {
+            "$ref": "#/definitions/GlobalStoreAction"
+          },
+          "type": "array"
+        },
         "paramCapture": {
           "description": "Use to capture querystring parameters in answers such as participant_name. See the examples for how this is used, but prefer `uiConfig.urlParticipantIdParam` if you are capturing a participant ID.",
+          "type": "string"
+        },
+        "path": {
+          "description": "Path under `src/public/` to response code. Custom responses require a default React component. Any response code module may export `validate(value, values, response)` to return an error message, a boolean validity result, or null for valid input. It may separately export `score(value, values, response, expected?)` to return a boolean or a score from 0 to 1; null uses ordinary correct-answer matching. `expected` is the configured correct answer when correctness is checked.",
           "type": "string"
         },
         "prompt": {
@@ -3002,6 +4423,10 @@
           "const": "reactive",
           "type": "string"
         },
+        "visibleIf": {
+          "$ref": "#/definitions/ResponseVisibilityCondition",
+          "description": "Show this response only when another response in this component satisfies the condition."
+        },
         "withDivider": {
           "description": "Renders the response with a trailing divider. If present, will override the divider setting in the components or `uiConfig`.",
           "type": "boolean"
@@ -3020,7 +4445,7 @@
     },
     "RepeatedComponentBlockCondition": {
       "additionalProperties": false,
-      "description": "The RepeatedComponentBlockCondition interface is used to define a SkipCondition based on the number of correct or incorrect repeated components. You might use this if you need to check if an attention check was failed multiple times. This is similar to the [ComponentBlockCondition](../ComponentBlockCondition), but it only checks a specific repeated component.\n\nHere's an example of how to use the RepeatedComponentBlockCondition:\n\n```json {  ...  \"skip\": [    {      \"name\": \"attentionCheck\",      \"check\": \"repeatedComponent\",      \"condition\": \"numIncorrect\",      \"value\": 2,      \"to\": \"end\"    }  ]  ... } ```\n\nIn this example, when the number of incorrect responses to the repeated component with the name \"attentionCheck\" is two, the participant will be redirected to the end of the study. If the number of incorrect responses is less than two, the participant will continue to the next component in the sequence.",
+      "description": "The RepeatedComponentBlockCondition interface is used to define a SkipCondition based on the number of correct or incorrect repeated components. You might use this if you need to check if an attention check was failed multiple times. This is similar to  {@link  ComponentBlockCondition } , but it only checks a specific repeated component.\n\nHere's an example of how to use the RepeatedComponentBlockCondition:\n\n```json {  ...  \"skip\": [    {      \"name\": \"attentionCheck\",      \"check\": \"repeatedComponent\",      \"condition\": \"numIncorrect\",      \"value\": 2,      \"to\": \"end\"    }  ]  ... } ```\n\nIn this example, when the number of incorrect responses to the repeated component with the name \"attentionCheck\" is two, the participant will be redirected to the end of the study. If the number of incorrect responses is less than two, the participant will continue to the next component in the sequence.",
       "properties": {
         "check": {
           "const": "repeatedComponent",
@@ -3061,6 +4486,12 @@
       "anyOf": [
         {
           "$ref": "#/definitions/NumericalResponse"
+        },
+        {
+          "$ref": "#/definitions/DateResponse"
+        },
+        {
+          "$ref": "#/definitions/TimeResponse"
         },
         {
           "$ref": "#/definitions/ShortTextResponse"
@@ -3106,13 +4537,256 @@
         }
       ]
     },
+    "ResponseFeedback": {
+      "additionalProperties": false,
+      "description": "Custom training messages. Arrays select a message for each answer-checking attempt (first entry for attempt 1), repeating the last entry for later attempts. Tokens: {attemptsUsed} and {attemptsLeft}.",
+      "properties": {
+        "correctText": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          ],
+          "description": "Message when this response is correct."
+        },
+        "exhaustedText": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          ],
+          "description": "Message when this response is incorrect and all attempts have been used."
+        },
+        "hints": {
+          "description": "Progressive hints shown alongside incorrect feedback while attempts remain. One per trial-wide answer-checking attempt, repeating the final hint for later attempts.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "incorrectText": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          ],
+          "description": "Message when this response is incorrect. Also used after the final attempt when exhaustedText is absent."
+        }
+      },
+      "type": "object"
+    },
+    "ResponseVisibilityCondition": {
+      "anyOf": [
+        {
+          "additionalProperties": false,
+          "properties": {
+            "comparison": {
+              "$ref": "#/definitions/EqualityComparison"
+            },
+            "globalVariable": {
+              "type": "string"
+            },
+            "value": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "boolean"
+                },
+                {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                }
+              ]
+            }
+          },
+          "required": [
+            "comparison",
+            "globalVariable",
+            "value"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "comparison": {
+              "$ref": "#/definitions/StringComparison"
+            },
+            "globalVariable": {
+              "type": "string"
+            },
+            "value": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "comparison",
+            "globalVariable",
+            "value"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "comparison": {
+              "$ref": "#/definitions/NumericComparison"
+            },
+            "globalVariable": {
+              "type": "string"
+            },
+            "value": {
+              "type": "number"
+            }
+          },
+          "required": [
+            "comparison",
+            "globalVariable",
+            "value"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "comparison": {
+              "$ref": "#/definitions/EqualityComparison"
+            },
+            "responseId": {
+              "type": "string"
+            },
+            "value": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "boolean"
+                },
+                {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                }
+              ]
+            }
+          },
+          "required": [
+            "comparison",
+            "responseId",
+            "value"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "comparison": {
+              "$ref": "#/definitions/StringComparison"
+            },
+            "responseId": {
+              "type": "string"
+            },
+            "value": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "comparison",
+            "responseId",
+            "value"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "comparison": {
+              "$ref": "#/definitions/NumericComparison"
+            },
+            "responseId": {
+              "type": "string"
+            },
+            "value": {
+              "type": "number"
+            }
+          },
+          "required": [
+            "comparison",
+            "responseId",
+            "value"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "comparison": {
+              "const": "isCorrect",
+              "type": "string"
+            },
+            "responseId": {
+              "type": "string"
+            },
+            "value": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "comparison",
+            "responseId",
+            "value"
+          ],
+          "type": "object"
+        }
+      ],
+      "description": "Controls visibility based on another response's answer in the same component. List equality comparisons ignore selection order. Unanswered or conditionally hidden controlling responses never satisfy a condition."
+    },
     "ShortTextResponse": {
       "additionalProperties": false,
-      "description": "The ShortTextResponse interface is used to define the properties of a short text response. ShortTextResponses render as a text input that accepts any text and can optionally have a placeholder. ```json {   \"id\": \"q-short-text\",   \"prompt\": \"Short text example\",   \"location\": \"aboveStimulus\",   \"type\": \"shortText\",   \"default\": \"Jane Doe\",   \"placeholder\": \"Enter your answer here\" } ```",
+      "description": "The ShortTextResponse interface is used to define the properties of a short text response. ShortTextResponses render as a text input that accepts any text and can optionally have a placeholder. ```json {   \"id\": \"q-short-text\",   \"prompt\": \"Short text example\",   \"location\": \"aboveStimulus\",   \"type\": \"shortText\",   \"default\": \"ReVISit is great\",   \"placeholder\": \"Enter your answer here\",   \"minCharLength\": 3,   \"maxCharLength\": 100,   \"minWordLength\": 2,   \"maxWordLength\": 20,   \"textValidation\": [     {       \"type\": \"contains\",       \"value\": \"ReVISit\"     }   ] } ```",
       "properties": {
+        "builtInValidation": {
+          "$ref": "#/definitions/BuiltInValidationType",
+          "description": "Applies one predefined format from BuiltInValidationType to the response value."
+        },
         "default": {
           "description": "The default value of the response. Specify a string such as `\"Jane Doe\"`.",
           "type": "string"
+        },
+        "delay": {
+          "description": "Delay in milliseconds before an element activates. Must be non-negative; defaults to 0 meaning the element is always active.",
+          "minimum": 0,
+          "type": "number"
         },
         "excludeFromRandomization": {
           "description": "Exclude response from randomization. If present, will override the `responseOrder` randomization setting in the components. Defaults to false.",
@@ -3134,8 +4808,35 @@
           "$ref": "#/definitions/ConfigResponseBlockLocation",
           "description": "Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus`"
         },
+        "maxCharLength": {
+          "description": "The maximum number of characters accepted in the response. Must be greater than 0 when the response is required.",
+          "type": "number"
+        },
+        "maxWordLength": {
+          "description": "The maximum number of whitespace-separated words accepted in the response. Must be greater than 0 when the response is required.",
+          "type": "number"
+        },
+        "minCharLength": {
+          "description": "The minimum number of characters accepted in the response.",
+          "type": "number"
+        },
+        "minWordLength": {
+          "description": "The minimum number of whitespace-separated words accepted in the response.",
+          "type": "number"
+        },
+        "onSubmit": {
+          "description": "Apply these actions to the final submitted answer, in declared order.",
+          "items": {
+            "$ref": "#/definitions/GlobalStoreAction"
+          },
+          "type": "array"
+        },
         "paramCapture": {
           "description": "Use to capture querystring parameters in answers such as participant_name. See the examples for how this is used, but prefer `uiConfig.urlParticipantIdParam` if you are capturing a participant ID.",
+          "type": "string"
+        },
+        "path": {
+          "description": "Path under `src/public/` to response code. Custom responses require a default React component. Any response code module may export `validate(value, values, response)` to return an error message, a boolean validity result, or null for valid input. It may separately export `score(value, values, response, expected?)` to return a boolean or a score from 0 to 1; null uses ordinary correct-answer matching. `expected` is the configured correct answer when correctness is checked.",
           "type": "string"
         },
         "placeholder": {
@@ -3169,9 +4870,20 @@
           "description": "The path to the external stylesheet file.",
           "type": "string"
         },
+        "textValidation": {
+          "description": "Validation rules applied to the response value in array order.",
+          "items": {
+            "$ref": "#/definitions/TextValidationRule"
+          },
+          "type": "array"
+        },
         "type": {
           "const": "shortText",
           "type": "string"
+        },
+        "visibleIf": {
+          "$ref": "#/definitions/ResponseVisibilityCondition",
+          "description": "Show this response only when another response in this component satisfies the condition."
         },
         "withDivider": {
           "description": "Renders the response with a trailing divider. If present, will override the divider setting in the components or `uiConfig`.",
@@ -3190,9 +4902,11 @@
       "type": "object"
     },
     "SkipConditions": {
-      "description": "The SkipConditions interface is used to define skip conditions. This is used to skip to a different component/block based on the response to a component or based on the number of correct/incorrect responses in a block. Skip conditions work recursively: if you have a nested block, the parent blocks' skip conditions will be considered when computing the skip logic.\n\nSkip conditions are evaluated in the order they are defined in the array. If a condition is met, the participant will be redirected to the component or block specified in the `\"to\"` property. If no conditions are met, the participant will continue to the next component in the sequence.\n\nSkip conditions allow you to jump to a different component or block. If you intend to skip to a block, you should specify a block id in the sequence. If you intend to skip to a component, you should specify a component id. Skipping backwards is not supported. Skipping to a repeated component will skip to the first instance of the component after the component that triggered the skip.\n\nPlease see the interface definitions for more specific information on the different types of skip conditions.",
       "items": {
         "anyOf": [
+          {
+            "$ref": "#/definitions/GlobalVariableCondition"
+          },
           {
             "$ref": "#/definitions/IndividualComponentSingleResponseCondition"
           },
@@ -3217,6 +4931,11 @@
           "description": "The default value of the response. Specify a numeric value that falls within the slider range.",
           "type": "number"
         },
+        "delay": {
+          "description": "Delay in milliseconds before an element activates. Must be non-negative; defaults to 0 meaning the element is always active.",
+          "minimum": 0,
+          "type": "number"
+        },
         "excludeFromRandomization": {
           "description": "Exclude response from randomization. If present, will override the `responseOrder` randomization setting in the components. Defaults to false.",
           "type": "boolean"
@@ -3237,6 +4956,13 @@
           "$ref": "#/definitions/ConfigResponseBlockLocation",
           "description": "Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus`"
         },
+        "onSubmit": {
+          "description": "Apply these actions to the final submitted answer, in declared order.",
+          "items": {
+            "$ref": "#/definitions/GlobalStoreAction"
+          },
+          "type": "array"
+        },
         "options": {
           "description": "This defines the steps in the slider and the extent of the slider as an array of objects that have a label and a value.",
           "items": {
@@ -3246,6 +4972,10 @@
         },
         "paramCapture": {
           "description": "Use to capture querystring parameters in answers such as participant_name. See the examples for how this is used, but prefer `uiConfig.urlParticipantIdParam` if you are capturing a participant ID.",
+          "type": "string"
+        },
+        "path": {
+          "description": "Path under `src/public/` to response code. Custom responses require a default React component. Any response code module may export `validate(value, values, response)` to return an error message, a boolean validity result, or null for valid input. It may separately export `score(value, values, response, expected?)` to return a boolean or a score from 0 to 1; null uses ordinary correct-answer matching. `expected` is the configured correct answer when correctness is checked.",
           "type": "string"
         },
         "prompt": {
@@ -3303,6 +5033,10 @@
           "const": "slider",
           "type": "string"
         },
+        "visibleIf": {
+          "$ref": "#/definitions/ResponseVisibilityCondition",
+          "description": "Show this response only when another response in this component satisfies the condition."
+        },
         "withBar": {
           "description": "Whether to render the slider with a bar to the left. Defaults to true.",
           "type": "boolean"
@@ -3323,6 +5057,14 @@
         "type"
       ],
       "type": "object"
+    },
+    "StringComparison": {
+      "enum": [
+        "matchesRegex",
+        "contains",
+        "doesNotContain"
+      ],
+      "type": "string"
     },
     "StringOption": {
       "additionalProperties": false,
@@ -3506,6 +5248,11 @@
       "additionalProperties": false,
       "description": "The TextOnlyResponse interface is used to define the properties of a text only response. TextOnlyResponses render as a block of text that is displayed to the user. This can be used to display instructions or other information. It does not accept any input from the user. ```json {   \"id\": \"textOnlyResponse\",   \"type\": \"textOnly\",   \"prompt\": \"This is a text only response, it accepts markdown so you can **bold** or _italicize_ text.\",   \"location\": \"belowStimulus\",   \"restartEnumeration\": true } ```\n\nIn this example, the text only response is displayed below the stimulus and the enumeration of the questions is restarted.",
       "properties": {
+        "delay": {
+          "description": "Delay in milliseconds before an element activates. Must be non-negative; defaults to 0 meaning the element is always active.",
+          "minimum": 0,
+          "type": "number"
+        },
         "excludeFromRandomization": {
           "description": "Exclude response from randomization. If present, will override the `responseOrder` randomization setting in the components. Defaults to false.",
           "type": "boolean"
@@ -3525,8 +5272,19 @@
           "$ref": "#/definitions/ConfigResponseBlockLocation",
           "description": "Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus`"
         },
+        "onSubmit": {
+          "description": "Apply these actions to the final submitted answer, in declared order.",
+          "items": {
+            "$ref": "#/definitions/GlobalStoreAction"
+          },
+          "type": "array"
+        },
         "paramCapture": {
           "not": {}
+        },
+        "path": {
+          "description": "Path under `src/public/` to response code. Custom responses require a default React component. Any response code module may export `validate(value, values, response)` to return an error message, a boolean validity result, or null for valid input. It may separately export `score(value, values, response, expected?)` to return a boolean or a score from 0 to 1; null uses ordinary correct-answer matching. `expected` is the configured correct answer when correctness is checked.",
+          "type": "string"
         },
         "prompt": {
           "description": "The markdown text that is displayed to the user.",
@@ -3560,12 +5318,166 @@
           "const": "textOnly",
           "type": "string"
         },
+        "visibleIf": {
+          "$ref": "#/definitions/ResponseVisibilityCondition",
+          "description": "Show this response only when another response in this component satisfies the condition."
+        },
         "withDivider": {
           "description": "Renders the response with a trailing divider. If present, will override the divider setting in the components or `uiConfig`.",
           "type": "boolean"
         },
         "withDontKnow": {
           "not": {}
+        }
+      },
+      "required": [
+        "id",
+        "prompt",
+        "type"
+      ],
+      "type": "object"
+    },
+    "TextValidationRule": {
+      "additionalProperties": false,
+      "description": "A validation rule applied to a short or long text response. Rules are evaluated in array order, and the first failing rule is displayed to the participant.\n\nFor example, the following rules accept only `ReVISit is great`: it must start with `ReVISit`, contain `great`, not contain `invalid`, equal `ReVISit is great`, and not equal `TEST`. See the [MDN regular expression syntax cheat sheet](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_expressions/Cheatsheet) for help writing regular expression patterns. ```json \"textValidation\": [   {     \"type\": \"matchesRegex\",     \"value\": \"^ReVISit\"   },   {     \"type\": \"contains\",     \"value\": \"great\"   },   {     \"type\": \"doesNotContain\",     \"value\": \"invalid\"   },   {     \"type\": \"equals\",     \"value\": \"ReVISit is great\"   },   {     \"type\": \"doesNotEqual\",     \"value\": \"TEST\"   } ] ```",
+      "properties": {
+        "type": {
+          "$ref": "#/definitions/TextValidationType",
+          "description": "The operation used to validate the response value."
+        },
+        "value": {
+          "description": "The regular expression pattern or text value used by the validation operation. Must be non-empty for `equals`, `contains`, and `doesNotContain`. Empty `matchesRegex` and `doesNotEqual` values produce a parser warning because they do not restrict responses.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "value"
+      ],
+      "type": "object"
+    },
+    "TextValidationType": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/EqualityComparison"
+        },
+        {
+          "$ref": "#/definitions/StringComparison"
+        }
+      ],
+      "description": "The validation operations available for short and long text responses."
+    },
+    "TimeResponse": {
+      "additionalProperties": false,
+      "description": "The TimeResponse interface defines a time selected with a time input. Time values are stored as 24-hour `HH:mm` strings, or `HH:mm:ss` when `withSeconds` is `true`. ```json {   \"id\": \"q-time\",   \"prompt\": \"Select a time.\",   \"location\": \"aboveStimulus\",   \"type\": \"time\",   \"default\": \"14:28:30\",   \"min\": \"09:00:00\",   \"max\": \"18:00:00\",   \"format\": \"24h\",   \"withSeconds\": true } ```",
+      "properties": {
+        "default": {
+          "description": "The default time in 24-hour `HH:mm` format, or `HH:mm:ss` when `withSeconds` is `true`.",
+          "type": "string"
+        },
+        "delay": {
+          "description": "Delay in milliseconds before an element activates. Must be non-negative; defaults to 0 meaning the element is always active.",
+          "minimum": 0,
+          "type": "number"
+        },
+        "excludeFromRandomization": {
+          "description": "Exclude response from randomization. If present, will override the `responseOrder` randomization setting in the components. Defaults to false.",
+          "type": "boolean"
+        },
+        "format": {
+          "description": "The format displayed to participants. Defaults to `24h`. Values are always stored in 24-hour format.",
+          "enum": [
+            "12h",
+            "24h"
+          ],
+          "type": "string"
+        },
+        "hidden": {
+          "description": "Controls whether the response is hidden.",
+          "type": "boolean"
+        },
+        "id": {
+          "description": "The id of the response. This is used to identify the response in the data file.",
+          "type": "string"
+        },
+        "infoText": {
+          "description": "The description that is displayed when the participant hovers over the response. This does not accept markdown.",
+          "type": "string"
+        },
+        "location": {
+          "$ref": "#/definitions/ConfigResponseBlockLocation",
+          "description": "Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus`"
+        },
+        "max": {
+          "description": "The latest time accepted, in the same format as the response value.",
+          "type": "string"
+        },
+        "min": {
+          "description": "The earliest time accepted, in the same format as the response value.",
+          "type": "string"
+        },
+        "onSubmit": {
+          "description": "Apply these actions to the final submitted answer, in declared order.",
+          "items": {
+            "$ref": "#/definitions/GlobalStoreAction"
+          },
+          "type": "array"
+        },
+        "paramCapture": {
+          "description": "Use to capture querystring parameters in answers such as participant_name. See the examples for how this is used, but prefer `uiConfig.urlParticipantIdParam` if you are capturing a participant ID.",
+          "type": "string"
+        },
+        "path": {
+          "description": "Path under `src/public/` to response code. Custom responses require a default React component. Any response code module may export `validate(value, values, response)` to return an error message, a boolean validity result, or null for valid input. It may separately export `score(value, values, response, expected?)` to return a boolean or a score from 0 to 1; null uses ordinary correct-answer matching. `expected` is the configured correct answer when correctness is checked.",
+          "type": "string"
+        },
+        "prompt": {
+          "description": "The prompt that is displayed to the participant. You can use markdown here to render images, links, etc.",
+          "type": "string"
+        },
+        "required": {
+          "description": "Controls whether the response is required to be answered. Defaults to true.",
+          "type": "boolean"
+        },
+        "requiredLabel": {
+          "description": "You can provide a required label, which makes it so a participant has to answer with a response that matches label.",
+          "type": "string"
+        },
+        "requiredValue": {
+          "description": "The time required for a correct response, in 24-hour `HH:mm` format, or `HH:mm:ss` when `withSeconds` is `true`.",
+          "type": "string"
+        },
+        "secondaryText": {
+          "description": "The secondary text that is displayed to the participant under the prompt. This does not accept markdown.",
+          "type": "string"
+        },
+        "style": {
+          "$ref": "#/definitions/Styles",
+          "description": "You can set styles here, using React CSSProperties, for example: `{\"width\": 100}` or `{\"width\": \"50%\"}`"
+        },
+        "stylesheetPath": {
+          "description": "The path to the external stylesheet file.",
+          "type": "string"
+        },
+        "type": {
+          "const": "time",
+          "type": "string"
+        },
+        "visibleIf": {
+          "$ref": "#/definitions/ResponseVisibilityCondition",
+          "description": "Show this response only when another response in this component satisfies the condition."
+        },
+        "withDivider": {
+          "description": "Renders the response with a trailing divider. If present, will override the divider setting in the components or `uiConfig`.",
+          "type": "boolean"
+        },
+        "withDontKnow": {
+          "description": "Renders the response with an option for \"I don't know\". This counts as a completed answer for the validation.",
+          "type": "boolean"
+        },
+        "withSeconds": {
+          "description": "Determines whether the input includes seconds. Defaults to `false`.",
+          "type": "boolean"
         }
       },
       "required": [
@@ -3590,7 +5502,11 @@
       "description": "The VegaComponentConfig interface is used to define the properties of a Vega Component. This component is used to render a Vega/Vega-Lite Component by adding Vega/Vega-Lite specs within the reVISit config itself.\n\nTo do this, you would use the following snippet: ```json {   \"type\": \"vega\",   \"config\": { ... vega specs here ...} } ```\n\nIf you are using Vega, you can use signals with `revisitAnswer` to send the user's responses back to the reVISit. For example, you can use the following snippet in your Vega spec's signals section: ```json {   \"signals\": [     {       \"name\": \"revisitAnswer\",       \"value\": {},       \"on\": [         {           \"events\": \"rect:click\",           \"update\": \"{responseId: 'vegaDemoResponse1', response: datum.category}\"         }       ]     }   ] } ``` In this example, when a user clicks on a rectangle in the Vega chart, the `revisitAnswer` signal is updated with the responseId and response.",
       "properties": {
         "allowFailedTraining": {
-          "description": "Controls whether the component should allow failed training. If present, will override the allow failed training setting in the uiConfig.",
+          "description": "Allow continuing with incorrect answers after attempts are exhausted. Overrides uiConfig.allowFailedTraining. Defaults to true.",
+          "type": "boolean"
+        },
+        "captureGamepad": {
+          "description": "Whether or not to capture game controller input into windowEvents. If present, will override the capture gamepad setting in the uiConfig.",
           "type": "boolean"
         },
         "clickToRecord": {
@@ -3619,6 +5535,10 @@
         "helpTextPath": {
           "description": "The path to the help text file. This is displayed when a participant clicks help. Markdown is supported. If present, will override the help text path set in the uiConfig.",
           "type": "string"
+        },
+        "hideCheckAnswerButton": {
+          "description": "Hide the Check Answer button and grade answers on Next instead. Defaults to false. Feedback must be enabled by provideFeedback or answer-level feedback.",
+          "type": "boolean"
         },
         "instruction": {
           "description": "The instruction of the component. This is used to identify and provide additional information for the component in the admin panel.",
@@ -3669,6 +5589,11 @@
           "description": "Whether enter key should move to the next question. If present, will override the enter key setting in the uiConfig.",
           "type": "boolean"
         },
+        "parameters": {
+          "additionalProperties": {},
+          "description": "The parameters passed to the component. These can be used for variable substitution: in a react-component, they're available as the `parameters` prop; in this component's instruction field and its responses' prompt, secondaryText, and infoText fields, they're substituted as Handlebars variables (`{{variable}}`). The same substitution also applies inside markdown files, and inside a website component's HTML file when its `templated` field is true.",
+          "type": "object"
+        },
         "previousButton": {
           "description": "Whether to show the previous button. If present, will override the previous button setting in the uiConfig.",
           "type": "boolean"
@@ -3678,7 +5603,7 @@
           "type": "string"
         },
         "provideFeedback": {
-          "description": "Controls whether the component should provide feedback to the participant, such as in a training trial. If present, will override the provide feedback setting in the uiConfig.",
+          "description": "Enable answer checking and feedback. Explicit false disables it even with answer-level feedback. When omitted, answer-level feedback enables it before falling back to uiConfig.provideFeedback.",
           "type": "boolean"
         },
         "recordAudio": {
@@ -3687,6 +5612,10 @@
         },
         "recordScreen": {
           "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig. If true, the uiConfig must have recordScreen set to true or the screen will not be captured. It's also required that the library component, $screen-recording.components.screenRecordingPermission, be included in the study at some point before this component to ensure permissions are granted and screen capture has started.",
+          "type": "boolean"
+        },
+        "recordWebcam": {
+          "description": "Whether or not we want to utilize webcam recording. If present, will override the record webcam setting in the uiConfig. Studies using webcam without screen capture should include the webcam permission component before this component. Studies combining webcam with screen capture should use the screen recording permission component.",
           "type": "boolean"
         },
         "response": {
@@ -3765,7 +5694,11 @@
       "description": "The VegaComponentPath interface is used to define the properties of a Vega Component. This component is used to render a Vega/Vega-Lite Component with path pointing to your Vega/Vega-Lite specs file.\n\nFor example, to render a vega based stimuli with a path of `<study-name>/assets/vega.spec.json`, you would use the following snippet: ```json {   \"type\": \"vega\",   \"path\": \"<study-name>/assets/vega.spec.json\", } ```\n\nIf you are using Vega, you can use signals with `revisitAnswer` to send the user's responses back to the reVISit. For example, you can use the following snippet in your Vega spec file's signals section: ```json {   \"signals\": [     {       \"name\": \"revisitAnswer\",       \"value\": {},       \"on\": [         {           \"events\": \"rect:click\",           \"update\": \"{responseId: 'vegaDemoResponse1', response: datum.category}\"         }       ]     }   ] } ```  In this example, when a user clicks on a rectangle in the Vega chart, the `revisitAnswer` signal is updated with the responseId and response. This signal is then passed to reVISit as the participant's response.",
       "properties": {
         "allowFailedTraining": {
-          "description": "Controls whether the component should allow failed training. If present, will override the allow failed training setting in the uiConfig.",
+          "description": "Allow continuing with incorrect answers after attempts are exhausted. Overrides uiConfig.allowFailedTraining. Defaults to true.",
+          "type": "boolean"
+        },
+        "captureGamepad": {
+          "description": "Whether or not to capture game controller input into windowEvents. If present, will override the capture gamepad setting in the uiConfig.",
           "type": "boolean"
         },
         "clickToRecord": {
@@ -3790,6 +5723,10 @@
         "helpTextPath": {
           "description": "The path to the help text file. This is displayed when a participant clicks help. Markdown is supported. If present, will override the help text path set in the uiConfig.",
           "type": "string"
+        },
+        "hideCheckAnswerButton": {
+          "description": "Hide the Check Answer button and grade answers on Next instead. Defaults to false. Feedback must be enabled by provideFeedback or answer-level feedback.",
+          "type": "boolean"
         },
         "instruction": {
           "description": "The instruction of the component. This is used to identify and provide additional information for the component in the admin panel.",
@@ -3840,6 +5777,11 @@
           "description": "Whether enter key should move to the next question. If present, will override the enter key setting in the uiConfig.",
           "type": "boolean"
         },
+        "parameters": {
+          "additionalProperties": {},
+          "description": "The parameters passed to the component. These can be used for variable substitution: in a react-component, they're available as the `parameters` prop; in this component's instruction field and its responses' prompt, secondaryText, and infoText fields, they're substituted as Handlebars variables (`{{variable}}`). The same substitution also applies inside markdown files, and inside a website component's HTML file when its `templated` field is true.",
+          "type": "object"
+        },
         "path": {
           "description": "The path to the vega file. This should be a relative path from the public folder.",
           "type": "string"
@@ -3853,7 +5795,7 @@
           "type": "string"
         },
         "provideFeedback": {
-          "description": "Controls whether the component should provide feedback to the participant, such as in a training trial. If present, will override the provide feedback setting in the uiConfig.",
+          "description": "Enable answer checking and feedback. Explicit false disables it even with answer-level feedback. When omitted, answer-level feedback enables it before falling back to uiConfig.provideFeedback.",
           "type": "boolean"
         },
         "recordAudio": {
@@ -3862,6 +5804,10 @@
         },
         "recordScreen": {
           "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig. If true, the uiConfig must have recordScreen set to true or the screen will not be captured. It's also required that the library component, $screen-recording.components.screenRecordingPermission, be included in the study at some point before this component to ensure permissions are granted and screen capture has started.",
+          "type": "boolean"
+        },
+        "recordWebcam": {
+          "description": "Whether or not we want to utilize webcam recording. If present, will override the record webcam setting in the uiConfig. Studies using webcam without screen capture should include the webcam permission component before this component. Studies combining webcam with screen capture should use the screen recording permission component.",
           "type": "boolean"
         },
         "response": {
@@ -3940,7 +5886,11 @@
       "description": "The VideoComponent interface is used to define the properties of a video component. This component is used to render a video with optional controls.\n\nMost often, video components will be used for trainings, and will have a `forceCompletion` field set to true. This will prevent the participant from moving on until the video has finished playing.\n\nAs such, the `forceCompletion` field is set to true by default, and the `withTimeline` field is set to false by default.\n\nFor example, to render a training video with a path of `<study-name>/assets/video.mp4`, you would use the following snippet: ```json {   \"type\": \"video\",   \"path\": \"<study-name>/assets/video.mp4\", } ```",
       "properties": {
         "allowFailedTraining": {
-          "description": "Controls whether the component should allow failed training. If present, will override the allow failed training setting in the uiConfig.",
+          "description": "Allow continuing with incorrect answers after attempts are exhausted. Overrides uiConfig.allowFailedTraining. Defaults to true.",
+          "type": "boolean"
+        },
+        "captureGamepad": {
+          "description": "Whether or not to capture game controller input into windowEvents. If present, will override the capture gamepad setting in the uiConfig.",
           "type": "boolean"
         },
         "clickToRecord": {
@@ -3969,6 +5919,10 @@
         "helpTextPath": {
           "description": "The path to the help text file. This is displayed when a participant clicks help. Markdown is supported. If present, will override the help text path set in the uiConfig.",
           "type": "string"
+        },
+        "hideCheckAnswerButton": {
+          "description": "Hide the Check Answer button and grade answers on Next instead. Defaults to false. Feedback must be enabled by provideFeedback or answer-level feedback.",
+          "type": "boolean"
         },
         "instruction": {
           "description": "The instruction of the component. This is used to identify and provide additional information for the component in the admin panel.",
@@ -4019,6 +5973,11 @@
           "description": "Whether enter key should move to the next question. If present, will override the enter key setting in the uiConfig.",
           "type": "boolean"
         },
+        "parameters": {
+          "additionalProperties": {},
+          "description": "The parameters passed to the component. These can be used for variable substitution: in a react-component, they're available as the `parameters` prop; in this component's instruction field and its responses' prompt, secondaryText, and infoText fields, they're substituted as Handlebars variables (`{{variable}}`). The same substitution also applies inside markdown files, and inside a website component's HTML file when its `templated` field is true.",
+          "type": "object"
+        },
         "path": {
           "description": "The path to the video. This could be a relative path from the public folder or might be a url to an external website.",
           "type": "string"
@@ -4032,7 +5991,7 @@
           "type": "string"
         },
         "provideFeedback": {
-          "description": "Controls whether the component should provide feedback to the participant, such as in a training trial. If present, will override the provide feedback setting in the uiConfig.",
+          "description": "Enable answer checking and feedback. Explicit false disables it even with answer-level feedback. When omitted, answer-level feedback enables it before falling back to uiConfig.provideFeedback.",
           "type": "boolean"
         },
         "recordAudio": {
@@ -4041,6 +6000,10 @@
         },
         "recordScreen": {
           "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig. If true, the uiConfig must have recordScreen set to true or the screen will not be captured. It's also required that the library component, $screen-recording.components.screenRecordingPermission, be included in the study at some point before this component to ensure permissions are granted and screen capture has started.",
+          "type": "boolean"
+        },
+        "recordWebcam": {
+          "description": "Whether or not we want to utilize webcam recording. If present, will override the record webcam setting in the uiConfig. Studies using webcam without screen capture should include the webcam permission component before this component. Studies combining webcam with screen capture should use the screen recording permission component.",
           "type": "boolean"
         },
         "response": {
@@ -4116,15 +6079,27 @@
     },
     "WebsiteComponent": {
       "additionalProperties": false,
-      "description": "The WebsiteComponent interface is used to define the properties of a website component. A WebsiteComponent is used to render an iframe with a website inside of it. This can be used to display an external website or an html file that is located in the public folder. ```json {   \"type\": \"website\",   \"path\": \"<study-name>/assets/website.html\" } ```\n\nTo pass a data from the config to the website, you can use the `parameters` field as below:\n\n```json {   \"type\": \"website\",   \"path\": \"<study-name>/website.html\",   \"parameters\": {     \"barData\": [0.32, 0.01, 1.2, 1.3, 0.82, 0.4, 0.3]   },   \"response\": [     {       \"id\": \"barChart\",       \"prompt\": \"Your selected answer:\",       \"location\": \"belowStimulus\",       \"type\": \"reactive\"     }   ] } ``` In the `website.html` file, by including `revisit-communicate.js`, you can use the `Revisit.onDataReceive` method to retrieve the data, and `Revisit.postAnswers` to send the user's responses back to the reVISit as shown in the example below:\n\n```html <script src=\"../../revisitUtilities/revisit-communicate.js\"></script> <script> Revisit.onDataReceive((data) => {     const barData = data['barData'];     ...   });\n\n  // Call out that 'barChart' needs to match ID in 'response' object   Revisit.postAnswers({ barChart: userAnswer });   </script> ```\n\nIf the html website implements Trrack provenance tracking, create the instance through `Revisit.createTrrack`. reVISit subscribes before returning the instance and automatically reports apply, undo, redo, and other traversals.\n\n```ts const trrack = Revisit.createTrrack({     initializeTrrack,     initialState,     registry   }); ```",
+      "description": "The WebsiteComponent interface is used to define the properties of a website component. A WebsiteComponent is used to render an iframe with a website inside of it. This can be used to display an external website or an html file that is located in the public folder. ```json {   \"type\": \"website\",   \"path\": \"<study-name>/assets/website.html\" } ```\n\nTo pass a data from the config to the website, you can use the `parameters` field as below:\n\n```json {   \"type\": \"website\",   \"path\": \"<study-name>/website.html\",   \"parameters\": {     \"barData\": [0.32, 0.01, 1.2, 1.3, 0.82, 0.4, 0.3]   },   \"response\": [     {       \"id\": \"barChart\",       \"prompt\": \"Your selected answer:\",       \"location\": \"belowStimulus\",       \"type\": \"reactive\"     }   ] } ``` In the `website.html` file, by including `revisit-communicate.js`, you can use the `Revisit.onDataReceive` method to retrieve the data, and `Revisit.postAnswers` to send the user's responses back to the reVISit as shown in the example below:\n\n```html <script src=\"../../revisitUtilities/revisit-communicate.js\"></script> <script> Revisit.onDataReceive((data) => {     const barData = data['barData'];     ...   });\n\n  // Call out that 'barChart' needs to match ID in 'response' object   Revisit.postAnswers({ barChart: userAnswer });   </script> ```\n\nIf the html website implements Trrack provenance tracking, create the instance through `Revisit.createTrrack`. reVISit subscribes before returning the instance and automatically reports apply, undo, redo, and other traversals.\n\n```ts const trrack = Revisit.createTrrack({     initializeTrrack,     initialState,     registry   }); ```\n\nAs an alternative to passing data over `Revisit.onDataReceive`, you can set `templated` to true. The HTML file is then fetched and compiled as a Handlebars template before it is rendered, exactly like a markdown component's file, so `parameters` (and the `{{REVISIT.*}}` data frame and the `lookupAnswers`, `lookupParameters`, and `lookupCorrectAnswer` helpers and their `Rel` forms) can be substituted directly into the markup:\n\n```json {   \"type\": \"website\",   \"path\": \"<study-name>/assets/chart.html\",   \"templated\": true,   \"parameters\": {     \"country\": \"France\",     \"barData\": \"[0.32,0.01,1.2]\"   } } ```\n\n```html <h1>Capital of {{country}}</h1> <script>   // barData is a pre-serialized JSON string. Triple braces preserve it without HTML escaping.   // Only insert trusted parameters this way, never participant answers.   const barData = {{{barData}}}; </script> ```\n\nA few things to know about templated websites:\n- The file is rendered from its compiled contents rather than from its URL, so it is compiled once when the trial loads and is not re-compiled as answers change.\n- Relative paths inside the file (scripts, stylesheets, images) keep working; reVISit injects a `<base>` tag pointing at the file's folder.\n- `revisit-communicate.js` keeps working, but the file must reference the shared `revisitUtilities/revisit-communicate.js` rather than an old vendored copy of it.\n- `templated` is ignored when `path` points at an external website.",
       "properties": {
         "allowFailedTraining": {
-          "description": "Controls whether the component should allow failed training. If present, will override the allow failed training setting in the uiConfig.",
+          "description": "Allow continuing with incorrect answers after attempts are exhausted. Overrides uiConfig.allowFailedTraining. Defaults to true.",
+          "type": "boolean"
+        },
+        "captureGamepad": {
+          "description": "Whether or not to capture game controller input into windowEvents. If present, will override the capture gamepad setting in the uiConfig.",
           "type": "boolean"
         },
         "clickToRecord": {
           "description": "Enables a click-and-hold microphone button instead of continuous recording. When true, audio is muted by default and is recorded only while the button is held. When false, recording starts immediately and can be paused/resumed via the microphone button. Defaults to false.",
           "type": "boolean"
+        },
+        "colorMode": {
+          "description": "The iframe's color scheme. Defaults to the study's color mode. The embedded page must support color schemes.",
+          "enum": [
+            "light",
+            "dark"
+          ],
+          "type": "string"
         },
         "correctAnswer": {
           "description": "The correct answer to the component. This is used for training trials where the user is shown the correct answer after a guess.",
@@ -4144,6 +6119,10 @@
         "helpTextPath": {
           "description": "The path to the help text file. This is displayed when a participant clicks help. Markdown is supported. If present, will override the help text path set in the uiConfig.",
           "type": "string"
+        },
+        "hideCheckAnswerButton": {
+          "description": "Hide the Check Answer button and grade answers on Next instead. Defaults to false. Feedback must be enabled by provideFeedback or answer-level feedback.",
+          "type": "boolean"
         },
         "instruction": {
           "description": "The instruction of the component. This is used to identify and provide additional information for the component in the admin panel.",
@@ -4196,7 +6175,7 @@
         },
         "parameters": {
           "additionalProperties": {},
-          "description": "The parameters that are passed to the website (iframe). These can be used within your website to render different things.",
+          "description": "The parameters passed to the component. These can be used for variable substitution: in a react-component, they're available as the `parameters` prop; in this component's instruction field and its responses' prompt, secondaryText, and infoText fields, they're substituted as Handlebars variables (`{{variable}}`). The same substitution also applies inside markdown files, and inside a website component's HTML file when its `templated` field is true.",
           "type": "object"
         },
         "path": {
@@ -4212,7 +6191,7 @@
           "type": "string"
         },
         "provideFeedback": {
-          "description": "Controls whether the component should provide feedback to the participant, such as in a training trial. If present, will override the provide feedback setting in the uiConfig.",
+          "description": "Enable answer checking and feedback. Explicit false disables it even with answer-level feedback. When omitted, answer-level feedback enables it before falling back to uiConfig.provideFeedback.",
           "type": "boolean"
         },
         "recordAudio": {
@@ -4221,6 +6200,10 @@
         },
         "recordScreen": {
           "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig. If true, the uiConfig must have recordScreen set to true or the screen will not be captured. It's also required that the library component, $screen-recording.components.screenRecordingPermission, be included in the study at some point before this component to ensure permissions are granted and screen capture has started.",
+          "type": "boolean"
+        },
+        "recordWebcam": {
+          "description": "Whether or not we want to utilize webcam recording. If present, will override the record webcam setting in the uiConfig. Studies using webcam without screen capture should include the webcam permission component before this component. Studies combining webcam with screen capture should use the screen recording permission component.",
           "type": "boolean"
         },
         "response": {
@@ -4261,6 +6244,10 @@
         "stylesheetPath": {
           "description": "The path to the external stylesheet file.",
           "type": "string"
+        },
+        "templated": {
+          "description": "Whether the HTML file should be compiled as a Handlebars template before it is rendered, so that `{{parameter}}` placeholders in the file are substituted. Defaults to false. Only applies to HTML files served from the study's public folder; it is ignored for external websites, which cannot be fetched and rewritten.",
+          "type": "boolean"
         },
         "trainingAttempts": {
           "description": "The number of training attempts allowed for the component. If present, will override the training attempts setting in the uiConfig.",

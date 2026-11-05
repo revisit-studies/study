@@ -18,4 +18,4 @@ Try these URLs:
  * [size-trial-2.html](https://github.com/revisit-studies/study/blob/main/public/demo-condition/assets/size-trial-2.html)
 
 ## Relevant documentation:
-* [URL Conditions](https://revisit.dev/docs/designing-studies/url-conditions/)
+* [URL Conditions](https://revisit.dev/docs/designing-studies/sequences/url-conditions/)

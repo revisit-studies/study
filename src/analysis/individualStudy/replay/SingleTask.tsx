@@ -3,10 +3,10 @@ import * as d3 from 'd3';
 
 import { useResizeObserver } from '@mantine/hooks';
 import {
-  IconCheck, IconDeviceDesktop, IconMicrophone, IconProgress, IconX,
+  IconCamera, IconCheck, IconDeviceDesktop, IconMicrophone, IconProgress, IconX,
 } from '@tabler/icons-react';
 import { useNavigateToTrial } from '../../../utils/useNavigateToTrial';
-import type { ComponentAnswerStatus } from '../../../utils/correctAnswer';
+import type { ComponentAnswerStatus } from '../../../utils/componentCorrectness';
 import { UnknownAnswerIcon } from '../../../components/interface/UnknownAnswerIcon';
 
 const LABEL_MARGIN = 3;
@@ -48,6 +48,7 @@ export function SingleTask({
   answerStatus,
   hasAudio,
   hasScreenRecording,
+  hasWebcamRecording,
   scaleStart,
   scaleEnd,
   incomplete,
@@ -67,6 +68,7 @@ export function SingleTask({
   answerStatus: ComponentAnswerStatus | null,
   hasAudio: boolean,
   hasScreenRecording: boolean,
+  hasWebcamRecording: boolean,
   scaleStart: number,
   scaleEnd: number,
   incomplete: boolean,
@@ -82,14 +84,14 @@ export function SingleTask({
   const [ref, { width: labelWidth }] = useResizeObserver();
 
   const navigateToTrial = useNavigateToTrial();
-  const iconCount = (incomplete || answerStatus ? 1 : 0) + (hasAudio ? 1 : 0) + (hasScreenRecording ? 1 : 0);
+  const iconCount = (incomplete || answerStatus ? 1 : 0) + (hasAudio ? 1 : 0) + (hasScreenRecording ? 1 : 0) + (hasWebcamRecording ? 1 : 0);
   const iconsWidth = iconCount * (ICON_SIZE + ICON_GAP);
   const labelOpacity = isDimmed ? 0.35 : 1;
 
   const answerStatusIcon = answerStatus === 'correct'
     ? (
       <IconCheck
-        color="var(--mantine-color-green-6)"
+        color="var(--mantine-color-green-text)"
         style={{ marginTop: 2, strokeWidth: 4 }}
         size="14"
       />
@@ -97,7 +99,7 @@ export function SingleTask({
     : answerStatus === 'incorrect'
       ? (
         <IconX
-          color="var(--mantine-color-red-6)"
+          color="var(--mantine-color-red-text)"
           style={{ marginTop: 2, strokeWidth: 4 }}
           size={14}
         />
@@ -117,7 +119,7 @@ export function SingleTask({
       <rect
         opacity={isDimmed ? 0.45 : 1}
         fill={taskFill({ incomplete, answerStatus })}
-        stroke={isHovered ? 'cornflowerblue' : undefined}
+        stroke={isHovered ? 'var(--mantine-color-blue-text)' : undefined}
         strokeWidth={isHovered ? 3 : 0}
         x={xScale(scaleStart) + TASK_GAP}
         width={Math.max(0, xScale(scaleEnd) - xScale(scaleStart) - TASK_GAP * 2)}
@@ -131,10 +133,10 @@ export function SingleTask({
         width={labelWidth + LABEL_MARGIN * 2 + iconsWidth}
         y={height - TIMELINE_HEIGHT - LABEL_DISTANCE - labelHeight}
         height={LABEL_HEIGHT}
-        fill="whitesmoke"
+        fill="var(--mantine-color-default)"
       />
       <line
-        stroke="black"
+        stroke="var(--mantine-color-dimmed)"
         strokeWidth={1}
         opacity={labelOpacity}
         x1={xScale(scaleStart) - LABEL_MARGIN}
@@ -155,19 +157,25 @@ export function SingleTask({
             </Text>
             {hasScreenRecording && (
               <IconDeviceDesktop
-                color="orange"
+                color="var(--mantine-color-orange-text)"
                 size="14"
               />
             )}
             {hasAudio && (
               <IconMicrophone
+                color="var(--mantine-color-orange-text)"
+                size="14"
+              />
+            )}
+            {hasWebcamRecording && (
+              <IconCamera
                 color="orange"
                 size="14"
               />
             )}
             {incomplete ? (
               <IconProgress
-                color="orange"
+                color="var(--mantine-color-orange-text)"
                 size="14"
               />
             ) : answerStatusIcon}

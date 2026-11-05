@@ -1,5 +1,5 @@
 import {
-  Box, Group, LoadingOverlay, Stack,
+  Box, Group, LoadingOverlay, Stack, useComputedColorScheme, useMantineTheme,
 } from '@mantine/core';
 import {
   useLocation, useNavigate, useParams, useSearchParams,
@@ -19,15 +19,15 @@ import { TaskProvenanceTimeline } from './TaskProvenanceTimeline';
 import { useIsAnalysis } from '../../store/hooks/useIsAnalysis';
 import { Timer } from './Timer';
 import { youtubeReadableDuration } from '../../utils/humanReadableDuration';
-import { ResponseBlockLocation, StoredAnswer } from '../../parser/types';
+import { StoredAnswer } from '../../parser/types';
 import { useEvent } from '../../store/hooks/useEvent';
 import { encryptIndex } from '../../utils/encryptDecryptIndex';
 import { parseTrialOrder } from '../../utils/parseTrialOrder';
 import { useUpdateProvenance } from './useUpdateProvenance';
 import { useReplayContext } from '../../store/hooks/useReplay';
 import { syncChannel, syncEmitter } from '../../utils/syncReplay';
-import type { StoredProvenance } from '../../store/types';
-import { getLegacyStoredAnswerProvenance } from '../../store/provenance';
+import type { ProvenanceLocation, StoredProvenance } from '../../store/types';
+import { getCombinedProvenance, getLegacyStoredAnswerProvenance } from '../../store/provenance';
 import { getReplaySelection } from './provenanceReplay';
 
 const margin = {
@@ -82,14 +82,16 @@ export function AudioProvenanceVis({
   const [ref, { width }] = useResizeObserver();
   const [waveSurferWidth, setWaveSurferWidth] = useState<number>(0);
 
+  const assetIdentifier = answers[taskName]?.assetIdentifier ?? taskName;
   const startTime = useMemo(() => answers[taskName]?.startTime || 0, [answers, taskName]);
 
   const [currentNode, setCurrentNode] = useState<string | null>(null);
-  const [currentResponseNodes, setCurrentResponseNodes] = useState<Record<ResponseBlockLocation, string | undefined>>({
+  const [currentResponseNodes, setCurrentResponseNodes] = useState<Record<ProvenanceLocation, string | undefined>>({
     aboveStimulus: undefined,
     belowStimulus: undefined,
     sidebar: undefined,
     stimulus: undefined,
+    globalStore: undefined,
   });
   const [currentGlobalNode, setCurrentGlobalNode] = useState<{name: string, time: number} | null>(null);
 
@@ -97,6 +99,8 @@ export function AudioProvenanceVis({
   const [playTime, setPlayTime] = useState<number>(0);
 
   const wavesurfer = useRef<WaveSurferType | null>(null);
+  const loadedAnalysisUrls = useRef<string[]>([]);
+  const analysisLoadGeneration = useRef(0);
 
   const waveSurferDiv = useRef(null);
 
@@ -106,6 +110,12 @@ export function AudioProvenanceVis({
 
   const trrackForTrial = useRef<Trrack<object, string> | null>(null);
   const hasLoadableTask = Boolean(participantId && taskName && answers[taskName]);
+
+  useEffect(() => () => {
+    analysisLoadGeneration.current += 1;
+    loadedAnalysisUrls.current.forEach((url) => URL.revokeObjectURL(url));
+    loadedAnalysisUrls.current = [];
+  }, []);
 
   useEffect(() => {
     let canceled = false;
@@ -117,7 +127,7 @@ export function AudioProvenanceVis({
       }
 
       try {
-        const storedProvenance = await storageEngine.getProvenance(taskName, participantId);
+        const storedProvenance = await getCombinedProvenance(storageEngine, taskName, participantId);
         if (!canceled) {
           setStoredProvenanceGraph(storedProvenance ?? legacyProvenanceGraph);
         }
@@ -135,7 +145,7 @@ export function AudioProvenanceVis({
     };
   }, [legacyProvenanceGraph, participantId, storageEngine, taskName]);
 
-  const _setCurrentResponseNodes = useEvent((node: string | null, location: ResponseBlockLocation, createdOn?: number) => {
+  const _setCurrentResponseNodes = useEvent((node: string | null, location: ProvenanceLocation, createdOn?: number) => {
     const graph = provenanceGraph?.[location];
     if (graph && node) {
       const replayEventTime = createdOn ?? graph.nodes[node].createdOn;
@@ -147,12 +157,17 @@ export function AudioProvenanceVis({
     setCurrentResponseNodes({ ...currentResponseNodes, [location]: node });
   });
 
-  const _setPlayTime = useThrottledCallback((n: number) => {
+  const updatePlayTime = useCallback((n: number) => {
     setPlayTime(startTime + n);
     if (setTime) {
       setTime(startTime + n);
     }
-  }, 100); // 100ms throttle
+  }, [setTime, startTime]);
+  const throttledUpdatePlayTime = useThrottledCallback(updatePlayTime, 100);
+  // Replay seeks must reach the provenance state immediately. The throttled
+  // path is useful for live audio rendering, but can drop an intermediate
+  // seek while the analysis component is still applying the previous one.
+  const _setPlayTime = context === 'provenanceVis' ? updatePlayTime : throttledUpdatePlayTime;
 
   useEffect(() => {
     _setPlayTime(seekTime * 1000);
@@ -173,6 +188,7 @@ export function AudioProvenanceVis({
     const participantIdListener = (newId: string) => {
       setSearchParams((params) => {
         params.set('participantId', newId || '');
+        params.delete('globalStoreNode');
         return params;
       });
     };
@@ -218,6 +234,8 @@ export function AudioProvenanceVis({
   useUpdateProvenance('aboveStimulus', playTime, provenanceGraph?.aboveStimulus, currentResponseNodes.aboveStimulus, _setCurrentResponseNodes, saveProvenance);
 
   useUpdateProvenance('belowStimulus', playTime, provenanceGraph?.belowStimulus, currentResponseNodes.belowStimulus, _setCurrentResponseNodes, saveProvenance);
+
+  useUpdateProvenance('globalStore', playTime, provenanceGraph?.globalStore, currentResponseNodes.globalStore, _setCurrentResponseNodes, saveProvenance);
 
   useUpdateProvenance('sidebar', playTime, provenanceGraph?.sidebar, currentResponseNodes.sidebar, _setCurrentResponseNodes, saveProvenance);
 
@@ -289,9 +307,24 @@ export function AudioProvenanceVis({
   }, [analysisHasAudio, answers, taskName, setDuration]);
 
   const isAnalysis = useIsAnalysis();
+  const theme = useMantineTheme();
+  const colorScheme = useComputedColorScheme('light');
+  const waveColors = useMemo(() => ({
+    waveColor: colorScheme === 'dark' ? theme.colors.dark[2] : theme.colors.gray[7],
+    progressColor: theme.colors.blue[colorScheme === 'dark' ? 4 : 7],
+  }), [colorScheme, theme]);
+
+  useEffect(() => {
+    // WaveSurfer only reads its React options on mount; recolor without reloading audio.
+    wavesurfer.current?.setOptions(waveColors);
+  }, [waveColors]);
 
   const handleWSMount = useEvent(
     async (waveSurfer: WaveSurferType | null) => {
+      const loadGeneration = analysisLoadGeneration.current + 1;
+      analysisLoadGeneration.current = loadGeneration;
+      loadedAnalysisUrls.current.forEach((url) => URL.revokeObjectURL(url));
+      loadedAnalysisUrls.current = [];
       wavesurfer.current = waveSurfer;
 
       audioRef.current = null;
@@ -304,11 +337,19 @@ export function AudioProvenanceVis({
           }
 
           const [audioUrl, screenUrl] = await Promise.all([
-            safe(storageEngine.getAudio(taskName, participantId)),
-            safe(storageEngine.getScreenRecording(taskName, participantId)),
+            safe(storageEngine.getAudio(assetIdentifier, participantId)),
+            safe(storageEngine.getScreenRecording(assetIdentifier, participantId)),
           ]);
+          const loadedUrls = [audioUrl, screenUrl]
+            .filter((url): url is string => !!url && url.startsWith('blob:'));
+          if (loadGeneration !== analysisLoadGeneration.current) {
+            loadedUrls.forEach((url) => URL.revokeObjectURL(url));
+            return;
+          }
+          loadedAnalysisUrls.current = loadedUrls;
 
           const url = screenUrl ?? audioUrl ?? null;
+          const hasAudioSource = !!(screenUrl ?? audioUrl);
 
           if (!url) {
             setAnalysisHasAudio(false);
@@ -318,16 +359,23 @@ export function AudioProvenanceVis({
           }
 
           await waveSurfer.load(url!, undefined, duration);
+          if (loadGeneration !== analysisLoadGeneration.current) {
+            loadedUrls.forEach((loadedUrl) => URL.revokeObjectURL(loadedUrl));
+            return;
+          }
           setWaveSurferLoading(false);
 
           audioRef.current = waveSurfer.getMediaElement();
           updateReplayRef();
 
           setWaveSurferWidth(waveSurfer.getWidth());
-          setAnalysisHasAudio(true);
+          setAnalysisHasAudio(hasAudioSource);
           waveSurfer.seekTo(0);
           waveSurfer.on('redrawcomplete', () => setWaveSurferWidth(waveSurfer.getWidth()));
         } catch (error: unknown) {
+          if (loadGeneration !== analysisLoadGeneration.current) {
+            return;
+          }
           setAnalysisHasAudio(false);
           setWaveSurferLoading(false);
           audioRef.current = null;
@@ -369,7 +417,7 @@ export function AudioProvenanceVis({
                 display={analysisHasAudio ? 'block' : 'none'}
                 id="waveformDiv"
               >
-                <WaveSurfer backend="MediaElement" onMount={handleWSMount} plugins={[]} container="#waveformDiv" height={50} waveColor="#484848" progressColor="cornflowerblue" barHeight={0} cursorColor="rgba(0, 0, 0, 0)">
+                <WaveSurfer backend="MediaElement" onMount={handleWSMount} plugins={[]} container="#waveformDiv" height={50} {...waveColors} barHeight={0} cursorColor="rgba(0, 0, 0, 0)">
                   <WaveForm id="waveform" height={50} />
                 </WaveSurfer>
               </Box>

@@ -3,6 +3,7 @@ import {
   afterEach, describe, expect, test, vi,
 } from 'vitest';
 import { ReactNode } from 'react';
+import { StartupInteractionProvider } from '../StartupContext';
 import { TrainingFailed } from '../TrainingFailed';
 import { useStorageEngine } from '../../storage/storageEngineHooks';
 
@@ -29,6 +30,16 @@ describe('TrainingFailed', () => {
 
   test('calls rejectCurrentParticipant with the correct reason on mount', async () => {
     const { unmount } = render(<TrainingFailed />);
+    await waitFor(() => expect(mockReject).toHaveBeenCalledWith('Failed training'));
+    unmount();
+  });
+
+  test('defers rejection until participant startup is ready', async () => {
+    const { rerender, unmount } = render(
+      <StartupInteractionProvider value><TrainingFailed /></StartupInteractionProvider>,
+    );
+    expect(mockReject).not.toHaveBeenCalled();
+    rerender(<StartupInteractionProvider value={false}><TrainingFailed /></StartupInteractionProvider>);
     await waitFor(() => expect(mockReject).toHaveBeenCalledWith('Failed training'));
     unmount();
   });

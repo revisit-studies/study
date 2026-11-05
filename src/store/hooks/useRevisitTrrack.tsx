@@ -1,19 +1,25 @@
 import {
-  createContext, ReactNode, useContext, useEffect, useInsertionEffect, useRef,
+  createContext, ReactNode, useContext, useEffect, useInsertionEffect, useLayoutEffect, useMemo, useRef,
 } from 'react';
-import { initializeTrrack } from '@trrack/core';
 import type { ConfigureTrrackOptions, Trrack } from '@trrack/core';
 import { appendProvenanceTraversalEvent } from '../provenance';
+import { initializeResumedTrrack } from '../resumeProvenance';
 import type { TrrackedProvenance, UseTrrack } from '../types';
 
 export type ProvenanceChangeHandler = (provenance: TrrackedProvenance) => void;
 
-const RevisitProvenanceContext = createContext<ProvenanceChangeHandler | null>(null);
+interface RevisitProvenanceContextValue {
+  onChange: ProvenanceChangeHandler;
+  provenance?: TrrackedProvenance;
+  onGraphReady?: () => () => void;
+}
+const RevisitProvenanceContext = createContext<RevisitProvenanceContextValue | null>(null);
 
 export function useManagedTrrack<State, Event extends string = string>(
   options: ConfigureTrrackOptions<State, Event>,
   onProvenanceChange: ProvenanceChangeHandler,
   scopeKey: string = 'default',
+  retainedProvenance?: TrrackedProvenance,
 ): Trrack<State, Event> {
   const trrackRef = useRef<{
     scopeKey: string;
@@ -26,14 +32,14 @@ export function useManagedTrrack<State, Event extends string = string>(
   if (!trrackRef.current || trrackRef.current.scopeKey !== scopeKey) {
     trrackRef.current = {
       scopeKey,
-      trrack: initializeTrrack(options),
+      trrack: initializeResumedTrrack(options, retainedProvenance),
     };
   }
 
   const { trrack } = trrackRef.current;
 
   useInsertionEffect(() => {
-    previousProvenanceRef.current = undefined;
+    previousProvenanceRef.current = retainedProvenance;
     pendingProvenanceRef.current = [];
     activeHandlerRef.current = null;
 
@@ -52,7 +58,7 @@ export function useManagedTrrack<State, Event extends string = string>(
     };
 
     const unsubscribe = trrack.currentChange(publishProvenance);
-    publishProvenance();
+    if (!retainedProvenance || retainedProvenance.resetToInitialState) publishProvenance();
 
     return () => {
       unsubscribe();
@@ -79,24 +85,32 @@ export function useManagedTrrack<State, Event extends string = string>(
 function useRevisitTrrack<State, Event extends string = string>(
   options: ConfigureTrrackOptions<State, Event>,
 ): Trrack<State, Event> {
-  const onProvenanceChange = useContext(RevisitProvenanceContext);
+  const context = useContext(RevisitProvenanceContext);
 
-  if (!onProvenanceChange) {
+  if (!context) {
     throw new Error('useRevisitTrrack must be used within a reVISit React stimulus.');
   }
 
-  return useManagedTrrack(options, onProvenanceChange);
+  const trrack = useManagedTrrack(options, context.onChange, 'stimulus', context.provenance);
+  const { onGraphReady } = context;
+  useLayoutEffect(() => onGraphReady?.(), [onGraphReady]);
+  return trrack;
 }
 
 export function RevisitProvenanceProvider({
   children,
   onProvenanceChange,
+  provenance,
+  onGraphReady,
 }: {
   children: (useTrrack: UseTrrack) => ReactNode;
   onProvenanceChange: ProvenanceChangeHandler;
+  provenance?: TrrackedProvenance;
+  onGraphReady?: () => () => void;
 }) {
+  const value = useMemo(() => ({ onChange: onProvenanceChange, provenance, onGraphReady }), [onProvenanceChange, provenance, onGraphReady]);
   return (
-    <RevisitProvenanceContext.Provider value={onProvenanceChange}>
+    <RevisitProvenanceContext.Provider value={value}>
       {children(useRevisitTrrack)}
     </RevisitProvenanceContext.Provider>
   );

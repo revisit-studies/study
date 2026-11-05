@@ -43,7 +43,7 @@ describe('TagEditor', () => {
     const createTagCallback = vi.fn(() => new Promise<void>((resolve) => {
       resolveSave = resolve;
     }));
-    render(<MantineProvider><TagEditor createTagCallback={createTagCallback} tags={[]} /></MantineProvider>);
+    render(<MantineProvider env="test"><TagEditor createTagCallback={createTagCallback} tags={[]} /></MantineProvider>);
 
     fireEvent.click(screen.getByRole('button', { name: 'Create new tag' }));
     const nameInput = await screen.findByPlaceholderText('Enter tag name');
@@ -61,7 +61,7 @@ describe('TagEditor', () => {
 
   test('keeps the creation popover open when persistence fails', async () => {
     const createTagCallback = vi.fn().mockRejectedValue(new Error('save failed'));
-    render(<MantineProvider><TagEditor createTagCallback={createTagCallback} tags={[]} /></MantineProvider>);
+    render(<MantineProvider env="test"><TagEditor createTagCallback={createTagCallback} tags={[]} /></MantineProvider>);
 
     fireEvent.click(screen.getByRole('button', { name: 'Create new tag' }));
     fireEvent.change(await screen.findByPlaceholderText('Enter tag name'), { target: { value: 'New Tag' } });

@@ -50,14 +50,14 @@ export function ConfigDiffModal({ configs }: { configs: ConfigInfo[] }) {
               let prefix = '  ';
 
               if (part.removed) {
-                bgColor = '#ffe5e5';
-                borderColor = '#ff6b6b';
-                textColor = '#c92a2a';
+                bgColor = 'var(--mantine-color-red-light)';
+                borderColor = 'var(--mantine-color-red-outline)';
+                textColor = 'var(--mantine-color-red-light-color)';
                 prefix = '- ';
               } else if (part.added) {
-                bgColor = '#e6fcf5';
-                borderColor = '#51cf66';
-                textColor = '#2b8a3e';
+                bgColor = 'var(--mantine-color-green-light)';
+                borderColor = 'var(--mantine-color-green-outline)';
+                textColor = 'var(--mantine-color-green-light-color)';
                 prefix = '+ ';
               }
 

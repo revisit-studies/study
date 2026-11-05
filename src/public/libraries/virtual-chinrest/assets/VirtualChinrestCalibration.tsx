@@ -1,4 +1,5 @@
 /* eslint-disable react/no-unescaped-entities */
+import { useStudyState } from '../../../../store/hooks/useStudyState';
 import {
   useState, useRef, useEffect, useMemo,
 } from 'react';
@@ -35,6 +36,9 @@ export default function VirtualChinrestCalibration({
   itemHeightMM = 53.98, // Standard credit card height
   fixedCorner = 'top-left', // Default to top-left fixed corner
 }: VirtualChinrestCalibrationProps) {
+  const storedAnswer = useStoredAnswer();
+  const storedValue = Number(storedAnswer?.answer?.[parameters.taskid]);
+  const storedPixelsPerMM = Number.isFinite(storedValue) && storedValue > 0 ? storedValue : null;
   const { actions, registry } = useMemo(() => {
     const reg = Registry.create();
     return {
@@ -54,24 +58,21 @@ export default function VirtualChinrestCalibration({
   const trrack = useTrrack<CardCalibrationState>({
     registry,
     initialState: {
-      itemWidthPx: 300,
-      isCalibrationComplete: false,
+      itemWidthPx: storedPixelsPerMM === null ? 300 : storedPixelsPerMM * itemWidthMM,
+      isCalibrationComplete: storedPixelsPerMM !== null,
     },
   });
 
+  const restoredState = useStudyState({ trrack });
   // Set states
-  const [itemWidthPx, setItemWidthPx] = useState(300); // default starting slider value (unit is px)
-  const [isCalibrationComplete, setIsCalibrationComplete] = useState(false);
+  const [itemWidthPx, setItemWidthPx] = useState(restoredState.itemWidthPx); // default starting slider value (unit is px)
+  const [isCalibrationComplete, setIsCalibrationComplete] = useState(restoredState.isCalibrationComplete);
   const [sliderRange, setSliderRange] = useState({ min: 100, max: 500 });
-  const [hasMovedSlider, setHasMovedSlider] = useState(false);
+  const [hasMovedSlider, setHasMovedSlider] = useState(restoredState.itemWidthPx !== 300);
   const [showMoveSliderWarning, setShowMoveSliderWarning] = useState(false);
   const isAnalysis = useIsAnalysis();
-  const storedAnswer = useStoredAnswer();
-
   const { taskid } = parameters;
   const pixelsPerMM = itemWidthPx / itemWidthMM; // pixel to MM conversion
-  const storedValue = Number(storedAnswer?.answer?.[taskid]);
-  const storedPixelsPerMM = Number.isFinite(storedValue) && storedValue > 0 ? storedValue : null;
 
   // Set references
   const containerRef = useRef<HTMLDivElement>(null);
@@ -100,18 +101,8 @@ export default function VirtualChinrestCalibration({
       setHasMovedSlider(replayWidth !== 300);
       setIsCalibrationComplete(provenanceState?.isCalibrationComplete === true);
       setShowMoveSliderWarning(false);
-      return;
     }
-
-    if (storedPixelsPerMM === null) {
-      return;
-    }
-
-    setItemWidthPx(storedPixelsPerMM * itemWidthMM);
-    setHasMovedSlider(true);
-    setIsCalibrationComplete(true);
-    setShowMoveSliderWarning(false);
-  }, [itemWidthMM, provenanceState, storedPixelsPerMM]);
+  }, [provenanceState]);
 
   // Handle a change in the slider
   const handleSliderChange = (value: number) => {

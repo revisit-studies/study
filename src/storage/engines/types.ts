@@ -1,9 +1,16 @@
 import localforage from 'localforage';
 import throttle from 'lodash.throttle';
 import { v4 as uuidv4 } from 'uuid';
+import { resolveBetweenSubjectsFactorLevels } from '../../parser/libraryParser';
+import { GLOBAL_STORE_TASK, getGlobalStoreNodeState, getGlobalStoreNodeStates } from '../../store/globalStoreProvenance';
+import type { GlobalStoreGraph } from '../../store/globalStoreProvenance';
 import { StudyConfig } from '../../parser/types';
+import { DISTINCT_COLOR_PALETTE } from '../../utils/colors';
 import { ParticipantMetadata, Sequence, StoredProvenance } from '../../store/types';
 import { ParticipantData, ParticipantDataWithStatus } from '../types';
+import {
+  countParticipantStatuses, getSequenceAssignmentStatus, statusConsumesCapacity,
+} from '../participantStatus';
 import { hash, isParticipantData } from './utils/storageEngineHelpers';
 import { shouldPreferCachedParticipantData } from './utils/participantDataRecovery';
 import { RevisitNotification } from '../../utils/notifications';
@@ -12,13 +19,14 @@ import {
   ParticipantTags, Tag, TaglessEditedText, TranscribedAudio,
 } from '../../analysis/individualStudy/thinkAloud/types';
 import {
-  normalizeStoredProvenance,
+  createEmptyProvenance, hasProvenanceSource, mergeStoredProvenance, normalizeStoredProvenance,
   splitProvenanceFromAnswers,
 } from '../../store/provenance';
 import {
   SnapshotParticipantCounts,
   calculateSnapshotParticipantCounts,
 } from './utils/snapshotParticipantCounts';
+import { getStageCombinationTargets } from './utils/stageAllocation';
 
 export interface StoredUser {
   email: string | null,
@@ -39,18 +47,35 @@ export type SequenceAssignment = {
   claimed: boolean;
   claimedParticipantId?: string; // The original rejected participant whose slot this assignment is reusing.
   completed: number | null;
+  /** The time this allocation stopped consuming capacity. Unlike rejection, the participant may still finish. */
+  autoTimedOutAt?: number;
   createdTime: number;
   total: number; // Total number of questions/steps
   answered: string[]; // Number of answered questions
   isDynamic: boolean; // Whether the study contains dynamic blocks
   stage: string; // The stage of the participant in the study
   conditions?: string[]; // The study condition(s) assigned to this participant.
+  betweenSubjectsCombinationKey?: string; // The between-subjects combination assigned to this participant.
+  creationIndex?: number; // Stable zero-based participant creation order.
+  sequenceIndex?: number; // Stable zero-based allocator slot.
+  reusableSequenceIndex?: number;
+  initialization?: { pending: string[]; complete: boolean }; // Overlapping first uploads share one reservation.
+  sequenceKey?: string; // Config hash and prepared row index, used to balance active task orders.
 };
 
 export type REVISIT_MODE = 'dataCollectionEnabled' | 'developmentModeEnabled' | 'dataSharingEnabled';
 
-export function cleanupModes(modes: Record<string, boolean>): Record<REVISIT_MODE, boolean> {
-  const cleanedModes: Record<string, boolean> = { ...modes };
+export type RuntimeStudySettings = Record<REVISIT_MODE, boolean> & {
+  stage?: StageData;
+  /** Undefined disables lazy participant timeouts. */
+  autoTimeoutMinutes?: number;
+};
+
+/** The study's runtime settings without the stage data stored alongside them. */
+export type StudyModes = Omit<RuntimeStudySettings, 'stage'>;
+
+export function cleanupModes(modes: Record<string, unknown>): Record<REVISIT_MODE, boolean> {
+  const cleanedModes: Record<string, unknown> = { ...modes };
 
   if ('studyNavigatorEnabled' in modes && !('developmentModeEnabled' in modes)) {
     cleanedModes.developmentModeEnabled = modes.studyNavigatorEnabled;
@@ -68,16 +93,101 @@ export function cleanupModes(modes: Record<string, boolean>): Record<REVISIT_MOD
 export interface StageInfo {
   stageName: string;
   color: string;
+  /** Maximum number of non-rejected participants allowed in this stage. Undefined means unlimited. */
+  maxParticipants?: number;
+  /** Whether the saved maximum is enforced. Undefined preserves the legacy behavior of enabling any defined maximum. */
+  participantLimitEnabled?: boolean;
+  /** Condition definitions registered for this stage; append-only after its first assignment. */
+  conditionKeys?: string[];
+  /** Disabled between-subjects condition keys. Undefined means every condition is enabled. */
+  disabledBetweenSubjectsCombinations?: string[];
+  /** Legacy manual target participant-count overrides for individual between-subjects conditions. */
+  desiredParticipantsByCombination?: Record<string, number>;
+  /** The active participant allocation strategy. Stages created before this field existed infer manual mode from legacy overrides. */
+  participantAssignmentMode?: 'even' | 'manual';
+  /** Saved manual condition allocations, retained while the stage is using even allocation. */
+  manualDesiredParticipantsByCombination?: Record<string, number>;
 }
 
-interface StageData {
+/** The fields of a {@link StageInfo} that an admin can change. An omitted field is left alone and a null clears it. */
+export interface StageUpdates {
+  color?: string;
+  conditionKeys?: string[];
+  maxParticipants?: number | null;
+  participantLimitEnabled?: boolean | null;
+  disabledBetweenSubjectsCombinations?: string[] | null;
+  desiredParticipantsByCombination?: Record<string, number> | null;
+  participantAssignmentMode?: 'even' | 'manual' | null;
+  manualDesiredParticipantsByCombination?: Record<string, number> | null;
+}
+
+export function isStageParticipantLimitEnabled(
+  stage: StageInfo,
+): stage is StageInfo & { maxParticipants: number } {
+  return stage.maxParticipants !== undefined && stage.participantLimitEnabled !== false;
+}
+
+export function applyStageUpdates(data: StageData, stageName: string, updates: StageUpdates): StageData {
+  if (!data.allStages.some((stage) => stage.stageName === stageName)) throw new Error(`Stage ${stageName} not found`);
+  return {
+    currentStage: data.currentStage.stageName === stageName && updates.color !== undefined
+      ? { ...data.currentStage, color: updates.color } : data.currentStage,
+    allStages: data.allStages.map((stage) => {
+      if (stage.stageName !== stageName) return stage;
+      const next = { ...stage } as StageInfo & Record<string, unknown>;
+      Object.entries(updates).forEach(([key, value]) => {
+        if (value === null) delete next[key];
+        else if (value !== undefined) next[key] = value;
+      });
+      return next;
+    }),
+  };
+}
+
+export class StageCapacityExceededError extends Error {
+  constructor(public readonly stageName: string) {
+    super(`The ${stageName} stage has reached its participant limit`);
+    this.name = 'StageCapacityExceededError';
+  }
+}
+
+export class StageNoAvailableConditionsError extends Error {
+  constructor(public readonly stageName: string) {
+    super(`The ${stageName} stage has no enabled between-subjects conditions`);
+    this.name = 'StageNoAvailableConditionsError';
+  }
+}
+
+export class StageOnlyDisabledConditionsHaveCapacityError extends Error {
+  constructor(public readonly stageName: string) {
+    super(`The ${stageName} stage only has capacity in disabled between-subjects conditions`);
+    this.name = 'StageOnlyDisabledConditionsHaveCapacityError';
+  }
+}
+
+export class StageConditionCapacityExceededError extends Error {
+  constructor(public readonly stageName: string) {
+    super(`The participant's between-subjects condition in the ${stageName} stage has reached its participant limit`);
+    this.name = 'StageConditionCapacityExceededError';
+  }
+}
+
+export interface StageData {
   currentStage: StageInfo;
   allStages: StageInfo[];
 }
 
-type ModesAndStageData = {
-  modes: Record<REVISIT_MODE, boolean>;
+export type ModesAndStageData = {
+  modes: StudyModes;
   stageData: StageData;
+  sequenceArray?: Sequence[];
+};
+
+// Reuse the orders prepared during startup. Admission still rechecks policy
+// under its own lock rather than trusting the earlier modes snapshot.
+export type ParticipantSessionBootstrapData = {
+  modesDocument: Record<REVISIT_MODE, boolean> & { stage?: StageData };
+  sequenceArray: Sequence[];
 };
 
 export interface ConditionData {
@@ -85,7 +195,155 @@ export interface ConditionData {
   conditionCounts: Record<string, number>;
 }
 
-const defaultStageColor = '#F05A30';
+const defaultStageColor = DISTINCT_COLOR_PALETTE[0];
+
+/** Whether an allocation still counts against the study's participant limits. */
+export function consumesCapacity(assignment: SequenceAssignment) {
+  return statusConsumesCapacity(getSequenceAssignmentStatus(assignment));
+}
+
+// Admission and stage policy changes share one lock so a participant cannot be
+// committed against a stage configuration that changed mid-assignment.
+const ADMISSION_POLICY_LOCK_KEY = 'participant-assignment';
+
+// Participant IDs must not collide with shared policy or settings lock keys.
+export function getParticipantLockKey(participantId: string) {
+  return `participant:${participantId}`;
+}
+
+export function getStageParticipantCounts(sequenceAssignments: SequenceAssignment[]) {
+  return sequenceAssignments.reduce<Record<string, number>>((counts, assignment) => {
+    if (consumesCapacity(assignment)) {
+      counts[assignment.stage] = (counts[assignment.stage] || 0) + 1;
+    }
+    return counts;
+  }, Object.create(null) as Record<string, number>);
+}
+
+export function getBetweenSubjectsCombinationKey(
+  parameters: Record<string, unknown> | undefined,
+  factorNames: string[],
+) {
+  return JSON.stringify(factorNames.map((factorName) => [factorName, parameters?.[factorName]]));
+}
+
+export function getConfigConditionKeys(config: StudyConfig) {
+  const factors = config.betweenSubjects || [];
+  const combinations = factors.reduce<Record<string, unknown>[]>((rows, factor) => {
+    const levels = resolveBetweenSubjectsFactorLevels(factor, config.factors || {}) || [];
+    return rows.flatMap((row) => levels.map((level) => ({ ...row, [factor]: level })));
+  }, [{}]);
+  return combinations.map((parameters) => getBetweenSubjectsCombinationKey(parameters, factors));
+}
+
+export function assertAppendOnlyConditions(previousKeys: string[], nextKeys: string[]) {
+  if (previousKeys.some((key) => !nextKeys.includes(key))) {
+    throw new Error('Conditions cannot be removed or renamed after participants have joined this stage. Disable recruitment or start a new stage.');
+  }
+}
+
+export function validateStageParticipantLimits(stage: StageInfo, assignments: SequenceAssignment[], previousStage?: StageInfo) {
+  const active = assignments.filter((assignment) => assignment.stage === stage.stageName && consumesCapacity(assignment));
+  if (isStageParticipantLimitEnabled(stage)
+    && (stage.maxParticipants !== previousStage?.maxParticipants || !previousStage || !isStageParticipantLimitEnabled(previousStage))
+    && stage.maxParticipants < active.length) {
+    throw new Error(`The stage maximum cannot be below the ${active.length} participants already assigned`);
+  }
+  const targets = stage.participantAssignmentMode === 'even'
+    ? undefined
+    : stage.manualDesiredParticipantsByCombination ?? stage.desiredParticipantsByCombination;
+  const counts: Record<string, number> = {};
+  active.forEach((assignment) => {
+    if (assignment.betweenSubjectsCombinationKey) {
+      const key = assignment.betweenSubjectsCombinationKey;
+      counts[key] = (counts[key] || 0) + 1;
+    }
+  });
+  const previousTargets = previousStage?.participantAssignmentMode === 'even'
+    ? undefined : previousStage?.manualDesiredParticipantsByCombination ?? previousStage?.desiredParticipantsByCombination;
+  Object.entries(targets || {}).forEach(([key, target]) => {
+    if (target !== previousTargets?.[key] && target < (counts[key] || 0)) {
+      throw new Error(`The condition target cannot be below the ${counts[key]} participants already assigned`);
+    }
+  });
+}
+
+export function isSequenceEnabledForStage(
+  sequence: Sequence,
+  stage: StageInfo,
+  betweenSubjects: string[],
+) {
+  const disabledCombinations = stage.disabledBetweenSubjectsCombinations;
+  if (!disabledCombinations) {
+    return true;
+  }
+
+  return !disabledCombinations.includes(
+    getBetweenSubjectsCombinationKey(sequence.parameters, betweenSubjects),
+  );
+}
+
+export function getDesiredParticipantCountsByCombination(
+  stage: StageInfo,
+  sequenceArray: Sequence[],
+  betweenSubjects: string[],
+) {
+  if (!isStageParticipantLimitEnabled(stage) || betweenSubjects.length === 0) {
+    return undefined;
+  }
+
+  const combinationKeys = [...new Set(sequenceArray.map((sequence) => (
+    getBetweenSubjectsCombinationKey(sequence.parameters, betweenSubjects)
+  )))];
+  const participantAssignmentMode = stage.participantAssignmentMode
+    ?? (stage.desiredParticipantsByCombination ? 'manual' : 'even');
+  const manuallySpecifiedCounts = participantAssignmentMode === 'manual'
+    ? (stage.manualDesiredParticipantsByCombination ?? stage.desiredParticipantsByCombination)
+    : undefined;
+
+  return getStageCombinationTargets(
+    stage.maxParticipants,
+    combinationKeys,
+    manuallySpecifiedCounts,
+    stage.disabledBetweenSubjectsCombinations,
+  );
+}
+
+// Chooses a sequence from the between-subjects condition furthest from its
+// target, so new participants top up the condition that is behind. Conditions with
+// a target are compared by the fraction of that target already filled, so unequal
+// targets fill in proportion rather than largest-first; without targets the raw
+// participant count is used.
+export function getLeastServedSequence(
+  sequences: Sequence[],
+  combinationCounts: Record<string, number>,
+  desiredParticipantCountsByCombination: Record<string, number> | undefined,
+  betweenSubjects: string[],
+  intentIndex: number,
+  sequenceCounts: Map<Sequence, number>,
+) {
+  const combinationKeys = [...new Set(sequences.map((sequence) => (
+    getBetweenSubjectsCombinationKey(sequence.parameters, betweenSubjects)
+  )))];
+  const servedFractions = combinationKeys.map((combinationKey) => {
+    const count = combinationCounts[combinationKey] || 0;
+    const desiredCount = desiredParticipantCountsByCombination?.[combinationKey];
+
+    return desiredCount ? count / desiredCount : count;
+  });
+  const leastServedFraction = Math.min(...servedFractions);
+
+  const leastServedKeys = combinationKeys.filter((_, index) => servedFractions[index] === leastServedFraction);
+  const combinationKey = leastServedKeys[intentIndex % leastServedKeys.length];
+  const combinationSequences = sequences.filter((sequence) => (
+    getBetweenSubjectsCombinationKey(sequence.parameters, betweenSubjects) === combinationKey
+  ));
+  // Released allocations free a particular row, so choose the least-used active
+  // row rather than advancing past the order that needs a replacement.
+  return combinationSequences.reduce((leastUsed, sequence) => (
+    sequenceCounts.get(sequence)! < sequenceCounts.get(leastUsed)! ? sequence : leastUsed
+  ));
+}
 
 export type StorageObjectType = 'sequenceArray' | 'participantData' | 'config' | string;
 export type StorageObject<T extends StorageObjectType> =
@@ -149,6 +407,17 @@ function cloneParticipantDataSnapshot(participantData: ParticipantData) {
   return structuredClone(participantData);
 }
 
+type GlobalStoreProgress = Pick<ParticipantData, 'globalStoreRevision' | 'globalStoreHead' | 'finalized' | 'rejected'>;
+
+function isStaleGlobalStoreSnapshot(snapshot: GlobalStoreProgress, remote: GlobalStoreProgress) {
+  const revision = snapshot.globalStoreRevision ?? 0;
+  const remoteRevision = remote.globalStoreRevision ?? 0;
+  return remoteRevision > revision
+    || (remoteRevision === revision && remoteRevision > 0 && remote.globalStoreHead !== snapshot.globalStoreHead)
+    || (!!remote.finalized && !snapshot.finalized)
+    || (remote.rejected && !snapshot.rejected);
+}
+
 type AssetRetryOperation = () => Promise<unknown>;
 
 type ProgressData = { total: number; answered: string[]; isDynamic: boolean };
@@ -157,6 +426,51 @@ type ProgressDataWrite = {
   participantId: string;
   progressData: ProgressData;
 };
+
+export type StageAllocation = { count: number; combinationCounts: Record<string, number>; rowCounts: Record<string, number> };
+
+export type SequenceRowContext = { configHash: string; sequenceCount: number };
+
+export class LegacyAutoTimeoutStageError extends Error {
+  constructor() {
+    super('This stage contains legacy assignments without saved order information. Create and activate a new stage before enabling auto-timeout.');
+    this.name = 'LegacyAutoTimeoutStageError';
+  }
+}
+
+export function shouldValidateAutoTimeoutStage(previous: RuntimeStudySettings, next: RuntimeStudySettings): boolean {
+  return next.dataCollectionEnabled && typeof next.autoTimeoutMinutes === 'number'
+    && (next.autoTimeoutMinutes !== previous.autoTimeoutMinutes || !previous.dataCollectionEnabled
+      || next.stage?.currentStage.stageName !== previous.stage?.currentStage.stageName);
+}
+
+export function assertAutoTimeoutStageSupported(assignments: SequenceAssignment[], stage: string): void {
+  if (assignments.some((assignment) => assignment.stage === stage && consumesCapacity(assignment)
+    && !assignment.sequenceKey && assignment.sequenceIndex === undefined)) {
+    throw new LegacyAutoTimeoutStageError();
+  }
+}
+
+export function assertAutoTimeoutRestoreSupported(assignment: SequenceAssignment, modes: RuntimeStudySettings | undefined): void {
+  if (modes?.dataCollectionEnabled && modes.autoTimeoutMinutes !== undefined) {
+    assertAutoTimeoutStageSupported([{ ...assignment, rejected: false }], modes.stage?.currentStage.stageName ?? 'DEFAULT');
+  }
+}
+
+export function getStageAllocationFromAssignments(all: SequenceAssignment[], stage: string, sequenceRows?: SequenceRowContext): StageAllocation {
+  // Rejected and auto-timed-out assignments have released their slot.
+  const assignments = all.filter((assignment) => assignment.stage === stage && consumesCapacity(assignment));
+  const combinationCounts: Record<string, number> = {};
+  const rowCounts: Record<string, number> = {};
+  assignments.forEach((assignment) => {
+    if (assignment.betweenSubjectsCombinationKey) combinationCounts[assignment.betweenSubjectsCombinationKey] = (combinationCounts[assignment.betweenSubjectsCombinationKey] || 0) + 1;
+    const sequenceKey = assignment.sequenceKey || (sequenceRows && assignment.sequenceIndex !== undefined
+      ? `${sequenceRows.configHash}:${assignment.sequenceIndex % sequenceRows.sequenceCount}`
+      : undefined);
+    if (sequenceKey) rowCounts[sequenceKey] = (rowCounts[sequenceKey] || 0) + 1;
+  });
+  return { count: assignments.length, combinationCounts, rowCounts };
+}
 
 export abstract class StorageEngine {
   protected engine: 'localStorage' | 'supabase' | 'firebase';
@@ -185,11 +499,19 @@ export abstract class StorageEngine {
 
   private pendingParticipantDataWriteTimer: ReturnType<typeof setTimeout> | null = null;
 
+  private provenanceWriteChains = new Map<string, Promise<unknown>>();
+
+  private globalStorePendingTrials = new Map<string, Map<string, number>>();
+
   private participantDataWriteChain: Promise<void> = Promise.resolve();
+
+  private localParticipantDataUpdateChain: Promise<void> = Promise.resolve();
 
   private participantDataWriteError: Error | null = null;
 
   private participantDataWriteErrorListeners = new Set<(error: Error) => void>();
+
+  private participantRejectionListeners = new Set<() => void>();
 
   private pendingAssetUploads = new Map<string, Promise<void>>();
 
@@ -228,8 +550,12 @@ export abstract class StorageEngine {
     };
   }
 
-  protected shouldDeferInitialParticipantDataPersistence() {
-    return false;
+  subscribeToCurrentParticipantRejection(callback: () => void) {
+    this.participantRejectionListeners.add(callback);
+
+    return () => {
+      this.participantRejectionListeners.delete(callback);
+    };
   }
 
   /*
@@ -238,7 +564,7 @@ export abstract class StorageEngine {
   */
   /* Storage ------------------------------------------------------------- */
   // Gets an object from the storage engine. The object is identified by its type and studyId.
-  protected abstract _getFromStorage<T extends StorageObjectType>(prefix: string, type: T, studyId?: string): Promise<StorageObject<T> | null>;
+  protected abstract _getFromStorage<T extends StorageObjectType>(prefix: string, type: T, studyId?: string, strict?: boolean, fresh?: boolean): Promise<StorageObject<T> | null>;
 
   // Pushes an object to the storage engine. The object is identified by its type and studyId.
   protected abstract _pushToStorage<T extends StorageObjectType>(prefix: string, type: T, objectToUpload: StorageObject<T>): Promise<void>;
@@ -263,6 +589,14 @@ export abstract class StorageEngine {
   // Gets all sequence assignments for the given studyId. The sequence assignments are sorted ascending by timestamp.
   public abstract getAllSequenceAssignments(studyId: string): Promise<SequenceAssignment[]>;
 
+  // Reads one participant's assignment without loading every participant in the study.
+  public abstract getSequenceAssignment(studyId: string, participantId: string): Promise<SequenceAssignment | null>;
+
+  // Reads at least every unfinished, unrejected assignment in the stage, so the
+  // timeout sweep that runs on each admission does not load the full history.
+  // Engines may return extra rows when their backend cannot filter them out.
+  protected abstract _getTimeoutCandidates(stage: string): Promise<SequenceAssignment[]>;
+
   // Creates a sequence assignment for the given participantId and sequenceAssignment. Cloud storage engines should use the realtime database to create the sequence assignment and should use the server to prevent race conditions (i.e. using server timestamps).
   protected abstract _createSequenceAssignment(participantId: string, sequenceAssignment: SequenceAssignment, withServerTimestamp: boolean): Promise<void>;
 
@@ -280,13 +614,34 @@ export abstract class StorageEngine {
   protected abstract _completeCurrentParticipantRealtime(): Promise<void>;
 
   // Rejects the participant in the realtime database sequence assignments. This must also reverse any claimed sequence assignments.
-  protected abstract _rejectParticipantRealtime(participantId: string): Promise<void>;
+  protected abstract _rejectParticipantRealtime(participantId: string, onlyIncomplete?: boolean): Promise<void | boolean>;
 
   // Unrejects the participant in the realtime database sequence assignments. This must also reverse any claimed sequence assignments.
   protected abstract _undoRejectParticipantRealtime(participantId: string): Promise<void>;
 
   // Helper function to claim a sequence assignment of the given participant in the realtime database.
-  protected abstract _claimSequenceAssignment(participantId: string, sequenceAssignment: SequenceAssignment): Promise<void>;
+  protected abstract _claimSequenceAssignment(participantId: string): Promise<void>;
+
+  /**
+   * Atomically marks an eligible assignment as timed out. Returns false when a
+   * concurrent completion, rejection, or timeout made the assignment ineligible.
+   * Sweeps supply their deadline so a fresh reservation at the same ID survives.
+   */
+  protected abstract _markSequenceAssignmentTimedOut(participantId: string, timedOutAt: number, deadline?: number): Promise<boolean>;
+
+  /**
+   * The backend's current time in milliseconds. Timeout eligibility must never
+   * be decided from a participant's browser clock: this code runs when a new
+   * participant opens the study, so a clock that runs fast would time out
+   * active participants and a clock that runs slow would leave stale
+   * assignments consuming capacity.
+   */
+  protected abstract _getServerTimeMs(): Promise<number>;
+
+  // Runs an operation while holding a distributed lock for this study. This is used for
+  // operations whose correctness depends on multiple reads and writes, such as assigning
+  // the final available participant slot or rejecting a participant with a pending save.
+  protected abstract _runWithLock<T>(lockKey: string, operation: () => Promise<T>): Promise<T>;
 
   // Sets up the study database (firestore, indexedDB, etc.) for the given studyId. Also sets the studyId in the storage engine.
   abstract initializeStudyDb(studyId: string): Promise<void>;
@@ -296,19 +651,89 @@ export abstract class StorageEngine {
   abstract connect(): Promise<void>;
 
   // Gets the modes for the given studyId. The modes are stored as a record with the mode name as the key and a boolean value indicating whether the mode is enabled or not.
-  abstract getModes(studyId: string): Promise<Record<REVISIT_MODE, boolean> & { stage?: StageData }>;
+  abstract getModes(studyId: string): Promise<RuntimeStudySettings>;
+
+  // Read modes for an access decision without creating a missing Supabase record.
+  async getAccessModes(studyId: string): Promise<(Record<REVISIT_MODE, boolean> & { stage?: StageData }) | null> {
+    return this.getModes(studyId);
+  }
 
   // Sets the mode for the given studyId. The mode is stored as a record with the mode name as the key and a boolean value indicating whether the mode is enabled or not.
-  abstract setMode(studyId: string, mode: REVISIT_MODE, value: boolean): Promise<void>;
+  // Modes share one document with the stage data, and stage edits rewrite that whole
+  // document, so mode changes hold the same lock to keep either write from replacing
+  // the other with a stale value.
+  async setMode(studyId: string, mode: REVISIT_MODE, value: boolean): Promise<void> {
+    await this._runWithLock(ADMISSION_POLICY_LOCK_KEY, async () => {
+      await this._setMode(studyId, mode, value);
+    });
+  }
+
+  // Engine primitive for setMode. Callers must hold the admission policy lock.
+  protected abstract _setMode(studyId: string, mode: REVISIT_MODE, value: boolean): Promise<void>;
+
+  async setAutoTimeoutMinutes(studyId: string, minutes: number | undefined): Promise<void> {
+    if (minutes !== undefined && (!Number.isInteger(minutes) || minutes < 1)) {
+      throw new Error('Auto-timeout must be a whole number of minutes greater than zero');
+    }
+    // Write only this field. Rewriting the whole settings document from a copy
+    // read earlier would drop a stage or mode update that landed in between.
+    // Coordinate enabling with rejection restoration and its rollback, so a
+    // legacy assignment cannot become active after the compatibility check.
+    await this._runWithLock(ADMISSION_POLICY_LOCK_KEY, () => this._updateModesFields(studyId, { autoTimeoutMinutes: minutes }));
+  }
+
+  // Gets the landing-page visibility for the given studyId. This method is used to check whether the study is hidden from the landing page or not.
+  abstract getStudyHiddenFromLandingPage(studyId: string): Promise<boolean>;
+
+  // Sets the landing-page visibility for the given studyId. This method is used to control whether the study is hidden from the landing page or not.
+  abstract setStudyHiddenFromLandingPage(studyId: string, hidden: boolean): Promise<void>;
 
   // Protected helper: Sets the full modes document (including stage data and mode flags)
-  protected abstract _setModesDocument(studyId: string, modesDocument: Record<REVISIT_MODE, boolean> & { stage?: StageData }): Promise<void>;
+  protected abstract _setModesDocument(studyId: string, modesDocument: RuntimeStudySettings): Promise<void>;
+
+  /**
+   * Protected helper: merges the given settings fields into the stored document
+   * without touching the fields it was not given. A field set to `undefined` is
+   * removed from the stored document.
+   *
+   * Backends that store the settings as one opaque value cannot merge, so this
+   * default serializes the read-modify-write behind the settings lock. A backend
+   * that can merge field by field should override it and skip the lock.
+   */
+  protected async _updateModesFields(studyId: string, fields: Partial<RuntimeStudySettings>): Promise<void> {
+    await this._runWithLock('study-settings', async () => {
+      const modes = await this._readModesForUpdate(studyId);
+      const updatedModes: Record<string, unknown> = { ...modes };
+      Object.entries(fields).forEach(([field, value]) => {
+        if (value === undefined) {
+          delete updatedModes[field];
+        } else {
+          updatedModes[field] = value;
+        }
+      });
+      const settings = updatedModes as RuntimeStudySettings;
+      if (shouldValidateAutoTimeoutStage(modes, settings)) {
+        assertAutoTimeoutStageSupported(await this.getAllSequenceAssignments(studyId), settings.stage?.currentStage.stageName ?? 'DEFAULT');
+      }
+      await this._setModesDocument(studyId, settings);
+    });
+  }
+
+  // Protected helper: reads the settings that `_updateModesFields` merges into
+  // while it holds the settings lock. An engine whose `getModes` takes that lock
+  // must override this to read without it.
+  protected async _readModesForUpdate(studyId: string): Promise<RuntimeStudySettings> {
+    return await this.getModes(studyId);
+  }
 
   // Gets the audio URL for the given task and participantId. This method is used to fetch the audio file from the storage engine.
   protected abstract _getAudioUrl(task: string, participantId?: string): Promise<string | null>;
 
   // Gets the screen recording URL for the given task and participantId. This method is used to fetch the screen recording video file from the storage engine.
   protected abstract _getScreenRecordingUrl(task: string, participantId?: string): Promise<string | null>;
+
+  // Gets the webcam recording URL for the given task and participantId.
+  protected abstract _getWebcamRecordingUrl(task: string, participantId?: string): Promise<string | null>;
 
   // Gets the transcript URL for the given task and participantId. (Optional - not all storage engines need to implement this, only if they generate transcripts).
   protected _getTranscriptUrl?(task: string, participantId?: string): Promise<string | null>;
@@ -392,7 +817,7 @@ export abstract class StorageEngine {
     return `${this.collectionPrefix}${this.studyId}/participants/${participantId}/localParticipantData`;
   }
 
-  private async cacheParticipantDataSnapshot(snapshot: ParticipantData, participantId?: string) {
+  private async cacheParticipantDataSnapshot(snapshot: ParticipantData, participantId?: string, required = false) {
     const targetParticipantId = participantId || this.currentParticipantId;
     if (!this.studyId || !targetParticipantId) {
       return;
@@ -404,8 +829,26 @@ export abstract class StorageEngine {
         cloneParticipantDataSnapshot(snapshot),
       );
     } catch (error) {
+      if (required) throw error;
       console.warn('Failed to cache participant data locally:', error);
     }
+  }
+
+  /** Serialize local acceptance and background updates without waiting for cloud writes. */
+  private async updateParticipantDataLocally<T>(
+    studyId: string | undefined,
+    participantId: string | undefined,
+    update: (assertCurrentSession: () => void) => Promise<T>,
+  ) {
+    const assertCurrentSession = () => {
+      if (this.studyId !== studyId || this.currentParticipantId !== participantId) throw new Error('The participant session changed before its data could be saved.');
+    };
+    const pending = this.localParticipantDataUpdateChain.then(() => {
+      assertCurrentSession();
+      return update(assertCurrentSession);
+    });
+    this.localParticipantDataUpdateChain = pending.then(() => undefined, () => undefined);
+    return pending;
   }
 
   private async getCachedParticipantDataSnapshot(participantId?: string) {
@@ -426,15 +869,30 @@ export abstract class StorageEngine {
     }
   }
 
-  private async getModesAndStageData(studyId: string): Promise<ModesAndStageData> {
-    const modesDoc = await this.getModes(studyId);
+  private async removeCachedParticipantDataSnapshot(participantId?: string) {
+    const targetParticipantId = participantId || this.currentParticipantId;
+    if (!this.studyId || !targetParticipantId) {
+      return;
+    }
+
+    try {
+      await this.participantStore.removeItem(
+        this.getParticipantDataSnapshotStorageKey(targetParticipantId),
+      );
+    } catch (error) {
+      console.warn('Failed to remove cached participant data:', error);
+    }
+  }
+
+  protected async getModesAndStageData(
+    studyId: string,
+    existingModesDocument?: Record<REVISIT_MODE, boolean> & { stage?: StageData },
+  ): Promise<ModesAndStageData> {
+    const modesDoc = existingModesDocument ?? await this.getModes(studyId);
     const { stage, ...modeValues } = modesDoc;
 
     if (stage) {
-      return {
-        modes: modeValues as Record<REVISIT_MODE, boolean>,
-        stageData: stage,
-      };
+      return { modes: modeValues, stageData: stage };
     }
 
     const defaultStageData: StageData = {
@@ -442,15 +900,9 @@ export abstract class StorageEngine {
       allStages: [{ stageName: 'DEFAULT', color: defaultStageColor }],
     };
 
-    await this._setModesDocument(studyId, {
-      ...(modeValues as Record<REVISIT_MODE, boolean>),
-      stage: defaultStageData,
-    });
+    await this._updateModesFields(studyId, { stage: defaultStageData });
 
-    return {
-      modes: modeValues as Record<REVISIT_MODE, boolean>,
-      stageData: defaultStageData,
-    };
+    return { modes: modeValues, stageData: defaultStageData };
   }
 
   private clearPendingParticipantDataWriteTimer() {
@@ -475,26 +927,85 @@ export abstract class StorageEngine {
     return error;
   }
 
+  private async assertGlobalStoreUploadCurrent(
+    participantId: string,
+    snapshot: GlobalStoreProgress,
+    remoteParticipant?: ParticipantData | null,
+    incomingHistory?: GlobalStoreGraph,
+  ) {
+    const remote = remoteParticipant === undefined
+      ? await this._getFromStorage(`participants/${participantId}`, 'participantData', undefined, true, true)
+      : remoteParticipant;
+    if (snapshot.globalStoreRevision === undefined && (!isParticipantData(remote) || remote.globalStoreRevision === undefined)) return;
+    // Finalization marks the assignment under this same participant lock; its
+    // completion is authoritative even when another browser still has an open session.
+    const assignment = await this._getSequenceAssignment(participantId);
+    if (assignment && assignment.completed !== null) throw new Error('This participant has already completed the study. Reload before continuing.');
+    const conflict = () => new Error('This session has newer progress in another browser. Reload before continuing.');
+    if (isParticipantData(remote) && isStaleGlobalStoreSnapshot(snapshot, remote)) throw conflict();
+    if (!snapshot.globalStoreRevision) return;
+
+    // History can finish uploading before its participant snapshot. Protect that interval too.
+    const uploaded = await this.parseProvenanceStorageObject(await this._getFromStorage(`provenance/${participantId}`, GLOBAL_STORE_TASK, undefined, true, true));
+    if (!uploaded?.globalStore) return;
+    if (!incomingHistory && uploaded.globalStore.current === snapshot.globalStoreHead) return;
+    const local = incomingHistory ?? (await this.participantStore.getItem<StoredProvenance>(
+      this.localProvenanceKey(`${GLOBAL_STORE_TASK}/${snapshot.globalStoreRevision}`, participantId),
+    ))?.globalStore;
+    if (!local?.nodes[uploaded.globalStore.current]) throw conflict();
+  }
+
   private async enqueueParticipantDataWrite(
     participantId: string,
     snapshot: ParticipantData,
     cache: boolean,
   ) {
+    const { studyId } = this;
+    const publicationKey = `${studyId}/${participantId}/${GLOBAL_STORE_TASK}`;
     const write = async () => {
       this.participantDataWriteError = null;
       try {
-        await this._pushToStorage(
-          `participants/${participantId}`,
-          'participantData',
-          snapshot,
-        );
-
-        if (cache) {
-          await this._cacheStorageObject(
+        if (snapshot.globalStoreRevision !== undefined) await this.provenanceWriteChains.get(publicationKey);
+        await this._runWithLock(getParticipantLockKey(participantId), async () => {
+          // An admin can reject a participant in another browser while this
+          // client still has a debounced full-record write pending. The same
+          // lock is held by rejectParticipant, so the check and write cannot
+          // race with a rejection.
+          const latestParticipant = await this._getFromStorage(
             `participants/${participantId}`,
             'participantData',
+            undefined,
+            true,
+            snapshot.globalStoreRevision !== undefined,
           );
-        }
+          if (isParticipantData(latestParticipant) && latestParticipant.rejected) {
+            if (participantId === this.currentParticipantId) {
+              this.participantData = latestParticipant;
+              this.clearPendingParticipantDataWriteTimer();
+              this.pendingParticipantDataWrite = undefined;
+              await this.cacheParticipantDataSnapshot(latestParticipant, participantId);
+              this.participantRejectionListeners.forEach((listener) => listener());
+            }
+            return false;
+          }
+
+          const current = this.participantData;
+          // A newer local acceptance includes earlier tag/metadata mutations and supersedes this projection.
+          if (this.studyId === studyId && this.currentParticipantId === participantId && current?.participantId === participantId
+            && (current.globalStoreRevision ?? 0) > (snapshot.globalStoreRevision ?? 0)) return false;
+
+          await this.assertGlobalStoreUploadCurrent(participantId, snapshot, latestParticipant);
+
+          await this._pushToStorage(
+            `participants/${participantId}`,
+            'participantData',
+            snapshot,
+          );
+          if (cache && snapshot.globalStoreRevision === undefined) {
+            await this._cacheStorageObject(`participants/${participantId}`, 'participantData');
+          }
+          return true;
+        });
       } catch (error) {
         this.recordParticipantDataWriteError(error);
         throw this.participantDataWriteError;
@@ -543,25 +1054,32 @@ export abstract class StorageEngine {
 
   protected async persistCurrentParticipantData(
     options: { immediate?: boolean; cache?: boolean } = {},
+    update?: (participant: ParticipantData) => void,
   ) {
     if (!this.currentParticipantId || this.participantData === undefined) {
       throw new Error('Participant not initialized');
     }
+    if (this.participantData.finalized) return;
 
-    const snapshot = cloneParticipantDataSnapshot(this.participantData);
+    const { studyId, currentParticipantId } = this;
     const { immediate = false, cache = false } = options;
-
-    await this.cacheParticipantDataSnapshot(snapshot, this.currentParticipantId);
     await this.verifyStudyDatabase();
-
-    if (!immediate) {
-      this.scheduleParticipantDataWrite(snapshot, cache);
-      return;
-    }
-
-    this.clearPendingParticipantDataWriteTimer();
-    this.pendingParticipantDataWrite = undefined;
-    await this.enqueueParticipantDataWrite(this.currentParticipantId, snapshot, cache);
+    let cloudWrite: Promise<void> | undefined;
+    await this.updateParticipantDataLocally(studyId, currentParticipantId, async (assertCurrentSession) => {
+      if (this.participantData!.finalized) return;
+      update?.(this.participantData!);
+      const snapshot = cloneParticipantDataSnapshot(this.participantData!);
+      await this.cacheParticipantDataSnapshot(snapshot, currentParticipantId);
+      assertCurrentSession();
+      if (immediate) {
+        this.clearPendingParticipantDataWriteTimer();
+        this.pendingParticipantDataWrite = undefined;
+        cloudWrite = this.enqueueParticipantDataWrite(currentParticipantId, snapshot, cache);
+      } else {
+        this.scheduleParticipantDataWrite(snapshot, cache);
+      }
+    });
+    await cloudWrite;
   }
 
   async flushPendingParticipantData() {
@@ -586,11 +1104,23 @@ export abstract class StorageEngine {
   }
 
   async retryFailedWrites() {
+    if (this.participantData?.finalized) return;
     await this.connect();
     if (!this.isConnected()) {
       throw new Error(`Failed to reconnect to ${this.getEngine()} storage engine`);
     }
 
+    if (this.participantData?.globalStoreRevision !== undefined) {
+      const queueKey = `${this.studyId}/${this.currentParticipantId}/${GLOBAL_STORE_TASK}`;
+      await this.provenanceWriteChains.get(queueKey)?.catch(() => undefined);
+      const assetKey = `provenance/${GLOBAL_STORE_TASK}`;
+      const retry = this.failedAssetRetryOperations.get(assetKey);
+      if (retry) {
+        const publication = this.trackAssetOperation(assetKey, retry);
+        this.provenanceWriteChains.set(queueKey, publication);
+        await publication;
+      }
+    }
     await this.persistCurrentParticipantData({ immediate: true });
 
     const { pendingProgressDataWrite } = this;
@@ -705,7 +1235,25 @@ export abstract class StorageEngine {
   }
 
   // Setting current stage
-  async setCurrentStage(studyId: string, stageName: string, color: string = defaultStageColor): Promise<void> {
+  async setCurrentStage(
+    studyId: string,
+    stageName: string,
+    color: string = defaultStageColor,
+    maxParticipants?: number,
+  ): Promise<void> {
+    // The modes document holds every stage, so a read-modify-write of one stage
+    // would otherwise drop a concurrent admin's edit to a different stage.
+    await this._runWithLock(ADMISSION_POLICY_LOCK_KEY, async () => {
+      await this.setCurrentStageUnlocked(studyId, stageName, color, maxParticipants);
+    });
+  }
+
+  private async setCurrentStageUnlocked(
+    studyId: string,
+    stageName: string,
+    color: string,
+    maxParticipants?: number,
+  ): Promise<void> {
     const modesDoc = await this.getModes(studyId);
 
     // Initialize if doesn't exist or invalid
@@ -722,84 +1270,135 @@ export abstract class StorageEngine {
     );
 
     if (existingStageIndex === -1) {
-      modesDoc.stage.allStages.push({ stageName, color });
+      modesDoc.stage.allStages.push({
+        stageName,
+        color,
+        ...(maxParticipants === undefined ? {} : { maxParticipants }),
+      });
     }
 
     modesDoc.stage.currentStage = { stageName, color };
 
-    const updatedModesDoc = {
-      ...modesDoc,
-      stage: modesDoc.stage,
-    };
-
-    await this._setModesDocument(studyId, updatedModesDoc);
+    await this._updateModesFields(studyId, { stage: modesDoc.stage });
   }
 
   // Updating stage color
   async updateStageColor(studyId: string, stageName: string, color: string): Promise<void> {
-    const modesDoc = await this.getModes(studyId);
-
-    if (!modesDoc.stage) {
-      throw new Error('Stage data not initialized');
-    }
-
-    const updatedAllStages = modesDoc.stage.allStages.map(
-      (s) => (s.stageName === stageName ? { ...s, color } : s),
-    );
-
-    const updatedCurrentStage = modesDoc.stage.currentStage.stageName === stageName
-      ? { ...modesDoc.stage.currentStage, color }
-      : modesDoc.stage.currentStage;
-
-    const updatedStageData = {
-      currentStage: updatedCurrentStage,
-      allStages: updatedAllStages,
-    };
-
-    const updatedModesDoc = {
-      ...modesDoc,
-      stage: updatedStageData,
-    };
-
-    await this._setModesDocument(studyId, updatedModesDoc);
+    await this.updateStage(studyId, stageName, { color });
   }
 
-  // Saves the new config for the study. This will overwrite the existing sequence array so that the new sequences are compatible with the new config.
+  protected async changeStagePolicy(studyId: string, stageName: string, update: (stage: StageInfo) => StageUpdates | Promise<StageUpdates>) {
+    await this._runWithLock(ADMISSION_POLICY_LOCK_KEY, async () => {
+      const stage = (await this.getModes(studyId)).stage?.allStages.find((item) => item.stageName === stageName);
+      if (!stage) throw new Error(`Stage ${stageName} not found`);
+      await this.updateStageUnlocked(studyId, stageName, await update(stage));
+    });
+  }
+
+  async updateStage(studyId: string, stageName: string, updates: StageUpdates): Promise<void> {
+    await this.changeStagePolicy(studyId, stageName, () => updates);
+  }
+
+  async setStageCombinationEnabled(studyId: string, stageName: string, combinationKey: string, enabled: boolean) {
+    await this.changeStagePolicy(studyId, stageName, (stage) => {
+      const disabled = stage.disabledBetweenSubjectsCombinations || [];
+      const next = enabled ? disabled.filter((key) => key !== combinationKey) : [...new Set([...disabled, combinationKey])];
+      return { disabledBetweenSubjectsCombinations: next.length ? next : null };
+    });
+  }
+
+  async setStageParticipantAssignmentMode(studyId: string, stageName: string, mode: 'even' | 'manual', combinationKeys: string[]) {
+    await this.changeStagePolicy(studyId, stageName, (stage) => {
+      if (mode === 'even') return { participantAssignmentMode: mode };
+      const targets = getStageCombinationTargets(
+        stage.maxParticipants,
+        combinationKeys,
+        stage.manualDesiredParticipantsByCombination ?? stage.desiredParticipantsByCombination,
+        stage.disabledBetweenSubjectsCombinations,
+      );
+      if (!targets) throw new Error('Set a stage maximum before assigning participants manually');
+      return {
+        participantAssignmentMode: mode,
+        manualDesiredParticipantsByCombination: targets,
+        maxParticipants: Object.values(targets).reduce((total, count) => total + count, 0),
+      };
+    });
+  }
+
+  async setStageDesiredParticipants(studyId: string, stageName: string, combinationKey: string, desiredParticipants: number, initialDesiredParticipants: Record<string, number>) {
+    await this.changeStagePolicy(studyId, stageName, async (stage) => {
+      const configHash = await this._getCurrentConfigHash();
+      const config = configHash ? await this._getFromStorage(`configs/${configHash}`, 'config', studyId) : undefined;
+      if (configHash && !config?.sequence) throw new Error('The active study configuration could not be loaded. Please try again.');
+      const keys = config?.sequence ? getConfigConditionKeys(config) : stage.conditionKeys ?? Object.keys(initialDesiredParticipants);
+      if ((configHash || stage.conditionKeys) && !keys.includes(combinationKey)) throw new Error('This condition is no longer available. Please reload the study settings.');
+      const saved = stage.manualDesiredParticipantsByCombination ?? stage.desiredParticipantsByCombination;
+      const effective = getStageCombinationTargets(stage.maxParticipants, keys, saved, stage.disabledBetweenSubjectsCombinations) ?? initialDesiredParticipants;
+      const targets = {
+        ...Object.fromEntries(keys.map((key) => [key, effective[key] ?? 0])),
+        [combinationKey]: desiredParticipants,
+      };
+      return {
+        participantAssignmentMode: 'manual',
+        manualDesiredParticipantsByCombination: targets,
+        maxParticipants: Object.values(targets).reduce((total, count) => total + count, 0),
+        conditionKeys: keys,
+      };
+    });
+  }
+
+  protected async updateStageUnlocked(studyId: string, stageName: string, updates: StageUpdates): Promise<void> {
+    const modes = await this.getModes(studyId);
+    if (!modes.stage) throw new Error('Stage data not initialized');
+    const data = applyStageUpdates(modes.stage, stageName, updates);
+    const assignments = await this.getAllSequenceAssignments(studyId);
+    const stage = data.allStages.find((item) => item.stageName === stageName)!;
+    validateStageParticipantLimits(stage, assignments, modes.stage.allStages.find((item) => item.stageName === stageName));
+    if (assignments.some((assignment) => assignment.stage === stageName)) {
+      assertAppendOnlyConditions(modes.stage.allStages.find((item) => item.stageName === stageName)!.conditionKeys || [], stage.conditionKeys || []);
+    }
+    // Write only the stage, so a concurrently saved setting such as the
+    // auto-timeout is not replaced with the copy read above.
+    await this._updateModesFields(studyId, { stage: data });
+  }
+
+  protected async validateStageConditions(studyId: string, keys: string[]) {
+    const { stageData } = await this.getModesAndStageData(studyId);
+    const stage = stageData.allStages.find((candidate) => candidate.stageName === stageData.currentStage.stageName)!;
+    const assignments = await this.getAllSequenceAssignments(studyId);
+    if (assignments.some((assignment) => assignment.stage === stage.stageName)) {
+      assertAppendOnlyConditions(stage.conditionKeys || [], keys);
+    }
+    return stage;
+  }
+
+  private async registerStageConditions(studyId: string, keys: string[]) {
+    const stage = await this.validateStageConditions(studyId, keys);
+    if (JSON.stringify(stage.conditionKeys) !== JSON.stringify(keys)) {
+      await this.updateStageUnlocked(studyId, stage.stageName, { conditionKeys: keys });
+    }
+  }
+
   async saveConfig(config: StudyConfig) {
-    const currentConfigHash = await this._getCurrentConfigHash();
-    // Hash the provided config
-    const configHash = await hash(JSON.stringify(config));
+    await this._runWithLock(ADMISSION_POLICY_LOCK_KEY, async () => {
+      if (!this.studyId) throw new Error('Study ID is not set');
+      const currentConfigHash = await this._getCurrentConfigHash();
+      const configHash = await hash(JSON.stringify(config));
+      const storedConfig = currentConfigHash === configHash
+        ? await this._getFromStorage(`configs/${configHash}`, 'config') : null;
+      if (storedConfig && Object.keys(storedConfig).length > 0) return;
+      const keys = getConfigConditionKeys(config);
+      await this.validateStageConditions(this.studyId, keys);
+      await this._pushToStorage(`configs/${configHash}`, 'config', config);
+      await this._cacheStorageObject(`configs/${configHash}`, 'config');
+      // Failed uploads must not advance the append-only condition definitions.
+      await this.activateConfig(configHash, keys);
+    });
+  }
 
-    // Skip saving config if the active config is already saved in storage
-    if (currentConfigHash === configHash) {
-      const storedConfig = await this._getFromStorage(`configs/${configHash}`, 'config');
-      if (storedConfig && Object.keys(storedConfig).length > 0) {
-        return;
-      }
-    }
-
-    // Push the config to storage and cache it, since it won't change
-    await this._pushToStorage(
-      `configs/${configHash}`,
-      'config',
-      config,
-    );
-    await this._cacheStorageObject(`configs/${configHash}`, 'config');
-
-    // Clear sequence array if the config has changed.
-    // Keep currentParticipantId so existing participant sessions can continue
-    // against their original participantConfigHash.
-    if (currentConfigHash && currentConfigHash !== configHash) {
-      try {
-        await this._deleteFromStorage('', 'sequenceArray');
-      } catch {
-        // pass, if this happens, we didn't have a sequence array yet
-      }
-    }
-
-    if (currentConfigHash !== configHash) {
-      await this._setCurrentConfigHash(configHash);
-    }
+  protected async activateConfig(configHash: string, keys: string[]) {
+    await this.registerStageConditions(this.studyId!, keys);
+    if (await this._getCurrentConfigHash() !== configHash) await this._setCurrentConfigHash(configHash);
   }
 
   // Gets all configs from the storage engine based on the provided temporary hashes and studyId.
@@ -867,97 +1466,243 @@ export abstract class StorageEngine {
   // This function is one of the most critical functions in the storage engine.
   // It uses the notion of sequence intents and assignments to determine the current sequence for the participant.
   // It handles rejected participants and allows for reusing a rejected participant's sequence.
-  protected async _getSequence(conditions?: string[], bootstrapData?: ModesAndStageData) {
-    if (!this.currentParticipantId) {
-      throw new Error('Participant not initialized');
+  protected async _getSequence(
+    conditions: string[] | undefined,
+    bootstrapData: ModesAndStageData,
+    config: StudyConfig,
+    participantConfigHash: string,
+  ) {
+    if (!this.currentParticipantId || !this.studyId) throw new Error('Participant not initialized');
+    const { modes, stageData } = bootstrapData;
+    const stage = stageData.allStages.find((item) => item.stageName === stageData.currentStage.stageName)!;
+    const sequences = bootstrapData.sequenceArray
+      ?? await this.getSequenceArray(await this._getCurrentConfigHash() ? participantConfigHash : undefined);
+    if (!sequences?.length) throw new Error('Latin square not initialized');
+    const existing = modes.dataCollectionEnabled ? await this._getSequenceAssignment(this.currentParticipantId) : null;
+    if (existing && !existing.rejected) {
+      const allocation = await this._allocateSequenceAssignment(this.currentParticipantId, existing);
+      const prefix = `${participantConfigHash}:`;
+      const currentRow = existing.sequenceKey?.startsWith(prefix) ? sequences[Number(existing.sequenceKey.slice(prefix.length))]
+        : existing.sequenceKey === undefined ? sequences[allocation.sequenceIndex % sequences.length] : undefined;
+      if (!currentRow) throw new Error('The unfinished reservation uses a different study configuration. Please contact the study administrator.');
+      return { currentRow, creationIndex: allocation.creationIndex + 1, stage: existing.stage };
     }
-    if (this.studyId === undefined) {
-      throw new Error('Study ID is not set');
+    const betweenSubjects = config.betweenSubjects || [];
+    const keys = getConfigConditionKeys(config);
+    const state = await this.getStageAllocation(stage.stageName, keys, modes.dataCollectionEnabled && betweenSubjects.length === 0
+      ? { configHash: participantConfigHash, sequenceCount: sequences.length } : undefined);
+    if (JSON.stringify(stage.conditionKeys) !== JSON.stringify(keys)) {
+      if (stage.conditionKeys?.length && await this.hasStageAssignments(stage.stageName)) assertAppendOnlyConditions(stage.conditionKeys || [], keys);
+      await this._updateModesFields(this.studyId, { stage: applyStageUpdates(stageData, stage.stageName, { conditionKeys: keys }) });
     }
-    let sequenceAssignments = await this.getAllSequenceAssignments(this.studyId);
+    if (modes.dataCollectionEnabled && isStageParticipantLimitEnabled(stage) && state.count >= stage.maxParticipants) {
+      throw new StageCapacityExceededError(stage.stageName);
+    }
+    const enabled = sequences.filter((row) => isSequenceEnabledForStage(row, stage, betweenSubjects));
+    if (!enabled.length) throw new StageNoAvailableConditionsError(stage.stageName);
+    const targets = getDesiredParticipantCountsByCombination(stage, sequences, betweenSubjects);
+    const hasCapacity = (row: Sequence) => !modes.dataCollectionEnabled || !targets
+      || (state.combinationCounts[getBetweenSubjectsCombinationKey(row.parameters, betweenSubjects)] || 0) < targets[getBetweenSubjectsCombinationKey(row.parameters, betweenSubjects)];
+    const eligible = enabled.filter(hasCapacity);
+    if (!eligible.length) {
+      if (sequences.some((row) => !isSequenceEnabledForStage(row, stage, betweenSubjects) && hasCapacity(row))) throw new StageOnlyDisabledConditionsHaveCapacityError(stage.stageName);
+      throw new StageCapacityExceededError(stage.stageName);
+    }
+    if (!modes.dataCollectionEnabled) return { currentRow: eligible[Math.floor(Math.random() * eligible.length)], creationIndex: 1 };
+    const rowCounts = new Map(sequences.map((row, index) => [row, state.rowCounts[`${participantConfigHash}:${index}`] || 0]));
+    const balancedRow = betweenSubjects.length ? getLeastServedSequence(eligible, state.combinationCounts, targets, betweenSubjects, state.count, rowCounts) : undefined;
+    const timestamp = Date.now();
+    const allocation = await this._allocateSequenceAssignment(this.currentParticipantId, {
+      participantId: this.currentParticipantId,
+      timestamp,
+      createdTime: timestamp,
+      rejected: false,
+      claimed: false,
+      completed: null,
+      total: 0,
+      answered: [],
+      isDynamic: false,
+      stage: stage.stageName,
+      ...(conditions ? { conditions } : {}),
+      ...(balancedRow ? {
+        betweenSubjectsCombinationKey: getBetweenSubjectsCombinationKey(balancedRow.parameters, betweenSubjects),
+        sequenceKey: `${participantConfigHash}:${sequences.indexOf(balancedRow)}`,
+      } : {}),
+    });
+    const completeRowCounts = Object.values(state.rowCounts).reduce((total, count) => total + count, 0) === state.count;
+    const currentRow = balancedRow ?? (completeRowCounts
+      ? getLeastServedSequence(eligible, state.combinationCounts, targets, betweenSubjects, state.count, rowCounts)
+      : eligible[allocation.sequenceIndex % eligible.length]);
+    if (!balancedRow) {
+      await this.patchSequenceAssignment(this.currentParticipantId, {
+        sequenceKey: `${participantConfigHash}:${sequences.indexOf(currentRow)}`,
+        betweenSubjectsCombinationKey: getBetweenSubjectsCombinationKey(currentRow.parameters, betweenSubjects),
+      });
+    }
+    return { currentRow, creationIndex: allocation.creationIndex + 1 };
+  }
 
-    const { modes, stageData } = bootstrapData ?? await this.getModesAndStageData(this.studyId);
-    const currentStage = stageData.currentStage.stageName;
+  private timeoutSweeps: Promise<void> = Promise.resolve();
 
-    // Find all rejected documents
-    const rejectedDocs = sequenceAssignments
-      .filter((doc) => doc.rejected && !doc.claimed);
-    if (rejectedDocs.length > 0) {
-      const firstReject = rejectedDocs[0];
-      const firstRejectTime = firstReject.timestamp;
-      if (modes.dataCollectionEnabled) {
-        // Make the sequence assignment document for the participant
-        const participantSequenceAssignmentData: SequenceAssignment = {
-          participantId: this.currentParticipantId,
-          timestamp: firstRejectTime, // Use the timestamp of the first reject
-          rejected: false,
-          claimed: false,
-          claimedParticipantId: firstReject.participantId,
-          completed: null,
-          createdTime: new Date().getTime(), // Placeholder, will be set to server timestamp in cloud engines
-          total: 0,
-          answered: [],
-          isDynamic: false,
-          stage: currentStage,
-          ...(conditions ? { conditions } : {}),
-        };
-        // Mark the first reject as claimed
-        await this._claimSequenceAssignment(firstReject.participantId, firstReject);
-        // Set the participant's sequence assignment document
-        await this._createSequenceAssignment(this.currentParticipantId, participantSequenceAssignmentData, false);
+  /**
+   * Times out expired assignments in the current study's current stage. This is
+   * safe outside the admission lock: each engine rechecks eligibility and moves
+   * the stage counts with the write, and a timeout only ever frees capacity.
+   * Sweeps in this session run one at a time, so a call made during a sweep
+   * gets its own pass, with current settings, once that sweep finishes.
+   * Resolves to the number of participants released, at most `limit`.
+   */
+  async releaseExpiredAssignments(limit = Infinity): Promise<number> {
+    const studyId = this.studyId!;
+    const sweep = this.timeoutSweeps.then(() => this.timeoutExpiredAssignments(studyId, limit));
+    this.timeoutSweeps = sweep.then(() => undefined, () => undefined);
+    return sweep;
+  }
+
+  // The engine is shared across studies and engines read `this.studyId` while a
+  // timeout writes, so switching to another study waits for this session's sweeps.
+  protected async finishTimeoutSweepsBeforeSwitching(studyId: string) {
+    while (this.studyId !== undefined && studyId !== this.studyId) {
+      const pending = this.timeoutSweeps;
+      // eslint-disable-next-line no-await-in-loop
+      await pending;
+      if (pending === this.timeoutSweeps) return;
+    }
+  }
+
+  // Reads modes directly: `getModesAndStageData` saves a default stage when none
+  // exists, which could overwrite a stage a designer saves meanwhile.
+  private async readTimeoutSettings(studyId: string) {
+    const modes = await this.getModes(studyId);
+    return {
+      timeoutMinutes: modes.dataCollectionEnabled ? modes.autoTimeoutMinutes : undefined,
+      stage: modes.stage?.currentStage.stageName ?? 'DEFAULT',
+    };
+  }
+
+  private async timeoutExpiredAssignments(studyId: string, limit: number): Promise<number> {
+    const { timeoutMinutes, stage } = await this.readTimeoutSettings(studyId);
+    if (timeoutMinutes === undefined) {
+      return 0;
+    }
+
+    const assignments = await this._getTimeoutCandidates(stage);
+    assertAutoTimeoutStageSupported(assignments, stage);
+
+    // `createdTime` is written by the backend in the cloud engines, so the
+    // deadline it is compared against has to come from the backend too.
+    const serverNow = await this._getServerTimeMs();
+    const deadline = serverNow - timeoutMinutes * 60_000;
+    const expiredAssignments = assignments.filter((assignment) => (
+      assignment.stage === stage
+      && consumesCapacity(assignment)
+      && assignment.completed === null
+      && Number.isFinite(assignment.createdTime)
+      && assignment.createdTime <= deadline
+    ));
+
+    // Each engine rechecks eligibility in the same operation that writes, so a
+    // participant who finished or was rejected in the meantime keeps their slot.
+    // Stop at the first failed mutation; a later sweep retries the rest.
+    let released = 0;
+    for (const assignment of expiredAssignments) {
+      if (released >= limit) break;
+      // Concurrent sweeps share a backlog, so skip rows already settled before
+      // paying for the timeout write's locks.
+      // eslint-disable-next-line no-await-in-loop
+      const latest = await this._getSequenceAssignment(assignment.participantId);
+      if (latest && consumesCapacity(latest) && latest.completed === null && latest.stage === stage) {
+        // eslint-disable-next-line no-await-in-loop
+        const result = await this.releaseExpiredAssignment(studyId, assignment.participantId, serverNow, deadline, { timeoutMinutes, stage });
+        if (result === 'stopped') break;
+        if (result === 'released') released += 1;
       }
-    } else if (modes.dataCollectionEnabled) {
-      const timestamp = new Date().getTime();
-      const participantSequenceAssignmentData: SequenceAssignment = {
-        participantId: this.currentParticipantId,
-        timestamp, // Placeholder, will be set to server timestamp in cloud engines
-        rejected: false,
-        claimed: false,
-        completed: null,
-        createdTime: timestamp, // Placeholder, will be set to server timestamp in cloud engines
-        total: 0,
-        answered: [],
-        isDynamic: false,
-        stage: currentStage,
-        ...(conditions ? { conditions } : {}),
-      };
-      await this._createSequenceAssignment(this.currentParticipantId, participantSequenceAssignmentData, true);
+    }
+    return released;
+  }
+
+  // Times out one expired assignment. Settings changes hold the admission-policy
+  // lock, so recheck them under it: a timeout cannot land after a designer
+  // disables, changes, or moves it. Engines whose timeout write rechecks the
+  // settings itself override this.
+  protected async releaseExpiredAssignment(
+    studyId: string,
+    participantId: string,
+    serverNow: number,
+    deadline: number,
+    settings: { timeoutMinutes: number; stage: string },
+  ): Promise<'released' | 'skipped' | 'stopped'> {
+    return this._runWithLock(ADMISSION_POLICY_LOCK_KEY, async () => {
+      const current = await this.readTimeoutSettings(studyId);
+      if (this.studyId !== studyId || current.timeoutMinutes !== settings.timeoutMinutes || current.stage !== settings.stage) return 'stopped';
+      return await this._markSequenceAssignmentTimedOut(participantId, serverNow, deadline) ? 'released' : 'skipped';
+    });
+  }
+
+  // Patches an assignment without erasing a completion, rejection, or timeout
+  // written concurrently. Some engines rewrite the whole record, so by default
+  // the patch holds the participant lock; engines whose field updates are
+  // atomic override this. Callers that already hold the participant lock call
+  // `_updateSequenceAssignmentFields` directly.
+  protected async patchSequenceAssignment(
+    participantId: string,
+    updatedFields: Partial<SequenceAssignment>,
+  ) {
+    await this._runWithLock(getParticipantLockKey(participantId), async () => {
+      await this._updateSequenceAssignmentFields(participantId, updatedFields);
+    });
+  }
+
+  // Releases a sequence assignment created for the current participant during a
+  // failed initialization. Rejecting the assignment frees the stage slot and
+  // lets the next participant claim it, and reverses any slot this assignment
+  // claimed from an earlier rejection. Failures here are swallowed: the caller
+  // is already reporting the initialization error it is rolling back.
+  protected async releaseInitialSequenceAssignment(_reservation?: { creationIndex: number; reservationToken?: string }) {
+    if (!this.currentParticipantId) {
+      return;
     }
 
-    // Query all the intents to get a sequence and find our position in the queue
-    sequenceAssignments = await this.getAllSequenceAssignments(this.studyId);
-
-    // Get the latin square
-    const sequenceArray = await this.getSequenceArray();
-    if (!sequenceArray) {
-      throw new Error('Latin square not initialized');
+    try {
+      const assignment = await this._getSequenceAssignment(this.currentParticipantId);
+      if (!assignment || assignment.rejected) {
+        return;
+      }
+      await this._rejectParticipantRealtime(this.currentParticipantId);
+    } catch (error) {
+      console.warn('Error releasing the sequence assignment of a failed participant initialization:', error);
     }
+  }
 
-    // Get the current row
-    const intentIndex = sequenceAssignments.filter((assignment) => !assignment.rejected).findIndex(
-      (assignment) => assignment.participantId === this.currentParticipantId,
-    ) % sequenceArray.length;
-    if (sequenceArray.length === 0) {
-      throw new Error('Something really bad happened with sequence assignment');
+  // Rejects a sequence assignment that is still active although its participant
+  // record was never written. Callers must hold the admission policy lock and have
+  // checked that the participant record is missing, so the assignment cannot
+  // belong to an initialization that is still in progress.
+  protected async releaseOrphanedSequenceAssignment(participantId: string) {
+    const assignment = await this._getSequenceAssignment(participantId);
+    if (assignment && consumesCapacity(assignment)) {
+      await this._rejectParticipantRealtime(participantId);
     }
-    // If index = -1, we probably have data collection disabled. Give a random assignment.
-    if (intentIndex === -1) {
-      return {
-        currentRow: sequenceArray[Math.floor(Math.random() * sequenceArray.length)],
-        creationIndex: 1,
-      };
-    }
-    const currentRow = sequenceArray[intentIndex];
+  }
 
-    if (!currentRow) {
-      throw new Error('Latin square is empty');
-    }
+  protected hasAtomicSequenceReservation = false;
 
-    const creationSorted = sequenceAssignments.sort((a, b) => a.createdTime - b.createdTime);
+  protected async prepareParticipantReservation(participantId: string) {
+    return this._getSequenceAssignment(participantId);
+  }
 
-    const creationIndex = creationSorted.findIndex((assignment) => assignment.participantId === this.currentParticipantId) + 1;
+  // Cloud backends can confirm the reservation before exposing a persisted session.
+  protected async confirmParticipantReservation(_participant: ParticipantData, _reservationToken?: string, _fromCache = false): Promise<boolean> {
+    return true;
+  }
 
-    return { currentRow, creationIndex };
+  private async getParticipantSessionSnapshot(participantId: string) {
+    return this._runWithLock(getParticipantLockKey(participantId), async () => {
+      const assignment = await this._getSequenceAssignment(participantId);
+      const latest = await this._getFromStorage(`participants/${participantId}`, 'participantData', undefined, true, true);
+      return isParticipantData(latest) && assignment && assignment.completed !== null
+        ? { ...latest, finalized: true } : latest;
+    });
   }
 
   // Initializes or resumes a participant session for the given studyId. This will create a new participant data object if it does not exist, or update the existing one.
@@ -966,6 +1711,7 @@ export abstract class StorageEngine {
     config: StudyConfig,
     metadata: ParticipantMetadata,
     urlParticipantId?: string,
+    bootstrapData?: ParticipantSessionBootstrapData,
   ) {
     await this.verifyStudyDatabase();
 
@@ -975,62 +1721,179 @@ export abstract class StorageEngine {
       throw new Error('Participant not initialized');
     }
 
-    const cachedParticipant = await this.getCachedParticipantDataSnapshot(this.currentParticipantId);
-    if (cachedParticipant) {
+    let cachedParticipant = await this.getCachedParticipantDataSnapshot(this.currentParticipantId);
+    if (cachedParticipant?.rejected) {
+      // An admin may have restored the participant since this browser learned
+      // about the rejection. A rejected cache must not permanently block saves.
+      const current = await this._getFromStorage(`participants/${this.currentParticipantId}`, 'participantData');
+      if (isParticipantData(current)) {
+        cachedParticipant = current;
+        await this.cacheParticipantDataSnapshot(current, this.currentParticipantId);
+      }
+    }
+    if (cachedParticipant && (cachedParticipant.globalStoreRevision !== undefined || config.globalVariables !== undefined)
+      && (await this.getModes(this.studyId!)).dataCollectionEnabled) {
+      const remote = await this.getParticipantSessionSnapshot(this.currentParticipantId);
+      if (isParticipantData(remote) && (remote.finalized || isStaleGlobalStoreSnapshot(cachedParticipant, remote))) {
+        // Trial assets have logical keys, so an older local copy must not shadow the new history.
+        const prefix = this.localProvenanceKey('', this.currentParticipantId);
+        const keys = await this.participantStore.keys();
+        await Promise.all(keys.filter((key) => key.startsWith(prefix)).map((key) => this.participantStore.removeItem(key)));
+        cachedParticipant = remote;
+        await this.cacheParticipantDataSnapshot(remote, this.currentParticipantId, true);
+      }
+    }
+    if (cachedParticipant && await this.confirmParticipantReservation(cachedParticipant, undefined, true)) {
       this.participantData = cachedParticipant;
+      await this.restoreGlobalStoreUploads(cachedParticipant);
       return cachedParticipant;
     }
 
     // Check if the participant has already been initialized
-    const participant = await this._getFromStorage(
+    let participant = await this._getFromStorage(
       `participants/${this.currentParticipantId}`,
       'participantData',
     );
+    if (isParticipantData(participant) && (participant.globalStoreRevision !== undefined || config.globalVariables !== undefined)) {
+      participant = await this.getParticipantSessionSnapshot(this.currentParticipantId);
+    }
 
     if (this.studyId === undefined) {
       throw new Error('Study ID is not set');
     }
 
-    const { modes, stageData } = await this.getModesAndStageData(this.studyId);
-    const currentStage = stageData.currentStage.stageName;
-
-    if (isParticipantData(participant)) {
+    if (isParticipantData(participant) && await this.confirmParticipantReservation(participant)) {
       // Participant already initialized
       this.participantData = participant;
       await this.cacheParticipantDataSnapshot(participant, this.currentParticipantId);
       return participant;
     }
-    // Initialize participant
-    const participantConfigHash = await hash(JSON.stringify(config));
-    const parsedConditions = parseConditionParam(searchParams.condition);
-    const conditions = parsedConditions.length > 0 ? parsedConditions : undefined;
-    const { currentRow, creationIndex } = await this._getSequence(conditions, { modes, stageData });
-    this.participantData = {
-      participantId: this.currentParticipantId,
-      participantConfigHash,
-      sequence: currentRow,
-      participantIndex: creationIndex,
-      answers: {},
-      searchParams,
-      conditions,
-      metadata,
-      rejected: false,
-      participantTags: [],
-      stage: currentStage,
-      createdTime: Date.now(),
+
+    let autoTimeoutEnabled = false;
+    const initializeParticipant = async (): Promise<ParticipantData> => {
+      // Another session may have completed initialization while this session waited
+      // for the lock, so always read the participant record again inside it.
+      let existingParticipant = await this._getFromStorage(
+        `participants/${this.currentParticipantId}`,
+        'participantData',
+      );
+      if (isParticipantData(existingParticipant) && (existingParticipant.globalStoreRevision !== undefined || config.globalVariables !== undefined)) {
+        existingParticipant = await this.getParticipantSessionSnapshot(this.currentParticipantId!);
+      }
+      if (isParticipantData(existingParticipant) && await this.confirmParticipantReservation(existingParticipant)) {
+        await this.cacheParticipantDataSnapshot(existingParticipant, this.currentParticipantId);
+        return existingParticipant;
+      }
+
+      // A previous attempt can leave an active assignment with no participant
+      // record when both its participant write and its own cleanup failed. Release
+      // it before counting, so the participant's abandoned slot cannot keep them
+      // out of the stage, and the retry below assigns them afresh.
+      const existingReservation = await this.prepareParticipantReservation(this.currentParticipantId!);
+
+      const { modes, stageData } = await this.getModesAndStageData(this.studyId!, this.cloudEngine ? undefined : bootstrapData?.modesDocument);
+      const currentStage = stageData.currentStage.stageName;
+      autoTimeoutEnabled = modes.dataCollectionEnabled && modes.autoTimeoutMinutes !== undefined;
+      const currentStageInfo = stageData.allStages.find((stage) => stage.stageName === currentStage);
+      if (!this.hasAtomicSequenceReservation && modes.dataCollectionEnabled && (!existingReservation || existingReservation.rejected) && currentStageInfo && isStageParticipantLimitEnabled(currentStageInfo)) {
+        const stageParticipantCounts = await this.getStageAllocation(currentStage, getConfigConditionKeys(config));
+        if (stageParticipantCounts.count >= currentStageInfo.maxParticipants) {
+          throw new StageCapacityExceededError(currentStage);
+        }
+      }
+
+      const participantConfigHash = await hash(JSON.stringify(config));
+      const parsedConditions = parseConditionParam(searchParams.condition);
+      const conditions = parsedConditions.length > 0 ? parsedConditions : undefined;
+      let sequence: { currentRow: Sequence; creationIndex: number; stage?: string; reservationToken?: string };
+      try {
+        sequence = await this._getSequence(conditions, { modes, stageData, sequenceArray: bootstrapData?.sequenceArray }, config, participantConfigHash);
+      } catch (error) {
+        // _getSequence writes the sequence assignment before it picks a row, so a
+        // later failure leaves an assignment that occupies a stage slot with no
+        // participant record for an admin to reject. Release it here, while the
+        // assignment lock is still held, so the slot stays recoverable.
+        await this.releaseInitialSequenceAssignment();
+        throw error;
+      }
+      const { currentRow, creationIndex } = sequence;
+      const participantData: ParticipantData = {
+        participantId: this.currentParticipantId!,
+        participantConfigHash,
+        sequence: currentRow,
+        participantIndex: creationIndex,
+        answers: {},
+        searchParams,
+        conditions,
+        metadata,
+        rejected: false,
+        participantTags: [],
+        stage: sequence.stage ?? currentStage,
+        createdTime: Date.now(),
+      };
+
+      this.participantData = participantData;
+      let participantRecordPersisted = false;
+      try {
+        if (modes.dataCollectionEnabled) {
+          // Do not expose a session until its participant record and assignment
+          // both exist. Otherwise a failed first write can strand a capacity slot
+          // and leave only a browser-local participant snapshot.
+          await this.persistCurrentParticipantData({ immediate: true });
+          participantRecordPersisted = true;
+          if (!await this.confirmParticipantReservation(participantData, sequence.reservationToken)) {
+            throw new Error('The participant reservation changed while joining. Please reload.');
+          }
+        } else {
+          await this.cacheParticipantDataSnapshot(participantData, this.currentParticipantId);
+        }
+      } catch (error) {
+        // After an acknowledged upload, retain the place if confirmation fails.
+        // A retry can confirm the stored record; releasing it would undercount.
+        if (!participantRecordPersisted) await this.releaseInitialSequenceAssignment(sequence);
+        await this.removeCachedParticipantDataSnapshot(this.currentParticipantId);
+        this.participantData = undefined;
+        throw error;
+      }
+
+      return participantData;
     };
 
-    if (modes.dataCollectionEnabled) {
-      if (this.shouldDeferInitialParticipantDataPersistence()) {
-        this.persistCurrentParticipantData({ immediate: true }).catch(() => undefined);
-      } else {
-        await this.persistCurrentParticipantData({ immediate: true });
+    // Atomic reservation engines own admission in the database transaction.
+    // Serialize starts for the same participant without blocking other participants
+    // on a slow upload. Admission itself remains transactional.
+    const admit = () => (this.hasAtomicSequenceReservation
+      ? this._runWithLock(`initialize-participant-${this.currentParticipantId}`, initializeParticipant)
+      : this._runWithLock(ADMISSION_POLICY_LOCK_KEY, initializeParticipant));
+    let initializedParticipant: ParticipantData | undefined;
+    while (!initializedParticipant) {
+      try {
+        // eslint-disable-next-line no-await-in-loop
+        initializedParticipant = await admit();
+      } catch (error) {
+        if (!(error instanceof StageCapacityExceededError || error instanceof StageOnlyDisabledConditionsHaveCapacityError)) throw error;
+        // Expired participants are released lazily, so the stage may only be full
+        // of them. Release one at a time and retry, so this participant waits only
+        // as long as needed, and turn them away once nothing more can be released.
+        let released = 0;
+        try {
+          // eslint-disable-next-line no-await-in-loop
+          released = await this.releaseExpiredAssignments(1);
+        } catch (sweepError) {
+          console.warn('Failed to release expired participant allocations:', sweepError);
+        }
+        if (released === 0) throw error;
       }
-    } else {
-      await this.cacheParticipantDataSnapshot(this.participantData, this.currentParticipantId);
     }
 
-    return this.participantData;
+    // Release other expired participants without delaying this one.
+    if (autoTimeoutEnabled) {
+      this.releaseExpiredAssignments()
+        .catch((sweepError) => console.warn('Failed to release expired participant allocations:', sweepError));
+    }
+
+    this.participantData = initializedParticipant;
+    return initializedParticipant;
   }
 
   // Gets all participant IDs for the given studyId
@@ -1136,60 +1999,41 @@ export abstract class StorageEngine {
 
   // Adds a participant tag to the current participant.
   async addParticipantTags(tags: string[]) {
-    await this.verifyStudyDatabase();
-    if (!this.participantData) {
-      throw new Error('Participant data not initialized');
-    }
-    this.participantData.participantTags = [...new Set([...this.participantData.participantTags, ...tags])];
-
-    await this.persistCurrentParticipantData({ immediate: true });
+    await this.persistCurrentParticipantData({ immediate: true }, (participant) => {
+      participant.participantTags = [...new Set([...participant.participantTags, ...tags])];
+    });
   }
 
   // Removes participant tags from the current participant.
   async removeParticipantTags(tags: string[]): Promise<void> {
-    await this.verifyStudyDatabase();
-
-    if (!this.participantData) {
-      throw new Error('Participant data not initialized');
-    }
-    this.participantData.participantTags = this.participantData.participantTags.filter((tag) => !tags.includes(tag));
-
-    await this.persistCurrentParticipantData({ immediate: true });
+    await this.persistCurrentParticipantData({ immediate: true }, (participant) => {
+      participant.participantTags = participant.participantTags.filter((tag) => !tags.includes(tag));
+    });
   }
 
   // Updates the participant's stored search params.
   async updateParticipantSearchParams(searchParams: Record<string, string>) {
-    await this.verifyStudyDatabase();
-
-    if (!this.participantData) {
-      throw new Error('Participant data not initialized');
-    }
-
-    this.participantData.searchParams = searchParams;
-
-    await this.persistCurrentParticipantData({ immediate: true });
+    await this.persistCurrentParticipantData({ immediate: true }, (participant) => {
+      participant.searchParams = searchParams;
+    });
   }
 
   async updateParticipantMetadata(metadata: ParticipantMetadata) {
+    const { studyId, currentParticipantId } = this;
     await this.verifyStudyDatabase();
-
-    if (!this.participantData) {
-      throw new Error('Participant data not initialized');
-    }
-
-    this.participantData.metadata = metadata;
-
-    if (!this.studyId) {
+    if (!studyId) {
       throw new Error('Study ID is not set');
     }
-
-    const modes = await this.getModes(this.studyId);
-    if (!modes.dataCollectionEnabled) {
-      await this.cacheParticipantDataSnapshot(this.participantData, this.currentParticipantId);
-      return;
-    }
-
-    await this.persistCurrentParticipantData({ immediate: false });
+    const modes = await this.getModes(studyId);
+    return this.updateParticipantDataLocally(studyId, currentParticipantId, async (assertCurrentSession) => {
+      if (!this.participantData) throw new Error('Participant data not initialized');
+      if (this.participantData.finalized) return;
+      this.participantData.metadata = metadata;
+      const snapshot = cloneParticipantDataSnapshot(this.participantData);
+      await this.cacheParticipantDataSnapshot(snapshot, currentParticipantId);
+      assertCurrentSession();
+      if (modes.dataCollectionEnabled) this.scheduleParticipantDataWrite(snapshot);
+    });
   }
 
   async updateStudyCondition(condition: string | string[]) {
@@ -1217,14 +2061,57 @@ export abstract class StorageEngine {
       throw new Error('Participant not initialized');
     }
 
-    await this._updateSequenceAssignmentFields(
+    await this.patchSequenceAssignment(
       this.currentParticipantId,
       { conditions: this.participantData.conditions },
     );
   }
 
   // Rejects a participant with the given participantId and reason.
-  async rejectParticipant(participantId: string, reason: string) {
+  async timeoutParticipant(participantId: string): Promise<void> {
+    await this._runWithLock(ADMISSION_POLICY_LOCK_KEY, () => this._runWithLock(getParticipantLockKey(participantId), async () => {
+      const assignment = await this._getSequenceAssignment(participantId);
+      // An auto-timed-out participant has already released their slot and may
+      // still finish, so a manual timeout must not turn them into a rejection.
+      if (!assignment || assignment.completed !== null || assignment.rejected || assignment.autoTimedOutAt !== undefined) return;
+      await this.rejectParticipantUnlocked(participantId, 'Timed out by admin', true);
+    }));
+  }
+
+  async rejectParticipant(participantId: string, reason: string): Promise<void> {
+    const participantRecordMissing = await this._runWithLock(ADMISSION_POLICY_LOCK_KEY, () => this._runWithLock(getParticipantLockKey(participantId), () => (
+      this.rejectParticipantUnlocked(participantId, reason)
+    )));
+
+    if (!participantRecordMissing) {
+      return;
+    }
+
+    // Without a participant record, the only thing to reject is an assignment
+    // left behind by an initialization whose writes and cleanup both failed.
+    // Initialization writes the assignment and the record under the admission
+    // lock, so holding it here keeps an initialization still in progress from
+    // being mistaken for an abandoned one.
+    const participantRecordCreated = await this._runWithLock(ADMISSION_POLICY_LOCK_KEY, async () => {
+      const participant = await this._getFromStorage(
+        `participants/${participantId}`,
+        'participantData',
+      );
+      if (isParticipantData(participant)) {
+        return true;
+      }
+      await this.releaseOrphanedSequenceAssignment(participantId);
+      return false;
+    });
+
+    if (participantRecordCreated) {
+      // The participant finished initializing while this call waited for the
+      // lock, so reject the new record through the normal path.
+      await this.rejectParticipant(participantId, reason);
+    }
+  }
+
+  private async rejectParticipantUnlocked(participantId: string, reason: string, onlyIncomplete = false): Promise<boolean> {
     const participant = participantId === this.currentParticipantId && this.participantData
       ? this.participantData
       : await this._getFromStorage(
@@ -1234,13 +2121,12 @@ export abstract class StorageEngine {
     let participantRecordUpdated = false;
 
     try {
-      // If the user doesn't exist or is already rejected, return
-      if (
-        !participant
-        || !isParticipantData(participant)
-        || participant.rejected
-      ) {
-        return;
+      if (!participant || !isParticipantData(participant)) {
+        return true;
+      }
+      // An already rejected participant needs no further changes.
+      if (participant.rejected) {
+        return false;
       }
 
       // Create a copy with rejected flag for storage write
@@ -1260,13 +2146,18 @@ export abstract class StorageEngine {
       );
       participantRecordUpdated = true;
 
-      await this._rejectParticipantRealtime(participantId);
+      const rejected = await this._rejectParticipantRealtime(participantId, onlyIncomplete);
+      if (rejected === false) {
+        await this._pushToStorage(`participants/${participantId}`, 'participantData', participant);
+        return false;
+      }
 
       // Update in-memory state only after the participant record and
       // sequence-assignment updates have both succeeded.
       if (participantId === this.currentParticipantId && this.participantData) {
         this.participantData = rejectedParticipant;
       }
+      return false;
     } catch (error) {
       let realtimeRollbackError: unknown = null;
       try {
@@ -1301,6 +2192,7 @@ export abstract class StorageEngine {
         console.warn('Participant rejection rollback completed with realtime inconsistencies.');
       }
       console.warn('Error rejecting participant:', error);
+      throw normalizeError(error);
     }
   }
 
@@ -1315,49 +2207,65 @@ export abstract class StorageEngine {
 
   // Un-rejects a participant with the given participantId.
   async undoRejectParticipant(participantId: string) {
-    const participant = participantId === this.currentParticipantId && this.participantData
-      ? this.participantData
-      : await this._getFromStorage(
-        `participants/${participantId}`,
-        'participantData',
-      );
-    let participantRecordUpdated = false;
+    // Admin restoration may exceed recruitment limits. Keep the admission lock
+    // to coordinate rejected-slot ownership with new admissions.
+    return await this._runWithLock(ADMISSION_POLICY_LOCK_KEY, () => this._runWithLock(getParticipantLockKey(participantId), async () => {
+      const assignment = await this._getSequenceAssignment(participantId);
+      // A timed-out participant holds no slot, so a replacement reusing theirs
+      // does not prevent restoring them.
+      if (assignment?.claimed && assignment.autoTimedOutAt === undefined) {
+        throw new Error('Cannot undo rejection after the participant slot has been reassigned');
+      }
 
-    try {
+      if (assignment?.rejected) {
+        assertAutoTimeoutRestoreSupported(assignment, await this.getModes(this.studyId!));
+      }
+
+      const participant = participantId === this.currentParticipantId && this.participantData
+        ? this.participantData
+        : await this._getFromStorage(
+          `participants/${participantId}`,
+          'participantData',
+        );
+      let participantRecordUpdated = false;
+
       // If the user doesn't exist, return
       if (!participant || !isParticipantData(participant)) {
         return;
       }
 
-      const restoredParticipant: ParticipantData = {
-        ...participant,
-        rejected: false,
-      };
-      await this._pushToStorage(
-        `participants/${participantId}`,
-        'participantData',
-        restoredParticipant,
-      );
-      participantRecordUpdated = true;
-      await this._undoRejectParticipantRealtime(participantId);
-
-      if (participantId === this.currentParticipantId && this.participantData) {
-        this.participantData = restoredParticipant;
-      }
-    } catch (error) {
       try {
-        if (participantRecordUpdated && participant && isParticipantData(participant)) {
-          await this._pushToStorage(
-            `participants/${participantId}`,
-            'participantData',
-            participant,
-          );
+        const restoredParticipant: ParticipantData = {
+          ...participant,
+          rejected: false,
+        };
+        await this._pushToStorage(
+          `participants/${participantId}`,
+          'participantData',
+          restoredParticipant,
+        );
+        participantRecordUpdated = true;
+        await this._undoRejectParticipantRealtime(participantId);
+
+        if (participantId === this.currentParticipantId && this.participantData) {
+          this.participantData = restoredParticipant;
         }
-      } catch (rollbackError) {
-        console.warn('Error rolling back participant unrejection state:', rollbackError);
+      } catch (error) {
+        try {
+          if (participantRecordUpdated && participant && isParticipantData(participant)) {
+            await this._pushToStorage(
+              `participants/${participantId}`,
+              'participantData',
+              participant,
+            );
+          }
+        } catch (rollbackError) {
+          console.warn('Error rolling back participant unrejection state:', rollbackError);
+        }
+        console.warn('Error undoing participant rejection:', error);
+        throw normalizeError(error);
       }
-      console.warn('Error undoing participant rejection:', error);
-    }
+    }));
   }
 
   // Un-rejects the current participant.
@@ -1371,13 +2279,9 @@ export abstract class StorageEngine {
 
   // Gets all participant IDs for the current studyId or a provided studyId.
   async getAllParticipantsData(studyId: string): Promise<ParticipantDataWithStatus[]> {
-    const participantIds = await this.getAllParticipantIds(studyId);
     const sequenceAssignments = await this.getAllSequenceAssignments(studyId);
-    const completedByParticipantId = new Map(
-      sequenceAssignments.map((assignment) => [assignment.participantId, assignment.completed !== null]),
-    );
-
-    const participantPulls = participantIds.map(async (participantId) => {
+    const participantPulls = sequenceAssignments.map(async (assignment): Promise<ParticipantDataWithStatus | null> => {
+      const { participantId } = assignment;
       const participantData = await this._getFromStorage(
         `participants/${participantId}`,
         'participantData',
@@ -1387,7 +2291,9 @@ export abstract class StorageEngine {
       if (isParticipantData(participantData)) {
         return {
           ...participantData,
-          completed: completedByParticipantId.get(participantId) ?? false,
+          completed: assignment.completed !== null,
+          timedOut: assignment.autoTimedOutAt !== undefined,
+          assignmentCreatedTime: assignment.createdTime,
         } satisfies ParticipantDataWithStatus;
       }
       return null;
@@ -1400,22 +2306,109 @@ export abstract class StorageEngine {
   async getParticipantsStatusCounts(studyId: string) {
     const sequenceAssignments = await this.getAllSequenceAssignments(studyId);
 
-    const completed = sequenceAssignments.filter((assignment) => assignment.completed && !assignment.rejected).length;
-    const rejected = sequenceAssignments.filter((assignment) => assignment.rejected).length;
-    const inProgress = sequenceAssignments.length - completed - rejected;
+    const counts = countParticipantStatuses(sequenceAssignments, getSequenceAssignmentStatus);
     const minTime = sequenceAssignments.length > 0 ? sequenceAssignments[0].timestamp : null;
     const maxTime = sequenceAssignments.length > 0 ? sequenceAssignments.at(-1)!.timestamp : null;
 
     return {
-      completed,
-      rejected,
-      inProgress,
+      ...counts,
       minTime,
       maxTime,
     };
   }
 
   // Save the answer into the local participant data and queue a debounced write to storage.
+  private localProvenanceKey(task: string, participantId: string) {
+    return `${this.collectionPrefix}${this.studyId}/participants/${participantId}/localProvenance/${task}`;
+  }
+
+  private queueGlobalStoreProvenance(participant: ParticipantData, graph: GlobalStoreGraph, tasks: string[]) {
+    const queueKey = `${this.studyId}/${participant.participantId}/${GLOBAL_STORE_TASK}`;
+    const pending = this.globalStorePendingTrials.get(queueKey) ?? new Map<string, number>();
+    tasks.forEach((task) => pending.set(task, Math.max(pending.get(task) ?? 0, participant.globalStoreRevision!)));
+    this.globalStorePendingTrials.set(queueKey, pending);
+    this.saveProvenance({ ...createEmptyProvenance(), globalStore: graph }, GLOBAL_STORE_TASK).catch(() => undefined);
+  }
+
+  /** Rebuild upload work from accepted local history after a reload loses in-memory retries. */
+  private async restoreGlobalStoreUploads(participant: ParticipantData) {
+    if (participant.finalized || !participant.globalStoreRevision || !this.studyId) return;
+    const { studyId, currentParticipantId } = this;
+    const saved = await this.participantStore.getItem<StoredProvenance>(
+      this.localProvenanceKey(`${GLOBAL_STORE_TASK}/${participant.globalStoreRevision}`, participant.participantId),
+    );
+    if (!saved?.globalStore || !(await this.getModes(studyId)).dataCollectionEnabled) return;
+    const tasks = new Set(Object.values(getGlobalStoreNodeStates(saved.globalStore))
+      .flatMap((state) => (state.submission ? [state.submission.answer.identifier] : [])));
+    const retained = await Promise.all([...tasks].map(async (task) => ({
+      task, provenance: await this.participantStore.getItem<StoredProvenance>(this.localProvenanceKey(task, participant.participantId)),
+    })));
+    if (this.studyId !== studyId || this.currentParticipantId !== currentParticipantId) throw new Error('The participant session changed while restoring its interaction history.');
+    this.queueGlobalStoreProvenance(participant, saved.globalStore, retained.filter(({ provenance }) => normalizeStoredProvenance(provenance)).map(({ task }) => task));
+    this.scheduleParticipantDataWrite(participant);
+  }
+
+  /** Accept once locally. Cloud retries upload this snapshot and never rerun store actions. */
+  async saveGlobalStoreSubmission(
+    answers: ParticipantData['answers'],
+    graph: GlobalStoreGraph,
+    revision: number,
+    task: string,
+    provenance: StoredProvenance,
+  ) {
+    if (!this.participantData || !this.currentParticipantId) throw new Error('Participant not initialized');
+    if (this.participantData.rejected || this.participantData.finalized) throw new Error('This participant session is closed.');
+    const participantId = this.currentParticipantId;
+    const { studyId } = this;
+    const modes = await this.getModes(studyId!);
+    return this.updateParticipantDataLocally(studyId, participantId, async (assertCurrentSession) => {
+      const participantData = this.participantData!;
+      if (participantData.rejected || participantData.finalized) throw new Error('This participant session is closed.');
+      const snapshot: ParticipantData = {
+        ...participantData,
+        answers: structuredClone(answers),
+        globalVariables: structuredClone(getGlobalStoreNodeState(graph).values),
+        globalStoreHead: graph.current,
+        globalStoreRevision: revision,
+      };
+      const previousProvenance = normalizeStoredProvenance(await this.participantStore.getItem(this.localProvenanceKey(task, participantId)));
+      assertCurrentSession();
+      let retainedProvenance = mergeStoredProvenance(previousProvenance, provenance);
+      const sources = Object.values(getGlobalStoreNodeStates(graph)).flatMap(({ submission }) => (
+        submission?.answer.identifier === task ? Object.entries(submission.sourceNodes) : []
+      ));
+      const hasEverySource = () => sources.every(([location, source]) => (
+        hasProvenanceSource(retainedProvenance[location as keyof StoredProvenance], source)
+      ));
+      // Local acceptance stays available offline. Only missing historical assets
+      // require a download (for example a direct caller resuming on a new device).
+      if (!previousProvenance && !hasEverySource()) {
+        retainedProvenance = mergeStoredProvenance(await this.getProvenance(task, participantId, true), provenance);
+        assertCurrentSession();
+      }
+      if (!hasEverySource()) throw new Error('The accepted interaction state is missing.');
+      // Assets may be ahead after a failed save. Only the accepted snapshot's head and
+      // source-node references decide what is restored, so the previous revision is safe.
+      await this.participantStore.setItem(this.localProvenanceKey(task, participantId), structuredClone(retainedProvenance));
+      assertCurrentSession();
+      await this.participantStore.setItem(this.localProvenanceKey(`${GLOBAL_STORE_TASK}/${revision}`, participantId), { globalStore: structuredClone(graph) });
+      assertCurrentSession();
+      await this.cacheParticipantDataSnapshot(snapshot, participantId, true);
+      assertCurrentSession();
+      const previousRevision = participantData.globalStoreRevision;
+      this.participantData = snapshot;
+      if (previousRevision) {
+        this.participantStore.removeItem(this.localProvenanceKey(`${GLOBAL_STORE_TASK}/${previousRevision}`, participantId))
+          .catch((error) => console.warn('Could not remove an obsolete local global-store snapshot:', error));
+      }
+      if (modes.dataCollectionEnabled) {
+        // Start tracking assets before the participant write/finalization can flush.
+        this.queueGlobalStoreProvenance(snapshot, graph, [task]);
+        this.scheduleParticipantDataWrite(snapshot);
+      }
+    });
+  }
+
   async saveAnswers(answers: ParticipantData['answers']) {
     if (!this.currentParticipantId || this.participantData === undefined) {
       throw new Error('Participant not initialized');
@@ -1426,6 +2419,9 @@ export abstract class StorageEngine {
       return;
     }
 
+    const { studyId, currentParticipantId } = this;
+    const revision = this.participantData.globalStoreRevision;
+
     const {
       answers: answersWithoutProvenance,
       provenanceByIdentifier,
@@ -1434,14 +2430,15 @@ export abstract class StorageEngine {
       ([taskName, provenanceGraph]) => this.saveProvenance(provenanceGraph, taskName),
     );
 
-    // Update the local copy of the participant data
-    this.participantData = {
-      ...this.participantData,
-      answers: answersWithoutProvenance,
-    };
-
-    await this.cacheParticipantDataSnapshot(this.participantData, this.currentParticipantId);
-    this.scheduleParticipantDataWrite(this.participantData);
+    await this.updateParticipantDataLocally(studyId, currentParticipantId, async (assertCurrentSession) => {
+      // A completed submission supersedes any earlier pending Check Answer draft.
+      if (this.participantData!.rejected || this.participantData!.globalStoreRevision !== revision) return;
+      const snapshot = { ...this.participantData!, answers: answersWithoutProvenance };
+      this.participantData = snapshot;
+      await this.cacheParticipantDataSnapshot(snapshot, currentParticipantId);
+      assertCurrentSession();
+      this.scheduleParticipantDataWrite(snapshot);
+    });
     await Promise.all(provenanceUploadPromises);
   }
 
@@ -1467,9 +2464,8 @@ export abstract class StorageEngine {
 
     try {
       const existingAssignment = await this._getSequenceAssignment(targetParticipantId);
-
       if (existingAssignment) {
-        await this._updateSequenceAssignmentFields(targetParticipantId, {
+        await this.patchSequenceAssignment(targetParticipantId, {
           total: progressData.total,
           answered: progressData.answered,
           isDynamic: progressData.isDynamic,
@@ -1497,15 +2493,31 @@ export abstract class StorageEngine {
       throw new Error('Participant not initialized');
     }
 
-    const sequenceAssignments = await this.getAllSequenceAssignments(studyIdToUse);
-    const sequenceAssignment = sequenceAssignments.find(
-      (assignment) => assignment.participantId === participantIdToUse,
-    );
+    if (studyIdToUse !== this.studyId) {
+      await this.initializeStudyDb(studyIdToUse);
+    }
+    if (participantIdToUse === this.currentParticipantId && this.participantData?.finalized) return true;
+    const sequenceAssignment = await this._getSequenceAssignment(participantIdToUse);
 
     return sequenceAssignment ? sequenceAssignment.completed !== null : false;
   }
 
+  private async markParticipantFinalized(assertCurrentSession: () => void) {
+    if (!this.participantData) return;
+    const snapshot = { ...this.participantData, finalized: true };
+    await this.cacheParticipantDataSnapshot(snapshot, this.currentParticipantId, !!snapshot.globalStoreRevision);
+    assertCurrentSession();
+    this.participantData = snapshot;
+  }
+
   async finalizeParticipant(): Promise<FinalizeParticipantResult> {
+    const { studyId, currentParticipantId } = this;
+    // Keep finalization in the local update queue through the final flush and
+    // completion marker, so accepted background writes cannot arrive afterward.
+    return this.updateParticipantDataLocally(studyId, currentParticipantId, (assertCurrentSession) => this.finalizeParticipantSession(assertCurrentSession));
+  }
+
+  private async finalizeParticipantSession(assertCurrentSession: () => void): Promise<FinalizeParticipantResult> {
     try {
       await this.flushPendingParticipantData();
     } catch (error) {
@@ -1526,12 +2538,15 @@ export abstract class StorageEngine {
     }
 
     const modes = await this.getModes(this.studyId);
+    assertCurrentSession();
     if (!modes.dataCollectionEnabled) {
+      await this.markParticipantFinalized(assertCurrentSession);
       return { status: 'complete' };
     }
 
     const alreadyCompleted = await this.getParticipantCompletionStatus();
     if (alreadyCompleted) {
+      await this.markParticipantFinalized(assertCurrentSession);
       return { status: 'complete' };
     }
 
@@ -1544,7 +2559,13 @@ export abstract class StorageEngine {
     }
 
     try {
-      await this._completeCurrentParticipantRealtime();
+      await this._runWithLock(getParticipantLockKey(this.currentParticipantId), async () => {
+        assertCurrentSession();
+        const assignment = await this._getSequenceAssignment(this.currentParticipantId!);
+        if (assignment?.rejected) throw new Error('This participant has been timed out or rejected');
+        await this._completeCurrentParticipantRealtime();
+      });
+      await this.markParticipantFinalized(assertCurrentSession);
     } catch (error) {
       return {
         status: 'error',
@@ -1560,15 +2581,24 @@ export abstract class StorageEngine {
       return null;
     }
 
-    const asset = new Promise<string>((resolve) => {
+    const asset = new Promise<string>((resolve, reject) => {
       const xhr = new XMLHttpRequest();
       xhr.responseType = 'blob';
       xhr.onload = () => {
         const blob = xhr.response;
-
-        const _url = URL.createObjectURL(blob);
-
-        resolve(_url);
+        try {
+          resolve(URL.createObjectURL(blob));
+        } finally {
+          if (url.startsWith('blob:')) {
+            URL.revokeObjectURL(url);
+          }
+        }
+      };
+      xhr.onerror = () => {
+        if (url.startsWith('blob:')) {
+          URL.revokeObjectURL(url);
+        }
+        reject(new Error(`Failed to load asset: ${url}`));
       };
       xhr.open('GET', url);
       xhr.send();
@@ -1613,17 +2643,35 @@ export abstract class StorageEngine {
   async getProvenance(
     task: string,
     participantId?: string,
+    strict = false,
   ) {
     const targetParticipantId = participantId || this.currentParticipantId;
     if (!targetParticipantId) {
       throw new Error('Participant not initialized');
     }
 
+    const localTask = task === GLOBAL_STORE_TASK && this.participantData?.globalStoreRevision
+      ? `${task}/${this.participantData.globalStoreRevision}` : task;
+    const local = targetParticipantId === this.currentParticipantId
+      ? await this.participantStore.getItem<StoredProvenance>(this.localProvenanceKey(localTask, targetParticipantId)) : null;
+    if (local) return normalizeStoredProvenance(local);
     const provenanceObject = await this._getFromStorage(
       `provenance/${targetParticipantId}`,
       task,
+      undefined,
+      strict,
+      true,
     );
 
+    if (strict && provenanceObject != null) {
+      const parsed = typeof Blob !== 'undefined' && provenanceObject instanceof Blob
+        ? JSON.parse(await provenanceObject.text()) : provenanceObject;
+      const normalized = normalizeStoredProvenance(parsed);
+      if (!normalized && (!parsed || typeof parsed !== 'object' || Array.isArray(parsed) || Object.values(parsed).some((value) => value != null))) {
+        throw new Error('Saved interaction history is invalid.');
+      }
+      return normalized;
+    }
     return this.parseProvenanceStorageObject(provenanceObject);
   }
 
@@ -1648,11 +2696,26 @@ export abstract class StorageEngine {
       return undefined;
     }
 
-    return this.trackAssetOperation(`provenance/${taskName}`, async () => {
+    const participantId = this.currentParticipantId;
+    const { studyId } = this;
+    const progress: GlobalStoreProgress | undefined = this.participantData ? {
+      globalStoreRevision: this.participantData.globalStoreRevision,
+      globalStoreHead: this.participantData.globalStoreHead,
+      finalized: this.participantData.finalized,
+      rejected: this.participantData.rejected,
+    } : undefined;
+    const assetKey = `provenance/${taskName}`;
+    const queueKey = `${studyId}/${participantId}/${taskName}`;
+    const previous = this.provenanceWriteChains.get(queueKey);
+    const write = this.trackAssetOperation(assetKey, async () => {
+      await previous?.catch(() => undefined);
+      this.clearAssetUploadError(assetKey);
+      this.failedAssetRetryOperations.delete(assetKey);
+      if (this.studyId !== studyId) throw new Error('The study changed before its interaction history was uploaded.');
       if (this.studyId === undefined) {
         throw new Error('Study ID is not set');
       }
-      if (!this.currentParticipantId) {
+      if (!participantId) {
         throw new Error('Participant not initialized');
       }
       const modes = await this.getModes(this.studyId);
@@ -1660,18 +2723,74 @@ export abstract class StorageEngine {
         throw new Error('Data collection is disabled for this study');
       }
 
-      await this._pushToStorage(
-        `provenance/${this.currentParticipantId}`,
-        taskName,
-        provenanceToSave as unknown as StorageObject<typeof taskName>,
-      );
-
-      try {
-        await this._cacheStorageObject(`provenance/${this.currentParticipantId}`, taskName);
-      } catch (error) {
-        console.warn(`Failed to update cache headers for provenance ${taskName}:`, error);
+      const upload = async (provenance = provenanceToSave) => {
+        await this._pushToStorage(`provenance/${participantId}`, taskName, provenance as unknown as StorageObject<typeof taskName>);
+        if (progress?.globalStoreRevision === undefined) {
+          try {
+            // Supabase refreshes headers by reuploading bytes, so keep this
+            // mutation inside the same protection as the original upload.
+            await this._cacheStorageObject(`provenance/${participantId}`, taskName);
+          } catch (error) {
+            console.warn(`Failed to update cache headers for provenance ${taskName}:`, error);
+          }
+        }
+      };
+      if (progress) {
+        await this._runWithLock(getParticipantLockKey(participantId), async () => {
+          let uploadProgress = progress;
+          let provenance = provenanceToSave;
+          const current = this.participantData;
+          if (taskName !== GLOBAL_STORE_TASK && participantId === this.currentParticipantId
+            && current && (current.globalStoreRevision ?? 0) > progress.globalStoreRevision!) {
+            const accepted = await this.participantStore.getItem<StoredProvenance>(
+              this.localProvenanceKey(`${GLOBAL_STORE_TASK}/${current.globalStoreRevision}`, participantId),
+            );
+            if (progress.globalStoreHead && accepted?.globalStore?.nodes[progress.globalStoreHead]) {
+              // A later acceptance in this browser still needs its earlier trial assets.
+              uploadProgress = current;
+              provenance = normalizeStoredProvenance(await this.participantStore.getItem(this.localProvenanceKey(taskName, participantId))) ?? provenance;
+            }
+          }
+          await this.assertGlobalStoreUploadCurrent(participantId, uploadProgress, undefined, provenance.globalStore);
+          const pending = this.globalStorePendingTrials.get(queueKey);
+          const states = taskName === GLOBAL_STORE_TASK && provenance.globalStore
+            ? Object.values(getGlobalStoreNodeStates(provenance.globalStore)) : [];
+          const requiredTasks = new Set(states.flatMap((state) => (state.submission ? [state.submission.answer.identifier] : [])));
+          const trials = await Promise.all([...pending ?? []].filter(([task]) => requiredTasks.has(task)).map(async ([task, revision]) => ({
+            task,
+            revision,
+            provenance: normalizeStoredProvenance(await this.participantStore.getItem(this.localProvenanceKey(task, participantId))),
+          })));
+          // Validate every retained source before publishing any part of the matching boundary.
+          trials.forEach((trial) => {
+            states.filter((state) => state.submission?.answer.identifier === trial.task).forEach(({ submission }) => {
+              Object.entries(submission!.sourceNodes).forEach(([location, source]) => {
+                const graph = trial.provenance?.[location as keyof StoredProvenance];
+                if (!hasProvenanceSource(graph, source)) throw new Error('The accepted interaction state is missing.');
+              });
+            });
+          });
+          // Await all writes before releasing the lock, including when one of them fails.
+          const uploads = await Promise.allSettled(trials.map((trial) => (trial.provenance
+            ? this._pushToStorage(`provenance/${participantId}`, trial.task, trial.provenance as unknown as StorageObject<typeof trial.task>) : Promise.resolve())));
+          const failed = uploads.find((result): result is PromiseRejectedResult => result.status === 'rejected');
+          if (failed) throw failed.reason;
+          await upload(provenance);
+          trials.forEach(({ task, revision }) => {
+            if (pending?.get(task) === revision && revision <= progress.globalStoreRevision!) {
+              pending.delete(task);
+              this.clearAssetUploadError(`provenance/${task}`);
+              this.failedAssetRetryOperations.delete(`provenance/${task}`);
+            }
+          });
+          if (pending?.size === 0) this.globalStorePendingTrials.delete(queueKey);
+        });
+      } else {
+        await upload();
       }
     });
+    this.provenanceWriteChains.set(queueKey, write);
+    return write;
   }
 
   // Gets the transcript download URL (currently only supported by Firebase)
@@ -1764,34 +2883,79 @@ export abstract class StorageEngine {
     });
   }
 
+  // Gets the webcam recording for a specific task and participantId.
+  async getWebcamRecording(
+    task: string,
+    participantId: string,
+  ) {
+    const url = await this._getWebcamRecordingUrl(task, participantId);
+    return this.getAsset(url);
+  }
+
+  // Saves the webcam video stream as a separate per-task asset.
+  async saveWebcamRecording(
+    blob: Blob,
+    taskName: string,
+  ) {
+    return this.trackAssetOperation(`webcamRecording/${taskName}`, async () => {
+      if (this.studyId === undefined) {
+        throw new Error('Study ID is not set');
+      }
+      const modes = await this.getModes(this.studyId);
+      if (!modes.dataCollectionEnabled) {
+        throw new Error('Data collection is disabled for this study');
+      }
+      return this.saveAsset('webcamRecording', blob, taskName);
+    });
+  }
+
   // Gets the sequence array from the storage engine.
-  async getSequenceArray() {
+  async getSequenceArray(configHash?: string) {
     await this.verifyStudyDatabase();
 
+    const version = configHash ?? await this._getCurrentConfigHash();
     const sequenceArrayDocData = await this._getFromStorage(
-      '',
+      version ? `configs/${version}` : '',
       'sequenceArray',
     );
 
     return Array.isArray(sequenceArrayDocData) ? sequenceArrayDocData : null;
   }
 
+  // Only first-time preparation takes a config-specific lock. Every caller gets
+  // the published array, including callers that waited for another publisher.
+  async getOrCreateSequenceArray(configHash: string, generate: () => Sequence[]) {
+    const existing = await this.getSequenceArray(configHash);
+    if (existing) return existing;
+
+    return this._runWithLock(`prepare-sequences-${configHash}`, async () => {
+      const prepared = await this.getSequenceArray(configHash);
+      if (prepared) return prepared;
+      const sequences = generate();
+      await this.setSequenceArray(sequences, configHash);
+      return sequences;
+    });
+  }
+
   // Sets the sequence array in the storage engine.
-  async setSequenceArray(latinSquare: Sequence[]) {
+  async setSequenceArray(latinSquare: Sequence[], configHash?: string) {
     await this.verifyStudyDatabase();
 
-    await this._pushToStorage('', 'sequenceArray', latinSquare);
+    const version = configHash ?? await this._getCurrentConfigHash();
+    await this._pushToStorage(version ? `configs/${version}` : '', 'sequenceArray', latinSquare);
   }
 
   protected async __testingReset() {
     this.clearPendingParticipantDataWriteTimer();
     this.pendingParticipantDataWrite = undefined;
     this.participantDataWriteChain = Promise.resolve();
+    this.localParticipantDataUpdateChain = Promise.resolve();
     this.participantDataWriteError = null;
     this.pendingAssetUploads.clear();
     this.pendingAssetOperations.clear();
     this.failedAssetUploads.clear();
     this.failedAssetRetryOperations.clear();
+    this.globalStorePendingTrials.clear();
     this.pendingProgressDataWrite = undefined;
     this.assetUploadActivityVersion = 0;
     this.participantData = undefined;
@@ -1846,6 +3010,7 @@ export abstract class StorageEngine {
       await this._copyDirectory(`${sourceName}/participants`, `${targetName}/participants`);
       await this._copyDirectory(`${sourceName}/audio`, `${targetName}/audio`);
       await this._copyDirectory(`${sourceName}/screenRecording`, `${targetName}/screenRecording`);
+      await this._copyDirectory(`${sourceName}/webcamRecording`, `${targetName}/webcamRecording`);
       await this._copyDirectory(`${sourceName}/provenance`, `${targetName}/provenance`);
       await this._copyDirectory(sourceName, targetName);
       await this._copyRealtimeData(sourceName, targetName);
@@ -1894,6 +3059,7 @@ export abstract class StorageEngine {
         await this._deleteDirectory(`${deletionTarget}/participants`);
         await this._deleteDirectory(`${deletionTarget}/audio`);
         await this._deleteDirectory(`${deletionTarget}/screenRecording`);
+        await this._deleteDirectory(`${deletionTarget}/webcamRecording`);
         await this._deleteDirectory(`${deletionTarget}/provenance`);
         await this._deleteDirectory(deletionTarget);
         await this._deleteRealtimeData(deletionTarget);
@@ -1965,6 +3131,10 @@ export abstract class StorageEngine {
         `${originalName}/screenRecording`,
       );
       await this._copyDirectory(
+        `${snapshotName}/webcamRecording`,
+        `${originalName}/webcamRecording`,
+      );
+      await this._copyDirectory(
         `${snapshotName}/provenance`,
         `${originalName}/provenance`,
       );
@@ -2029,6 +3199,17 @@ export abstract class StorageEngine {
   ) {
     await this._updateSnapshotParticipantCounts(snapshotName, studyId, participantCounts);
   }
+
+  protected abstract _allocateSequenceAssignment(
+    participantId: string,
+    sequenceAssignment: SequenceAssignment,
+  ): Promise<SequenceAssignmentAllocation>;
+
+  protected async hasStageAssignments(stage: string): Promise<boolean> { return (await this.getAllSequenceAssignments(this.studyId!)).some((assignment) => assignment.stage === stage); }
+
+  protected async getStageAllocation(stage: string, _conditionKeys: string[] = [], sequenceRows?: SequenceRowContext): Promise<StageAllocation> {
+    return getStageAllocationFromAssignments(await this.getAllSequenceAssignments(this.studyId!), stage, sequenceRows);
+  }
 }
 
 export type UserManagementData = { authentication?: { isEnabled: boolean }; adminUsers?: { adminUsersList: StoredUser[] } };
@@ -2040,8 +3221,28 @@ export abstract class CloudStorageEngine extends StorageEngine {
 
   protected userManagementData: UserManagementData = {};
 
-  protected shouldDeferInitialParticipantDataPersistence() {
-    return true;
+  abstract getStorageDisconnected(studyId: string): Promise<boolean>;
+
+  protected abstract _setStorageDisconnected(studyId: string, disconnected: boolean): Promise<void>;
+
+  protected abstract getAuthenticatedUser(): Promise<StoredUser | null>;
+
+  async isStorageAdmin() {
+    this.userManagementData = {};
+    const auth = await this.getUserManagementData('authentication');
+    const signedInUser = await this.getAuthenticatedUser();
+    if (!auth?.isEnabled || !signedInUser?.email || !signedInUser.uid) return false;
+    const adminUsers = await this.getUserManagementData('adminUsers');
+    return Boolean(adminUsers?.adminUsersList.some((admin) => admin.email === signedInUser.email
+      && (admin.uid === null || admin.uid === signedInUser.uid)));
+  }
+
+  async setStorageDisconnected(studyId: string, disconnected: boolean) {
+    if (!await this.isStorageAdmin()) {
+      throw new Error('A verified administrator must sign in to change storage.');
+    }
+
+    await this._setStorageDisconnected(studyId, disconnected);
   }
 
   /*
@@ -2114,8 +3315,19 @@ export abstract class CloudStorageEngine extends StorageEngine {
           return false;
         }
       }
-      return true;
+      return this.engine !== 'supabase' || authInfo?.isEnabled === false;
     }
     return false;
   }
 }
+
+export type SequenceAllocator = {
+  nextSequenceIndex: number;
+  nextCreationIndex: number;
+  availableSequenceIndexes?: number[]; // Unused replacement vacancies returned by undoing rejection.
+};
+
+export type SequenceAssignmentAllocation = {
+  sequenceIndex: number;
+  creationIndex: number;
+};

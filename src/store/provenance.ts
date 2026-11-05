@@ -1,13 +1,15 @@
-import type { ResponseBlockLocation } from '../parser/types';
+import type { StorageEngine } from '../storage/engines/types';
+import { GLOBAL_STORE_TASK } from './globalStoreProvenance';
 import type {
-  ProvenanceTraversalEvent, StoredAnswer, StoredProvenance, TrrackedProvenance,
+  ProvenanceLocation, ProvenanceTraversalEvent, StoredAnswer, StoredProvenance, TrrackedProvenance,
 } from './types';
 
-export const PROVENANCE_LOCATIONS: ResponseBlockLocation[] = [
+export const PROVENANCE_LOCATIONS: ProvenanceLocation[] = [
   'aboveStimulus',
   'belowStimulus',
   'sidebar',
   'stimulus',
+  'globalStore',
 ];
 
 export type LegacyStoredAnswerWithProvenance = StoredAnswer & {
@@ -42,35 +44,99 @@ export function getProvenanceTraversalEvents(
     .sort((first, second) => first.createdOn - second.createdOn);
 }
 
+/** Retain independent visits as checkpoint branches in one replayable graph. */
+export function mergeProvenanceGraphs(
+  previous: TrrackedProvenance | undefined,
+  incoming: TrrackedProvenance,
+): TrrackedProvenance {
+  if (!previous) return incoming;
+  const nodes = { ...previous.nodes };
+  const retainedRoot = nodes[incoming.root];
+  const parent = previous.nodes[previous.current];
+  const levelOffset = incoming.root === previous.root ? 0
+    : (retainedRoot?.level ?? parent.level + 1) - incoming.nodes[incoming.root].level;
+  Object.entries(incoming.nodes).forEach(([id, node]) => {
+    const retained = nodes[id];
+    const children = [...new Set([...(retained?.children ?? []), ...node.children])];
+    if (id === incoming.root && incoming.root !== previous.root) {
+      // A legacy page starts over on every load. Keep its root ID/checkpoint so
+      // old submission references and patch checkpoint references remain valid.
+      nodes[id] = {
+        ...node,
+        event: '__revisit_visit',
+        parent: retained && 'parent' in retained ? retained.parent : previous.current,
+        sideEffects: { do: [], undo: [] },
+        level: node.level + levelOffset,
+        children,
+      };
+    } else {
+      nodes[id] = { ...node, level: node.level + levelOffset, children };
+    }
+  });
+  if (incoming.root !== previous.root && !retainedRoot) {
+    nodes[parent.id] = { ...nodes[parent.id], children: [...nodes[parent.id].children, incoming.root] };
+  }
+  const events = [...getProvenanceTraversalEvents(previous), ...getProvenanceTraversalEvents(incoming)];
+  const seen = new Set<string>();
+  const traversalEvents = events.filter(({ nodeId, createdOn }) => {
+    const key = `${nodeId}/${createdOn}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  }).sort((first, second) => first.createdOn - second.createdOn);
+  return {
+    ...incoming, root: previous.root, nodes, ...(traversalEvents.length ? { traversalEvents } : {}),
+  };
+}
+
+/** A former visit root can now be a checkpoint branch below the canonical root. */
+export function hasProvenanceSource(
+  graph: TrrackedProvenance | undefined,
+  source: { root: string; current: string },
+): boolean {
+  if (!graph?.nodes[source.root]) return false;
+  const visited = new Set<string>();
+  let node: TrrackedProvenance['nodes'][string] | undefined = graph.nodes[source.current];
+  while (node && !visited.has(node.id)) {
+    if (node.id === source.root) return true;
+    visited.add(node.id);
+    node = 'parent' in node ? graph.nodes[node.parent] : undefined;
+  }
+  return false;
+}
+
+export function mergeStoredProvenance(previous: StoredProvenance | null, incoming: StoredProvenance): StoredProvenance {
+  const merged = { ...previous, ...incoming };
+  (['aboveStimulus', 'belowStimulus', 'sidebar', 'stimulus'] as const).forEach((location) => {
+    const graph = incoming[location];
+    merged[location] = graph ? mergeProvenanceGraphs(previous?.[location], graph) : previous?.[location];
+  });
+  return merged;
+}
+
 export function appendProvenanceTraversalEvent(
   previousProvenance: TrrackedProvenance | undefined,
   incomingProvenance: TrrackedProvenance,
   observedAt: number,
 ): TrrackedProvenance {
-  const isSameGraph = previousProvenance?.root === incomingProvenance.root;
-  const previousEvents = isSameGraph && previousProvenance
-    ? getProvenanceTraversalEvents(previousProvenance)
-    : [];
-  const incomingEvents = getProvenanceTraversalEvents(incomingProvenance);
-  const traversalEvents = incomingEvents.length >= previousEvents.length
-    ? incomingEvents
-    : previousEvents;
+  const merged = mergeProvenanceGraphs(previousProvenance, incomingProvenance);
+  const traversalEvents = getProvenanceTraversalEvents(merged);
   const currentNodeId = incomingProvenance.current as string;
   const currentNode = incomingProvenance.nodes?.[currentNodeId];
 
   if (!currentNode || traversalEvents.at(-1)?.nodeId === currentNodeId) {
     return traversalEvents.length > 0
-      ? { ...incomingProvenance, traversalEvents }
-      : incomingProvenance;
+      ? { ...merged, traversalEvents }
+      : merged;
   }
 
-  const isNewNode = !isSameGraph || !previousProvenance?.nodes[currentNodeId];
+  const isNewNode = !previousProvenance?.nodes[currentNodeId];
   const eventTime = isNewNode ? currentNode.createdOn : observedAt;
   const previousEventTime = traversalEvents.at(-1)?.createdOn ?? Number.NEGATIVE_INFINITY;
   const createdOn = Math.max(eventTime, previousEventTime + 1);
 
   return {
-    ...incomingProvenance,
+    ...merged,
     traversalEvents: [...traversalEvents, { nodeId: currentNodeId, createdOn }],
   };
 }
@@ -133,4 +199,11 @@ export function splitProvenanceFromAnswers(answers: Record<string, StoredAnswer>
     answers: answersWithoutProvenance,
     provenanceByIdentifier,
   };
+}
+
+export async function getCombinedProvenance(storage: Pick<StorageEngine, 'getProvenance'>, task: string, participantId: string) {
+  const [trial, global] = await Promise.all([
+    storage.getProvenance(task, participantId), storage.getProvenance(GLOBAL_STORE_TASK, participantId),
+  ]);
+  return global?.globalStore ? { ...createEmptyProvenance(), ...trial, globalStore: global.globalStore } : trial;
 }

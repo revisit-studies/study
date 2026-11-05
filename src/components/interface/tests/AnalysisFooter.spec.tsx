@@ -26,12 +26,14 @@ vi.mock('../../../routes/utils', () => ({
 }));
 
 vi.mock('../../../store/store', () => ({
+  useStoreSelector: (selector: (state: { answers: object }) => unknown) => selector({ answers: {} }),
   useStoreActions: () => ({ saveAnalysisState: vi.fn() }),
   useStoreDispatch: () => vi.fn(),
 }));
 
 vi.mock('react-router', () => ({
   useParams: () => ({ studyId: 'test-study' }),
+  useSearchParams: () => [new URLSearchParams(), vi.fn()],
 }));
 
 vi.mock('../../../analysis/individualStudy/thinkAloud/ThinkAloudFooter', () => ({

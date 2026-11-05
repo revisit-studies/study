@@ -47,11 +47,17 @@ function getRequiredValueMismatchMessage(
     return null;
   }
 
-  if (Array.isArray(requiredValue)) {
-    return `Please ${options ? 'select' : 'enter'} ${requiredLabel || requiredValue.join(', ')} to continue.`;
-  }
+  const defaultRequiredLabel = Array.isArray(requiredValue)
+    ? requiredValue.join(', ')
+    : typeof requiredValue === 'object'
+      ? JSON.stringify(requiredValue)
+      : requiredValue.toString();
+  const optionLabel = !Array.isArray(requiredValue) && options
+    ? options.find((opt) => opt.value === requiredValue)?.label
+    : undefined;
+  const expectedLabel = requiredLabel || optionLabel || defaultRequiredLabel || 'the required value';
 
-  return `Please ${options ? 'select' : 'enter'} ${requiredLabel || (options ? options.find((opt) => opt.value === requiredValue)?.label : requiredValue.toString())} to continue.`;
+  return `Please ${options ? 'select' : 'enter'} ${expectedLabel} to continue.`;
 }
 
 export function evaluateResponseIssue(
@@ -131,7 +137,7 @@ export function generateInvalidResponseErrorMessage(
 export function generateErrorMessage(
   response: Response,
   answer: {
-    value?: number | string | string[] | Record<string, string>;
+    value?: StoredAnswer['answer'][string];
     checked?: string[];
   },
   options?: (StringOption | NumberOption)[],

@@ -2,8 +2,8 @@ import { MultiSelect, Select } from '@mantine/core';
 import { DropdownResponse } from '../../parser/types';
 import classes from './css/Input.module.css';
 import { InputLabel } from './InputLabel';
-import { OptionLabel } from './OptionLabel';
-import { parseStringOptions } from '../../utils/stringOptions';
+import { OptionLabel, useOptionTextTemplate } from './OptionLabel';
+import { getDropdownOptions } from '../../utils/dropdownOptions';
 
 export function DropdownInput({
   response,
@@ -24,16 +24,21 @@ export function DropdownInput({
     placeholder,
     prompt,
     required,
-    options,
     secondaryText,
     infoText,
   } = response;
 
-  const optionsAsStringOptions = parseStringOptions(options);
+  const template = useOptionTextTemplate();
+  const rawOptions = getDropdownOptions(response);
+  const optionsByValue = new Map(rawOptions.map((option) => [option.value, option]));
+  const optionsAsStringOptions = rawOptions.map((option) => ({ ...option, label: template(option.label, true) }));
+  const resolvedPlaceholder = placeholder ?? (response.options === 'countries' ? 'Select a country' : undefined);
+  const countryPreset = response.options === 'countries';
   const isMultiselect = (response.minSelections && response.minSelections >= 1) || (response.maxSelections && response.maxSelections > 1);
-  const renderOption = ({ option }: { option: { label: string; infoText?: string } }) => (
-    <OptionLabel label={option.label} infoText={option.infoText} />
-  );
+  const renderOption = ({ option }: { option: { value: string; label: string; infoText?: string } }) => {
+    const rawOption = optionsByValue.get(option.value);
+    return <OptionLabel label={rawOption?.label ?? option.label} infoText={rawOption?.infoText ?? option.infoText} />;
+  };
 
   return (
     isMultiselect ? (
@@ -41,7 +46,7 @@ export function DropdownInput({
         disabled={disabled}
         label={prompt.length > 0 && <InputLabel prompt={prompt} required={required} index={index} enumerateQuestions={enumerateQuestions} infoText={infoText} />}
         description={secondaryText}
-        placeholder={!answer.value || answer.value.length === 0 ? placeholder : undefined}
+        placeholder={!answer.value || answer.value.length === 0 ? resolvedPlaceholder : ' '}
         data={optionsAsStringOptions}
         radius="md"
         size="md"
@@ -50,7 +55,7 @@ export function DropdownInput({
         error={error}
         withErrorStyles={required}
         errorProps={{ c: required ? 'red' : 'orange', fz: 'sm', mt: 'xs' }}
-        classNames={{ input: classes.fixDisabled }}
+        classNames={{ input: classes.fixDisabled, inputField: classes.multiSelectSearch, pillsList: classes.multiSelectPills }}
         maxDropdownHeight={200}
         clearable
         searchable
@@ -61,7 +66,7 @@ export function DropdownInput({
         disabled={disabled}
         label={prompt.length > 0 && <InputLabel prompt={prompt} required={required} index={index} enumerateQuestions={enumerateQuestions} infoText={infoText} />}
         description={secondaryText}
-        placeholder={placeholder}
+        placeholder={resolvedPlaceholder}
         data={optionsAsStringOptions}
         radius="md"
         size="md"
@@ -72,6 +77,7 @@ export function DropdownInput({
         errorProps={{ c: required ? 'red' : 'orange', fz: 'sm', mt: 'xs' }}
         classNames={{ input: classes.fixDisabled }}
         maxDropdownHeight={200}
+        searchable={countryPreset}
         renderOption={renderOption}
       />
     )

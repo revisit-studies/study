@@ -1,11 +1,12 @@
 import {
-  useCallback, useEffect, useMemo, useState,
+  useCallback, useEffect, useMemo,
 } from 'react';
 import {
   Box, Center, Stack, Text, TextInput,
 } from '@mantine/core';
 import { Registry } from '@trrack/core';
 import { StimulusParams } from '../../../store/types';
+import { useStudyState } from '../../../store/hooks/useStudyState';
 
 /** State shape for provenance tracking (used during replay) */
 interface StroopState {
@@ -38,29 +39,26 @@ function StroopColorTask({
       registry: reg,
     };
   }, []);
+  const [savedResponse] = useStudyState({ responseId: 'stroopAnswer', initialState: '' });
   const trrack = useTrrack({
     registry,
-    initialState: { response: '' },
+    initialState: { response: savedResponse },
   });
 
-  const [responseText, setResponseText] = useState('');
+  const restoredState = useStudyState({ trrack });
+  const responseText = provenanceState?.response ?? restoredState.response;
+  useEffect(() => {
+    setAnswer({ status: restoredState.response.trim().length > 0, answers: { stroopAnswer: restoredState.response } });
+  }, [restoredState, setAnswer]);
 
   // Update local state and answer; reVISit records provenance automatically.
   const updateAnswer = useCallback((value: string) => {
-    setResponseText(value);
     trrack.apply('Set response', actions.setResponseAction(value));
     setAnswer({
       status: value.trim().length > 0,
       answers: { stroopAnswer: value },
     });
   }, [actions, setAnswer, trrack]);
-
-  // Replay: sync textbox from provenanceState when replay seeks to a different node
-  useEffect(() => {
-    if (provenanceState) {
-      setResponseText(provenanceState.response);
-    }
-  }, [provenanceState]);
 
   return (
     <Stack gap="xl" style={{ maxWidth: 520, margin: '0 auto' }}>

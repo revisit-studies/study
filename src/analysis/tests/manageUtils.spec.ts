@@ -18,7 +18,7 @@ const participantMetadata: ParticipantMetadata = {
   ip: '122.122.122.122',
 };
 const existingStages: StageInfo[] = [
-  { stageName: 'DEFAULT', color: '#F05A30' },
+  { stageName: 'DEFAULT', color: '#F35C34' },
   { stageName: 'REVIEW', color: '#00AAFF' },
 ];
 
