@@ -1,6 +1,6 @@
 import React, { ReactNode } from 'react';
 import {
-  render, waitFor, act, fireEvent,
+  render, waitFor, act, fireEvent, cleanup,
 } from '@testing-library/react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import {
@@ -267,6 +267,7 @@ vi.mock('@visdesignlab/upset2-react', () => ({
 }));
 
 afterEach(() => {
+  cleanup();
   vi.restoreAllMocks();
   vi.unstubAllEnvs();
 });
