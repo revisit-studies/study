@@ -664,8 +664,8 @@ function getZipDrawRelationship(identities: (FactorDrawIdentity | undefined)[]) 
     stream.slice(0, prefixLength).every((identity, index) => isEqual(identity, streams[0][index]))
   ));
   const owners = (identity: FactorDrawIdentity): string[] => (
-    typeof identity !== 'string' && 'inputs' in identity
-      ? identity.inputs.flatMap(owners) : [JSON.stringify(identity)]
+    typeof identity === 'string' ? [identity]
+      : 'inputs' in identity ? identity.inputs.flatMap(owners) : []
   );
   const seen = new Set<string>();
   let sharedOwner = false;
@@ -947,7 +947,7 @@ function resolveFactor(
     ? getRelevantFactorAssignment(assignmentParameters, getFactorPublicNames(factorSource, factors)) : undefined;
   const constrained = assignment !== undefined || eligibleConditions !== undefined;
   let inputDefinitions: FactorResolution[] | undefined;
-  if (aliasNames !== undefined || constrained || zipDraws.sharedOwner) {
+  if (aliasNames !== undefined || constrained || zipDraws.sharedPrefix || zipDraws.sharedOwner) {
     inputDefinitions = inputs.map((input, index) => getFactorDefinition(
       input,
       factors,
@@ -961,14 +961,14 @@ function resolveFactor(
   if (aliasNames !== undefined && !validateFactorAliases(inputDefinitions!, aliasNames, factorName, errors)) {
     return { conditions: [] };
   }
-  // A zip consumes the shared prefix even if one stream repeats it further.
-  // Partially overlapping full streams also need to reuse their complete draws
-  // before filtering; otherwise the same cached draw acquires conflicting pools.
-  const sharedFullDraws = zipDraws.sharedOwner
+  // Equal ordering descriptors prove aligned prefixes, not shared ownership.
+  // Only actual cached owners require pairing partially overlapping streams
+  // before filtering; matching deterministic tails leave independent draws free.
+  const pairBeforeFiltering = (zipDraws.sharedPrefix || zipDraws.sharedOwner)
     && inputDefinitions!.every((resolution) => !resolution.hasVariableMembership);
   const correlatedZip = action === 'zip' && (inputs.length === 1
-    || (zipDraws.sharedPrefix && sharedFullDraws));
-  const tuples = constrained && !sharedFullDraws
+    || (zipDraws.sharedPrefix && pairBeforeFiltering));
+  const tuples = constrained && !pairBeforeFiltering
     ? getEligibleInputTuples(inputDefinitions!, action, aliasNames, assignment, eligibleConditions, errors)
     : undefined;
   const resolveInput = (index: number, eligible?: MaterializedFactorCondition[]) => resolveFactor(

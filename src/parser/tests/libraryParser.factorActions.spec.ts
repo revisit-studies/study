@@ -41,6 +41,58 @@ function factorConfig(): StudyConfig {
 }
 
 describe('factor sequence actions', () => {
+  test.each(['fixed', 'latinSquare'] as const)('preserves aligned %s ordering without treating it as ownership', (order) => {
+    const factors: NonNullable<StudyConfig['factors']> = {
+      a: { values: [1, 2], order },
+      b: { values: [3, 4], order },
+      selected: { action: 'zip', factors: ['a', 'b'], as: ['x', 'y'] },
+    };
+    [0, 1].forEach((index) => {
+      const errors: ParserErrorWarning[] = [];
+      expect(resolveOrderedFactorConditions('selected', factors, createFactorOrderContext(index), errors, 'selected', { x: 1, y: 4 })).toEqual([]);
+      expect(errors).toEqual([]);
+    });
+  });
+
+  test.each(['array', 'fixed', 'latinSquare'] as const)('keeps independent draws independent with matching %s tails', async (order) => {
+    const config = factorConfig();
+    config.factors = {
+      a: [1, 2],
+      p: {
+        action: 'sample', factors: ['a'], numSamples: 2, samplingStrategy: 'withoutReplacement',
+      },
+      q: {
+        action: 'sample', factors: ['a'], numSamples: 2, samplingStrategy: 'withoutReplacement',
+      },
+      c: order === 'array' ? [{ a: 3 }] : { values: [{ a: 3 }], order },
+      d: order === 'array' ? [{ a: 4 }] : { values: [{ a: 4 }], order },
+      selected: {
+        action: 'zip',
+        factors: [{ action: 'concat', factors: ['p', 'c'] }, { action: 'concat', factors: ['q', 'd'] }],
+        as: ['x', 'y'],
+      },
+      assignment: [{ x: 1, y: 2 }],
+    };
+    config.betweenSubjects = ['assignment'];
+    config.baseComponents!.trial = { type: 'questionnaire', response: [] };
+    config.sequence = {
+      type: 'factor', id: 'independentTails', factor: 'selected', components: 'trial',
+    };
+    const random = vi.spyOn(Math, 'random').mockReturnValue(0);
+    try {
+      const errors: ParserErrorWarning[] = [];
+      expect(resolveOrderedFactorConditions('selected', config.factors, createFactorOrderContext(0), errors, 'selected', { x: 1, y: 2 }))
+        .toEqual([{ x: 1, y: 2 }]);
+      expect(errors).toEqual([]);
+      const parsed = await parseStudyConfig(JSON.stringify(config));
+      expect(parsed.errors).toEqual([]);
+      generateSequenceArray(parsed).forEach((sequence) => {
+        const rows = getSequenceFlatMap(sequence).filter((id) => id !== 'end').map((id) => parsed.components[id].parameters);
+        expect(rows).toEqual([{ x: 1, y: 2 }]);
+      });
+    } finally { random.mockRestore(); }
+  });
+
   test.each((['prefix', 'partialOverlap'] as const).flatMap((kind) => (
     [false, true].map((unknownCount) => ({ kind, unknownCount }))
   )))('preserves shared full draws across $kind streams (unknownCount=$unknownCount)', async ({ kind, unknownCount }) => {
