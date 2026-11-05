@@ -41,6 +41,99 @@ function factorConfig(): StudyConfig {
 }
 
 describe('factor sequence actions', () => {
+  test.each(['inline', 'named'] as const)('preserves independent %s draws inside shared-group inputs', async (kind) => {
+    const config = factorConfig();
+    const draw: Exclude<FactorOption, string> = {
+      action: 'sample', factors: ['a'], numSamples: 3, samplingStrategy: 'withoutReplacement',
+    };
+    config.factors = {
+      a: [1, 2, 3],
+      p: draw,
+      q: draw,
+      selected: { action: 'zip', factors: [{ action: 'repeat', factors: ['p'], numRepeats: 2 }, { action: 'concat', factors: ['p', kind === 'inline' ? draw : 'q'] }], as: ['x', 'y'] },
+      assignment: [{ x: 2, y: 1 }],
+    };
+    config.betweenSubjects = ['assignment'];
+    config.baseComponents!.trial = { type: 'questionnaire', response: [] };
+    config.sequence = {
+      type: 'factor', id: 'inlineDraw', factor: 'selected', components: 'trial',
+    };
+    const random = vi.spyOn(Math, 'random').mockReturnValue(0);
+    try {
+      const parsed = await parseStudyConfig(JSON.stringify(config));
+      expect(parsed.errors).toEqual([]);
+      generateSequenceArray(parsed).forEach((sequence) => {
+        expect(getSequenceFlatMap(sequence).filter((id) => id !== 'end').map((id) => parsed.components[id].parameters)).toEqual([{ x: 2, y: 1 }]);
+      });
+    } finally { random.mockRestore(); }
+  });
+
+  test.each([14, 18, 32])('bounds partially constrained %s-input shared-zip eligibility work by groups', (inputCount) => {
+    const factors: NonNullable<StudyConfig['factors']> = {
+      a: [1, 2],
+      p: {
+        action: 'sample', factors: ['a'], numSamples: 2, samplingStrategy: 'withoutReplacement',
+      },
+      q: {
+        action: 'sample', factors: ['a'], numSamples: 2, samplingStrategy: 'withoutReplacement',
+      },
+      selected: { action: 'zip', factors: [...Array<string>(inputCount - 1).fill('p'), 'q'], as: Array.from({ length: inputCount }, (_, index) => `v${index}`) },
+    };
+    const random = vi.spyOn(Math, 'random').mockReturnValue(0);
+    const original = Object.entries;
+    let visits = 0;
+    const entries = vi.spyOn(Object, 'entries').mockImplementation((value) => {
+      if (Object.hasOwn(value, 'v0')) visits += 1;
+      return original(value);
+    });
+    try {
+      const errors: ParserErrorWarning[] = [];
+      const rows = resolveOrderedFactorConditions('selected', factors, createFactorOrderContext(0), errors, 'selected', { v0: 1 });
+      expect(errors).toEqual([]);
+      expect(rows).toEqual([Object.fromEntries(Array.from({ length: inputCount }, (_, index) => [`v${index}`, index === inputCount - 1 ? 2 : 1]))]);
+      expect(visits).toBeLessThan(inputCount ** 2 * 20);
+    } finally { entries.mockRestore(); random.mockRestore(); }
+  });
+
+  test.each([false, true])('preserves shared positions through a constrained nested cross (aliases=%s)', async (aliases) => {
+    const factors: NonNullable<StudyConfig['factors']> = {
+      a: [1, 2],
+      b: [10, 20],
+      p: {
+        action: 'sample', factors: ['a'], numSamples: 2, samplingStrategy: 'withoutReplacement',
+      },
+      r: {
+        action: 'sample', factors: ['b'], numSamples: 1, samplingStrategy: 'withoutReplacement',
+      },
+      q: { action: 'cross', factors: ['p', 'r'], ...(aliases ? { as: ['left', 'right'] } : {}) },
+      selected: { action: 'zip', factors: ['p', 'p', 'q'] },
+    };
+    const expected: Record<string, number> = aliases ? {
+      a_0: 1, a_1: 1, left: 1, right: 20,
+    } : {
+      a_0: 1, a_1: 1, a_2: 1, b: 20,
+    };
+    const random = vi.spyOn(Math, 'random').mockReturnValue(0);
+    try {
+      const errors: ParserErrorWarning[] = [];
+      expect(resolveOrderedFactorConditions('selected', factors, createFactorOrderContext(0), errors)).toContainEqual(expected);
+      expect(resolveOrderedFactorConditions('selected', factors, createFactorOrderContext(0), errors, 'selected', expected)).toEqual([expected]);
+      expect(errors).toEqual([]);
+      const config = factorConfig();
+      config.factors = { ...factors, assignment: [expected] };
+      config.betweenSubjects = ['assignment'];
+      config.baseComponents!.trial = { type: 'questionnaire', response: [] };
+      config.sequence = {
+        type: 'factor', id: 'nestedCross', factor: 'selected', components: 'trial',
+      };
+      const parsed = await parseStudyConfig(JSON.stringify(config));
+      expect(parsed.errors).toEqual([]);
+      generateSequenceArray(parsed).forEach((sequence) => {
+        expect(getSequenceFlatMap(sequence).filter((id) => id !== 'end').map((id) => parsed.components[id].parameters)).toEqual([expected]);
+      });
+    } finally { random.mockRestore(); }
+  });
+
   test.each(['fixed', 'latinSquare'] as const)('preserves %s prefixes alongside an independent partial tail', (order) => {
     const factors: NonNullable<StudyConfig['factors']> = {
       a: [1, 2],
