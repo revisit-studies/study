@@ -4,7 +4,7 @@ import merge from 'lodash.merge';
 import librarySchema from './LibraryConfigSchema.json';
 import studySchema from './StudyConfigSchema.json';
 import {
-  ComponentBlock, ComponentOrder, Factor, FactorAction, FactorBlock, FactorObject, FactorObjectValue, FactorOption, FactorValue, IndividualComponent, LibraryConfig, OrderedFactorValues, ParsedConfig, ParserErrorWarning, StudyConfig,
+  ComponentBlock, ComponentOrder, Factor, FactorAction, FactorBlock, FactorExpression, FactorObject, FactorObjectValue, FactorOption, FactorValue, IndividualComponent, LibraryConfig, OrderedFactorValues, ParsedConfig, ParserErrorWarning, StudyConfig,
 } from './types';
 import {
   FactorPlanBlock, isDynamicBlock, isFactorBlock, isInheritedComponent,
@@ -620,7 +620,7 @@ function getFactorRuntimeCount(resolution: FactorResolution) {
 }
 
 type FactorDrawIdentity = string
-  | { action: 'fixed' | 'latinSquare'; length: number }
+  | { action: 'fixed' | 'latinSquare'; length: number; numSamples?: number }
   | { action: 'cross' | 'zip' | 'concat'; inputs: FactorDrawIdentity[] };
 
 function getFactorDrawIdentity(
@@ -635,13 +635,18 @@ function getFactorDrawIdentity(
   if (Array.isArray(factor)) return { action: 'fixed', length: factor.length };
   if (isOrderedFactorValues(factor)) {
     if (factor.order === 'random') return named;
-    return { action: factor.order || 'fixed', length: factor.values.length };
+    const length = Math.min(factor.values.length, factor.numSamples ?? factor.values.length);
+    return {
+      action: factor.order || 'fixed',
+      length: factor.order === 'latinSquare' ? factor.values.length : length,
+      ...(factor.order === 'latinSquare' && length < factor.values.length ? { numSamples: length } : {}),
+    };
   }
   // Sampling owns a cache identity; filtering may change row positions. Do not
   // equate independently named operations with identical-looking definitions.
   if (factor.action === 'sample' || factor.action === 'keep' || factor.action === 'remove') return named;
   const inputs = factor.factors.map((input) => getFactorDrawIdentity(input, factors, named ? [...stack, named] : stack));
-  if (!inputs.every((input): input is FactorDrawIdentity => input !== undefined)) return named;
+  if (!inputs.every((input): input is FactorDrawIdentity => input !== undefined)) return undefined;
   if (factor.action === 'zip' && inputs.length > 0 && inputs.every((input) => isEqual(input, inputs[0]))) return inputs[0];
   if (factor.action === 'concat' || factor.action === 'repeat') {
     const repetitions = factor.action === 'repeat' ? factor.numRepeats : 1;
@@ -661,7 +666,36 @@ function getFactorDrawIdentity(
   };
 }
 
-function getFactorStreamOwners(source: FactorOption, factors: Record<string, Factor>, stack: string[] = []): string[] {
+// Shared zip inputs may only concatenate/repeat the same draws or use
+// single-input wrappers. More involved layouts need constraint-aware generation.
+function isLinearFactorInput(source: FactorOption, factors: Record<string, Factor>, stack: string[] = []): boolean {
+  const named = typeof source === 'string' ? source : undefined;
+  if (named && stack.includes(named)) return false;
+  const factor = named ? factors[named] : source as Exclude<FactorOption, string>;
+  if (!factor) return false;
+  if (Array.isArray(factor) || isOrderedFactorValues(factor) || factor.action === 'sample') return true;
+  if (factor.action === 'keep' || factor.action === 'remove') return false;
+  if ((factor.action === 'cross' || factor.action === 'zip') && factor.factors.length !== 1) return false;
+  return factor.factors.every((input) => isLinearFactorInput(input, factors, named ? [...stack, named] : stack));
+}
+
+function getFactorSources(factor: FactorExpression, includeSelectors = false): FactorOption[] {
+  if (factor.action !== 'keep' && factor.action !== 'remove') return factor.factors;
+  return [factor.factor, ...(includeSelectors && factor.items !== undefined && !Array.isArray(factor.items) ? [factor.items] : [])];
+}
+
+// Fixed slices run during allocation too, but do not own a randomized stream.
+function hasRuntimeFactorDraw(source: FactorOption, factors: Record<string, Factor>, stack: string[] = []): boolean {
+  const named = typeof source === 'string' ? source : undefined;
+  if (named && stack.includes(named)) return false;
+  const factor = named ? factors[named] : source as Exclude<FactorOption, string>;
+  if (!factor || Array.isArray(factor)) return false;
+  if (isOrderedFactorValues(factor)) return factor.order !== undefined && factor.order !== 'fixed';
+  if (factor.action === 'sample') return true;
+  return getFactorSources(factor, true).some((input) => hasRuntimeFactorDraw(input, factors, named ? [...stack, named] : stack));
+}
+
+function getFactorStreamOwners(source: FactorOption, factors: Record<string, Factor>, stack: string[] = [], includeSelectors = false): string[] {
   const named = typeof source === 'string' ? source : undefined;
   if (named && stack.includes(named)) return [];
   const factor = named ? factors[named] : source as Exclude<FactorOption, string>;
@@ -671,8 +705,8 @@ function getFactorStreamOwners(source: FactorOption, factors: Record<string, Fac
   // ordering dependencies of their source streams, even when row counts change.
   if (Array.isArray(factor) || isOrderedFactorValues(factor)) return own;
   if (factor.action === 'sample') return own;
-  const sources = factor.action === 'keep' || factor.action === 'remove' ? [factor.factor] : factor.factors;
-  return [...own, ...sources.flatMap((input) => getFactorStreamOwners(input, factors, named ? [...stack, named] : stack))];
+  const sources = getFactorSources(factor, includeSelectors);
+  return [...own, ...sources.flatMap((input) => getFactorStreamOwners(input, factors, named ? [...stack, named] : stack, includeSelectors))];
 }
 
 function hasIndependentFactorDraw(
@@ -986,6 +1020,26 @@ function resolveFactor(
         owners.set(owner, [...(owners.get(owner) || []), index]);
       });
     });
+  }
+  if (action === 'zip') {
+    // Selectors are validation dependencies, not row-order owners. Keep them
+    // separate from the ownership map used by generation below.
+    const dependencies = new Map<string, number[]>();
+    inputs.forEach((input, index) => {
+      new Set(getFactorStreamOwners(input, factors, [], true)).forEach((owner) => {
+        dependencies.set(owner, [...(dependencies.get(owner) || []), index]);
+      });
+    });
+    const unsupportedOwner = [...dependencies].find(([owner, indices]) => {
+      if (indices.length < 2 || !hasRuntimeFactorDraw(owner, factors)) return false;
+      const identity = zipIdentities[indices[0]];
+      return identity === undefined
+        || indices.some((index) => !isLinearFactorInput(inputs[index], factors) || !isEqual(zipIdentities[index], identity));
+    });
+    if (unsupportedOwner) {
+      addFactorError(errors, `Factor \`${factorName}\` has an unsupported shared-draw zip: \`${unsupportedOwner[0]}\` is reused through different or nested row layouts. Define the paired conditions explicitly, or use independent named draws.`);
+      return { conditions: [] };
+    }
   }
   const sharesStream = [...owners.values()].some((indices) => indices.length > 1);
   const assignment = assignmentParameters && Object.keys(assignmentParameters).length > 0

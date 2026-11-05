@@ -41,7 +41,184 @@ function factorConfig(): StudyConfig {
 }
 
 describe('factor sequence actions', () => {
-  test.each(['inline', 'named'] as const)('preserves independent %s draws inside shared-group inputs', async (kind) => {
+  test.each([false, true])('rejects unknown shared layouts rather than equating missing identities (assigned=%s)', async (assigned) => {
+    const config = factorConfig();
+    const draw: FactorOption = {
+      action: 'sample', factors: ['a'], numSamples: 2, samplingStrategy: 'withoutReplacement',
+    };
+    config.factors = {
+      a: [1, 2],
+      p: draw,
+      selected: { action: 'zip', factors: [{ action: 'concat', factors: ['p', draw] }, { action: 'concat', factors: [draw, 'p'] }], as: ['x', 'y'] },
+    };
+    if (assigned) {
+      config.factors.assignment = [{ x: 1, y: 2 }];
+      config.betweenSubjects = ['assignment'];
+    }
+    config.baseComponents!.trial = { type: 'questionnaire', response: [] };
+    config.sequence = {
+      type: 'factor', id: 'unknownLayouts', factor: 'selected', components: 'trial',
+    };
+    const parsed = await parseStudyConfig(JSON.stringify(config));
+    expect(parsed.errors.some((error) => error.category === 'invalid-config')).toBe(false);
+    expect(parsed.errors.some((error) => error.message.includes('unsupported shared-draw zip'))).toBe(true);
+  });
+
+  test('does not treat a named wrapper as proof of an unknown child layout', async () => {
+    const config = factorConfig();
+    const draw: FactorOption = {
+      action: 'sample', factors: ['a'], numSamples: 2, samplingStrategy: 'withoutReplacement',
+    };
+    config.factors = {
+      a: [1, 2],
+      p: draw,
+      left: { action: 'concat', factors: ['p', draw] },
+      selected: { action: 'zip', factors: ['left', 'left'], as: ['x', 'y'] },
+    };
+    config.baseComponents!.trial = { type: 'questionnaire', response: [] };
+    config.sequence = {
+      type: 'factor', id: 'unknownWrappedLayout', factor: 'selected', components: 'trial',
+    };
+    const parsed = await parseStudyConfig(JSON.stringify(config));
+    expect(parsed.errors.some((error) => error.message.includes('unsupported shared-draw zip'))).toBe(true);
+  });
+
+  test('normalizes fixed prefixes with equal effective lengths', async () => {
+    const config = factorConfig();
+    config.factors = {
+      a: [1, 2],
+      p: {
+        action: 'sample', factors: ['a'], numSamples: 2, samplingStrategy: 'withoutReplacement',
+      },
+      c: { values: [{ a: 3 }, { a: 4 }], order: 'fixed', numSamples: 1 },
+      d: [{ a: 5 }],
+      selected: { action: 'zip', factors: [{ action: 'concat', factors: ['c', 'p'] }, { action: 'concat', factors: ['d', 'p'] }], as: ['x', 'y'] },
+    };
+    config.baseComponents!.trial = { type: 'questionnaire', response: [] };
+    config.sequence = {
+      type: 'factor', id: 'equalEffectiveLengths', factor: 'selected', components: 'trial',
+    };
+    const parsed = await parseStudyConfig(JSON.stringify(config));
+    expect(parsed.errors).toEqual([]);
+    generateSequenceArray(parsed).forEach((sequence) => expect(getSequenceFlatMap(sequence)).toHaveLength(4));
+  });
+
+  test.each((['fixed', 'latinSquare'] as const).flatMap((order) => [1, 2].map((numSamples) => ({ order, numSamples }))))('compares actual ordered prefix lengths ($order, numSamples=$numSamples)', async ({ order, numSamples }) => {
+    const config = factorConfig();
+    config.factors = {
+      a: [1, 2],
+      p: {
+        action: 'sample', factors: ['a'], numSamples: 2, samplingStrategy: 'withoutReplacement',
+      },
+      c: { values: [{ a: 3 }, { a: 4 }], order, numSamples },
+      d: { values: [{ a: 5 }, { a: 6 }], order },
+      selected: { action: 'zip', factors: [{ action: 'concat', factors: ['c', 'p'] }, { action: 'concat', factors: ['d', 'p'] }], as: ['x', 'y'] },
+    };
+      config.baseComponents!.trial = { type: 'questionnaire', response: [] };
+      config.sequence = {
+        type: 'factor', id: 'orderedPrefixes', factor: 'selected', components: 'trial',
+      };
+      const parsed = await parseStudyConfig(JSON.stringify(config));
+      if (numSamples === 1) {
+        expect(parsed.errors.some((error) => error.message.includes('unsupported shared-draw zip'))).toBe(true);
+      } else {
+        expect(parsed.errors).toEqual([]);
+        generateSequenceArray(parsed).forEach((sequence) => expect(getSequenceFlatMap(sequence)).toHaveLength(5));
+      }
+  });
+
+  test.each([1, 2].flatMap((numSamples) => [false, true].map((wrapped) => ({ numSamples, wrapped }))))('allows deterministic slices as shared markers (numSamples=$numSamples, wrapped=$wrapped)', async ({ numSamples, wrapped }) => {
+    const config = factorConfig();
+    const draw: FactorOption = {
+      action: 'sample', factors: ['a'], numSamples: 2, samplingStrategy: 'withoutReplacement',
+    };
+    config.factors = {
+      a: [1, 2],
+      p: draw,
+      q: draw,
+      c: { values: [{ a: 3 }, { a: 4 }], order: 'fixed', numSamples },
+      marker: { action: 'concat', factors: ['c'] },
+      selected: { action: 'zip', factors: [{ action: 'concat', factors: ['p', wrapped ? 'marker' : 'c'] }, { action: 'concat', factors: ['q', wrapped ? 'marker' : 'c'] }], as: ['x', 'y'] },
+      assignment: [{ x: 1, y: 2 }],
+    };
+    config.betweenSubjects = ['assignment'];
+      config.baseComponents!.trial = { type: 'questionnaire', response: [] };
+      config.sequence = {
+        type: 'factor', id: 'fixedMarkers', factor: 'selected', components: 'trial',
+      };
+      const random = vi.spyOn(Math, 'random').mockReturnValue(0);
+      try {
+        const parsed = await parseStudyConfig(JSON.stringify(config));
+        expect(parsed.errors).toEqual([]);
+        generateSequenceArray(parsed).forEach((sequence) => {
+          expect(getSequenceFlatMap(sequence).filter((id) => id !== 'end').map((id) => parsed.components[id].parameters)).toEqual([{ x: 1, y: 2 }]);
+        });
+      } finally { random.mockRestore(); }
+  });
+
+  test.each((['keep', 'remove'] as const).flatMap((action) => [false, true].map((named) => ({ action, named }))))('rejects shared selector draw dependencies ($action, named=$named)', async ({ action, named }) => {
+    const config = factorConfig();
+    const filter: Exclude<FactorOption, string> = { action, factor: 'a', items: 'p' };
+    config.factors = {
+      a: [1, 2, 3],
+      p: {
+        action: 'sample', factors: ['a'], numSamples: 1, samplingStrategy: 'withoutReplacement',
+      },
+      left: filter,
+      right: filter,
+      selected: { action: 'zip', factors: named ? ['left', 'right'] : [filter, filter], as: ['x', 'y'] },
+    };
+      config.baseComponents!.trial = { type: 'questionnaire', response: [] };
+      config.sequence = {
+        type: 'factor', id: 'sharedSelectors', factor: 'selected', components: 'trial',
+      };
+      const parsed = await parseStudyConfig(JSON.stringify(config));
+      expect(parsed.errors.some((error) => error.category === 'invalid-config')).toBe(false);
+      expect(parsed.errors.some((error) => error.message.includes('unsupported shared-draw zip'))).toBe(true);
+  });
+
+  test.each((['cross', 'zip', 'keep', 'remove', 'prefix', 'independentTail'] as const).flatMap((kind) => (
+    [false, true].map((assigned) => ({ kind, assigned }))
+  )))(
+    'rejects unsupported shared-draw zip composition ($kind, assigned=$assigned) before generation',
+    async ({ kind, assigned }) => {
+      const config = factorConfig();
+      const inner: FactorOption = { action: kind === 'cross' ? 'cross' : 'zip', factors: ['p', 'q'], as: ['x', 'y'] };
+      const wrapped: FactorOption = kind === 'keep' ? { action: 'keep', factor: inner, condition: { x: 1 } }
+        : kind === 'remove' ? { action: 'remove', factor: inner, condition: { x: 999 } } : inner;
+      config.factors = {
+        a: [1, 2],
+        b: [10, 20],
+        p: {
+          action: 'sample', factors: ['a'], numSamples: 2, samplingStrategy: 'withoutReplacement',
+        },
+        q: {
+          action: 'sample', factors: ['b'], numSamples: 2, samplingStrategy: 'withoutReplacement',
+        },
+        selected: {
+          action: 'zip',
+          factors: kind === 'prefix' || kind === 'independentTail'
+            ? [{ action: 'repeat', factors: ['p'], numRepeats: 2 }, { action: 'concat', factors: kind === 'prefix' ? ['p'] : ['p', 'q'] }]
+            : ['p', wrapped],
+        },
+      };
+      config.baseComponents!.trial = { type: 'questionnaire', response: [] };
+      if (assigned) {
+        config.factors.assignment = [{ a: 1 }];
+        config.betweenSubjects = ['assignment'];
+      }
+      config.sequence = {
+        type: 'factor', id: 'unsupportedZip', factor: 'selected', components: 'trial',
+      };
+      const parsed = await parseStudyConfig(JSON.stringify(config));
+      expect(parsed.errors).toEqual(expect.arrayContaining([expect.objectContaining({
+        message: expect.stringContaining('unsupported shared-draw zip'),
+        category: 'sequence-validation',
+      })]));
+    },
+  );
+
+  test.each(['inline', 'named'] as const)('rejects differently laid out shared streams with %s draws', async (kind) => {
     const config = factorConfig();
     const draw: Exclude<FactorOption, string> = {
       action: 'sample', factors: ['a'], numSamples: 3, samplingStrategy: 'withoutReplacement',
@@ -58,14 +235,8 @@ describe('factor sequence actions', () => {
     config.sequence = {
       type: 'factor', id: 'inlineDraw', factor: 'selected', components: 'trial',
     };
-    const random = vi.spyOn(Math, 'random').mockReturnValue(0);
-    try {
-      const parsed = await parseStudyConfig(JSON.stringify(config));
-      expect(parsed.errors).toEqual([]);
-      generateSequenceArray(parsed).forEach((sequence) => {
-        expect(getSequenceFlatMap(sequence).filter((id) => id !== 'end').map((id) => parsed.components[id].parameters)).toEqual([{ x: 2, y: 1 }]);
-      });
-    } finally { random.mockRestore(); }
+    const parsed = await parseStudyConfig(JSON.stringify(config));
+    expect(parsed.errors.some((error) => error.message.includes('unsupported shared-draw zip'))).toBe(true);
   });
 
   test.each([14, 18, 32])('bounds partially constrained %s-input shared-zip eligibility work by groups', (inputCount) => {
@@ -95,7 +266,7 @@ describe('factor sequence actions', () => {
     } finally { entries.mockRestore(); random.mockRestore(); }
   });
 
-  test.each([false, true])('preserves shared positions through a constrained nested cross (aliases=%s)', async (aliases) => {
+  test.each([false, true])('rejects shared draws through a nested cross (aliases=%s)', async (aliases) => {
     const factors: NonNullable<StudyConfig['factors']> = {
       a: [1, 2],
       b: [10, 20],
@@ -113,28 +284,18 @@ describe('factor sequence actions', () => {
     } : {
       a_0: 1, a_1: 1, a_2: 1, b: 20,
     };
-    const random = vi.spyOn(Math, 'random').mockReturnValue(0);
-    try {
-      const errors: ParserErrorWarning[] = [];
-      expect(resolveOrderedFactorConditions('selected', factors, createFactorOrderContext(0), errors)).toContainEqual(expected);
-      expect(resolveOrderedFactorConditions('selected', factors, createFactorOrderContext(0), errors, 'selected', expected)).toEqual([expected]);
-      expect(errors).toEqual([]);
-      const config = factorConfig();
-      config.factors = { ...factors, assignment: [expected] };
-      config.betweenSubjects = ['assignment'];
-      config.baseComponents!.trial = { type: 'questionnaire', response: [] };
-      config.sequence = {
-        type: 'factor', id: 'nestedCross', factor: 'selected', components: 'trial',
-      };
-      const parsed = await parseStudyConfig(JSON.stringify(config));
-      expect(parsed.errors).toEqual([]);
-      generateSequenceArray(parsed).forEach((sequence) => {
-        expect(getSequenceFlatMap(sequence).filter((id) => id !== 'end').map((id) => parsed.components[id].parameters)).toEqual([expected]);
-      });
-    } finally { random.mockRestore(); }
+    const config = factorConfig();
+    config.factors = { ...factors, assignment: [expected] };
+    config.betweenSubjects = ['assignment'];
+    config.baseComponents!.trial = { type: 'questionnaire', response: [] };
+    config.sequence = {
+      type: 'factor', id: 'nestedCross', factor: 'selected', components: 'trial',
+    };
+    const parsed = await parseStudyConfig(JSON.stringify(config));
+    expect(parsed.errors.some((error) => error.message.includes('unsupported shared-draw zip'))).toBe(true);
   });
 
-  test.each(['fixed', 'latinSquare'] as const)('preserves %s prefixes alongside an independent partial tail', (order) => {
+  test.each(['fixed', 'latinSquare'] as const)('rejects runtime shared prefixes with different layouts while allowing fixed inputs (%s)', (order) => {
     const factors: NonNullable<StudyConfig['factors']> = {
       a: [1, 2],
       p: { values: [{ a: 1 }, { a: 2 }], order },
@@ -146,8 +307,10 @@ describe('factor sequence actions', () => {
     [0, 1].forEach((index) => {
       const errors: ParserErrorWarning[] = [];
       expect(resolveOrderedFactorConditions('selected', factors, createFactorOrderContext(index), errors, 'selected', { x: 1, y: 2 }))
-        .toEqual(order === 'latinSquare' && index === 1 ? [] : [{ x: 1, y: 2 }]);
-      expect(errors).toEqual([]);
+        .toEqual(order === 'latinSquare' ? [] : [{ x: 1, y: 2 }]);
+      if (order === 'latinSquare') {
+        expect(errors.some((error) => error.message.includes('unsupported shared-draw zip'))).toBe(true);
+      } else expect(errors).toEqual([]);
     });
   });
 
@@ -168,7 +331,7 @@ describe('factor sequence actions', () => {
     expect(errors).toEqual([]);
   });
 
-  test.each(['keep', 'remove'] as const)('retains shared ordering through a %s wrapper', (action) => {
+  test.each(['keep', 'remove'] as const)('rejects shared draws through a %s wrapper', (action) => {
     const factors: NonNullable<StudyConfig['factors']> = {
       a: [1, 2],
       p: {
@@ -177,13 +340,9 @@ describe('factor sequence actions', () => {
       q: action === 'keep' ? { action, factor: 'p', items: 'a' } : { action, factor: 'p', condition: { a: 3 } },
       selected: { action: 'zip', factors: ['p', 'p', 'q'], as: ['x', 'y', 'z'] },
     };
-    const random = vi.spyOn(Math, 'random').mockReturnValue(0);
-    try {
-      const errors: ParserErrorWarning[] = [];
-      expect(resolveOrderedFactorConditions('selected', factors, createFactorOrderContext(0), errors, 'selected', { x: 1, y: 1, z: 2 })).toEqual([]);
-      expect(resolveOrderedFactorConditions('selected', factors, createFactorOrderContext(0), errors, 'selected', { x: 1, y: 1, z: 1 })).toEqual([{ x: 1, y: 1, z: 1 }]);
-      expect(errors).toEqual([]);
-    } finally { random.mockRestore(); }
+    const errors: ParserErrorWarning[] = [];
+    expect(resolveOrderedFactorConditions('selected', factors, createFactorOrderContext(0), errors)).toEqual([]);
+    expect(errors.some((error) => error.message.includes('unsupported shared-draw zip'))).toBe(true);
   });
 
   test.each([0, 0.99])('filters an independent sample of a shared full draw (random=%s)', (value) => {
@@ -277,7 +436,7 @@ describe('factor sequence actions', () => {
     } finally { random.mockRestore(); }
   });
 
-  test.each([0, 0.99])('preserves shared segments with an independently sampled tail (random=%s)', (value) => {
+  test('rejects differently laid out shared segments with an independent partial tail', () => {
     const factors: NonNullable<StudyConfig['factors']> = {
       a: [1, 2],
       p: {
@@ -288,13 +447,9 @@ describe('factor sequence actions', () => {
       },
       selected: { action: 'zip', factors: [{ action: 'repeat', factors: ['p'], numRepeats: 2 }, { action: 'concat', factors: ['p', 'q'] }], as: ['x', 'y'] },
     };
-    const random = vi.spyOn(Math, 'random').mockReturnValue(value);
-    try {
-      const errors: ParserErrorWarning[] = [];
-      expect(resolveOrderedFactorConditions('selected', factors, createFactorOrderContext(0), errors, 'selected', { x: 1, y: 2 }))
-        .toEqual(value === 0 ? [] : [{ x: 1, y: 2 }]);
-      expect(errors).toEqual([]);
-    } finally { random.mockRestore(); }
+    const errors: ParserErrorWarning[] = [];
+    expect(resolveOrderedFactorConditions('selected', factors, createFactorOrderContext(0), errors)).toEqual([]);
+    expect(errors.some((error) => error.message.includes('unsupported shared-draw zip'))).toBe(true);
   });
 
   test.each([1, 2])('filters independent %s-row draws alongside a shared pair', (numSamples) => {
@@ -375,7 +530,7 @@ describe('factor sequence actions', () => {
 
   test.each((['prefix', 'partialOverlap'] as const).flatMap((kind) => (
     [false, true].map((unknownCount) => ({ kind, unknownCount }))
-  )))('preserves shared full draws across $kind streams (unknownCount=$unknownCount)', async ({ kind, unknownCount }) => {
+  )))('rejects shared draws across different $kind streams (unknownCount=$unknownCount)', async ({ kind, unknownCount }) => {
     const config = factorConfig();
     config.factors = {
       a: [1, 2],
@@ -407,22 +562,11 @@ describe('factor sequence actions', () => {
     config.sequence = {
       type: 'factor', id: 'prefixOwnership', factor: 'selected', components: 'trial',
     };
-    const random = vi.spyOn(Math, 'random').mockReturnValue(0);
-    try {
-      const errors: ParserErrorWarning[] = [];
-      const expected = resolveOrderedFactorConditions('selected', config.factors, createFactorOrderContext(0), errors).filter((row) => row.x === 1 && row.y === 2);
-      expect(errors).toEqual([]);
-      if (kind === 'prefix') expect(expected).toEqual([]);
-      const parsed = await parseStudyConfig(JSON.stringify(config));
-      expect(parsed.errors).toEqual([]);
-      generateSequenceArray(parsed).forEach((sequence) => {
-        const rows = getSequenceFlatMap(sequence).filter((id) => id !== 'end').map((id) => parsed.components[id].parameters);
-        expect(rows).toEqual(expected);
-      });
-    } finally { random.mockRestore(); }
+    const parsed = await parseStudyConfig(JSON.stringify(config));
+    expect(parsed.errors.some((error) => error.message.includes('unsupported shared-draw zip'))).toBe(true);
   });
 
-  test('compiles only surviving templates for a shared prefix removal', async () => {
+  test('rejects a shared prefix zip used as a removal selector', async () => {
     const config = factorConfig();
     config.factors = {
       a: [1, 2],
@@ -443,14 +587,10 @@ describe('factor sequence actions', () => {
       type: 'factor', id: 'prefixRemoval', factor: 'selected', components: 'trial{{x}}{{y}}',
     };
     const parsed = await parseStudyConfig(JSON.stringify(config));
-    expect(parsed.errors).toEqual([]);
-    generateSequenceArray(parsed).forEach((sequence) => {
-      const rows = getSequenceFlatMap(sequence).filter((id) => id !== 'end').map((id) => parsed.components[id].parameters);
-      expect(rows).toEqual([{ x: 1, y: 2 }, { x: 2, y: 1 }]);
-    });
+    expect(parsed.errors.some((error) => error.message.includes('unsupported shared-draw zip'))).toBe(true);
   });
 
-  test.each(['partial', 'independent'] as const)('retains %s sampling eligibility through unequal streams', (kind) => {
+  test.each(['partial', 'independent'] as const)('rejects shared unequal streams while allowing independent samples (%s)', (kind) => {
     const draw: Exclude<FactorOption, string> = {
       action: 'sample', factors: ['a'], numSamples: kind === 'partial' ? 1 : 2, samplingStrategy: 'withoutReplacement',
     };
@@ -461,11 +601,13 @@ describe('factor sequence actions', () => {
       selected: { action: 'zip', factors: [{ action: 'repeat', factors: ['p'], numRepeats: 2 }, kind === 'partial' ? 'p' : 'q'], as: ['x', 'y'] },
     };
     const errors: ParserErrorWarning[] = [];
-    expect(resolveOrderedFactorConditions('selected', factors, createFactorOrderContext(0), errors, 'selected', { x: 1, y: 2 })).toEqual([{ x: 1, y: 2 }]);
-    expect(errors).toEqual([]);
+    expect(resolveOrderedFactorConditions('selected', factors, createFactorOrderContext(0), errors, 'selected', { x: 1, y: 2 })).toEqual(kind === 'partial' ? [] : [{ x: 1, y: 2 }]);
+    if (kind === 'partial') {
+      expect(errors.some((error) => error.message.includes('unsupported shared-draw zip'))).toBe(true);
+    } else expect(errors).toEqual([]);
   });
 
-  test.each(['cross', 'zip'] as const)('preserves shared pairing across equivalent %s groupings', async (action) => {
+  test.each(['cross', 'zip'] as const)('rejects shared draws through nested %s groupings', async (action) => {
     const config = factorConfig();
     config.factors = {
       a: [1, 2],
@@ -483,8 +625,7 @@ describe('factor sequence actions', () => {
       type: 'factor', id: 'associativePairing', factor: 'selected', components: 'trial',
     };
     const parsed = await parseStudyConfig(JSON.stringify(config));
-    expect(parsed.errors).toEqual([]);
-    generateSequenceArray(parsed).forEach((sequence) => expect(getSequenceFlatMap(sequence)).toEqual(['end']));
+    expect(parsed.errors.some((error) => error.message.includes('unsupported shared-draw zip'))).toBe(true);
   });
 
   test('materializes only surviving templates for equivalent repeat and concat draws', async () => {
@@ -573,7 +714,10 @@ describe('factor sequence actions', () => {
       b: { values: Array.from({ length: levelCount }, (_, index) => index), order: 'random' },
       p: { action: 'keep', factor: { action: 'zip', factors: ['a', 'b'] }, condition: { a: 1 } },
       left: { action: 'concat', factors: ['p'] },
-      right: { action: 'concat', factors: ['p'] },
+      r: {
+        action: 'sample', factors: ['p'], numSamples: 1, samplingStrategy: 'withoutReplacement',
+      },
+      right: { action: 'concat', factors: ['r'] },
       selected: { action: 'zip', factors: ['left', 'right'] },
     };
     config.baseComponents!.trial = { type: 'questionnaire', response: [] };
@@ -619,7 +763,7 @@ describe('factor sequence actions', () => {
     } finally { random.mockRestore(); }
   });
 
-  test.each([false, true])('preserves full-draw pairing through mixed wrappers (unknownCount=%s)', async (unknownCount) => {
+  test.each([false, true])('rejects hidden filters while allowing simple shared-draw wrappers (unknownCount=%s)', async (unknownCount) => {
     const config = factorConfig();
     config.factors = {
       a: [1, 2],
@@ -649,11 +793,15 @@ describe('factor sequence actions', () => {
       type: 'factor', id: 'mixedWrapperZip', factor: 'selected', components: 'trial',
     };
     const parsed = await parseStudyConfig(JSON.stringify(config));
-    expect(parsed.errors).toEqual([]);
-    generateSequenceArray(parsed).forEach((sequence) => expect(getSequenceFlatMap(sequence)).toEqual(['end']));
+    if (unknownCount) {
+      expect(parsed.errors.some((error) => error.message.includes('unsupported shared-draw zip'))).toBe(true);
+    } else {
+      expect(parsed.errors).toEqual([]);
+      generateSequenceArray(parsed).forEach((sequence) => expect(getSequenceFlatMap(sequence)).toEqual(['end']));
+    }
   });
 
-  test.each(['partial', 'independent', 'filtered'] as const)('does not conflate %s wrapper draw domains', (kind) => {
+  test.each(['partial', 'independent', 'filtered'] as const)('keeps independent and partial draws eligible and rejects shared filters (%s)', (kind) => {
     const draw: FactorOption = {
       action: 'sample', factors: ['a'], numSamples: kind === 'partial' ? 1 : 2, samplingStrategy: 'withoutReplacement',
     };
@@ -670,8 +818,10 @@ describe('factor sequence actions', () => {
       const errors: ParserErrorWarning[] = [];
       const assignment = kind === 'partial' ? { x: 1, y: 2 } : undefined;
       const rows = resolveOrderedFactorConditions('selected', factors, createFactorOrderContext(0), errors, 'selected', assignment);
-      expect(rows).toEqual(kind === 'independent' ? [{ x: 2, y: 1 }, { x: 1, y: 2 }] : [{ x: 1, y: 2 }]);
-      expect(errors).toEqual([]);
+      expect(rows).toEqual(kind === 'filtered' ? [] : kind === 'independent' ? [{ x: 2, y: 1 }, { x: 1, y: 2 }] : [{ x: 1, y: 2 }]);
+      if (kind === 'filtered') {
+        expect(errors.some((error) => error.message.includes('unsupported shared-draw zip'))).toBe(true);
+      } else expect(errors).toEqual([]);
     } finally { random.mockRestore(); }
   });
 
@@ -700,7 +850,7 @@ describe('factor sequence actions', () => {
     generateSequenceArray(parsed).forEach((sequence) => expect(getSequenceFlatMap(sequence)).toEqual(['end']));
   });
 
-  test('preserves shared fixed membership when runtime cardinality is unknown', async () => {
+  test('rejects a filtered shared draw used as a zip removal selector', async () => {
     const config = factorConfig();
     config.factors = {
       a: [1, 2, 3],
@@ -726,13 +876,7 @@ describe('factor sequence actions', () => {
       type: 'factor', id: 'unknownCountZip', factor: 'selected', components: 'trial{{a_0}}{{a_1}}',
     };
     const parsed = await parseStudyConfig(JSON.stringify(config));
-    expect(parsed.errors).toEqual([]);
-    generateSequenceArray(parsed).forEach((sequence) => {
-      const rows = getSequenceFlatMap(sequence).filter((id) => id !== 'end').map((id) => parsed.components[id].parameters);
-      expect(rows).toHaveLength(7);
-      expect(rows).not.toContainEqual({ a_0: 1, a_1: 1 });
-      expect(rows).not.toContainEqual({ a_0: 2, a_1: 2 });
-    });
+    expect(parsed.errors.some((error) => error.message.includes('unsupported shared-draw zip'))).toBe(true);
   });
 
   test.each([false, true])('preserves full named sample zip membership (expanded=%s)', async (expanded) => {
