@@ -650,31 +650,30 @@ function getFactorDrawIdentity(
   };
 }
 
-function getZipDrawRelationship(identities: (FactorDrawIdentity | undefined)[]) {
+function getFactorStreamOwners(source: FactorOption, factors: Record<string, Factor>, stack: string[] = []): string[] {
+  const named = typeof source === 'string' ? source : undefined;
+  if (named && stack.includes(named)) return [];
+  const factor = named ? factors[named] : source as Exclude<FactorOption, string>;
+  if (!factor) return [];
+  const own = named ? [named] : [];
+  // Sampling starts an independent stream. Filters and composition retain the
+  // ordering dependencies of their source streams, even when row counts change.
+  if (Array.isArray(factor) || isOrderedFactorValues(factor)) return own;
+  if (factor.action === 'sample') return own;
+  const sources = factor.action === 'keep' || factor.action === 'remove' ? [factor.factor] : factor.factors;
+  return [...own, ...sources.flatMap((input) => getFactorStreamOwners(input, factors, named ? [...stack, named] : stack))];
+}
+
+function hasSharedZipPrefix(identities: (FactorDrawIdentity | undefined)[]) {
   const draws = identities.filter((identity): identity is FactorDrawIdentity => identity !== undefined);
-  if (draws.length < 2 || draws.length !== identities.length) {
-    return { sharedPrefix: false, sharedOwner: false };
-  }
+  if (draws.length < 2 || draws.length !== identities.length) return false;
   const streams = draws.map((identity) => (
-    typeof identity !== 'string' && identity.action === 'concat'
-      ? identity.inputs : [identity]
+    typeof identity !== 'string' && identity.action === 'concat' ? identity.inputs : [identity]
   ));
   const prefixLength = Math.min(...streams.map((stream) => stream.length));
-  const sharedPrefix = prefixLength > 0 && streams.every((stream) => (
+  return prefixLength > 0 && streams.every((stream) => (
     stream.slice(0, prefixLength).every((identity, index) => isEqual(identity, streams[0][index]))
   ));
-  const owners = (identity: FactorDrawIdentity): string[] => (
-    typeof identity === 'string' ? [identity]
-      : 'inputs' in identity ? identity.inputs.flatMap(owners) : []
-  );
-  const seen = new Set<string>();
-  let sharedOwner = false;
-  draws.forEach((identity) => {
-    const inputOwners = new Set(owners(identity));
-    inputOwners.forEach((owner) => { sharedOwner ||= seen.has(owner); });
-    inputOwners.forEach((owner) => seen.add(owner));
-  });
-  return { sharedPrefix, sharedOwner };
 }
 
 function getFactorPublicNames(
@@ -753,12 +752,20 @@ function resolveFactor(
   assignmentParameters?: Record<string, unknown>,
   warnings: ParserErrorWarning[] = [],
   eligibleConditions?: MaterializedFactorCondition[],
+  completeDraws?: ReadonlySet<string>,
 ): FactorResolution {
   if (typeof factorSource === 'string') {
     if (stack.includes(factorSource)) {
       addFactorError(errors, `Circular factor reference: ${[...stack, factorSource].join(' -> ')}`);
       return { conditions: [] };
     }
+  }
+
+  // A shared complete draw keeps one pool throughout this zip. Independent
+  // children still receive their own projected eligibility before sampling.
+  if (mode === 'runtime' && typeof factorSource === 'string' && completeDraws?.has(factorSource)
+    && (assignmentParameters !== undefined || eligibleConditions !== undefined)) {
+    return resolveFactor(factorSource, factors, errors, stack, expressionName, mode, orderContext, undefined, warnings, undefined, completeDraws);
   }
 
   const factorName = typeof factorSource === 'string' ? factorSource : expressionName;
@@ -839,6 +846,7 @@ function resolveFactor(
       assignmentParameters,
       warnings,
       eligibleConditions,
+      completeDraws,
     );
 
     const sourceAssignment = getRelevantFactorAssignment(assignmentParameters, getFactorPublicNames(factor.factor, factors));
@@ -883,6 +891,7 @@ function resolveFactor(
         undefined,
         warnings,
         selectorEligibility,
+        completeDraws,
       )
       : undefined;
 
@@ -941,13 +950,22 @@ function resolveFactor(
   }
 
   const aliasNames = (factor.action === 'cross' || factor.action === 'zip') ? factor.as : undefined;
-  const zipDraws = getZipDrawRelationship(action === 'zip'
-    ? inputs.map((input) => getFactorDrawIdentity(input, factors)) : []);
+  const zipIdentities = action === 'zip' ? inputs.map((input) => getFactorDrawIdentity(input, factors)) : [];
+  const sharedZipPrefix = hasSharedZipPrefix(zipIdentities);
+  const owners = new Map<string, number[]>();
+  if (action === 'zip') {
+    inputs.forEach((input, index) => {
+      new Set(getFactorStreamOwners(input, factors)).forEach((owner) => {
+        owners.set(owner, [...(owners.get(owner) || []), index]);
+      });
+    });
+  }
+  const sharesStream = [...owners.values()].some((indices) => indices.length > 1);
   const assignment = assignmentParameters && Object.keys(assignmentParameters).length > 0
     ? getRelevantFactorAssignment(assignmentParameters, getFactorPublicNames(factorSource, factors)) : undefined;
   const constrained = assignment !== undefined || eligibleConditions !== undefined;
   let inputDefinitions: FactorResolution[] | undefined;
-  if (aliasNames !== undefined || constrained || zipDraws.sharedPrefix || zipDraws.sharedOwner) {
+  if (aliasNames !== undefined || constrained || sharedZipPrefix || sharesStream || (action === 'zip' && mode === 'materialize')) {
     inputDefinitions = inputs.map((input, index) => getFactorDefinition(
       input,
       factors,
@@ -961,16 +979,73 @@ function resolveFactor(
   if (aliasNames !== undefined && !validateFactorAliases(inputDefinitions!, aliasNames, factorName, errors)) {
     return { conditions: [] };
   }
-  // Equal ordering descriptors prove aligned prefixes, not shared ownership.
-  // Only actual cached owners require pairing partially overlapping streams
-  // before filtering; matching deterministic tails leave independent draws free.
-  const pairBeforeFiltering = (zipDraws.sharedPrefix || zipDraws.sharedOwner)
+  // A wholly aligned, fixed-membership zip can filter after pairing.
+  // Other zips resolve their shared input groups separately below.
+  const pairBeforeFiltering = sharedZipPrefix
     && inputDefinitions!.every((resolution) => !resolution.hasVariableMembership);
   const correlatedZip = action === 'zip' && (inputs.length === 1
-    || (zipDraws.sharedPrefix && pairBeforeFiltering));
+    || pairBeforeFiltering);
   const tuples = constrained && !pairBeforeFiltering
     ? getEligibleInputTuples(inputDefinitions!, action, aliasNames, assignment, eligibleConditions, errors)
     : undefined;
+  // Connect input positions by shared complete streams or aligned ordering.
+  // Groups can be non-adjacent and contain any number of inputs.
+  const groupIds = inputs.map((_, index) => index);
+  const root = (index: number): number => {
+    let current = index;
+    while (groupIds[current] !== current) current = groupIds[current];
+    return current;
+  };
+  const sharedCompleteDraws = new Set<string>();
+  const alignedInputs = new Set<number>();
+  if (action === 'zip' && (constrained || mode === 'materialize')) {
+    owners.forEach((indices, owner) => {
+      if (indices.length < 2) return;
+      const direct = inputs.indexOf(owner);
+      const definition = direct >= 0 && inputDefinitions ? inputDefinitions[direct]
+        : getFactorDefinition(owner, factors, errors, stack, owner, warnings, orderContext);
+      if (definition.hasVariableMembership) return;
+      sharedCompleteDraws.add(owner);
+      indices.forEach((index) => {
+        groupIds[root(index)] = root(indices[0]);
+      });
+    });
+  }
+  if (action === 'zip' && inputDefinitions) {
+    inputs.forEach((input, index) => {
+      const streamOwners = getFactorStreamOwners(input, factors);
+      const hasIndependentDraw = streamOwners.some((owner) => {
+        const definition = factors[owner];
+        return !sharedCompleteDraws.has(owner) && !Array.isArray(definition)
+          && (isOrderedFactorValues(definition) ? definition.order === 'random' : definition.action === 'sample');
+      });
+      if (!inputDefinitions![index].hasVariableMembership && !hasIndependentDraw
+        && streamOwners.some((owner) => sharedCompleteDraws.has(owner))) alignedInputs.add(index);
+    });
+  }
+  const pairedGroups = inputs.map((_, index) => index);
+  const pairedRoot = (index: number): number => {
+    let current = index;
+    while (pairedGroups[current] !== current) current = pairedGroups[current];
+    return current;
+  };
+  if (action === 'zip' && inputDefinitions) {
+    inputs.forEach((_, index) => {
+      inputs.slice(0, index).forEach((__, previous) => {
+        if (!inputDefinitions![index].hasVariableMembership && !inputDefinitions![previous].hasVariableMembership
+          && hasSharedZipPrefix([zipIdentities[index], zipIdentities[previous]])) {
+          groupIds[root(index)] = root(previous);
+          pairedGroups[pairedRoot(index)] = pairedRoot(previous);
+          alignedInputs.add(index);
+          alignedInputs.add(previous);
+        }
+      });
+    });
+  }
+  const groups = new Map<number, number[]>();
+  inputs.forEach((_, index) => { groups.set(root(index), [...(groups.get(root(index)) || []), index]); });
+  const scopedDraws = sharedCompleteDraws.size > 0
+    ? new Set([...completeDraws || [], ...sharedCompleteDraws]) : completeDraws;
   const resolveInput = (index: number, eligible?: MaterializedFactorCondition[]) => resolveFactor(
     inputs[index],
     factors,
@@ -982,6 +1057,7 @@ function resolveFactor(
     undefined,
     warnings,
     eligible,
+    scopedDraws,
   );
 
   if (mode === 'runtime' && action === 'cross' && tuples) {
@@ -1015,8 +1091,34 @@ function resolveFactor(
   const fixedZip = action === 'zip' && inputDefinitions && inputDefinitions.every((resolution) => (
     !resolution.hasRuntimeOrder && !resolution.hasRuntimeSample && resolution.numSamples === undefined
   ));
-  const resolutions = ((mode === 'materialize' && !constrained) || fixedZip) && inputDefinitions
-    ? inputDefinitions : inputs.map((_, index) => resolveInput(index, tuples && getInputEligibility(tuples, index, errors)));
+  let resolutions: FactorResolution[];
+  if (mode === 'runtime' && action === 'zip' && tuples && [...groups.values()].some((group) => group.length > 1)) {
+    resolutions = [];
+    let candidates = tuples;
+    const matches = (tuple: FactorInputTuple, indices: number[], row: number) => indices.every((index) => (
+      tuple[index] && isEqual(
+        materializeFactorCondition(tuple[index]!.values, errors),
+        materializeFactorCondition(resolutions[index].conditions[row].values, errors),
+      )
+    ));
+    // Resolve shared groups first, then narrow independent sampling pools using
+    // their surviving rows. Retain row positions inside each group until paired.
+    [...groups.values()].sort((left, right) => right.length - left.length).forEach((indices) => {
+      indices.forEach((index) => {
+        resolutions[index] = resolveInput(index, alignedInputs.has(index) ? undefined : getInputEligibility(candidates, index, errors));
+      });
+      if (indices.length === 1) return;
+      const rows = Array.from({ length: Math.min(...indices.map((index) => resolutions[index].conditions.length)) }, (_, row) => row)
+        .filter((row) => candidates.some((tuple) => matches(tuple, indices, row)));
+      candidates = candidates.filter((tuple) => rows.some((row) => matches(tuple, indices, row)));
+      indices.forEach((index) => {
+        resolutions[index] = { ...resolutions[index], conditions: rows.map((row) => resolutions[index].conditions[row]) };
+      });
+    });
+  } else {
+    resolutions = ((mode === 'materialize' && !constrained) || fixedZip) && inputDefinitions
+      ? inputDefinitions : inputs.map((_, index) => resolveInput(index, tuples && getInputEligibility(tuples, index, errors)));
+  }
   const conditionSets = resolutions.map((resolution, index) => (
     resolution.conditions.map((condition) => aliasFactorCondition(condition, aliasNames?.[index]))
   ));
@@ -1042,9 +1144,38 @@ function resolveFactor(
     if (mode === 'materialize' && runtimeCounts && (hasRuntimeOrder || hasRuntimeSample)) {
       warnZipLengths(runtimeCounts, factorName, warnings);
     }
-    const combined = mode === 'materialize' && !correlatedZip && (hasRuntimeOrder || hasRuntimeSample)
-      ? crossFactorConditions(conditionSets)
-      : zipFactorConditions(conditionSets, factorName, errors, warnings);
+    let combined: ResolvedFactorCondition[];
+    if (mode === 'materialize' && !correlatedZip && (hasRuntimeOrder || hasRuntimeSample)) {
+      // Materialize correlated groups together; Cartesian expansion is only
+      // needed between independently ordered/sampled groups. Preserve original
+      // input positions so repeated public names keep their slot indices.
+      const materialGroups = new Map<number, number[]>();
+      inputs.forEach((_, index) => {
+        const key = pairedRoot(index);
+        materialGroups.set(key, [...(materialGroups.get(key) || []), index]);
+      });
+      const possible = [...materialGroups.values()].reduce<FactorInputTuple[]>((prefixes, indices) => {
+        const paired = indices.length > 1 && indices.every((index) => !resolutions[index].hasVariableMembership)
+          && hasSharedZipPrefix(indices.map((index) => zipIdentities[index]));
+        const rows = paired
+          ? Array.from({ length: Math.min(...indices.map((index) => conditionSets[index].length)) }, (_, row) => (
+            inputs.map((__, index) => (indices.includes(index) ? conditionSets[index][row] : undefined))
+          ))
+          : indices.reduce<FactorInputTuple[]>((current, index) => current.flatMap((prefix) => (
+            conditionSets[index].map((condition) => {
+              const row = [...prefix];
+              row[index] = condition;
+              return row;
+            })
+          )), [[]]);
+        return prefixes.flatMap((prefix) => rows.map((row) => inputs.map((_, index) => row[index] || prefix[index])));
+      }, [[]]);
+      combined = possible.map((tuple) => tuple.reduce<ResolvedFactorCondition>((condition, next) => (
+        next ? mergeResolvedFactorConditions(condition, next) : condition
+      ), { values: {} }));
+    } else {
+      combined = zipFactorConditions(conditionSets, factorName, errors, warnings);
+    }
     const conditions = filterFactorConditionsByAssignment(combined, assignmentParameters, errors, eligibleConditions);
     const varyingInputs = conditionSets.flatMap((rows, index) => (
       rows.some((row) => !isEqual(row, rows[0])) ? [index] : []
@@ -1087,6 +1218,9 @@ function resolveFactor(
   if (factor.action !== 'sample') {
     return { conditions };
   }
+  // A protected source supplies its complete ordered rows. This independent
+  // sample must still restrict its own pool before choosing any of those rows.
+  const pool = filterFactorConditionsByAssignment(conditions, assignmentParameters, errors, eligibleConditions);
   if (
     factor.samplingStrategy !== 'withoutReplacement'
     && factor.samplingStrategy !== 'withReplacement'
@@ -1103,13 +1237,13 @@ function resolveFactor(
   }
 
   // The definition was validated before participant eligibility filtering.
-  if (mode === 'runtime' && conditions.length === 0) {
+  if (mode === 'runtime' && pool.length === 0) {
     return {
       conditions: [], runtimeCount: 0, hasRuntimeOrder,
     };
   }
 
-  const availableCount = mode === 'runtime' ? conditions.length : concatenatedCount;
+  const availableCount = mode === 'runtime' ? pool.length : concatenatedCount;
   if (
     factor.samplingStrategy === 'withoutReplacement'
     && availableCount !== null && factor.numSamples > availableCount
@@ -1131,7 +1265,7 @@ function resolveFactor(
       `Sample factor \`${factorName}\` requested ${factor.numSamples} conditions but only ${availableCount} are available; stopping after the list is exhausted`,
     );
   }
-  if (conditions.length === 0) {
+  if (pool.length === 0) {
     addFactorError(
       errors,
       `Sample factor \`${factorName}\` cannot sample from an empty condition set`,
@@ -1142,14 +1276,14 @@ function resolveFactor(
     return {
       conditions: sampleFactorConditions(
         factorName,
-        conditions,
+        pool,
         factor.numSamples,
         factor.samplingStrategy,
         orderContext,
       ),
       hasRuntimeOrder,
-      hasVariableMembership: hasVariableMembership || factor.numSamples < conditions.length
-        || (factor.samplingStrategy === 'withReplacement' && conditions.length > 1),
+      hasVariableMembership: hasVariableMembership || factor.numSamples < pool.length
+        || (factor.samplingStrategy === 'withReplacement' && pool.length > 1),
     };
   }
   const runtimeCount = factor.samplingStrategy === 'withReplacement'
@@ -1162,7 +1296,7 @@ function resolveFactor(
     hasRuntimeOrder,
     hasRuntimeSample: hasRuntimeSample || factor.samplingStrategy === 'withReplacement',
     hasVariableMembership: hasVariableMembership || concatenatedCount === null || factor.numSamples < concatenatedCount
-      || (factor.samplingStrategy === 'withReplacement' && conditions.length > 1),
+      || (factor.samplingStrategy === 'withReplacement' && pool.length > 1),
   };
 }
 

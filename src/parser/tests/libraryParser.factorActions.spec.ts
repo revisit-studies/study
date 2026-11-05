@@ -41,6 +41,193 @@ function factorConfig(): StudyConfig {
 }
 
 describe('factor sequence actions', () => {
+  test.each(['fixed', 'latinSquare'] as const)('preserves %s prefixes alongside an independent partial tail', (order) => {
+    const factors: NonNullable<StudyConfig['factors']> = {
+      a: [1, 2],
+      p: { values: [{ a: 1 }, { a: 2 }], order },
+      q: {
+        action: 'sample', factors: ['a'], numSamples: 1, samplingStrategy: 'withoutReplacement',
+      },
+      selected: { action: 'zip', factors: [{ action: 'repeat', factors: ['p'], numRepeats: 2 }, { action: 'concat', factors: ['p', 'q'] }], as: ['x', 'y'] },
+    };
+    [0, 1].forEach((index) => {
+      const errors: ParserErrorWarning[] = [];
+      expect(resolveOrderedFactorConditions('selected', factors, createFactorOrderContext(index), errors, 'selected', { x: 1, y: 2 }))
+        .toEqual(order === 'latinSquare' && index === 1 ? [] : [{ x: 1, y: 2 }]);
+      expect(errors).toEqual([]);
+    });
+  });
+
+  test('keeps independent draws eligible when both streams share a deterministic tail', () => {
+    const factors: NonNullable<StudyConfig['factors']> = {
+      a: [1, 2],
+      c: [{ a: 3 }],
+      p: {
+        action: 'sample', factors: ['a'], numSamples: 2, samplingStrategy: 'withoutReplacement',
+      },
+      q: {
+        action: 'sample', factors: ['a'], numSamples: 2, samplingStrategy: 'withoutReplacement',
+      },
+      selected: { action: 'zip', factors: [{ action: 'concat', factors: ['p', 'c'] }, { action: 'concat', factors: ['q', 'c'] }], as: ['x', 'y'] },
+    };
+    const errors: ParserErrorWarning[] = [];
+    expect(resolveOrderedFactorConditions('selected', factors, createFactorOrderContext(0), errors, 'selected', { x: 1, y: 2 })).toEqual([{ x: 1, y: 2 }]);
+    expect(errors).toEqual([]);
+  });
+
+  test.each(['keep', 'remove'] as const)('retains shared ordering through a %s wrapper', (action) => {
+    const factors: NonNullable<StudyConfig['factors']> = {
+      a: [1, 2],
+      p: {
+        action: 'sample', factors: ['a'], numSamples: 2, samplingStrategy: 'withoutReplacement',
+      },
+      q: action === 'keep' ? { action, factor: 'p', items: 'a' } : { action, factor: 'p', condition: { a: 3 } },
+      selected: { action: 'zip', factors: ['p', 'p', 'q'], as: ['x', 'y', 'z'] },
+    };
+    const random = vi.spyOn(Math, 'random').mockReturnValue(0);
+    try {
+      const errors: ParserErrorWarning[] = [];
+      expect(resolveOrderedFactorConditions('selected', factors, createFactorOrderContext(0), errors, 'selected', { x: 1, y: 1, z: 2 })).toEqual([]);
+      expect(resolveOrderedFactorConditions('selected', factors, createFactorOrderContext(0), errors, 'selected', { x: 1, y: 1, z: 1 })).toEqual([{ x: 1, y: 1, z: 1 }]);
+      expect(errors).toEqual([]);
+    } finally { random.mockRestore(); }
+  });
+
+  test.each([0, 0.99])('filters an independent sample of a shared full draw (random=%s)', (value) => {
+    const factors: NonNullable<StudyConfig['factors']> = {
+      a: [1, 2],
+      p: {
+        action: 'sample', factors: ['a'], numSamples: 2, samplingStrategy: 'withoutReplacement',
+      },
+      q: {
+        action: 'sample', factors: ['p'], numSamples: 1, samplingStrategy: 'withoutReplacement',
+      },
+      selected: { action: 'zip', factors: ['p', 'p', 'q'], as: ['x', 'y', 'z'] },
+    };
+    const random = vi.spyOn(Math, 'random').mockReturnValue(value);
+    try {
+      const errors: ParserErrorWarning[] = [];
+      expect(resolveOrderedFactorConditions('selected', factors, createFactorOrderContext(0), errors, 'selected', { x: 1, y: 1, z: 2 }))
+        .toEqual([{ x: 1, y: 1, z: 2 }]);
+      expect(errors).toEqual([]);
+    } finally { random.mockRestore(); }
+  });
+
+  test.each([3, 5])('materializes only correlated rows across %s interleaved inputs', async (length) => {
+    const config = factorConfig();
+    const inputs = ['p', 'q', 'p', 'q', 'p'].slice(0, length);
+    config.factors = {
+      a: [1, 2],
+      b: [3, 4],
+      p: {
+        action: 'sample', factors: ['a'], numSamples: 2, samplingStrategy: 'withoutReplacement',
+      },
+      q: {
+        action: 'sample', factors: ['b'], numSamples: 1, samplingStrategy: 'withoutReplacement',
+      },
+      selected: { action: 'zip', factors: inputs, as: inputs.map((_, index) => `v${index}`) },
+    };
+    config.baseComponents = { trial11: { type: 'questionnaire', response: [] }, trial22: { type: 'questionnaire', response: [] } };
+    config.sequence = {
+      type: 'factor', id: 'strictGroupedTemplates', factor: 'selected', components: 'trial{{v0}}{{v2}}',
+    };
+    const parsed = await parseStudyConfig(JSON.stringify(config));
+    expect(parsed.errors).toEqual([]);
+    generateSequenceArray(parsed).forEach((sequence) => {
+      getSequenceFlatMap(sequence).filter((id) => id !== 'end').forEach((id) => {
+        const parameters = parsed.components[id].parameters!;
+        inputs.forEach((input, index) => {
+          if (input === 'p') expect(parameters[`v${index}`]).toBe(parameters.v0);
+        });
+      });
+    });
+  });
+
+  test.each([3, 5, 8, 32].flatMap((length) => [0, 0.99].flatMap((random) => (
+    [false, true].map((conflict) => ({ length, random, conflict }))
+  ))))('preserves shared input groups for $length inputs (random=$random, conflict=$conflict)', async ({ length, random: value, conflict }) => {
+    const config = factorConfig();
+    const pattern = length === 3 ? ['p', 'p', 'q'] : ['p', 'r', 'p', 'q', 'r', 'p', 'r', 'q'];
+    const inputs = Array.from({ length }, (_, index) => pattern[index % pattern.length]);
+    const aliases = inputs.map((_, index) => `v${index}`);
+    const assignment = Object.fromEntries(inputs.map((input, index) => [aliases[index], input === 'p' ? 1 : input === 'r' ? 10 : 100]));
+    if (conflict) assignment[aliases[inputs.lastIndexOf('p')]] = 2;
+    config.factors = {
+      a: [1, 2],
+      b: [10, 20],
+      c: [100, 200],
+      p: {
+        action: 'sample', factors: ['a'], numSamples: 2, samplingStrategy: 'withoutReplacement',
+      },
+      r: {
+        action: 'sample', factors: ['b'], numSamples: 2, samplingStrategy: 'withoutReplacement',
+      },
+      q: {
+        action: 'sample', factors: ['c'], numSamples: 1, samplingStrategy: 'withoutReplacement',
+      },
+      selected: { action: 'zip', factors: inputs, as: aliases },
+      assignment: [assignment],
+    };
+    config.betweenSubjects = ['assignment'];
+    config.baseComponents!.trial = { type: 'questionnaire', response: [] };
+    config.sequence = {
+      type: 'factor', id: 'sharedGroups', factor: 'selected', components: 'trial',
+    };
+    const random = vi.spyOn(Math, 'random').mockReturnValue(value);
+    try {
+      const parsed = await parseStudyConfig(JSON.stringify(config));
+      expect(parsed.errors).toEqual([]);
+      generateSequenceArray(parsed).forEach((sequence) => {
+        const rows = getSequenceFlatMap(sequence).filter((id) => id !== 'end').map((id) => parsed.components[id].parameters);
+        expect(rows).toEqual(conflict ? [] : [assignment]);
+      });
+    } finally { random.mockRestore(); }
+  });
+
+  test.each([0, 0.99])('preserves shared segments with an independently sampled tail (random=%s)', (value) => {
+    const factors: NonNullable<StudyConfig['factors']> = {
+      a: [1, 2],
+      p: {
+        action: 'sample', factors: ['a'], numSamples: 2, samplingStrategy: 'withoutReplacement',
+      },
+      q: {
+        action: 'sample', factors: ['a'], numSamples: 1, samplingStrategy: 'withoutReplacement',
+      },
+      selected: { action: 'zip', factors: [{ action: 'repeat', factors: ['p'], numRepeats: 2 }, { action: 'concat', factors: ['p', 'q'] }], as: ['x', 'y'] },
+    };
+    const random = vi.spyOn(Math, 'random').mockReturnValue(value);
+    try {
+      const errors: ParserErrorWarning[] = [];
+      expect(resolveOrderedFactorConditions('selected', factors, createFactorOrderContext(0), errors, 'selected', { x: 1, y: 2 }))
+        .toEqual(value === 0 ? [] : [{ x: 1, y: 2 }]);
+      expect(errors).toEqual([]);
+    } finally { random.mockRestore(); }
+  });
+
+  test.each([1, 2])('filters independent %s-row draws alongside a shared pair', (numSamples) => {
+    const factors: NonNullable<StudyConfig['factors']> = {
+      a: [1, 2],
+      b: [3, 4],
+      p: {
+        action: 'sample', factors: ['a'], numSamples: 2, samplingStrategy: 'withoutReplacement',
+      },
+      q: {
+        action: 'sample', factors: ['b'], numSamples, samplingStrategy: 'withoutReplacement',
+      },
+      selected: { action: 'zip', factors: ['p', 'p', 'q'] },
+    };
+    const random = vi.spyOn(Math, 'random').mockReturnValue(0);
+    try {
+      const errors: ParserErrorWarning[] = [];
+      const context = createFactorOrderContext(0);
+      expect(resolveOrderedFactorConditions('selected', factors, context, errors, 'selected', { a_0: 1, a_1: 1, b: 4 }))
+        .toEqual([{ a_0: 1, a_1: 1, b: 4 }]);
+      // Protecting the pair must not change eligibility for later resolutions.
+      expect(resolveOrderedFactorConditions('p', factors, context, errors, 'p', { a: 1 })).toEqual([{ a: 1 }]);
+      expect(errors).toEqual([]);
+    } finally { random.mockRestore(); }
+  });
+
   test.each(['fixed', 'latinSquare'] as const)('preserves aligned %s ordering without treating it as ownership', (order) => {
     const factors: NonNullable<StudyConfig['factors']> = {
       a: { values: [1, 2], order },
