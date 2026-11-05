@@ -635,11 +635,13 @@ function getFactorDrawIdentity(
   if (Array.isArray(factor)) return { action: 'fixed', length: factor.length };
   if (isOrderedFactorValues(factor)) {
     if (factor.order === 'random') return named;
+    // Eligibility filtering precedes slicing, so a truncated fixed list is
+    // not equivalent to a shorter array even when their initial lengths match.
     const length = Math.min(factor.values.length, factor.numSamples ?? factor.values.length);
     return {
       action: factor.order || 'fixed',
-      length: factor.order === 'latinSquare' ? factor.values.length : length,
-      ...(factor.order === 'latinSquare' && length < factor.values.length ? { numSamples: length } : {}),
+      length: factor.values.length,
+      ...(length < factor.values.length ? { numSamples: length } : {}),
     };
   }
   // Sampling owns a cache identity; filtering may change row positions. Do not

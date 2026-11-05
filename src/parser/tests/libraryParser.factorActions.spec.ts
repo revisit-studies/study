@@ -83,24 +83,42 @@ describe('factor sequence actions', () => {
     expect(parsed.errors.some((error) => error.message.includes('unsupported shared-draw zip'))).toBe(true);
   });
 
-  test('normalizes fixed prefixes with equal effective lengths', async () => {
+  test.each([false, true].flatMap((leftSlice) => [false, true].flatMap((rightSlice) => (
+    [false, true].map((assigned) => ({ leftSlice, rightSlice, assigned }))
+  ))))('checks array versus sliced prefix semantics (leftSlice=$leftSlice, rightSlice=$rightSlice, assigned=$assigned)', async ({ leftSlice, rightSlice, assigned }) => {
     const config = factorConfig();
+    const prefix = (sliced: boolean) => (sliced
+      ? { values: [{ chart: 'intro' }, { chart: 'unused' }], order: 'fixed' as const, numSamples: 1 }
+      : [{ chart: 'intro' }]);
     config.factors = {
-      a: [1, 2],
-      p: {
-        action: 'sample', factors: ['a'], numSamples: 2, samplingStrategy: 'withoutReplacement',
+      chart: ['bar', 'line', 'pie'],
+      shuffled: {
+        action: 'sample', factors: ['chart'], numSamples: 3, samplingStrategy: 'withoutReplacement',
       },
-      c: { values: [{ a: 3 }, { a: 4 }], order: 'fixed', numSamples: 1 },
-      d: [{ a: 5 }],
-      selected: { action: 'zip', factors: [{ action: 'concat', factors: ['c', 'p'] }, { action: 'concat', factors: ['d', 'p'] }], as: ['x', 'y'] },
+      introA: prefix(leftSlice),
+      introB: prefix(rightSlice),
+      paired: { action: 'zip', factors: [{ action: 'concat', factors: ['introA', 'shuffled'] }, { action: 'concat', factors: ['introB', 'shuffled'] }], as: ['stimulus', 'probe'] },
+      arm: [{ stimulus: 'bar', probe: 'bar' }, { stimulus: 'bar', probe: 'line' }],
     };
+    if (assigned) config.betweenSubjects = ['arm'];
     config.baseComponents!.trial = { type: 'questionnaire', response: [] };
     config.sequence = {
-      type: 'factor', id: 'equalEffectiveLengths', factor: 'selected', components: 'trial',
+      type: 'factor', id: 'prefixSemantics', factor: 'paired', components: 'trial',
     };
-    const parsed = await parseStudyConfig(JSON.stringify(config));
-    expect(parsed.errors).toEqual([]);
-    generateSequenceArray(parsed).forEach((sequence) => expect(getSequenceFlatMap(sequence)).toHaveLength(4));
+    const random = vi.spyOn(Math, 'random').mockReturnValue(0);
+    try {
+      const parsed = await parseStudyConfig(JSON.stringify(config));
+      if (leftSlice !== rightSlice) {
+        expect(parsed.errors.some((error) => error.message.includes('unsupported shared-draw zip'))).toBe(true);
+        return;
+      }
+      expect(parsed.errors).toEqual([]);
+      generateSequenceArray(parsed).forEach((sequence) => {
+        const rows = getSequenceFlatMap(sequence).filter((id) => id !== 'end').map((id) => parsed.components[id].parameters);
+        expect(rows).toHaveLength(assigned ? Number(sequence.parameters?.stimulus === sequence.parameters?.probe) : 4);
+        rows.forEach((row) => expect(row?.stimulus).toEqual(row?.probe));
+      });
+    } finally { random.mockRestore(); }
   });
 
   test.each((['fixed', 'latinSquare'] as const).flatMap((order) => [1, 2].map((numSamples) => ({ order, numSamples }))))('compares actual ordered prefix lengths ($order, numSamples=$numSamples)', async ({ order, numSamples }) => {
