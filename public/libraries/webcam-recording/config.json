@@ -1,5 +1,5 @@
 {
-  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/dev/src/parser/LibraryConfigSchema.json",
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v3.0.0/src/parser/LibraryConfigSchema.json",
   "description": "This library requests webcam and optional microphone permission, then keeps those capture streams active until the end of the study.",
   "components": {
     "webcamRecordingPermission": {
