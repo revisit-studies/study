@@ -670,15 +670,19 @@ function getFactorDrawIdentity(
 
 // Shared zip inputs may only concatenate/repeat the same draws or use
 // single-input wrappers. More involved layouts need constraint-aware generation.
-function isLinearFactorInput(source: FactorOption, factors: Record<string, Factor>, stack: string[] = []): boolean {
+function isLinearFactorInput(source: FactorOption, factors: Record<string, Factor>, stack: string[] = [], nested = false): boolean {
   const named = typeof source === 'string' ? source : undefined;
   if (named && stack.includes(named)) return false;
   const factor = named ? factors[named] : source as Exclude<FactorOption, string>;
   if (!factor) return false;
-  if (Array.isArray(factor) || isOrderedFactorValues(factor) || factor.action === 'sample') return true;
+  if (Array.isArray(factor)) return true;
+  // A nested slice can lose its prefix under assignment filtering, shifting
+  // later shared rows even when both inputs have identical definitions.
+  if (isOrderedFactorValues(factor)) return !nested || factor.numSamples === undefined || factor.numSamples >= factor.values.length;
+  if (factor.action === 'sample') return true;
   if (factor.action === 'keep' || factor.action === 'remove') return false;
   if ((factor.action === 'cross' || factor.action === 'zip') && factor.factors.length !== 1) return false;
-  return factor.factors.every((input) => isLinearFactorInput(input, factors, named ? [...stack, named] : stack));
+  return factor.factors.every((input) => isLinearFactorInput(input, factors, named ? [...stack, named] : stack, true));
 }
 
 function getFactorSources(factor: FactorExpression, includeSelectors = false): FactorOption[] {

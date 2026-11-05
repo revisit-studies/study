@@ -83,6 +83,29 @@ describe('factor sequence actions', () => {
     expect(parsed.errors.some((error) => error.message.includes('unsupported shared-draw zip'))).toBe(true);
   });
 
+  test.each([false, true])('rejects matching sliced prefixes before shared zip generation (assigned=%s)', async (assigned) => {
+    const config = factorConfig();
+    const prefix = { values: [{ chart: 'intro' }, { chart: 'unused' }], order: 'fixed' as const, numSamples: 1 };
+    config.factors = {
+      chart: ['bar', 'line', 'pie'],
+      p: {
+        action: 'sample', factors: ['chart'], numSamples: 3, samplingStrategy: 'withoutReplacement',
+      },
+      c: prefix,
+      d: prefix,
+      paired: { action: 'zip', factors: [{ action: 'concat', factors: ['c', 'p'] }, { action: 'concat', factors: ['d', 'p'] }], as: ['stimulus', 'probe'] },
+      arm: [{ probe: 'line' }],
+    };
+    if (assigned) config.betweenSubjects = ['arm'];
+    config.baseComponents!.trial = { type: 'questionnaire', response: [] };
+    config.sequence = {
+      type: 'factor', id: 'slicedPrefix', factor: 'paired', components: 'trial',
+    };
+    const parsed = await parseStudyConfig(JSON.stringify(config));
+    expect(parsed.errors.some((error) => error.category === 'invalid-config')).toBe(false);
+    expect(parsed.errors.some((error) => error.message.includes('unsupported shared-draw zip'))).toBe(true);
+  });
+
   test.each([false, true].flatMap((leftSlice) => [false, true].flatMap((rightSlice) => (
     [false, true].map((assigned) => ({ leftSlice, rightSlice, assigned }))
   ))))('checks array versus sliced prefix semantics (leftSlice=$leftSlice, rightSlice=$rightSlice, assigned=$assigned)', async ({ leftSlice, rightSlice, assigned }) => {
@@ -108,7 +131,7 @@ describe('factor sequence actions', () => {
     const random = vi.spyOn(Math, 'random').mockReturnValue(0);
     try {
       const parsed = await parseStudyConfig(JSON.stringify(config));
-      if (leftSlice !== rightSlice) {
+      if (leftSlice || rightSlice) {
         expect(parsed.errors.some((error) => error.message.includes('unsupported shared-draw zip'))).toBe(true);
         return;
       }
