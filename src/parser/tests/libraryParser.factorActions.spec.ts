@@ -41,6 +41,98 @@ function factorConfig(): StudyConfig {
 }
 
 describe('factor sequence actions', () => {
+  test.each((['prefix', 'partialOverlap'] as const).flatMap((kind) => (
+    [false, true].map((unknownCount) => ({ kind, unknownCount }))
+  )))('preserves shared full draws across $kind streams (unknownCount=$unknownCount)', async ({ kind, unknownCount }) => {
+    const config = factorConfig();
+    config.factors = {
+      a: [1, 2],
+      one: [{ a: 1 }],
+      two: [{ a: 2 }],
+      three: [{ a: 3 }],
+      p: unknownCount ? {
+        action: 'remove',
+        condition: { a: 3 },
+        factor: {
+          action: 'concat',
+          factors: ['one', {
+            action: 'sample', factors: ['two'], numSamples: 3, samplingStrategy: 'withReplacement',
+          }, 'three'],
+        },
+      } : {
+        action: 'sample', factors: ['a'], numSamples: 2, samplingStrategy: 'withoutReplacement',
+      },
+      q: {
+        action: 'sample', factors: ['a'], numSamples: 2, samplingStrategy: 'withoutReplacement',
+      },
+      left: { action: 'repeat', factors: ['p'], numRepeats: 2 },
+      right: { action: 'concat', factors: kind === 'prefix' ? ['p'] : ['p', 'q'] },
+      selected: { action: 'zip', factors: ['left', 'right'], as: ['x', 'y'] },
+      assignment: [{ x: 1, y: 2 }],
+    };
+    config.betweenSubjects = ['assignment'];
+    config.baseComponents!.trial = { type: 'questionnaire', response: [] };
+    config.sequence = {
+      type: 'factor', id: 'prefixOwnership', factor: 'selected', components: 'trial',
+    };
+    const random = vi.spyOn(Math, 'random').mockReturnValue(0);
+    try {
+      const errors: ParserErrorWarning[] = [];
+      const expected = resolveOrderedFactorConditions('selected', config.factors, createFactorOrderContext(0), errors).filter((row) => row.x === 1 && row.y === 2);
+      expect(errors).toEqual([]);
+      if (kind === 'prefix') expect(expected).toEqual([]);
+      const parsed = await parseStudyConfig(JSON.stringify(config));
+      expect(parsed.errors).toEqual([]);
+      generateSequenceArray(parsed).forEach((sequence) => {
+        const rows = getSequenceFlatMap(sequence).filter((id) => id !== 'end').map((id) => parsed.components[id].parameters);
+        expect(rows).toEqual(expected);
+      });
+    } finally { random.mockRestore(); }
+  });
+
+  test('compiles only surviving templates for a shared prefix removal', async () => {
+    const config = factorConfig();
+    config.factors = {
+      a: [1, 2],
+      p: {
+        action: 'sample', factors: ['a'], numSamples: 2, samplingStrategy: 'withoutReplacement',
+      },
+      source: { action: 'cross', factors: ['a', 'a'], as: ['x', 'y'] },
+      selected: {
+        action: 'remove',
+        factor: 'source',
+        items: { action: 'zip', factors: [{ action: 'repeat', factors: ['p'], numRepeats: 2 }, 'p'], as: ['x', 'y'] },
+      },
+    };
+    config.baseComponents = {
+      trial12: { type: 'questionnaire', response: [] }, trial21: { type: 'questionnaire', response: [] },
+    };
+    config.sequence = {
+      type: 'factor', id: 'prefixRemoval', factor: 'selected', components: 'trial{{x}}{{y}}',
+    };
+    const parsed = await parseStudyConfig(JSON.stringify(config));
+    expect(parsed.errors).toEqual([]);
+    generateSequenceArray(parsed).forEach((sequence) => {
+      const rows = getSequenceFlatMap(sequence).filter((id) => id !== 'end').map((id) => parsed.components[id].parameters);
+      expect(rows).toEqual([{ x: 1, y: 2 }, { x: 2, y: 1 }]);
+    });
+  });
+
+  test.each(['partial', 'independent'] as const)('retains %s sampling eligibility through unequal streams', (kind) => {
+    const draw: Exclude<FactorOption, string> = {
+      action: 'sample', factors: ['a'], numSamples: kind === 'partial' ? 1 : 2, samplingStrategy: 'withoutReplacement',
+    };
+    const factors: NonNullable<StudyConfig['factors']> = {
+      a: [1, 2],
+      p: draw,
+      q: draw,
+      selected: { action: 'zip', factors: [{ action: 'repeat', factors: ['p'], numRepeats: 2 }, kind === 'partial' ? 'p' : 'q'], as: ['x', 'y'] },
+    };
+    const errors: ParserErrorWarning[] = [];
+    expect(resolveOrderedFactorConditions('selected', factors, createFactorOrderContext(0), errors, 'selected', { x: 1, y: 2 })).toEqual([{ x: 1, y: 2 }]);
+    expect(errors).toEqual([]);
+  });
+
   test.each(['cross', 'zip'] as const)('preserves shared pairing across equivalent %s groupings', async (action) => {
     const config = factorConfig();
     config.factors = {

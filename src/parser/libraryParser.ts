@@ -650,6 +650,33 @@ function getFactorDrawIdentity(
   };
 }
 
+function getZipDrawRelationship(identities: (FactorDrawIdentity | undefined)[]) {
+  const draws = identities.filter((identity): identity is FactorDrawIdentity => identity !== undefined);
+  if (draws.length < 2 || draws.length !== identities.length) {
+    return { sharedPrefix: false, sharedOwner: false };
+  }
+  const streams = draws.map((identity) => (
+    typeof identity !== 'string' && identity.action === 'concat'
+      ? identity.inputs : [identity]
+  ));
+  const prefixLength = Math.min(...streams.map((stream) => stream.length));
+  const sharedPrefix = prefixLength > 0 && streams.every((stream) => (
+    stream.slice(0, prefixLength).every((identity, index) => isEqual(identity, streams[0][index]))
+  ));
+  const owners = (identity: FactorDrawIdentity): string[] => (
+    typeof identity !== 'string' && 'inputs' in identity
+      ? identity.inputs.flatMap(owners) : [JSON.stringify(identity)]
+  );
+  const seen = new Set<string>();
+  let sharedOwner = false;
+  draws.forEach((identity) => {
+    const inputOwners = new Set(owners(identity));
+    inputOwners.forEach((owner) => { sharedOwner ||= seen.has(owner); });
+    inputOwners.forEach((owner) => seen.add(owner));
+  });
+  return { sharedPrefix, sharedOwner };
+}
+
 function getFactorPublicNames(
   source: FactorOption,
   factors: Record<string, Factor>,
@@ -914,17 +941,13 @@ function resolveFactor(
   }
 
   const aliasNames = (factor.action === 'cross' || factor.action === 'zip') ? factor.as : undefined;
-  const zipIdentities = action === 'zip' ? inputs.map((input) => {
-    const identity = getFactorDrawIdentity(input, factors);
-    return identity === undefined ? undefined : JSON.stringify(identity);
-  }) : [];
-  const sharedDrawZip = inputs.length > 1 && zipIdentities[0] !== undefined
-    && zipIdentities.every((identity) => identity === zipIdentities[0]);
+  const zipDraws = getZipDrawRelationship(action === 'zip'
+    ? inputs.map((input) => getFactorDrawIdentity(input, factors)) : []);
   const assignment = assignmentParameters && Object.keys(assignmentParameters).length > 0
     ? getRelevantFactorAssignment(assignmentParameters, getFactorPublicNames(factorSource, factors)) : undefined;
   const constrained = assignment !== undefined || eligibleConditions !== undefined;
   let inputDefinitions: FactorResolution[] | undefined;
-  if (aliasNames !== undefined || constrained || sharedDrawZip) {
+  if (aliasNames !== undefined || constrained || zipDraws.sharedOwner) {
     inputDefinitions = inputs.map((input, index) => getFactorDefinition(
       input,
       factors,
@@ -938,11 +961,14 @@ function resolveFactor(
   if (aliasNames !== undefined && !validateFactorAliases(inputDefinitions!, aliasNames, factorName, errors)) {
     return { conditions: [] };
   }
-  // Shared ordering survives transparent wrappers. Fixed membership is enough
-  // to pair full draws even when duplicate multiplicities make the count unknown.
+  // A zip consumes the shared prefix even if one stream repeats it further.
+  // Partially overlapping full streams also need to reuse their complete draws
+  // before filtering; otherwise the same cached draw acquires conflicting pools.
+  const sharedFullDraws = zipDraws.sharedOwner
+    && inputDefinitions!.every((resolution) => !resolution.hasVariableMembership);
   const correlatedZip = action === 'zip' && (inputs.length === 1
-    || (sharedDrawZip && inputDefinitions!.every((resolution) => !resolution.hasVariableMembership)));
-  const tuples = constrained && (!correlatedZip || inputs.length === 1)
+    || (zipDraws.sharedPrefix && sharedFullDraws));
+  const tuples = constrained && !sharedFullDraws
     ? getEligibleInputTuples(inputDefinitions!, action, aliasNames, assignment, eligibleConditions, errors)
     : undefined;
   const resolveInput = (index: number, eligible?: MaterializedFactorCondition[]) => resolveFactor(
