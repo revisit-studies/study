@@ -1,0 +1,245 @@
+{
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/dev/src/parser/StudyConfigSchema.json",
+  "studyMetadata": {
+    "title": "Global Store: Budget and Previous",
+    "version": "pilot",
+    "authors": [
+      "The reVISit Team"
+    ],
+    "date": "2026-10-22",
+    "description": "Regression study for config-declared participant global stores.",
+    "organizations": [
+      "The reVISit Team"
+    ]
+  },
+  "uiConfig": {
+    "contactEmail": "contact@revisit.dev",
+    "withSidebar": true,
+    "withProgressBar": true,
+    "nextOnEnter": true,
+    "autoDownloadStudy": false,
+    "studyEndMsg": "Global store study complete.",
+    "logoPath": "revisitAssets/revisitLogoSquare.svg",
+    "helpTextPath": ""
+  },
+  "globalVariables": {
+    "budget": {
+      "initialValue": 100,
+      "min": 0
+    },
+    "label": {
+      "initialValue": ""
+    },
+    "eligible": {
+      "initialValue": true
+    }
+  },
+  "components": {
+    "introduction": {
+      "type": "questionnaire",
+      "instruction": "# Global store budget study\n\nEntry budget: {{globalVariables.budget}}",
+      "instructionLocation": "aboveStimulus",
+      "previousButton": true,
+      "response": []
+    },
+    "purchase": {
+      "type": "questionnaire",
+      "instruction": "# Form purchases\n\nEntry budget: {{globalVariables.budget}}",
+      "instructionLocation": "aboveStimulus",
+      "previousButton": true,
+      "response": [
+        {
+          "id": "aboveCost",
+          "type": "numerical",
+          "prompt": "Above cost",
+          "location": "aboveStimulus",
+          "min": 0,
+          "max": "{{globalVariables.budget}}",
+          "onSubmit": [
+            {
+              "variable": "budget",
+              "operation": "subtract"
+            }
+          ]
+        },
+        {
+          "id": "belowCost",
+          "type": "numerical",
+          "prompt": "Below cost",
+          "location": "belowStimulus",
+          "min": 0,
+          "max": "{{globalVariables.budget}}",
+          "onSubmit": [
+            {
+              "variable": "budget",
+              "operation": "subtract"
+            }
+          ]
+        },
+        {
+          "id": "sidebarCost",
+          "type": "numerical",
+          "prompt": "Sidebar cost",
+          "location": "sidebar",
+          "min": 0,
+          "max": "{{globalVariables.budget}}",
+          "onSubmit": [
+            {
+              "variable": "budget",
+              "operation": "subtract"
+            }
+          ]
+        }
+      ]
+    },
+    "reactPurchase": {
+      "type": "react-component",
+      "instruction": "# React purchase\n\nEntry budget: {{globalVariables.budget}}",
+      "instructionLocation": "aboveStimulus",
+      "previousButton": true,
+      "response": [
+        {
+          "id": "confidence",
+          "type": "numerical",
+          "prompt": "Confidence",
+          "min": 0,
+          "max": 100
+        }
+      ],
+      "path": "test-global-store/assets/Purchase.tsx"
+    },
+    "htmlPurchase": {
+      "type": "website",
+      "instruction": "# HTML purchase\n\nEntry budget: {{globalVariables.budget}}",
+      "instructionLocation": "aboveStimulus",
+      "previousButton": true,
+      "response": [],
+      "path": "test-global-store/assets/purchase.html"
+    },
+    "htmlTemplatedPurchase": {
+      "type": "website",
+      "instruction": "# Templated HTML purchase\n\nEntry budget: {{globalVariables.budget}}",
+      "instructionLocation": "aboveStimulus",
+      "previousButton": true,
+      "response": [],
+      "path": "test-global-store/assets/purchase.html",
+      "templated": true
+    },
+    "dynamicPurchase": {
+      "type": "questionnaire",
+      "instruction": "# Dynamic purchase {{iteration}}\n\nEntry budget: {{globalVariables.budget}}",
+      "instructionLocation": "aboveStimulus",
+      "previousButton": true,
+      "response": [
+        {
+          "id": "dynamicCost",
+          "type": "numerical",
+          "prompt": "Dynamic cost",
+          "location": "belowStimulus",
+          "min": 0,
+          "max": "{{globalVariables.budget}}",
+          "onSubmit": [
+            {
+              "variable": "budget",
+              "operation": "subtract"
+            }
+          ]
+        }
+      ]
+    },
+    "branchDecision": {
+      "type": "questionnaire",
+      "instruction": "# Budget decision\n\nEntry budget: {{globalVariables.budget}}",
+      "instructionLocation": "aboveStimulus",
+      "previousButton": true,
+      "response": []
+    },
+    "funded": {
+      "type": "questionnaire",
+      "instruction": "# Funded branch\n\nEntry budget: {{globalVariables.budget}}",
+      "instructionLocation": "aboveStimulus",
+      "previousButton": true,
+      "response": [
+        {
+          "id": "eligibleReason",
+          "type": "shortText",
+          "prompt": "Eligible participant note",
+          "required": false,
+          "visibleIf": {
+            "globalVariable": "eligible",
+            "comparison": "equals",
+            "value": true
+          }
+        }
+      ]
+    },
+    "lowBudget": {
+      "type": "questionnaire",
+      "instruction": "# Low budget branch\n\nEntry budget: {{globalVariables.budget}}",
+      "instructionLocation": "aboveStimulus",
+      "previousButton": true,
+      "response": []
+    },
+    "review": {
+      "type": "questionnaire",
+      "instruction": "# Review budget\n\nEntry budget: {{globalVariables.budget}}",
+      "instructionLocation": "aboveStimulus",
+      "previousButton": true,
+      "response": [
+        {
+          "id": "summary",
+          "type": "textOnly",
+          "prompt": "Final budget: {{globalVariables.budget}}"
+        }
+      ]
+    }
+  },
+  "sequence": {
+    "order": "fixed",
+    "components": [
+      "introduction",
+      "purchase",
+      "reactPurchase",
+      "htmlPurchase",
+      "htmlTemplatedPurchase",
+      "purchase",
+      {
+        "id": "dynamicPurchases",
+        "order": "dynamic",
+        "functionPath": "test-global-store/assets/dynamic.tsx"
+      },
+      {
+        "order": "fixed",
+        "components": [
+          "branchDecision"
+        ],
+        "skip": [
+          {
+            "check": "globalVariable",
+            "variable": "budget",
+            "comparison": "lessThan",
+            "value": 20,
+            "to": "lowBudget"
+          }
+        ]
+      },
+      {
+        "order": "fixed",
+        "components": [
+          "funded"
+        ],
+        "skip": [
+          {
+            "check": "globalVariable",
+            "variable": "budget",
+            "comparison": "greaterThanOrEqual",
+            "value": 0,
+            "to": "review"
+          }
+        ]
+      },
+      "lowBudget",
+      "review"
+    ]
+  }
+}
