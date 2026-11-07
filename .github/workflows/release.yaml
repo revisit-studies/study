@@ -45,17 +45,19 @@ jobs:
           client-payload: '{"release_tag": "${{ env.RELEASE_TAG }}"}'
 
       - uses: peter-evans/repository-dispatch@v4
-        name: Build documentation in revisit.dev if repo is in revisit-studies
+        name: Publish revisitpy for the study release
         if: ${{ github.repository_owner == 'revisit-studies' }}
         with:
           token: ${{ secrets.PAT }}
           repository: revisit-studies/revisitpy
           event-type: study_repo_publish
+          client-payload: '{"release_tag": "${{ env.RELEASE_TAG }}"}'
 
       - uses: peter-evans/repository-dispatch@v4
-        name: Build documentation in revisit.dev if repo is in revisit-studies
+        name: Publish revisitpy-server for the study release
         if: ${{ github.repository_owner == 'revisit-studies' }}
         with:
           token: ${{ secrets.PAT }}
           repository: revisit-studies/revisitpy-server
           event-type: study_repo_publish
+          client-payload: '{"release_tag": "${{ env.RELEASE_TAG }}"}'
