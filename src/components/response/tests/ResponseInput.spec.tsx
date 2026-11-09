@@ -1,5 +1,5 @@
 import {
-  CSSProperties, forwardRef, ReactNode,
+  CSSProperties, forwardRef, MouseEvent as ReactMouseEvent, ReactNode,
 } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import {
@@ -71,17 +71,52 @@ vi.mock('@mantine/core', () => {
     ({ children }: { children?: ReactNode }) => <ul>{children}</ul>,
     { Item: ({ children }: { children?: ReactNode }) => <li>{children}</li> },
   );
-  function RadioGroup({ children, label, description }: { children?: ReactNode; label?: ReactNode; description?: ReactNode }) {
+  let radioGroupOnChange: ((value: string) => void) | undefined;
+  let radioGroupValue: string | undefined;
+  function RadioGroup({
+    children, label, description, onChange, value,
+  }: {
+    children?: ReactNode;
+    label?: ReactNode;
+    description?: ReactNode;
+    onChange?: (value: string) => void;
+    value?: string;
+  }) {
+    radioGroupOnChange = onChange;
+    radioGroupValue = value;
     return (
-      <div>
+      <div role="radiogroup" data-group-value={value}>
         {label}
         {description}
         {children}
       </div>
     );
   }
-  const RadioCard = forwardRef<HTMLButtonElement, { children?: ReactNode; value?: string }>(
-    ({ children, value }, ref) => <button ref={ref} type="button" role="radio" data-value={value}>{children}</button>,
+  type RadioCardProps = {
+    children?: ReactNode;
+    value?: string;
+    disabled?: boolean;
+    onClick?: (event: ReactMouseEvent<HTMLButtonElement>) => void;
+  };
+  const RadioCard = forwardRef<HTMLButtonElement, RadioCardProps>(
+    ({
+      children, value, disabled, onClick,
+    }, ref) => (
+      <button
+        ref={ref}
+        type="button"
+        role="radio"
+        data-value={value}
+        aria-checked={radioGroupValue === value}
+        disabled={disabled}
+        onClick={(event) => {
+          onClick?.(event);
+          radioGroupOnChange?.(value ?? '');
+        }}
+      >
+        {children}
+      </button>
+    ),
   );
   RadioCard.displayName = 'RadioCard';
   const Radio = Object.assign(
@@ -778,10 +813,12 @@ describe('ButtonsInput', () => {
     expect(onChange).not.toHaveBeenCalled();
   });
 
-  test('mapped key works when a rendered response card has focus', () => {
+  test('mapped key selects a button configured for auto-advance', () => {
     const onChange = vi.fn();
     const response = {
       ...base,
+      autoAdvanceToNextStep: true,
+      autoAdvanceDelay: 300,
       options: [
         { label: 'Yes', value: 'yes', key: 'Enter' },
         { label: 'No', value: 'no', key: 'n' },
@@ -818,6 +855,140 @@ describe('ButtonsInput', () => {
 
     fireEvent.click(getByRole('button', { name: 'Clear selection' }));
     expect(onChange).toHaveBeenCalledWith('', 'click');
+  });
+
+  test('locks a selected button against mapped keys and clearing when response changes are disabled', () => {
+    const onChange = vi.fn();
+    const response = {
+      ...base,
+      allowResponseChange: false,
+      options: [
+        { label: 'Yes', value: 'yes', key: 'y' },
+        { label: 'No', value: 'no', key: 'n' },
+      ],
+    } as ButtonsResponse;
+    const { getByRole } = render(
+      <ButtonsInput
+        response={response}
+        disabled={false}
+        answer={{ value: '', onChange }}
+        previousAnswer={{ q1: 'yes' }}
+        responseLocked
+        index={1}
+        enumerateQuestions={false}
+      />,
+    );
+
+    fireEvent.keyDown(document.body, { key: 'n', bubbles: true });
+    fireEvent.click(getByRole('button', { name: 'Clear selection' }));
+
+    expect(onChange).not.toHaveBeenCalled();
+    expect((getByRole('button', { name: 'Clear selection' }) as HTMLButtonElement).disabled).toBe(true);
+  });
+
+  test('does not lock a configured default before the participant selects an option', () => {
+    const response = {
+      ...base,
+      allowResponseChange: false,
+      default: 'yes',
+      options: [
+        { label: 'Yes', value: 'yes', key: 'y' },
+        { label: 'No', value: 'no', key: 'n' },
+      ],
+    } as ButtonsResponse;
+    const { getByRole } = render(
+      <ButtonsInput
+        response={response}
+        disabled={false}
+        answer={{ value: '', onChange: vi.fn() }}
+        previousAnswer={{ q1: 'yes' }}
+        index={1}
+        enumerateQuestions={false}
+      />,
+    );
+
+    expect((getByRole('radio', { name: /Yes/ }) as HTMLButtonElement).disabled).toBe(false);
+    expect((getByRole('radio', { name: /No/ }) as HTMLButtonElement).disabled).toBe(false);
+  });
+
+  test('does not restore a stale previous answer after the response is unlocked', () => {
+    const onChange = vi.fn();
+    const response = {
+      ...base,
+      allowResponseChange: false,
+      options: [
+        { label: 'Yes', value: 'yes' },
+        { label: 'No', value: 'no' },
+      ],
+    } as ButtonsResponse;
+    const { getByRole, rerender } = render(
+      <ButtonsInput
+        response={response}
+        disabled={false}
+        answer={{ value: '', onChange }}
+        previousAnswer={{ q1: 'yes' }}
+        responseLocked={false}
+        index={1}
+        enumerateQuestions={false}
+      />,
+    );
+
+    expect(getByRole('radiogroup').getAttribute('data-group-value')).toBe('');
+    expect((getByRole('radio', { name: /Yes/ }) as HTMLElement).getAttribute('aria-checked')).toBe('false');
+
+    rerender(
+      <ButtonsInput
+        response={response}
+        disabled={false}
+        answer={{ value: 'yes', onChange }}
+        previousAnswer={{ q1: 'yes' }}
+        responseLocked={false}
+        index={1}
+        enumerateQuestions={false}
+      />,
+    );
+    fireEvent.click(getByRole('button', { name: 'Clear selection' }));
+    expect(onChange).toHaveBeenCalledWith('', 'click');
+
+    rerender(
+      <ButtonsInput
+        response={response}
+        disabled={false}
+        answer={{ value: '', onChange }}
+        previousAnswer={{ q1: 'yes' }}
+        responseLocked={false}
+        index={1}
+        enumerateQuestions={false}
+      />,
+    );
+    expect(getByRole('radiogroup').getAttribute('data-group-value')).toBe('');
+    expect((getByRole('radio', { name: /Yes/ }) as HTMLElement).getAttribute('aria-checked')).toBe('false');
+  });
+
+  test('reselecting an auto-advance card reports one selection change', () => {
+    const onChange = vi.fn();
+    const response = {
+      ...base,
+      autoAdvanceToNextStep: true,
+      options: [
+        { label: 'Yes', value: 'yes' },
+        { label: 'No', value: 'no' },
+      ],
+    } as ButtonsResponse;
+    const { getByRole } = render(
+      <ButtonsInput
+        response={response}
+        disabled={false}
+        answer={{ value: 'yes', onChange }}
+        index={1}
+        enumerateQuestions={false}
+      />,
+    );
+
+    fireEvent.click(getByRole('radio', { name: 'Yes' }));
+
+    expect(onChange).toHaveBeenCalledTimes(1);
+    expect(onChange).toHaveBeenCalledWith('yes', 'click');
   });
 
   test('mapped Enter does not also trigger NextButton', () => {

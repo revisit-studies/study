@@ -2,7 +2,7 @@ import {
   afterEach, describe, expect, test, vi,
 } from 'vitest';
 import { readFileSync } from 'node:fs';
-import { ComponentBlock, StudyConfig } from '../types';
+import { ComponentBlock, IndividualComponent, StudyConfig } from '../types';
 import { parseGlobalConfig, parseStudyConfig } from '../parser';
 import { materializeParticipantConfig } from '../libraryParser';
 import { isDynamicBlock, isFactorBlock } from '../utils';
@@ -147,6 +147,54 @@ describe('Study and iframe color mode config parsing', () => {
 
     expect(result.errors).toEqual([]);
     expect(result.uiConfig).not.toHaveProperty('colorMode');
+  });
+
+  test('warns only when button auto-advance is enabled with multiple answerable questions', async () => {
+    const config = JSON.parse(JSON.stringify(makeStudyConfig())) as StudyConfig;
+    config.components.question.response = [
+      {
+        id: 'choice', prompt: 'Choose', type: 'buttons', options: ['A', 'B'], autoAdvanceToNextStep: true,
+      },
+      { id: 'text', prompt: 'Explain', type: 'shortText' },
+    ];
+
+    const result = await parseStudyConfig(JSON.stringify(config));
+    expect(result.warnings).toContainEqual(expect.objectContaining({
+      category: 'response-validation',
+      instancePath: '/components/question/response',
+      message: expect.stringContaining('multiple answerable questions'),
+    }));
+
+    config.components.question.response = config.components.question.response.slice(0, 1);
+    const singleResponseResult = await parseStudyConfig(JSON.stringify(config));
+    expect(singleResponseResult.warnings.some((warning) => warning.category === 'response-validation')).toBe(false);
+  });
+
+  test('test-keymapping includes a one-attempt auto-advancing math quiz', async () => {
+    const config = readFileSync('public/test-keymapping/config.json', 'utf8');
+    const result = await parseStudyConfig(config);
+
+    expect(result.errors).toEqual([]);
+    expect(result.warnings).toContainEqual(expect.objectContaining({
+      category: 'response-validation',
+      instancePath: '/components/auto-advance-required-validation/response',
+    }));
+    expect(result.components['auto-advance-math-quiz'] as IndividualComponent).toMatchObject({
+      trainingAttempts: 1,
+      allowFailedTraining: true,
+      provideFeedback: true,
+      response: [{
+        type: 'buttons',
+        autoAdvanceToNextStep: true,
+        autoAdvanceDelay: 300,
+        allowResponseChange: false,
+      }],
+      correctAnswer: [{
+        id: 'math-response',
+        answer: '56',
+        feedback: { incorrectText: 'you should have learned that in school' },
+      }],
+    });
   });
 
   test.each(['user', 'auto', 'userPreference ', null, true])('rejects invalid color mode %s', async (colorMode) => {

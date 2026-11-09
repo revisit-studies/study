@@ -530,6 +530,17 @@ function verifyStudyConfig(studyConfig: StudyConfig, importedLibrariesData: Reco
   });
   Object.entries(studyConfig.components).forEach(([componentName, component]) => {
     const mergedComponent = studyComponentToIndividualComponent(component, studyConfig);
+    const componentResponses = mergedComponent.response ?? [];
+    const autoAdvancingButtons = componentResponses.some((response) => response.type === 'buttons' && response.autoAdvanceToNextStep);
+    const answerableResponses = componentResponses.filter((response) => response.type !== 'textOnly' && response.type !== 'divider' && !response.hidden);
+    if (autoAdvancingButtons && answerableResponses.length > 1) {
+      warnings.push({
+        message: 'Button auto-advance is enabled on a component with multiple answerable questions.',
+        instancePath: `/components/${componentName}/response`,
+        params: { action: 'Use button auto-advance only when the component has one answerable question' },
+        category: 'response-validation',
+      });
+    }
     verifyCorrectAnswers(`/components/${componentName}`, mergedComponent, errors);
     verifyTextResponseConstraints(`/components/${componentName}`, mergedComponent, errors, warnings);
     verifyDateTimeResponseConstraints(`/components/${componentName}`, mergedComponent, errors);

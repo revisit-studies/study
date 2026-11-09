@@ -65,7 +65,7 @@ beforeEach(async () => {
     }));
   });
 });
-afterEach(() => { cleanup(); vi.restoreAllMocks(); });
+afterEach(() => { cleanup(); vi.useRealTimers(); vi.restoreAllMocks(); });
 function mount() {
   return renderHook(() => useNextStep(), { wrapper: ({ children }: { children: ReactNode }) => <StudyStoreContext.Provider value={mocks.context}>{children}</StudyStoreContext.Provider> });
 }
@@ -81,6 +81,34 @@ test('publishes a durable save after browser navigation and suppresses only the 
   await act(async () => { finish(); await pending; });
   expect(mocks.context.store.getState()).toMatchObject({ globalStoreRevision: 1, globalVariables: { budget: 90 }, globalStoreSubmitting: false });
   expect(mocks.navigate).not.toHaveBeenCalled();
+});
+
+test('keeps auto submission retryable when stimulus validation changes during the updater', async () => {
+  let finishUpdater!: (patch: Record<string, never>) => void;
+  mocks.context.globalStoreUpdaters.set('purchase_0', () => new Promise((resolve) => { finishUpdater = resolve; }));
+  const { store, actions } = mocks.context;
+  const hook = mount();
+  let pending!: Promise<void>;
+  act(() => { pending = hook.result.current.goToNextStep(true, true); });
+  await vi.waitFor(() => expect(finishUpdater).toBeTypeOf('function'));
+
+  store.dispatch(actions.updateResponseBlockValidation({
+    identifier: 'purchase_0', location: 'stimulus', status: false, values: {},
+  }));
+  await act(async () => { finishUpdater({}); await pending; });
+
+  expect(store.getState().globalStoreSubmitting).toBe(false);
+  expect(store.getState().globalStoreError).toContain('response changed');
+  expect(mocks.navigate).not.toHaveBeenCalled();
+  expect(mocks.save).not.toHaveBeenCalled();
+
+  store.dispatch(actions.updateResponseBlockValidation({
+    identifier: 'purchase_0', location: 'stimulus', status: true, values: {},
+  }));
+  mocks.context.globalStoreUpdaters.set('purchase_0', () => ({}));
+  await act(async () => { await hook.result.current.goToNextStep(true, true); });
+  expect(mocks.save).toHaveBeenCalledTimes(1);
+  expect(mocks.navigate).toHaveBeenCalledTimes(1);
 });
 
 test.each(['updater', 'answers', 'revision', 'participant', 'completed', 'asset'] as const)('rejects a prepared earlier edit when %s changes during confirmation', async (change) => {
@@ -121,6 +149,26 @@ test('normal advancement keeps the lock until the destination trial mounts', asy
   expect(mocks.context.store.getState().globalStoreRevision).toBe(1);
   expect(mocks.navigate).toHaveBeenCalledTimes(1);
   expect(mocks.context.store.getState().globalStoreSubmitting).toBe(true);
+});
+
+test('one-argument global-store submissions preserve Next time restrictions', async () => {
+  vi.useFakeTimers();
+  vi.setSystemTime(0);
+  const { store, actions } = mocks.context;
+  store.dispatch(actions.setConfig({
+    ...store.getState().config,
+    uiConfig: { ...store.getState().config.uiConfig, nextButtonEnableTime: 1000 },
+  }));
+  const hook = mount();
+
+  await act(async () => { await hook.result.current.goToNextStep(); });
+  expect(mocks.navigate).not.toHaveBeenCalled();
+  expect(mocks.save).not.toHaveBeenCalled();
+
+  vi.setSystemTime(1000);
+  await act(async () => { await hook.result.current.goToNextStep(); });
+  expect(mocks.navigate).toHaveBeenCalledTimes(1);
+  expect(mocks.save).toHaveBeenCalledTimes(1);
 });
 
 test.each([10, 30])('a revisit of cost %s saves the current recording and visit times', async (originalCost) => {

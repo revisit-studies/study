@@ -187,6 +187,8 @@ export async function studyStoreCreator(
     alertModal: initialAlertModal ?? { show: false, message: '', title: '' },
     trialValidation: Object.keys(answers).length > 0 ? allValid : emptyValidation,
     responseSubmitAttempted: {},
+    buttonAutoAdvancePending: {},
+    buttonSelectionIds: {},
     stimulusSubmitAttempted: {},
     checkAnswer: {},
     reactiveAnswers: {},
@@ -247,6 +249,8 @@ export async function studyStoreCreator(
           delete state.checkAnswer[id];
           delete state.responseSubmitAttempted[id];
           delete state.stimulusSubmitAttempted[id];
+          delete state.buttonAutoAdvancePending[id];
+          delete state.buttonSelectionIds[id];
           const validation = state.trialValidation[id];
           if (validation) {
             ['aboveStimulus', 'belowStimulus', 'sidebar', 'stimulus'].forEach((location) => {
@@ -370,6 +374,18 @@ export async function studyStoreCreator(
           delete state.matrixAnswers[id];
           delete state.rankingAnswers[id];
         });
+      },
+      setButtonAutoAdvancePending: (state, { payload }: PayloadAction<{ identifier: string; responseId: string; dueAt: number }>) => {
+        state.buttonAutoAdvancePending[payload.identifier] = { responseId: payload.responseId, dueAt: payload.dueAt };
+      },
+      clearButtonAutoAdvancePending: (state, { payload }: PayloadAction<string>) => {
+        delete state.buttonAutoAdvancePending[payload];
+      },
+      setButtonSelection: (state, { payload }: PayloadAction<{ identifier: string; responseId: string; selected: boolean }>) => {
+        const selectedIds = new Set(state.buttonSelectionIds[payload.identifier] ?? []);
+        if (payload.selected) selectedIds.add(payload.responseId);
+        else selectedIds.delete(payload.responseId);
+        state.buttonSelectionIds[payload.identifier] = [...selectedIds];
       },
       setMatrixAnswersRadio: (state, action: PayloadAction<{ questionKey: string, responseId: string, val: string } | null>) => {
         if (action.payload) {

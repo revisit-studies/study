@@ -7,7 +7,7 @@
       "The reVISit Team"
     ],
     "date": "2026-02-23",
-    "description": "A test of keymapping.",
+    "description": "Manual tests for button keymapping, auto-advance, previous navigation, validation, and feedback.",
     "organizations": [
       "University of Utah",
       "WPI"
@@ -23,6 +23,105 @@
     "studyEndMsg": "**Thank you for completing the study. You may click this link and return to Prolific**: [yourProlificLink](yourProlificLink)"
   },
   "components": {
+    "auto-advance-keymapper": {
+      "type": "questionnaire",
+      "instruction": "Press J or K. The selection locks, then advances after one second. Next remains visible here so you can continue after using Previous.",
+      "showNextButtonOnAutoAdvance": true,
+      "response": [
+        {
+          "id": "auto-key-response",
+          "type": "buttons",
+          "prompt": "Choose with a mapped key",
+          "options": [
+            { "label": "Left (J)", "value": "left", "key": "j" },
+            { "label": "Right (K)", "value": "right", "key": "k" }
+          ],
+          "autoAdvanceToNextStep": true,
+          "autoAdvanceDelay": 1000,
+          "allowResponseChange": false
+        }
+      ]
+    },
+    "auto-advance-change": {
+      "type": "questionnaire",
+      "previousButton": true,
+      "instruction": "Press A, B, or C. You can change your answer during the three-second delay; each change restarts it. To test a pending delay, select an option and immediately click Previous. Return with Next: your draft answer is retained and Next is available so you can continue.",
+      "response": [
+        {
+          "id": "change-response",
+          "type": "buttons",
+          "location": "aboveStimulus",
+          "prompt": "Change your answer before it advances",
+          "options": [
+            { "label": "A", "value": "a", "key": "a" },
+            { "label": "B", "value": "b", "key": "b" },
+            { "label": "C", "value": "c", "key": "c" }
+          ],
+          "autoAdvanceToNextStep": true,
+          "autoAdvanceDelay": 3000,
+          "allowResponseChange": true
+        }
+      ]
+    },
+    "auto-advance-required-validation": {
+      "type": "questionnaire",
+      "previousButton": true,
+      "instruction": "First choose with 1 or 2 and wait for the required-field error. Then enter text and choose the other button to retry. This deliberately triggers the multi-question configuration warning.",
+      "response": [
+        {
+          "id": "required-edge-choice",
+          "type": "buttons",
+          "prompt": "Choose with a mapped key",
+          "options": [
+            { "label": "First (1)", "value": "first", "key": "1" },
+            { "label": "Second (2)", "value": "second", "key": "2" }
+          ],
+          "autoAdvanceToNextStep": true,
+          "autoAdvanceDelay": 500,
+          "allowResponseChange": true
+        },
+        {
+          "id": "required-edge-text",
+          "type": "shortText",
+          "prompt": "Required before continuing",
+          "required": true
+        }
+      ]
+    },
+    "auto-advance-math-quiz": {
+      "type": "questionnaire",
+      "previousButton": true,
+      "provideFeedback": true,
+      "hideCheckAnswerButton": true,
+      "trainingAttempts": 1,
+      "allowFailedTraining": true,
+      "instruction": "Choose an answer with 1, 2, or 3. You get one attempt. Feedback is shown before the study advances.",
+      "response": [
+        {
+          "id": "math-response",
+          "type": "buttons",
+          "prompt": "What is 7 × 8?",
+          "options": [
+            { "label": "54", "value": "54", "key": "1" },
+            { "label": "56", "value": "56", "key": "2" },
+            { "label": "58", "value": "58", "key": "3" }
+          ],
+          "autoAdvanceToNextStep": true,
+          "autoAdvanceDelay": 300,
+          "allowResponseChange": false
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "math-response",
+          "answer": "56",
+          "feedback": {
+            "correctText": "Correct.",
+            "incorrectText": "you should have learned that in school"
+          }
+        }
+      ]
+    },
     "letter-mapper":{
       "response": [
         {
@@ -76,6 +175,10 @@
     "sequence": {
     "order": "fixed",
     "components": [
+      "auto-advance-keymapper",
+      "auto-advance-change",
+      "auto-advance-required-validation",
+      "auto-advance-math-quiz",
       "special-mapper",
       "letter-mapper"
     ]
