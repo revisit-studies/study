@@ -41,7 +41,7 @@ vi.mock('@mantine/core', () => {
     Flex: ({ children, onClick }: { children?: ReactNode; onClick?: () => void }) => <div onClick={onClick}>{children}</div>,
     Image: ({ alt }: { alt?: string }) => <img alt={alt} />,
     Space: () => null,
-    Title: ({ children }: { children?: ReactNode }) => <h1>{children}</h1>,
+    Title: ({ children, order }: { children?: ReactNode; order: 1 | 4 }) => (order === 1 ? <h1>{children}</h1> : <h4>{children}</h4>),
     Select: ({ value }: { value?: string }) => <select><option>{value}</option></select>,
     Button: ({ children }: { children?: ReactNode }) => <button type="button">{children}</button>,
     ActionIcon: ({ children, onClick, 'aria-label': label }: { children: ReactNode; onClick: () => void; 'aria-label': string }) => (
@@ -97,6 +97,17 @@ describe('AppHeader', () => {
     mockPathname = '/';
     const html = renderToStaticMarkup(<AppHeader studyIds={['my-study']} />);
     expect(html).toContain('ReVISit Studies');
+  });
+
+  test.each([
+    ['/', 1],
+    ['/settings', 0],
+    ['/analysis/stats/my-study', 0],
+  ])('uses the title as the page H1 only on the landing page (%s)', (pathname, h1Count) => {
+    mockPathname = pathname;
+    const { container } = render(<AppHeader studyIds={['my-study']} />);
+    expect(container.querySelectorAll('h1')).toHaveLength(h1Count);
+    expect(container.querySelectorAll('h4')).toHaveLength(1 - h1Count);
   });
 
   test('renders the logo image', () => {
