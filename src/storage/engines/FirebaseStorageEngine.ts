@@ -40,6 +40,8 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
 
   private readonly serverClockId = uuidv4();
 
+  private serverClockRead: Promise<{ serverNow: number; requestedAt: number }> | undefined;
+
   private assignmentReference(participantId: string) {
     return doc(collection(doc(this.studyCollection, 'sequenceAssignment'), 'sequenceAssignment'), participantId);
   }
@@ -608,8 +610,7 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
     // Backend time governs shared expiry; a monotonic clock bounds our local lease.
     let lockExpiresAt = 0;
     const acquireLock = async (attempt: number): Promise<void> => {
-      const leaseStartedAt = performance.now();
-      const now = await this._getServerTimeMs();
+      const { serverNow: now, requestedAt: leaseStartedAt } = await this.readServerClock();
       try {
         await runTransaction(this.firestore, async (transaction) => {
           const snapshot = await transaction.get(lockDocument);
@@ -643,8 +644,7 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
     let lockRefreshError: unknown;
     let lockLost = false;
     const refreshLock = async () => {
-      const leaseStartedAt = performance.now();
-      const now = await this._getServerTimeMs();
+      const { serverNow: now, requestedAt: leaseStartedAt } = await this.readServerClock();
       await runTransaction(this.firestore, async (transaction) => {
         const snapshot = await transaction.get(lockDocument);
         const existingLock = snapshot.data() as { token?: string } | undefined;
@@ -820,6 +820,24 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
   }
 
   protected async _getServerTimeMs(): Promise<number> {
+    return (await this.readServerClock()).serverNow;
+  }
+
+  // Concurrent callers share one clock read. A read overlapping another
+  // unacknowledged clock write from this browser sees that write's pending
+  // serverTimestamp() as null. Joiners get a slightly older time, so leases
+  // start when the shared request began, not when the caller joined.
+  private readServerClock() {
+    if (!this.serverClockRead) {
+      const requestedAt = performance.now();
+      this.serverClockRead = this.fetchServerTimeMs()
+        .then((serverNow) => ({ serverNow, requestedAt }))
+        .finally(() => { this.serverClockRead = undefined; });
+    }
+    return this.serverClockRead;
+  }
+
+  private async fetchServerTimeMs(): Promise<number> {
     await this.verifyStudyDatabase();
     // Firestore has no clock to query, so stamp a document with the server's
     // time and read the committed value back. Each engine uses its own document
