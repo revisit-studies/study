@@ -15,6 +15,7 @@ import { studyStoreCreator, StudyStoreContext } from '../../../store/store';
 import { ResponseBlock } from '../ResponseBlock';
 import { generateInitFields, useAnswerField } from '../utils';
 import { makeStoredAnswer } from '../../../tests/utils';
+import type * as HandleComponentInheritanceModule from '../../../utils/handleComponentInheritance';
 
 // ── mocks ────────────────────────────────────────────────────────────────────
 
@@ -125,7 +126,8 @@ vi.mock('@trrack/core', () => ({
 
 vi.mock('lodash.isequal', () => ({ default: vi.fn(() => true) }));
 
-vi.mock('../../../utils/handleComponentInheritance', () => ({
+vi.mock('../../../utils/handleComponentInheritance', async (importOriginal) => ({
+  ...await importOriginal<typeof HandleComponentInheritanceModule>(),
   studyComponentToIndividualComponent: () => ({ response: [], correctAnswer: [] }),
 }));
 
@@ -2040,6 +2042,29 @@ test('keeps trial totals from the checked snapshot when an answer hides a depend
   );
   expect(container.querySelector('[data-testid="trial-answer-summary"]')?.textContent).toBeUndefined();
   expect(container.querySelector('[data-response-id="dependent"]')).toBeNull();
+});
+
+describe('help text link in training feedback', () => {
+  const config: IndividualComponent = {
+    type: 'questionnaire',
+    response: [{
+      id: 'q1', type: 'shortText', prompt: 'First', location: 'belowStimulus',
+    }],
+    correctAnswer: [{ id: 'q1', answer: 'a' }],
+    provideFeedback: true,
+    trainingAttempts: 2,
+  };
+
+  test.each([
+    [undefined, 'false'],
+    ['help.md', 'true'],
+  ])('with component helpTextPath %s, showHelpTextLink is %s', async (helpTextPath, expected) => {
+    mockStoredAnswerData.checkAnswer = { attemptsUsed: 1, correct: false, responses: { q1: false } };
+    const { container } = await renderWithStore(
+      <ResponseBlock config={{ ...config, helpTextPath }} location="belowStimulus" />,
+    );
+    expect(container.querySelector('[data-testid="feedback-alert-q1"]')?.getAttribute('data-show-help-text-link')).toBe(expected);
+  });
 });
 
 describe('custom training feedback', () => {

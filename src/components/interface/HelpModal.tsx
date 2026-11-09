@@ -6,7 +6,7 @@ import { getStaticAssetByPath } from '../../utils/getStaticAsset';
 import { ResourceNotFound } from '../../ResourceNotFound';
 import { PREFIX } from '../../utils/Prefix';
 import { useCurrentComponent } from '../../routes/utils';
-import { studyComponentToIndividualComponent } from '../../utils/handleComponentInheritance';
+import { getHelpTextPath, studyComponentToIndividualComponent } from '../../utils/handleComponentInheritance';
 import { compileTemplate } from '../../utils/handlebars';
 import { useTemplateAnswerContext } from '../../store/hooks/useTemplateAnswerContext';
 import { useStoredAnswer } from '../../store/hooks/useStoredAnswer';
@@ -29,7 +29,7 @@ export function HelpModal() {
 
   const componentConfig = useMemo(() => studyComponentToIndividualComponent(config.components[component] || {}, config), [component, config]);
 
-  const helpTextPath = useMemo(() => componentConfig.helpTextPath ?? config.uiConfig.helpTextPath, [componentConfig.helpTextPath, config.uiConfig.helpTextPath]);
+  const helpTextPath = useMemo(() => getHelpTextPath(componentConfig, config), [componentConfig, config]);
 
   const templateData = useTemplateAnswerContext();
 
