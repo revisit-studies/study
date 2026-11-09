@@ -123,7 +123,9 @@ export function AlertModal() {
         title={alertModal.title}
         icon={<IconAlertCircle />}
         onClose={isStorageEngineAlert ? undefined : close}
-        styles={{ root: { backgroundColor: 'unset' } }}
+        // Without minWidth, long diagnostics widen the body past the clipped
+        // root and hide the action button.
+        styles={{ root: { backgroundColor: 'unset' }, body: { minWidth: 0 } }}
       >
         {firebaseIndexUrl ? (
           <>

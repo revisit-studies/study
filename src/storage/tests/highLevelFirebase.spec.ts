@@ -851,6 +851,40 @@ describe.each([
     expect(secondEntered).toBe(true);
   });
 
+  test('overlapping backend clock reads in one browser share a single request', async () => {
+    vi.mocked(setDoc).mockClear();
+    const clockWrites = () => vi.mocked(setDoc).mock.calls.filter(([, data]) => 'readAt' in data);
+    const [firstTime, secondTime] = await Promise.all([
+      // @ts-expect-error Exercise the backend clock used for leases and timeouts.
+      storageEngine._getServerTimeMs(),
+      // @ts-expect-error A second read overlaps the first one's pending write.
+      storageEngine._getServerTimeMs(),
+    ]);
+    expect(secondTime).toBe(firstTime);
+    expect(clockWrites()).toHaveLength(1);
+    // @ts-expect-error A later read starts a fresh request.
+    await storageEngine._getServerTimeMs();
+    expect(clockWrites()).toHaveLength(2);
+  });
+
+  test('a lock that joins an in-flight clock read starts its lease with that read', async () => {
+    const monotonic = vi.spyOn(performance, 'now').mockReturnValue(0);
+    try {
+      // @ts-expect-error Start a clock read before the lock is requested.
+      const inFlight = storageEngine._getServerTimeMs();
+      monotonic.mockReturnValue(50_000);
+      // @ts-expect-error Exercise the distributed lock lease.
+      const locked = storageEngine._runWithLock('joined-clock', async () => {
+        // Expired when measured from the shared read, not from when the lock joined.
+        monotonic.mockReturnValue(61_000);
+      });
+      await inFlight;
+      await expect(locked).rejects.toThrow('Study update lock was lost');
+    } finally {
+      monotonic.mockRestore();
+    }
+  });
+
   test('backend clock reads from different browsers write different documents', async () => {
     const second = new FirebaseStorageEngine(true);
     await second.connect();
@@ -1601,8 +1635,8 @@ describe.each([
     await second.connect();
     await second.initializeStudyDb(studyId);
     // The backend clock stays correct while the second browser's wall clock is fast.
-    vi.spyOn(storageEngine as unknown as { _getServerTimeMs: () => Promise<number> }, '_getServerTimeMs').mockImplementation(async () => new Date().getTime());
-    vi.spyOn(second as unknown as { _getServerTimeMs: () => Promise<number> }, '_getServerTimeMs').mockImplementation(async () => new Date().getTime());
+    vi.spyOn(storageEngine as unknown as { fetchServerTimeMs: () => Promise<number> }, 'fetchServerTimeMs').mockImplementation(async () => new Date().getTime());
+    vi.spyOn(second as unknown as { fetchServerTimeMs: () => Promise<number> }, 'fetchServerTimeMs').mockImplementation(async () => new Date().getTime());
     try {
       // @ts-expect-error Exercise the provider's actual distributed lock.
       const first = storageEngine._runWithLock('clock-skew', async () => {
