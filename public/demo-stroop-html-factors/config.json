@@ -37,11 +37,11 @@
           "secondaryText": "Keyboard shortcuts: 1-5",
           "type": "buttons",
           "options": [
-            {"label": "1. RED", "value": "RED", "key": "1"},
-            {"label": "2. YELLOW", "value": "YELLOW", "key": "2"},
-            {"label": "3. GREEN", "value": "GREEN", "key": "3"},
-            {"label": "4. BLUE", "value": "BLUE", "key": "4"},
-            {"label": "5. BLACK", "value": "BLACK", "key": "5"}
+            {"label": "RED", "value": "RED", "key": "1"},
+            {"label": "YELLOW", "value": "YELLOW", "key": "2"},
+            {"label": "GREEN", "value": "GREEN", "key": "3"},
+            {"label": "BLUE", "value": "BLUE", "key": "4"},
+            {"label": "BLACK", "value": "BLACK", "key": "5"}
           ],
           "location": "belowStimulus",
           "required": true
