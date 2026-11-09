@@ -37,7 +37,7 @@ import { calculateProgressData } from '../../storage/engines/utils/storageEngine
 import { PREFIX } from '../../utils/Prefix';
 import { getNewParticipant } from '../../utils/nextParticipant';
 import { RecordingAudioWaveform } from './RecordingAudioWaveform';
-import { studyComponentToIndividualComponent } from '../../utils/handleComponentInheritance';
+import { getHelpTextPath, studyComponentToIndividualComponent } from '../../utils/handleComponentInheritance';
 import { useRecordingContext } from '../../store/hooks/useRecording';
 import { hideNotification, showNotification } from '../../utils/notifications';
 import { getMutedInstruction } from '../../utils/recordingWarnings';
@@ -304,7 +304,7 @@ export function AppHeader({
             )}
             {!storageEngineFailedToConnect && !dataCollectionEnabled && <Tooltip multiline withArrow arrowSize={6} w={300} label="This is a demo version of the study, we’re not collecting any data."><Badge size="lg" color="orange" autoContrast>Demo Mode</Badge></Tooltip>}
             {hasUnmetDeviceRequirement && developmentModeEnabled && <Tooltip multiline withArrow arrowSize={6} w={420} label="Your device does not meet this study's requirements. You are still able to explore this study while in debug mode."><Badge size="lg" color="red">Device Requirement Not Met</Badge></Tooltip>}
-            {(componentConfig.helpTextPath ?? studyConfig.uiConfig.helpTextPath) !== undefined && (
+            {getHelpTextPath(componentConfig, studyConfig) !== undefined && (
               <Button
                 variant="outline"
                 onClick={() => { storeDispatch(toggleShowHelpText()); storeDispatch(incrementHelpCounter({ identifier: `${currentComponent}_${currentStep}` })); }}

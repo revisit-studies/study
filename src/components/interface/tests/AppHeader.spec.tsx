@@ -8,6 +8,7 @@ import {
 } from 'vitest';
 import { AppHeader } from '../AppHeader';
 import { getNewParticipant } from '../../../utils/nextParticipant';
+import type * as HandleComponentInheritanceModule from '../../../utils/handleComponentInheritance';
 
 // ── mutable state ─────────────────────────────────────────────────────────────
 
@@ -146,7 +147,8 @@ vi.mock('../RecordingAudioWaveform', () => ({
   RecordingAudioWaveform: () => <div data-testid="waveform" />,
 }));
 
-vi.mock('../../../utils/handleComponentInheritance', () => ({
+vi.mock('../../../utils/handleComponentInheritance', async (importOriginal) => ({
+  ...await importOriginal<typeof HandleComponentInheritanceModule>(),
   studyComponentToIndividualComponent: vi.fn(() => ({
     withProgressBar: false,
     showTitle: true,

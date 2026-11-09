@@ -6,6 +6,7 @@ import {
   afterEach, beforeEach, describe, expect, test, vi,
 } from 'vitest';
 import { HelpModal } from '../HelpModal';
+import type * as HandleComponentInheritanceModule from '../../../utils/handleComponentInheritance';
 
 // ── mutable state ─────────────────────────────────────────────────────────────
 
@@ -48,7 +49,8 @@ vi.mock('../../../routes/utils', () => ({
   useCurrentStep: () => 0,
 }));
 
-vi.mock('../../../utils/handleComponentInheritance', () => ({
+vi.mock('../../../utils/handleComponentInheritance', async (importOriginal) => ({
+  ...await importOriginal<typeof HandleComponentInheritanceModule>(),
   studyComponentToIndividualComponent: () => ({ helpTextPath: mockComponentHelpTextPath, parameters: { condition: 'A' } }),
 }));
 

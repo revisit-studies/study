@@ -22,6 +22,11 @@ export function studyComponentToIndividualComponent(stepConfig: InheritedCompone
     : (stepConfig as IndividualComponent));
 }
 
+/** The component's help text path (before templating), falling back to the study-wide one. */
+export function getHelpTextPath(componentConfig: IndividualComponent, studyConfig: StudyConfig): string | undefined {
+  return componentConfig.helpTextPath ?? studyConfig.uiConfig.helpTextPath;
+}
+
 export function getComponent(name: string, studyConfig: StudyConfig): IndividualComponent | null {
   // The only way this should happen is if the name we are getting is the name of the func, which is not a component
   if (studyConfig.components[name] === undefined) {

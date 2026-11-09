@@ -2,7 +2,7 @@ import {
   describe, expect, test, vi,
 } from 'vitest';
 import type { IndividualComponent, InheritedComponent, ResponseVisibilityCondition } from '../../parser/types';
-import { getComponent, studyComponentToIndividualComponent } from '../handleComponentInheritance';
+import { getComponent, getHelpTextPath, studyComponentToIndividualComponent } from '../handleComponentInheritance';
 import { makeStudyConfig } from '../../tests/utils';
 
 vi.mock('../../parser/utils', () => ({
@@ -72,4 +72,18 @@ test.each<[ResponseVisibilityCondition, ResponseVisibilityCondition]>([
   expect(inherited.response?.[0].visibleIf).toEqual(replacement);
   expect(result.response?.[0].visibleIf).not.toBe(replacement);
   expect(studyComponentToIndividualComponent({ baseComponent: 'base' }, config).response?.[0].visibleIf).toEqual(original);
+});
+
+describe('getHelpTextPath', () => {
+  const component: IndividualComponent = { type: 'markdown', path: '/intro.md', response: [] };
+
+  test.each([
+    [undefined, undefined, undefined],
+    [undefined, 'study-help.md', 'study-help.md'],
+    ['component-help.md', undefined, 'component-help.md'],
+    ['component-help.md', 'study-help.md', 'component-help.md'],
+  ])('resolves component path %s and study path %s to %s', (componentPath, studyPath, expected) => {
+    const config = makeStudyConfig({ uiConfig: { helpTextPath: studyPath } });
+    expect(getHelpTextPath({ ...component, helpTextPath: componentPath }, config)).toBe(expected);
+  });
 });
