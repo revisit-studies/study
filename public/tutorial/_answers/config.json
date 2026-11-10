@@ -28,6 +28,22 @@
     "autoDownloadStudy": false,
     "withSidebar": true
   },
+  "baseComponents": {
+    "trial": {
+      "type": "react-component",
+      "path": "tutorial/assets/TutorialFactorTrial.tsx",
+      "instruction": "Use the {{brushType}} on the {{dataset}} dataset to select a group of points. How many points did you select?",
+      "response": [
+        {
+          "id": "selectedCount",
+          "type": "numerical",
+          "prompt": "Number of selected points:",
+          "location": "sidebar",
+          "min": 0
+        }
+      ]
+    }
+  },
   "components": {
     "welcome": {
       "type": "markdown",
@@ -287,64 +303,6 @@
         ]
       }
     },
-    "reactExampleCars": {
-      "type": "react-component",
-      "path": "tutorial/assets/ReactExample.tsx",
-      "instruction": "How many cars from Japan have a Miles Per Gallon value greater than 35?",
-      "response": [
-        {
-          "id": "response",
-          "prompt": "Answer:",
-          "location": "sidebar",
-          "type": "numerical",
-          "max": 100,
-          "min": 0
-        }
-      ],
-      "correctAnswer": [
-        {
-          "id": "response",
-          "answer": 17
-        }
-      ],
-      "parameters": {
-        "dataset": "cars",
-        "x": "Miles per Gallon",
-        "y": "Weight (lbs)",
-        "category": "Origin",
-        "ids": "id",
-        "brushType": "Rectangular Selection"
-      }
-    },
-    "reactExamplePenguins": {
-      "type": "react-component",
-      "instruction": "How many Gentoo penguins weigh less than 4.5k grams (g)?",
-      "path": "tutorial/assets/ReactExample.tsx",
-      "response": [
-        {
-          "id": "response",
-          "prompt": "Answer:",
-          "location": "sidebar",
-          "type": "numerical",
-          "max": 100,
-          "min": 0
-        }
-      ],
-      "correctAnswer": [
-        {
-          "id": "response",
-          "answer": 15
-        }
-      ],
-      "parameters": {
-        "dataset": "penguin",
-        "x": "Body Mass (g)",
-        "y": "Flipper Length (mm)",
-        "category": "Species",
-        "ids": "id",
-        "brushType": "Slider Selection"
-      }
-    },
     "example1": {
       "type": "questionnaire",
       "response": [
@@ -392,6 +350,101 @@
           "prompt": "What is 2 + 2?"
         }
       ]
+    },
+    "carsRectangle": {
+      "type": "react-component",
+      "path": "tutorial/assets/TutorialFactorTrial.tsx",
+      "instruction": "Use the Rectangular Selection on the cars dataset to select a group of points. How many points did you select?",
+      "response": [
+        {
+          "id": "selectedCount",
+          "type": "numerical",
+          "prompt": "Number of selected points:",
+          "location": "sidebar",
+          "min": 0
+        }
+      ],
+      "parameters": {
+        "dataset": "cars",
+        "brushType": "Rectangular Selection"
+      }
+    },
+    "carsSlider": {
+      "type": "react-component",
+      "path": "tutorial/assets/TutorialFactorTrial.tsx",
+      "instruction": "Use the Slider Selection on the cars dataset to select a group of points. How many points did you select?",
+      "response": [
+        {
+          "id": "selectedCount",
+          "type": "numerical",
+          "prompt": "Number of selected points:",
+          "location": "sidebar",
+          "min": 0
+        }
+      ],
+      "parameters": {
+        "dataset": "cars",
+        "brushType": "Slider Selection"
+      }
+    },
+    "penguinRectangle": {
+      "type": "react-component",
+      "path": "tutorial/assets/TutorialFactorTrial.tsx",
+      "instruction": "Use the Rectangular Selection on the penguin dataset to select a group of points. How many points did you select?",
+      "response": [
+        {
+          "id": "selectedCount",
+          "type": "numerical",
+          "prompt": "Number of selected points:",
+          "location": "sidebar",
+          "min": 0
+        }
+      ],
+      "parameters": {
+        "dataset": "penguin",
+        "brushType": "Rectangular Selection"
+      }
+    },
+    "penguinSlider": {
+      "type": "react-component",
+      "path": "tutorial/assets/TutorialFactorTrial.tsx",
+      "instruction": "Use the Slider Selection on the penguin dataset to select a group of points. How many points did you select?",
+      "response": [
+        {
+          "id": "selectedCount",
+          "type": "numerical",
+          "prompt": "Number of selected points:",
+          "location": "sidebar",
+          "min": 0
+        }
+      ],
+      "parameters": {
+        "dataset": "penguin",
+        "brushType": "Slider Selection"
+      }
+    }
+  },
+  "factors": {
+    "dataset": {
+      "values": [
+        "cars",
+        "penguin"
+      ],
+      "order": "random"
+    },
+    "brushType": {
+      "values": [
+        "Rectangular Selection",
+        "Slider Selection"
+      ],
+      "order": "random"
+    },
+    "conditions": {
+      "action": "zip",
+      "factors": [
+        "dataset",
+        "brushType"
+      ]
     }
   },
   "sequence": {
@@ -408,8 +461,22 @@
       "reactiveVega",
       "website",
       "reactiveWebsite",
-      "reactExampleCars",
-      "reactExamplePenguins",
+      {
+        "id": "trials",
+        "order": "random",
+        "components": [
+          "carsRectangle",
+          "carsSlider",
+          "penguinRectangle",
+          "penguinSlider"
+        ]
+      },
+      {
+        "type": "factor",
+        "id": "trials",
+        "factor": "conditions",
+        "components": "trial"
+      },
       {
         "id": "attentionDeterministic",
         "order": "fixed",
