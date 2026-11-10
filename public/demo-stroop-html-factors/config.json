@@ -29,6 +29,9 @@
     "stroopTrial": {
       "type": "website",
       "path": "demo-stroop-html-factors/assets/trial.html",
+      "style": {
+        "height": "80px"
+      },
       "nextButtonLocation": "belowStimulus",
       "response": [
         {
