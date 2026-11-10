@@ -495,6 +495,22 @@ test('Test questionnaire component with responses and randomizing questions and 
   await expect(page.getByRole('button', { name: 'Next', exact: true })).toBeEnabled();
   await nextClick(page);
 
+  // The Form Elements demo includes an exact answer and an inclusive almost-correct margin.
+  const almostCorrectSlider = page.locator('[data-question-id="almost-correct-slider"]').getByRole('slider');
+  await expect(almostCorrectSlider).toBeVisible();
+  await almostCorrectSlider.focus();
+  await almostCorrectSlider.press('Home');
+  for (let step = 0; step < 58; step += 1) {
+    await almostCorrectSlider.press('ArrowRight');
+  }
+  await expect(almostCorrectSlider).toHaveAttribute('aria-valuenow', '58');
+  await page.getByRole('button', { name: 'Check Answer', exact: true }).click();
+  const almostCorrectAlert = page.getByRole('alert');
+  await expect(almostCorrectAlert).toContainText('Almost Correct');
+  await expect(almostCorrectAlert).toContainText('The correct answer is 60');
+  await expect(page.getByRole('button', { name: 'Next', exact: true })).toBeEnabled();
+  await nextClick(page);
+
   // Check that the thank you message is displayed
   await waitForStudyEndMessage(page);
 

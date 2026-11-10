@@ -213,9 +213,9 @@ vi.mock('../ResponseSwitcher', () => ({
 
 vi.mock('../FeedbackAlert', async (importOriginal) => ({
   ...await importOriginal<typeof FeedbackAlertModule>(),
-  FeedbackAlert: ({ response, alertConfig }: { response: { id: string }; alertConfig: Record<string, { visible: boolean; title: string; message: string; hint?: string; showHelpTextLink?: boolean; fitHeight?: boolean }> }) => (
+  FeedbackAlert: ({ response, alertConfig }: { response: { id: string }; alertConfig: Record<string, { visible: boolean; title: string; message: string; color?: string; hint?: string; showHelpTextLink?: boolean; fitHeight?: boolean }> }) => (
     alertConfig[response.id]?.visible ? (
-      <div data-testid={`feedback-alert-${response.id}`} data-title={alertConfig[response.id].title} data-show-help-text-link={alertConfig[response.id].showHelpTextLink} data-fit-height={alertConfig[response.id].fitHeight}>
+      <div data-testid={`feedback-alert-${response.id}`} data-title={alertConfig[response.id].title} data-color={alertConfig[response.id].color} data-show-help-text-link={alertConfig[response.id].showHelpTextLink} data-fit-height={alertConfig[response.id].fitHeight}>
         {alertConfig[response.id].message}
         {alertConfig[response.id].hint && <p>{alertConfig[response.id].hint}</p>}
       </div>
@@ -389,6 +389,36 @@ describe('ResponseBlock', () => {
     expect(container.querySelector('[role="status"]')).toBeNull();
     expect(container.querySelector('[data-testid="feedback-alert-q1"]')?.textContent).toContain('partially correct');
     expect(container.querySelector('[data-testid="feedback-alert-q1"]')?.getAttribute('data-title')).toBe('Partially Correct');
+  });
+
+  test('shows almost-correct feedback and the exact answer for an in-range numeric response', async () => {
+    const checkedAnswer = makeStoredAnswer({
+      answer: { q1: 24 },
+      checkAnswer: {
+        attemptsUsed: 1,
+        correct: true,
+        responses: { q1: true },
+        checkedAnswers: { q1: 24 },
+      },
+    });
+    const config: IndividualComponent = {
+      type: 'questionnaire',
+      provideFeedback: true,
+      response: [{
+        id: 'q1', type: 'slider', prompt: 'Choose a value', options: [{ label: '0', value: 0 }, { label: '50', value: 50 }],
+      }],
+      correctAnswer: [{
+        id: 'q1', answer: 25, acceptableLow: 22, acceptableHigh: 28,
+      }],
+    };
+    mockAnswerField.values = { q1: 24 };
+    const { container } = await renderWithStore(<ResponseBlock config={config} location="belowStimulus" status={checkedAnswer} />);
+    const alert = container.querySelector('[data-testid="feedback-alert-q1"]');
+
+    expect(alert?.getAttribute('data-title')).toBe('Almost Correct');
+    expect(alert?.getAttribute('data-color')).toBe('lime');
+    expect(alert?.textContent).toContain('The correct answer is 25');
+    expect(alert?.textContent).toContain('within an acceptable margin of error');
   });
 
   test('does not show answer totals before checking an enabled training page', async () => {

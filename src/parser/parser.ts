@@ -502,12 +502,17 @@ function verifyCorrectAnswers(
   errors: ParsedConfig<StudyConfig>['errors'],
 ) {
   component.correctAnswer?.forEach((answer, index) => {
-    if (Object.hasOwn(answer, 'answer') || answer.acceptableAnswers?.length
-      || answer.acceptableLow !== undefined || answer.acceptableHigh !== undefined) return;
+    const hasAnswer = Object.hasOwn(answer, 'answer');
+    const hasAlmostCorrectRange = answer.acceptableLow !== undefined || answer.acceptableHigh !== undefined;
+    const hasCorrectRange = answer.lowestCorrect !== undefined || answer.highestCorrect !== undefined;
+    const hasValidAlmostCorrectAnswer = typeof answer.answer === 'number'
+      || (typeof answer.answer === 'string' && answer.answer.trim() !== '' && Number.isFinite(Number(answer.answer)));
+    if ((!hasAlmostCorrectRange || (hasAnswer && hasValidAlmostCorrectAnswer))
+      && (hasAnswer || answer.acceptableAnswers?.length || hasCorrectRange || hasAlmostCorrectRange)) return;
     errors.push({
-      message: 'A correctAnswer must define an answer, a non-empty acceptableAnswers list, or a numeric bound',
+      message: 'A correctAnswer must define an answer, a non-empty acceptableAnswers list, or a lowestCorrect/highestCorrect numeric bound; acceptableLow/acceptableHigh require a numeric answer',
       instancePath: `${basePath}/correctAnswer/${index}`,
-      params: { action: 'Define answer, acceptableAnswers, acceptableLow, or acceptableHigh' },
+      params: { action: 'Define answer, acceptableAnswers, lowestCorrect, or highestCorrect; use acceptableLow/acceptableHigh with a numeric answer' },
       category: 'invalid-config',
     });
   });

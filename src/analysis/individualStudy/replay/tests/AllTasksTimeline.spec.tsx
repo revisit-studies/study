@@ -257,7 +257,7 @@ describe('AllTasksTimeline', () => {
 
   test.each([
     [{ id: 'q1', acceptableAnswers: ['yes', 'maybe'] }, '[&quot;yes&quot;,&quot;maybe&quot;]'],
-    [{ id: 'q1', acceptableLow: 0, acceptableHigh: 5 }, '{&quot;acceptableLow&quot;:0,&quot;acceptableHigh&quot;:5}'],
+    [{ id: 'q1', lowestCorrect: 0, highestCorrect: 5 }, '{&quot;lowestCorrect&quot;:0,&quot;highestCorrect&quot;:5}'],
   ])('shows list-only and range-only answer rules in replay tooltips: %j', (rule, expected) => {
     const participant = makeParticipant({
       answers: { trial1_0: makeAnswer({ answer: { q1: 'yes' }, correctAnswer: [rule] }) },

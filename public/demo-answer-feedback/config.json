@@ -150,8 +150,8 @@
       "correctAnswer": [
         {
           "id": "closed-range",
-          "acceptableLow": -10,
-          "acceptableHigh": 10,
+          "lowestCorrect": -10,
+          "highestCorrect": 10,
           "feedback": {
             "correctText": "Your number is inside the range, including its endpoints.",
             "incorrectText": "Your number is outside the accepted range.",
@@ -164,7 +164,7 @@
         },
         {
           "id": "lower-bound",
-          "acceptableLow": 0,
+          "lowestCorrect": 0,
           "feedback": {
             "correctText": "Your number is at least zero.",
             "incorrectText": "Your number is below the lower bound.",
@@ -177,7 +177,7 @@
         },
         {
           "id": "upper-bound",
-          "acceptableHigh": 0,
+          "highestCorrect": 0,
           "feedback": {
             "correctText": "Your number is at most zero.",
             "incorrectText": "Your number is above the upper bound.",
@@ -405,8 +405,8 @@
       "correctAnswer": [
         {
           "id": "hinted-number",
-          "acceptableLow": 150,
-          "acceptableHigh": 160,
+          "lowestCorrect": 150,
+          "highestCorrect": 160,
           "feedback": {
             "correctText": "You found the range on attempt {attemptsUsed}.",
             "incorrectText": "That is outside the range. You have {attemptsLeft} attempts left.",

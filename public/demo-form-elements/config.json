@@ -1620,6 +1620,45 @@
       ],
       "trainingAttempts": 3,
       "allowFailedTraining": true
+    },
+    "Almost Correct Feedback": {
+      "type": "questionnaire",
+      "provideFeedback": true,
+      "trainingAttempts": 3,
+      "allowFailedTraining": true,
+      "response": [
+        {
+          "id": "almost-correct-title",
+          "type": "textOnly",
+          "prompt": "# Almost-Correct Feedback\n\nThis slider accepts **60** exactly and treats values from **55 through 65** as almost correct. Try 60, then try a value inside the margin and one outside it.",
+          "restartEnumeration": true
+        },
+        {
+          "id": "almost-correct-slider",
+          "type": "slider",
+          "prompt": "Estimate the value.",
+          "secondaryText": "The exact answer is 60; the acceptable margin is inclusive.",
+          "startingValue": 50,
+          "options": [
+            {
+              "label": "0",
+              "value": 0
+            },
+            {
+              "label": "100",
+              "value": 100
+            }
+          ]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "almost-correct-slider",
+          "answer": 60,
+          "acceptableLow": 55,
+          "acceptableHigh": 65
+        }
+      ]
     }
   },
   "sequence": {
@@ -1636,7 +1675,8 @@
       "Randomizing Questions",
       "Ranking Widgets",
       "Sidebar Form Elements",
-      "Answer Feedback"
+      "Answer Feedback",
+      "Almost Correct Feedback"
     ]
   }
 }

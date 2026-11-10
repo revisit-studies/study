@@ -36,9 +36,9 @@ vi.mock('../../utils/correctAnswer', async (importOriginal) => ({
   responseAnswerIsCorrect: vi.fn((
     userAnswer: unknown,
     correctAnswer: unknown,
-    acceptableLow?: number,
-    acceptableHigh?: number,
-    options?: { ignoreArrayOrder?: boolean },
+    lowestCorrect?: number,
+    highestCorrect?: number,
+    options?: { ignoreArrayOrder?: boolean; acceptableLow?: number; acceptableHigh?: number },
   ) => {
     if (Array.isArray(userAnswer) && Array.isArray(correctAnswer)) {
       // Match real responseAnswerIsCorrect: default is sort-and-compare unless caller opts out.
@@ -48,15 +48,22 @@ vi.mock('../../utils/correctAnswer', async (importOriginal) => ({
       return [...userAnswer].sort().join('|') === [...correctAnswer].sort().join('|');
     }
 
-    if (acceptableLow !== undefined || acceptableHigh !== undefined) {
+    const matchesRange = (low?: number, high?: number) => {
+      if (low === undefined && high === undefined) return false;
       const num = Number(userAnswer);
-      if (Number.isNaN(num)) return userAnswer === correctAnswer;
-      if (acceptableLow !== undefined && num < acceptableLow) return false;
-      if (acceptableHigh !== undefined && num > acceptableHigh) return false;
-      return true;
-    }
-
-    return userAnswer === correctAnswer;
+      return !Number.isNaN(num)
+        && (low === undefined || num >= low)
+        && (high === undefined || num <= high);
+    };
+    const numericExactMatch = (typeof userAnswer === 'number' || typeof userAnswer === 'string')
+      && (typeof correctAnswer === 'number' || typeof correctAnswer === 'string')
+      && String(userAnswer).trim() !== ''
+      && Number.isFinite(Number(userAnswer))
+      && Number(userAnswer) === Number(correctAnswer);
+    return userAnswer === correctAnswer
+      || numericExactMatch
+      || matchesRange(lowestCorrect, highestCorrect)
+      || matchesRange(options?.acceptableLow, options?.acceptableHigh);
   }),
 }));
 

@@ -3519,9 +3519,9 @@ describe('standalone correct-answer acceptance rules', () => {
   test.each([
     { answer: 0 },
     { acceptableAnswers: [-3, 0, 3] },
-    { acceptableLow: -1, acceptableHigh: 1 },
-    { acceptableLow: 0 },
-    { acceptableHigh: 0 },
+    { lowestCorrect: -1, highestCorrect: 1 },
+    { lowestCorrect: 0 },
+    { highestCorrect: 0 },
     { answer: 0, acceptableLow: -1, acceptableHigh: 1 },
     { answer: 0, acceptableAnswers: [1, 2] },
   ])('accepts %j', async (definition) => {
@@ -3531,16 +3531,22 @@ describe('standalone correct-answer acceptance rules', () => {
     expect(parsed.components['Numeric Ranges'].correctAnswer?.[0]).toEqual({ id: 'closed-range', ...definition });
   });
 
-  test.each([{}, { acceptableAnswers: [] }])('rejects an empty acceptance rule %j', async (definition) => {
+  test.each([
+    {},
+    { acceptableAnswers: [] },
+    { acceptableLow: 0 },
+    { acceptableHigh: 0 },
+    { answer: 'not numeric', acceptableLow: 0 },
+  ])('rejects an invalid acceptance rule %j', async (definition) => {
     const parsed = await parseStudyConfig(JSON.stringify(makeConfig(definition)));
     expect(parsed.errors).toContainEqual(expect.objectContaining({
       instancePath: '/components/Numeric Ranges/correctAnswer/0',
-      message: 'A correctAnswer must define an answer, a non-empty acceptableAnswers list, or a numeric bound',
+      message: 'A correctAnswer must define an answer, a non-empty acceptableAnswers list, or a lowestCorrect/highestCorrect numeric bound; acceptableLow/acceptableHigh require a numeric answer',
     }));
   });
 
   test('validates acceptance rules inherited from base components', async () => {
-    const config = makeConfig({ acceptableHigh: 0 });
+    const config = makeConfig({ highestCorrect: 0 });
     config.baseComponents = { rangeBase: config.components['Numeric Ranges'] };
     config.components['Numeric Ranges'] = { baseComponent: 'rangeBase' };
     expect((await parseStudyConfig(JSON.stringify(config))).errors).toEqual([]);
