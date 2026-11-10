@@ -15,6 +15,7 @@ const mocks = vi.hoisted(() => ({
   navigate: vi.fn(),
   save: vi.fn(),
   confirm: undefined as undefined | (() => void),
+  cancel: undefined as undefined | (() => void),
 }));
 vi.mock('../../store', async (original) => ({
   ...await original<Record<string, unknown>>(),
@@ -31,11 +32,12 @@ vi.mock('../useWindowEvents', () => ({ useWindowEvents: () => ({ current: [] }) 
 vi.mock('../useIsAnalysis', () => ({ useIsAnalysis: () => false }));
 vi.mock('../../../components/response/customResponseModules', () => ({ getCustomResponseModule: () => null, getCustomResponseModuleLoadError: () => null }));
 vi.mock('react-router', () => ({ useNavigate: () => mocks.navigate, useParams: () => ({}) }));
-vi.mock('@mantine/modals', () => ({ openConfirmModal: (options: { onConfirm: () => void }) => { mocks.confirm = options.onConfirm; } }));
+vi.mock('@mantine/modals', () => ({ openConfirmModal: (options: { onConfirm: () => void; onCancel: () => void }) => { mocks.confirm = options.onConfirm; mocks.cancel = options.onCancel; } }));
 
 beforeEach(async () => {
   vi.clearAllMocks();
   mocks.confirm = undefined;
+  mocks.cancel = undefined;
   mocks.save.mockResolvedValue(undefined);
   window.history.replaceState({}, '', '/study/purchase');
   const config = makeStudyConfig({
@@ -141,6 +143,37 @@ test.each(['updater', 'answers', 'revision', 'participant', 'completed', 'asset'
   await act(async () => { mocks.confirm!(); await pending; });
   expect(mocks.save).not.toHaveBeenCalled();
   expect(mocks.navigate).not.toHaveBeenCalled();
+});
+
+test('canceling invalidation leaves an explicit retry without saving or navigating', async () => {
+  const { store, actions } = mocks.context;
+  const original = makeStoredAnswer({
+    identifier: 'purchase_0', componentName: 'purchase', trialOrder: '0', answer: { cost: 30 },
+  });
+  const later = makeStoredAnswer({
+    identifier: 'later_1', componentName: 'later', trialOrder: '1', answer: { cost: 20 },
+  });
+  const definitions = { budget: { initialValue: 100 } };
+  const first = createGlobalStoreSubmission(undefined, definitions, original, { budget: 70 }, [], {});
+  const second = createGlobalStoreSubmission(first.graph, definitions, later, { budget: 50 }, [], {});
+  store.dispatch(actions.acceptGlobalStoreSubmission({ graph: second.graph, answers: { purchase_0: original, later_1: later }, revision: 2 }));
+  mocks.context.globalStoreUpdaters.set('purchase_0', () => ({}));
+  const hook = mount();
+  let pending!: Promise<void>;
+  act(() => { pending = hook.result.current.goToNextStep(); });
+  await vi.waitFor(() => expect(mocks.cancel).toBeTypeOf('function'));
+  await act(async () => { mocks.cancel!(); await pending; });
+  expect(store.getState().globalStoreSubmitting).toBe(false);
+  expect(store.getState().globalStoreError).toContain('canceled');
+  expect(mocks.save).not.toHaveBeenCalled();
+  expect(mocks.navigate).not.toHaveBeenCalled();
+
+  mocks.confirm = undefined;
+  act(() => { pending = hook.result.current.goToNextStep(); });
+  await vi.waitFor(() => expect(mocks.confirm).toBeTypeOf('function'));
+  await act(async () => { mocks.confirm!(); await pending; });
+  expect(mocks.save).toHaveBeenCalledTimes(1);
+  expect(mocks.navigate).toHaveBeenCalledTimes(1);
 });
 
 test('normal advancement keeps the lock until the destination trial mounts', async () => {

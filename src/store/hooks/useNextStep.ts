@@ -333,7 +333,10 @@ export function useNextStep(responses?: Response[], correctAnswers?: Answer[]) {
               onClose: () => resolve(false),
             });
           });
-          if (!confirmed) return;
+          if (!confirmed) {
+            storeDispatch(setGlobalStoreError('Submission canceled. You can retry when ready.'));
+            return;
+          }
           if (!preparationIsCurrent()) {
             reportStalePreparation();
             return;

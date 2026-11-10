@@ -221,6 +221,8 @@ export function ResponseBlock({
   const autoAdvanceTriggeredRef = useRef(false);
   const pendingAutoAdvanceAttemptRef = useRef<number | null>(null);
   const autoAdvanceContinuationDueAtRef = useRef<number | null>(null);
+  const restoredContinuationStartedRef = useRef<string | null>(null);
+  const [autoAdvanceGradeFailed, setAutoAdvanceGradeFailed] = useState(false);
   const autoAdvanceActionRef = useRef<() => void>(() => {});
   const autoAdvanceRunnerRef = useRef<() => void>(() => {});
   const autoAdvanceContinuationRef = useRef<() => void>(() => {});
@@ -238,6 +240,10 @@ export function ResponseBlock({
   const currentSubmitAttempt = useStoreSelector((state) => state.responseSubmitAttempted[identifier]);
   const liveErrors = currentSubmitAttempt ?? savedSubmitAttempt;
   const savedCheckAnswer = storedAnswerData?.checkAnswer ?? status?.checkAnswer;
+  const restoredCheckAnswerRef = useRef({ identifier, checkAnswer: savedCheckAnswer });
+  if (restoredCheckAnswerRef.current.identifier !== identifier) {
+    restoredCheckAnswerRef.current = { identifier, checkAnswer: savedCheckAnswer };
+  }
   const currentCheckAnswer = useStoreSelector((state) => state.checkAnswer[identifier]);
   const storeAnswers = useStoreSelector((state) => state.answers);
   const dataCollectionEnabled = useStoreSelector((state) => state.modes.dataCollectionEnabled);
@@ -340,6 +346,9 @@ export function ResponseBlock({
   const checkAnswerScores = currentCheckAnswer?.scores;
   // Unlock Next after a correct answer, or once attempts run out if failed training is allowed.
   const canContinueAfterFeedback = attemptsUsed > 0 && (hasCorrectAnswer || (allowFailedTraining && usedAllAttempts));
+  const restoredCheckAnswer = restoredCheckAnswerRef.current.checkAnswer;
+  const restoredCanContinue = !!restoredCheckAnswer && restoredCheckAnswer.attemptsUsed > 0
+    && (restoredCheckAnswer.correct || (allowFailedTraining && trainingAttempts >= 0 && restoredCheckAnswer.attemptsUsed >= trainingAttempts));
   const bypassValidationForFailedTraining = hasCorrectAnswerFeedback && allowFailedTraining && usedAllAttempts;
   const disabledAttempts = hasCorrectAnswerFeedback && (usedAllAttempts || hasCorrectAnswer);
   const persistedVisibilityScores = isAnalysis
@@ -599,6 +608,11 @@ export function ResponseBlock({
       : value;
     answerValidator.setFieldValue(responseId, targetValue as never);
     const response = allResponses.find((candidate) => candidate.id === responseId);
+    if (response?.type === 'buttons' && targetValue && autoAdvanceContinuationDueAtRef.current !== null) {
+      autoAdvanceContinuationDueAtRef.current = null;
+      if (autoAdvanceTimerRef.current) clearTimeout(autoAdvanceTimerRef.current);
+      autoAdvanceTimerRef.current = undefined;
+    }
     if (response?.type === 'buttons') {
       const isDontKnowSelection = pendingDontKnowSelectionRef.current === responseId;
       pendingDontKnowSelectionRef.current = null;
@@ -950,8 +964,9 @@ export function ResponseBlock({
   }, [globalStore, allResponsesWithDefaults, attemptsUsed, config, currentCheckAnswer, hasCorrectAnswerFeedback, hasResponseIssues, hasStimulusIssue, identifier, revealResponseErrors, revealStimulusErrors, saveIncorrectAnswer, setCheckAnswerResult, storeDispatch, trialValidation]);
 
   const checkAnswerManually = useCallback(() => {
-    if (pendingAutoAdvanceAttemptRef.current !== null || autoAdvanceContinuationDueAtRef.current !== null) return;
+    if (usedAllAttempts || pendingAutoAdvanceAttemptRef.current !== null || autoAdvanceContinuationDueAtRef.current !== null) return;
     if (!checkAnswerProvideFeedback() || !autoAdvanceButtonsEnabled) return;
+    setAutoAdvanceGradeFailed(false);
     autoAdvanceContinuationDueAtRef.current = buttonAutoAdvancePending?.dueAt ?? Date.now();
     pendingAutoAdvanceAttemptRef.current = attemptsUsed;
     autoAdvanceTriggeredRef.current = true;
@@ -959,7 +974,7 @@ export function ResponseBlock({
     autoAdvanceTimerRef.current = undefined;
     autoAdvanceTimerOwnerRef.current = undefined;
     if (buttonAutoAdvancePending) storeDispatch(clearButtonAutoAdvancePending(identifier));
-  }, [attemptsUsed, autoAdvanceButtonsEnabled, buttonAutoAdvancePending, checkAnswerProvideFeedback, clearButtonAutoAdvancePending, identifier, storeDispatch]);
+  }, [attemptsUsed, autoAdvanceButtonsEnabled, buttonAutoAdvancePending, checkAnswerProvideFeedback, clearButtonAutoAdvancePending, identifier, storeDispatch, usedAllAttempts]);
 
   const nextButtonText = useMemo(() => config?.nextButtonText ?? studyConfig.uiConfig.nextButtonText ?? 'Next', [config, studyConfig]);
 
@@ -1058,6 +1073,37 @@ export function ResponseBlock({
       }, retryAfter);
       return;
     }
+    const checkedAnswers = currentCheckAnswer?.checkedAnswers ?? savedCheckAnswer?.checkedAnswers ?? status?.answer;
+    const currentAnswerSnapshot = getPersistedAnswerValues(
+      combinedValues,
+      allResponsesWithDefaults,
+      config.correctAnswer,
+      currentCheckAnswer ?? savedCheckAnswer,
+      globalStore,
+    );
+    if (checkedAnswers && !isEqual(checkedAnswers, currentAnswerSnapshot)) {
+      if (buttonAutoAdvancePending) {
+        autoAdvanceContinuationDueAtRef.current = null;
+        return;
+      }
+      if (usedAllAttempts) {
+        if (allowFailedTraining) {
+          autoAdvanceContinuationDueAtRef.current = null;
+          handleNextClick(true);
+        }
+        return;
+      }
+      pendingAutoAdvanceAttemptRef.current = attemptsUsed;
+      if (checkAnswerProvideFeedback()) {
+        autoAdvanceContinuationDueAtRef.current = null;
+        setAutoAdvanceGradeFailed(false);
+      } else {
+        pendingAutoAdvanceAttemptRef.current = null;
+        autoAdvanceContinuationDueAtRef.current = null;
+        setAutoAdvanceGradeFailed(true);
+      }
+      return;
+    }
     if (hasStimulusIssue || hasResponseIssues) {
       handleNextClick(true);
       return;
@@ -1069,6 +1115,7 @@ export function ResponseBlock({
     const restoredSelections = restoredButtonSelectionsRef.current;
     if (restoredSelections.length === 0) return;
     restoredButtonSelectionsRef.current = [];
+    if (restoredCanContinue) return;
     const response = applicableResponses.find((candidate) => (
       restoredSelections.includes(candidate.id)
       && candidate.type === 'buttons'
@@ -1082,7 +1129,7 @@ export function ResponseBlock({
       responseId: response.id,
       dueAt: Date.now() + (response.autoAdvanceDelay ?? 300),
     }));
-  }, [applicableResponses, identifier, setButtonAutoAdvancePending, storeDispatch]);
+  }, [applicableResponses, identifier, restoredCanContinue, setButtonAutoAdvancePending, storeDispatch]);
   useEffect(() => {
     if (!isNextDisabled && autoAdvanceContinuationDueAtRef.current !== null && !autoAdvanceTimerRef.current) autoAdvanceContinuationRef.current();
   }, [isNextDisabled]);
@@ -1090,7 +1137,7 @@ export function ResponseBlock({
     if (!hasStimulusIssue && !hasResponseIssues && autoAdvanceContinuationDueAtRef.current !== null && !autoAdvanceTimerRef.current) {
       autoAdvanceContinuationRef.current();
     }
-  }, [hasResponseIssues, hasStimulusIssue]);
+  }, [combinedValues, hasResponseIssues, hasStimulusIssue]);
 
   autoAdvanceActionRef.current = () => {
     if (hasStimulusIssue || hasResponseIssues) {
@@ -1118,6 +1165,11 @@ export function ResponseBlock({
     const alreadyChecked = isRestoredSelection && attemptsUsed > 0 && (checkedAnswers === undefined
       || isEqual(checkedAnswers, currentAnswerSnapshot));
     if (isRestoredSelection) restoredAutoAdvanceResponseIdRef.current = null;
+    if (usedAllAttempts) {
+      storeDispatch(clearButtonAutoAdvancePending(identifier));
+      if (allowFailedTraining || (hasCorrectAnswer && checkedAnswers && isEqual(checkedAnswers, currentAnswerSnapshot))) handleNextClick(true);
+      return;
+    }
     if (alreadyChecked) {
       storeDispatch(clearButtonAutoAdvancePending(identifier));
       if (canContinueAfterFeedback) {
@@ -1127,7 +1179,13 @@ export function ResponseBlock({
       return;
     }
     pendingAutoAdvanceAttemptRef.current = attemptsUsed;
-    checkAnswerProvideFeedback();
+    if (checkAnswerProvideFeedback()) {
+      setAutoAdvanceGradeFailed(false);
+    } else {
+      pendingAutoAdvanceAttemptRef.current = null;
+      storeDispatch(clearButtonAutoAdvancePending(identifier));
+      setAutoAdvanceGradeFailed(true);
+    }
   };
   useEffect(() => {
     if (!hasStimulusIssue && !hasResponseIssues && buttonAutoAdvancePending && !autoAdvanceTimerRef.current) {
@@ -1157,19 +1215,31 @@ export function ResponseBlock({
     autoAdvanceTriggeredRef.current = false;
     pendingAutoAdvanceAttemptRef.current = null;
     autoAdvanceContinuationDueAtRef.current = null;
+    restoredContinuationStartedRef.current = null;
+    setAutoAdvanceGradeFailed(false);
   }, [identifier]);
+  useEffect(() => {
+    if (isAnalysis || !showBtnsInLocation || !restoredCanContinue || !canContinueAfterFeedback
+      || currentCheckAnswer?.attemptsUsed !== restoredCheckAnswer?.attemptsUsed
+      || restoredContinuationStartedRef.current === identifier || autoAdvanceTriggeredRef.current) return;
+    const response = applicableResponses.find((candidate) => !candidate.hidden && candidate.type === 'buttons' && candidate.autoAdvanceToNextStep);
+    if (!response || response.type !== 'buttons') return;
+    restoredContinuationStartedRef.current = identifier;
+    autoAdvanceTriggeredRef.current = true;
+    autoAdvanceContinuationDueAtRef.current = Date.now() + (response.autoAdvanceDelay ?? 300);
+    autoAdvanceContinuationRef.current();
+  }, [applicableResponses, canContinueAfterFeedback, currentCheckAnswer, identifier, isAnalysis, restoredCanContinue, restoredCheckAnswer, showBtnsInLocation]);
 
   const showLockedTrainingRetry = showBtnsInLocation
     && autoAdvanceButtonsEnabled
     && !config.showNextButtonOnAutoAdvance
-    && config.hideCheckAnswerButton
     && hasCorrectAnswerFeedback
-    && hasLockedAutoAdvanceSelection
     && !buttonAutoAdvancePending
-    && attemptsUsed > 0
-    && !canContinueAfterFeedback
-    && !disabledAttempts
     && !isAnalysis
+    && (autoAdvanceGradeFailed || (config.hideCheckAnswerButton
+      && hasLockedAutoAdvanceSelection
+      && !canContinueAfterFeedback
+      && !disabledAttempts))
     && !globalStoreSubmitting;
 
   let index = 0;

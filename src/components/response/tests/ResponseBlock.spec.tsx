@@ -112,6 +112,7 @@ vi.mock('@trrack/core', () => ({
   },
   initializeTrrack: vi.fn(() => ({
     apply: mockTrrackApply,
+    importObject: vi.fn(),
     getState: () => ({ form: null }),
     currentChange: vi.fn(() => vi.fn()),
     graph: {
@@ -596,6 +597,64 @@ describe('ResponseBlock', () => {
 
     await act(async () => { await vi.advanceTimersByTimeAsync(1000); });
     expect(store.getState().checkAnswer.trial1_0?.attemptsUsed).toBe(1);
+  });
+
+  test('manual Check Answer retries after auto grading fails', async () => {
+    vi.useFakeTimers();
+    mockAnswerField.values = { q1: 'correct', customScore: 5 };
+    mockStoredAnswerData.formOrder = { response: ['q1', 'customScore'] };
+    mockCustomResponseModule.value = { default: () => null, score: () => 1.5 };
+    const config: IndividualComponent = {
+      ...baseConfig,
+      provideFeedback: true,
+      hideCheckAnswerButton: false,
+      response: [{
+        id: 'q1', type: 'buttons', prompt: 'Choose', options: ['correct'], autoAdvanceToNextStep: true, autoAdvanceDelay: 100,
+      }, {
+        id: 'customScore', type: 'custom', prompt: 'Score', path: 'test-response-functions/assets/CustomPartialScore.tsx', required: false,
+      }],
+      correctAnswer: [{ id: 'q1', answer: 'correct' }, { id: 'customScore', answer: 5 }],
+    };
+    const { store } = await renderWithStore(<ResponseBlock config={config} location="belowStimulus" />);
+
+    act(() => { capturedSwitcherProps.onChanges.q1('correct', 'click'); });
+    await act(async () => { await vi.advanceTimersByTimeAsync(100); });
+    expect(store.getState().checkAnswer.trial1_0).toBeUndefined();
+    expect(mockShowNotification).toHaveBeenCalledWith(expect.objectContaining({ title: 'Unable to Check Answer' }));
+
+    mockCustomResponseModule.value = { default: () => null, score: () => 1 };
+    await act(async () => { capturedNextButtonProps.onCheckAnswer?.(); });
+    expect(store.getState().checkAnswer.trial1_0?.attemptsUsed).toBe(1);
+  });
+
+  test('locked auto-advance selection offers Try again after grading fails', async () => {
+    vi.useFakeTimers();
+    mockAnswerField.values = { q1: 'correct', customScore: 5 };
+    mockStoredAnswerData.formOrder = { response: ['q1', 'customScore'] };
+    mockCustomResponseModule.value = { default: () => null, score: () => 1.5 };
+    const config: IndividualComponent = {
+      ...baseConfig,
+      provideFeedback: true,
+      response: [{
+        id: 'q1', type: 'buttons', prompt: 'Choose', options: ['correct'], autoAdvanceToNextStep: true, autoAdvanceDelay: 100, allowResponseChange: false,
+      }, {
+        id: 'customScore', type: 'custom', prompt: 'Score', path: 'test-response-functions/assets/CustomPartialScore.tsx', required: false,
+      }],
+      correctAnswer: [{ id: 'q1', answer: 'correct' }, { id: 'customScore', answer: 5 }],
+    };
+    const { store, queryByRole, getByRole } = await renderWithStore(<ResponseBlock config={config} location="belowStimulus" />);
+
+    act(() => { capturedSwitcherProps.onChanges.q1('correct', 'click'); });
+    expect(queryByRole('button', { name: 'Try again' })).toBeNull();
+    await act(async () => { await vi.advanceTimersByTimeAsync(100); });
+    expect(store.getState().checkAnswer.trial1_0).toBeUndefined();
+    expect(store.getState().buttonSelectionIds.trial1_0).toContain('q1');
+    expect(mockShowNotification).toHaveBeenCalledWith(expect.objectContaining({ title: 'Unable to Check Answer' }));
+
+    mockCustomResponseModule.value = { default: () => null, score: () => 1 };
+    fireEvent.click(getByRole('button', { name: 'Try again' }));
+    expect(store.getState().checkAnswer.trial1_0?.attemptsUsed).toBe(1);
+    expect(mockNavigate).toHaveBeenCalledTimes(1);
   });
 
   test('manual Check Answer continues after a correct auto-advance selection', async () => {

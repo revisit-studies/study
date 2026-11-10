@@ -593,6 +593,16 @@ export async function studyStoreCreator(
             delete state.checkAnswer[key];
           }
         });
+        Object.keys(state.buttonAutoAdvancePending).forEach((key) => {
+          if (matchesDeletedIteration(key)) {
+            delete state.buttonAutoAdvancePending[key];
+          }
+        });
+        Object.keys(state.buttonSelectionIds).forEach((key) => {
+          if (matchesDeletedIteration(key)) {
+            delete state.buttonSelectionIds[key];
+          }
+        });
 
         // Handle the funcSequence as well
         if (state.funcSequence[funcName]) {
