@@ -96,6 +96,7 @@ export function ResponseBlock({
   const {
     clearResponseAnswers, updateProvenance, updateResponseBlockValidation, saveIncorrectAnswer, saveTrialAnswer, setResponseSubmitAttempt, setStimulusSubmitAttempt, setCheckAnswerResult,
     setButtonAutoAdvancePending, clearButtonAutoAdvancePending, setButtonSelection,
+    setButtonAutoAdvanceContinuationOwner, clearButtonAutoAdvanceContinuationOwner,
   } = useStoreActions();
 
   const currentStep = useCurrentStep();
@@ -203,6 +204,7 @@ export function ResponseBlock({
   const trialValidation = useStoreSelector((state) => state.trialValidation);
   const analysisProvState = useStoreSelector((state) => state.analysisProvState);
   const buttonAutoAdvancePending = useStoreSelector((state) => state.buttonAutoAdvancePending[identifier]);
+  const buttonAutoAdvanceContinuationOwner = useStoreSelector((state) => state.buttonAutoAdvanceContinuationOwner[identifier]);
   const globalStoreError = useStoreSelector((state) => state.globalStoreError);
   const buttonSelectionIds = useStoreSelector((state) => state.buttonSelectionIds[identifier]);
   const { goToNextStep, getNextStepTiming, isNextDisabled } = useNextStep(config.response, config.correctAnswer);
@@ -218,9 +220,26 @@ export function ResponseBlock({
   const trainingAttempts = useMemo(() => config?.trainingAttempts ?? studyConfig.uiConfig.trainingAttempts ?? 2, [config, studyConfig]);
   const autoAdvanceTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const autoAdvanceTimerOwnerRef = useRef<{ identifier: string; responseId: string; location: ResponseBlockLocation } | undefined>(undefined);
+  const autoAdvanceIdentifierRef = useRef(identifier);
   const autoAdvanceTriggeredRef = useRef(false);
   const pendingAutoAdvanceAttemptRef = useRef<number | null>(null);
   const autoAdvanceContinuationDueAtRef = useRef<number | null>(null);
+  const autoAdvanceContinuationOwnerRef = useRef<string | null>(null);
+  const setAutoAdvanceContinuationDueAt = useCallback((dueAt: number | null, responseId?: string) => {
+    autoAdvanceContinuationDueAtRef.current = dueAt;
+    if (dueAt === null) {
+      storeDispatch(clearButtonAutoAdvanceContinuationOwner(identifier));
+      autoAdvanceContinuationOwnerRef.current = null;
+    } else if (responseId) {
+      storeDispatch(setButtonAutoAdvanceContinuationOwner({
+        identifier,
+        responseId,
+        location,
+        dueAt,
+      }));
+      autoAdvanceContinuationOwnerRef.current = responseId;
+    }
+  }, [clearButtonAutoAdvanceContinuationOwner, identifier, location, setButtonAutoAdvanceContinuationOwner, storeDispatch]);
   const restoredContinuationStartedRef = useRef<string | null>(null);
   const [autoAdvanceGradeFailed, setAutoAdvanceGradeFailed] = useState(false);
   const autoAdvanceActionRef = useRef<() => void>(() => {});
@@ -230,12 +249,44 @@ export function ResponseBlock({
   useEffect(() => () => {
     if (autoAdvanceTimerRef.current) clearTimeout(autoAdvanceTimerRef.current);
     const timerOwner = autoAdvanceTimerOwnerRef.current;
+    const continuationOwner = autoAdvanceContinuationOwnerRef.current;
     autoAdvanceTimerRef.current = undefined;
     autoAdvanceTimerOwnerRef.current = undefined;
+    autoAdvanceContinuationDueAtRef.current = null;
     if (timerOwner?.identifier === identifier && timerOwner.location === location) {
       storeDispatch(clearButtonAutoAdvancePending(timerOwner.identifier));
     }
-  }, [clearButtonAutoAdvancePending, identifier, location, storeDispatch]);
+    if (continuationOwner) storeDispatch(clearButtonAutoAdvanceContinuationOwner(identifier));
+  }, [clearButtonAutoAdvanceContinuationOwner, clearButtonAutoAdvancePending, identifier, location, storeDispatch]);
+  useEffect(() => {
+    if (autoAdvanceIdentifierRef.current === identifier) return;
+    const previousIdentifier = autoAdvanceIdentifierRef.current;
+    autoAdvanceIdentifierRef.current = identifier;
+    storeDispatch(clearButtonAutoAdvanceContinuationOwner(previousIdentifier));
+    autoAdvanceTriggeredRef.current = false;
+    pendingAutoAdvanceAttemptRef.current = null;
+    autoAdvanceContinuationDueAtRef.current = null;
+    restoredContinuationStartedRef.current = null;
+    restoredAutoAdvanceResponseIdRef.current = null;
+    setAutoAdvanceGradeFailed(false);
+  }, [clearButtonAutoAdvanceContinuationOwner, identifier, storeDispatch]);
+  useEffect(() => {
+    const owner = buttonAutoAdvanceContinuationOwner;
+    if (owner?.location === location) {
+      autoAdvanceContinuationOwnerRef.current = owner.responseId;
+      if (autoAdvanceContinuationDueAtRef.current === null) {
+        autoAdvanceContinuationDueAtRef.current = owner.dueAt;
+      }
+      return;
+    }
+    if (autoAdvanceContinuationOwnerRef.current !== null) {
+      autoAdvanceContinuationDueAtRef.current = null;
+      if (autoAdvanceTimerRef.current) clearTimeout(autoAdvanceTimerRef.current);
+      autoAdvanceTimerRef.current = undefined;
+      autoAdvanceTimerOwnerRef.current = undefined;
+    }
+    autoAdvanceContinuationOwnerRef.current = null;
+  }, [buttonAutoAdvanceContinuationOwner, location]);
   const savedSubmitAttempt = storedAnswerData?.responseSubmitAttempted ?? status?.responseSubmitAttempted ?? false;
   const currentSubmitAttempt = useStoreSelector((state) => state.responseSubmitAttempted[identifier]);
   const liveErrors = currentSubmitAttempt ?? savedSubmitAttempt;
@@ -381,7 +432,32 @@ export function ResponseBlock({
   }, {}, config.correctAnswer, persistedVisibilityScores, globalStore);
   const applicableResponses = allResponsesWithDefaults.filter((response) => visibleIds.has(response.id));
   const autoAdvanceButtonsEnabled = applicableResponses.some((response) => !response.hidden && response.type === 'buttons' && response.autoAdvanceToNextStep);
-  const selectedButtonResponseIds = new Set([...(buttonSelectionIds ?? []), ...selectedButtonResponses]);
+  const selectedButtonResponseIds = useMemo(
+    () => new Set([...(buttonSelectionIds ?? []), ...selectedButtonResponses]),
+    [buttonSelectionIds, selectedButtonResponses],
+  );
+  const hasUnansweredOptionalAutoAdvanceButton = applicableResponses.some((response) => (
+    !response.hidden
+    && response.type === 'buttons'
+    && response.autoAdvanceToNextStep
+    && response.required === false
+    && !selectedButtonResponseIds.has(response.id)
+  ));
+  const hasPendingAutoAdvance = !!buttonAutoAdvancePending || !!buttonAutoAdvanceContinuationOwner;
+  const hideNextForAutoAdvance = autoAdvanceButtonsEnabled
+    && !config.showNextButtonOnAutoAdvance
+    && (!hasUnansweredOptionalAutoAdvanceButton || hasPendingAutoAdvance);
+  useEffect(() => {
+    if (!buttonAutoAdvanceContinuationOwner) return;
+    const response = allResponsesWithDefaults.find((candidate) => candidate.id === buttonAutoAdvanceContinuationOwner.responseId);
+    if (!response || response.type !== 'buttons') return;
+    const responseLocation = response.location ?? 'belowStimulus';
+    if (!trialValidation[identifier]?.[responseLocation]?.initialized) return;
+    const value = combinedValues[response.id];
+    if ((value === undefined || value === '') && combinedValues[`${response.id}-dontKnow`] !== true) {
+      setAutoAdvanceContinuationDueAt(null);
+    }
+  }, [allResponsesWithDefaults, buttonAutoAdvanceContinuationOwner, combinedValues, identifier, setAutoAdvanceContinuationDueAt, trialValidation]);
   const hasLockedAutoAdvanceSelection = applicableResponses.some((response) => (
     response.type === 'buttons'
     && response.autoAdvanceToNextStep
@@ -472,13 +548,16 @@ export function ResponseBlock({
     const hiddenIds = new Set(hiddenSelections.map((response) => response.id));
     setSelectedButtonResponses((previous) => previous.filter((id) => !hiddenIds.has(id)));
     hiddenSelections.forEach((response) => storeDispatch(setButtonSelection({ identifier, responseId: response.id, selected: false })));
+    if (buttonAutoAdvanceContinuationOwner && hiddenIds.has(buttonAutoAdvanceContinuationOwner.responseId)) {
+      setAutoAdvanceContinuationDueAt(null);
+    }
     if (buttonAutoAdvancePending && hiddenIds.has(buttonAutoAdvancePending.responseId)) {
       if (autoAdvanceTimerRef.current) clearTimeout(autoAdvanceTimerRef.current);
       autoAdvanceTimerRef.current = undefined;
       autoAdvanceTimerOwnerRef.current = undefined;
       storeDispatch(clearButtonAutoAdvancePending(identifier));
     }
-  }, [responses, visibleIds, answerValidator.values, buttonSelectionIds, selectedButtonResponses, buttonAutoAdvancePending, identifier, storeDispatch, setButtonSelection, clearButtonAutoAdvancePending]);
+  }, [responses, visibleIds, answerValidator.values, buttonSelectionIds, selectedButtonResponses, buttonAutoAdvanceContinuationOwner, buttonAutoAdvancePending, identifier, setAutoAdvanceContinuationDueAt, storeDispatch, setButtonSelection, clearButtonAutoAdvancePending]);
   useEffect(() => {
     if (isAnalysis) return;
     const hiddenIds = responses.filter((response) => response.visibleIf && !visibleIds.has(response.id))
@@ -602,16 +681,32 @@ export function ResponseBlock({
 
   const trackInputChange = useCallback((responseId: string, value: unknown, source: 'keyboard' | 'click' = 'click') => {
     lastInteractionSourceRef.current = source;
-    restoredAutoAdvanceResponseIdRef.current = null;
     const targetValue = typeof value === 'object' && value !== null && 'target' in value && value.target && typeof value.target === 'object' && 'value' in value.target
       ? value.target.value
       : value;
     answerValidator.setFieldValue(responseId, targetValue as never);
     const response = allResponses.find((candidate) => candidate.id === responseId);
-    if (response?.type === 'buttons' && targetValue && autoAdvanceContinuationDueAtRef.current !== null) {
-      autoAdvanceContinuationDueAtRef.current = null;
+    const ownsRestoredContinuation = restoredAutoAdvanceResponseIdRef.current === responseId;
+    const ownsPendingSelection = buttonAutoAdvancePending?.responseId === responseId;
+    const ownsContinuation = buttonAutoAdvanceContinuationOwner?.responseId === responseId;
+    const replacesContinuation = response?.type === 'buttons'
+      && response.autoAdvanceToNextStep
+      && !!targetValue
+      && !!buttonAutoAdvanceContinuationOwner
+      && !ownsContinuation;
+    const ownsContinuationTimer = (ownsContinuation || replacesContinuation)
+      && buttonAutoAdvanceContinuationOwner?.location === location;
+    const ownsSelectionTimer = autoAdvanceTimerOwnerRef.current?.identifier === identifier
+      && autoAdvanceTimerOwnerRef.current.responseId === responseId
+      && autoAdvanceTimerOwnerRef.current.location === location;
+    if (ownsRestoredContinuation || ownsContinuation || replacesContinuation) {
+      restoredAutoAdvanceResponseIdRef.current = null;
+      setAutoAdvanceContinuationDueAt(null);
+    }
+    if (ownsContinuationTimer || ownsSelectionTimer) {
       if (autoAdvanceTimerRef.current) clearTimeout(autoAdvanceTimerRef.current);
       autoAdvanceTimerRef.current = undefined;
+      autoAdvanceTimerOwnerRef.current = undefined;
     }
     if (response?.type === 'buttons') {
       const isDontKnowSelection = pendingDontKnowSelectionRef.current === responseId;
@@ -623,7 +718,6 @@ export function ResponseBlock({
       storeDispatch(setButtonSelection({ identifier, responseId, selected }));
 
       if (response.autoAdvanceToNextStep) {
-        const ownsPendingSelection = buttonAutoAdvancePending?.responseId === responseId;
         if (selected || ownsPendingSelection) {
           if (autoAdvanceTimerRef.current) clearTimeout(autoAdvanceTimerRef.current);
           autoAdvanceTimerRef.current = undefined;
@@ -643,7 +737,7 @@ export function ResponseBlock({
         }
       }
     }
-  }, [allResponses, answerValidator, buttonAutoAdvancePending, clearButtonAutoAdvancePending, identifier, location, setButtonAutoAdvancePending, setButtonSelection, storeDispatch]);
+  }, [allResponses, answerValidator, buttonAutoAdvanceContinuationOwner, buttonAutoAdvancePending, clearButtonAutoAdvancePending, identifier, location, setAutoAdvanceContinuationDueAt, setButtonAutoAdvancePending, setButtonSelection, storeDispatch]);
   const revealResponseErrors = useCallback(() => {
     storeDispatch(setResponseSubmitAttempt({ identifier, attempted: true }));
     answerValidator.validate();
@@ -965,16 +1059,38 @@ export function ResponseBlock({
 
   const checkAnswerManually = useCallback(() => {
     if (usedAllAttempts || pendingAutoAdvanceAttemptRef.current !== null || autoAdvanceContinuationDueAtRef.current !== null) return;
+    if (autoAdvanceButtonsEnabled && applicableResponses.some((response) => (
+      response.type === 'buttons'
+      && !response.hidden
+      && response.autoAdvanceToNextStep
+      && response.required !== false
+      && !selectedButtonResponseIds.has(response.id)
+    ))) {
+      if (hasStimulusIssue) revealStimulusErrors();
+      else if (hasResponseIssues) revealResponseErrors();
+      return;
+    }
     if (!checkAnswerProvideFeedback() || !autoAdvanceButtonsEnabled) return;
+    const selectedAutoAdvanceResponse = applicableResponses.find((response) => (
+      response.type === 'buttons'
+      && !response.hidden
+      && response.autoAdvanceToNextStep
+      && selectedButtonResponseIds.has(response.id)
+    ));
+    const pendingResponseId = buttonAutoAdvancePending
+      && selectedButtonResponseIds.has(buttonAutoAdvancePending.responseId)
+      ? buttonAutoAdvancePending.responseId
+      : selectedAutoAdvanceResponse?.id;
     setAutoAdvanceGradeFailed(false);
-    autoAdvanceContinuationDueAtRef.current = buttonAutoAdvancePending?.dueAt ?? Date.now();
+    if (!pendingResponseId) return;
+    setAutoAdvanceContinuationDueAt(buttonAutoAdvancePending?.dueAt ?? Date.now(), pendingResponseId);
     pendingAutoAdvanceAttemptRef.current = attemptsUsed;
     autoAdvanceTriggeredRef.current = true;
     if (autoAdvanceTimerRef.current) clearTimeout(autoAdvanceTimerRef.current);
     autoAdvanceTimerRef.current = undefined;
     autoAdvanceTimerOwnerRef.current = undefined;
     if (buttonAutoAdvancePending) storeDispatch(clearButtonAutoAdvancePending(identifier));
-  }, [attemptsUsed, autoAdvanceButtonsEnabled, buttonAutoAdvancePending, checkAnswerProvideFeedback, clearButtonAutoAdvancePending, identifier, storeDispatch, usedAllAttempts]);
+  }, [applicableResponses, attemptsUsed, autoAdvanceButtonsEnabled, buttonAutoAdvancePending, checkAnswerProvideFeedback, clearButtonAutoAdvancePending, hasResponseIssues, hasStimulusIssue, identifier, revealResponseErrors, revealStimulusErrors, selectedButtonResponseIds, setAutoAdvanceContinuationDueAt, storeDispatch, usedAllAttempts]);
 
   const nextButtonText = useMemo(() => config?.nextButtonText ?? studyConfig.uiConfig.nextButtonText ?? 'Next', [config, studyConfig]);
 
@@ -1052,12 +1168,18 @@ export function ResponseBlock({
     }
 
     if (bypassValidationForFailedTraining || !hasResponseIssues) {
+      if (buttonAutoAdvanceContinuationOwner) {
+        setAutoAdvanceContinuationDueAt(null);
+        if (autoAdvanceTimerRef.current) clearTimeout(autoAdvanceTimerRef.current);
+        autoAdvanceTimerRef.current = undefined;
+        autoAdvanceTimerOwnerRef.current = undefined;
+      }
       goToNextStep(true, enforceTimeRestrictions);
       return;
     }
 
     revealResponseErrors();
-  }, [bypassValidationForFailedTraining, goToNextStep, hasResponseIssues, hasStimulusIssue, revealResponseErrors, revealStimulusErrors]);
+  }, [bypassValidationForFailedTraining, buttonAutoAdvanceContinuationOwner, goToNextStep, hasResponseIssues, hasStimulusIssue, revealResponseErrors, revealStimulusErrors, setAutoAdvanceContinuationDueAt]);
 
   autoAdvanceContinuationRef.current = () => {
     const dueAt = autoAdvanceContinuationDueAtRef.current;
@@ -1083,23 +1205,23 @@ export function ResponseBlock({
     );
     if (checkedAnswers && !isEqual(checkedAnswers, currentAnswerSnapshot)) {
       if (buttonAutoAdvancePending) {
-        autoAdvanceContinuationDueAtRef.current = null;
+        setAutoAdvanceContinuationDueAt(null);
         return;
       }
       if (usedAllAttempts) {
         if (allowFailedTraining) {
-          autoAdvanceContinuationDueAtRef.current = null;
+          setAutoAdvanceContinuationDueAt(null);
           handleNextClick(true);
         }
         return;
       }
       pendingAutoAdvanceAttemptRef.current = attemptsUsed;
       if (checkAnswerProvideFeedback()) {
-        autoAdvanceContinuationDueAtRef.current = null;
+        setAutoAdvanceContinuationDueAt(null);
         setAutoAdvanceGradeFailed(false);
       } else {
         pendingAutoAdvanceAttemptRef.current = null;
-        autoAdvanceContinuationDueAtRef.current = null;
+        setAutoAdvanceContinuationDueAt(null);
         setAutoAdvanceGradeFailed(true);
       }
       return;
@@ -1108,7 +1230,7 @@ export function ResponseBlock({
       handleNextClick(true);
       return;
     }
-    autoAdvanceContinuationDueAtRef.current = null;
+    setAutoAdvanceContinuationDueAt(null);
     if (timing.eligible) handleNextClick(true);
   };
   useEffect(() => {
@@ -1173,7 +1295,8 @@ export function ResponseBlock({
     if (alreadyChecked) {
       storeDispatch(clearButtonAutoAdvancePending(identifier));
       if (canContinueAfterFeedback) {
-        autoAdvanceContinuationDueAtRef.current = buttonAutoAdvancePending?.dueAt ?? Date.now();
+        restoredAutoAdvanceResponseIdRef.current = pendingResponseId ?? null;
+        setAutoAdvanceContinuationDueAt(buttonAutoAdvancePending?.dueAt ?? Date.now(), pendingResponseId);
         autoAdvanceContinuationRef.current();
       }
       return;
@@ -1201,34 +1324,33 @@ export function ResponseBlock({
       storeDispatch(clearButtonAutoAdvancePending(identifier));
       autoAdvanceTimerOwnerRef.current = undefined;
       if (autoAdvanceContinuationDueAtRef.current === null) {
-        autoAdvanceContinuationDueAtRef.current = Date.now();
+        setAutoAdvanceContinuationDueAt(Date.now(), buttonAutoAdvancePending?.responseId);
       }
       autoAdvanceContinuationRef.current();
     } else {
       storeDispatch(clearButtonAutoAdvancePending(identifier));
       autoAdvanceTimerOwnerRef.current = undefined;
-      autoAdvanceContinuationDueAtRef.current = null;
+      setAutoAdvanceContinuationDueAt(null);
     }
-  }, [attemptsUsed, canContinueAfterFeedback, clearButtonAutoAdvancePending, identifier, location, storeDispatch]);
+  }, [attemptsUsed, buttonAutoAdvancePending, canContinueAfterFeedback, clearButtonAutoAdvancePending, identifier, location, setAutoAdvanceContinuationDueAt, storeDispatch]);
 
-  useEffect(() => {
-    autoAdvanceTriggeredRef.current = false;
-    pendingAutoAdvanceAttemptRef.current = null;
-    autoAdvanceContinuationDueAtRef.current = null;
-    restoredContinuationStartedRef.current = null;
-    setAutoAdvanceGradeFailed(false);
-  }, [identifier]);
   useEffect(() => {
     if (isAnalysis || !showBtnsInLocation || !restoredCanContinue || !canContinueAfterFeedback
       || currentCheckAnswer?.attemptsUsed !== restoredCheckAnswer?.attemptsUsed
       || restoredContinuationStartedRef.current === identifier || autoAdvanceTriggeredRef.current) return;
-    const response = applicableResponses.find((candidate) => !candidate.hidden && candidate.type === 'buttons' && candidate.autoAdvanceToNextStep);
+    const response = applicableResponses.find((candidate) => (
+      !candidate.hidden
+      && candidate.type === 'buttons'
+      && candidate.autoAdvanceToNextStep
+      && selectedButtonResponseIds.has(candidate.id)
+    ));
     if (!response || response.type !== 'buttons') return;
     restoredContinuationStartedRef.current = identifier;
+    restoredAutoAdvanceResponseIdRef.current = response.id;
     autoAdvanceTriggeredRef.current = true;
-    autoAdvanceContinuationDueAtRef.current = Date.now() + (response.autoAdvanceDelay ?? 300);
+    setAutoAdvanceContinuationDueAt(Date.now() + (response.autoAdvanceDelay ?? 300), response.id);
     autoAdvanceContinuationRef.current();
-  }, [applicableResponses, canContinueAfterFeedback, currentCheckAnswer, identifier, isAnalysis, restoredCanContinue, restoredCheckAnswer, showBtnsInLocation]);
+  }, [applicableResponses, canContinueAfterFeedback, combinedValues, currentCheckAnswer, identifier, isAnalysis, restoredCanContinue, restoredCheckAnswer, selectedButtonResponseIds, setAutoAdvanceContinuationDueAt, showBtnsInLocation]);
 
   const showLockedTrainingRetry = showBtnsInLocation
     && autoAdvanceButtonsEnabled
@@ -1380,8 +1502,7 @@ export function ResponseBlock({
           config={config}
           location={location}
           onNext={handleNextClick}
-          hideNextButton={autoAdvanceButtonsEnabled
-            && !config.showNextButtonOnAutoAdvance}
+          hideNextButton={hideNextForAutoAdvance}
           onCheckAnswer={!isAnalysis && hasCorrectAnswerFeedback && !disabledAttempts ? checkAnswerManually : undefined}
           checkAnswer={hasCorrectAnswerFeedback && !config.hideCheckAnswerButton ? (
             <Button

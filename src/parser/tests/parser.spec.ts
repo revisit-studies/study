@@ -170,6 +170,21 @@ describe('Study and iframe color mode config parsing', () => {
     expect(singleResponseResult.warnings.some((warning) => warning.category === 'response-validation')).toBe(false);
   });
 
+  test('does not warn when the only auto-advancing button is hidden', async () => {
+    const config = JSON.parse(JSON.stringify(makeStudyConfig())) as StudyConfig;
+    config.components.question.response = [
+      {
+        id: 'hidden-choice', prompt: 'Hidden choice', type: 'buttons', options: ['A', 'B'], hidden: true, autoAdvanceToNextStep: true,
+      },
+      { id: 'text-one', prompt: 'First question', type: 'shortText' },
+      { id: 'text-two', prompt: 'Second question', type: 'shortText' },
+    ];
+
+    const result = await parseStudyConfig(JSON.stringify(config));
+    expect(result.warnings.some((warning) => warning.category === 'response-validation'
+      && warning.instancePath === '/components/question/response')).toBe(false);
+  });
+
   test('test-keymapping includes a one-attempt auto-advancing math quiz', async () => {
     const config = readFileSync('public/test-keymapping/config.json', 'utf8');
     const result = await parseStudyConfig(config);

@@ -188,6 +188,7 @@ export async function studyStoreCreator(
     trialValidation: Object.keys(answers).length > 0 ? allValid : emptyValidation,
     responseSubmitAttempted: {},
     buttonAutoAdvancePending: {},
+    buttonAutoAdvanceContinuationOwner: {},
     buttonSelectionIds: {},
     stimulusSubmitAttempted: {},
     checkAnswer: {},
@@ -250,6 +251,7 @@ export async function studyStoreCreator(
           delete state.responseSubmitAttempted[id];
           delete state.stimulusSubmitAttempted[id];
           delete state.buttonAutoAdvancePending[id];
+          delete state.buttonAutoAdvanceContinuationOwner[id];
           delete state.buttonSelectionIds[id];
           const validation = state.trialValidation[id];
           if (validation) {
@@ -380,6 +382,12 @@ export async function studyStoreCreator(
       },
       clearButtonAutoAdvancePending: (state, { payload }: PayloadAction<string>) => {
         delete state.buttonAutoAdvancePending[payload];
+      },
+      setButtonAutoAdvanceContinuationOwner: (state, { payload }: PayloadAction<{ identifier: string; responseId: string; location: ResponseBlockLocation; dueAt: number }>) => {
+        state.buttonAutoAdvanceContinuationOwner[payload.identifier] = { responseId: payload.responseId, location: payload.location, dueAt: payload.dueAt };
+      },
+      clearButtonAutoAdvanceContinuationOwner: (state, { payload }: PayloadAction<string>) => {
+        delete state.buttonAutoAdvanceContinuationOwner[payload];
       },
       setButtonSelection: (state, { payload }: PayloadAction<{ identifier: string; responseId: string; selected: boolean }>) => {
         const selectedIds = new Set(state.buttonSelectionIds[payload.identifier] ?? []);
@@ -596,6 +604,11 @@ export async function studyStoreCreator(
         Object.keys(state.buttonAutoAdvancePending).forEach((key) => {
           if (matchesDeletedIteration(key)) {
             delete state.buttonAutoAdvancePending[key];
+          }
+        });
+        Object.keys(state.buttonAutoAdvanceContinuationOwner).forEach((key) => {
+          if (matchesDeletedIteration(key)) {
+            delete state.buttonAutoAdvanceContinuationOwner[key];
           }
         });
         Object.keys(state.buttonSelectionIds).forEach((key) => {

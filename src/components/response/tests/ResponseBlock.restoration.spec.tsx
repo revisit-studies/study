@@ -129,25 +129,41 @@ async function restoreLockedAutoAdvance(
   checkAnswer?: StoredAnswer['checkAnswer'],
   expectedAnswer = 'A',
   withDontKnow = false,
-  options: { allowResponseChange?: boolean; selectedButtonResponses?: string[]; autoAdvanceDelay?: number; trainingAttempts?: number; allowFailedTraining?: boolean; nextHasPreviousButton?: boolean; choiceLocation?: 'aboveStimulus' | 'belowStimulus'; includeText?: boolean; initialChoice?: string } = {},
+  options: { allowResponseChange?: boolean; selectedButtonResponses?: string[]; autoAdvanceDelay?: number; trainingAttempts?: number; allowFailedTraining?: boolean; nextHasPreviousButton?: boolean; choiceLocation?: 'aboveStimulus' | 'belowStimulus'; includeText?: boolean; includeOptionalAutoAdvance?: boolean; optionalAutoAdvanceFirst?: boolean; optionalAutoAdvanceDefault?: boolean; includeOtherButton?: boolean; choiceRequired?: boolean; initialChoice?: string } = {},
 ) {
+  const optionalAutoAdvanceResponse = {
+    id: 'optional',
+    type: 'buttons' as const,
+    prompt: 'Optional choice',
+    options: ['X', 'Y'],
+    required: false,
+    autoAdvanceToNextStep: true,
+    ...(options.optionalAutoAdvanceDefault ? { default: 'X' } : {}),
+  };
   const autoAdvanceComponent: IndividualComponent = {
     type: 'questionnaire',
     provideFeedback: true,
     trainingAttempts: options.trainingAttempts,
     allowFailedTraining: options.allowFailedTraining,
-    response: [{
+    response: [...(options.includeOptionalAutoAdvance && options.optionalAutoAdvanceFirst ? [optionalAutoAdvanceResponse] : []), {
       id: 'choice',
       type: 'buttons',
       prompt: 'Choose',
       options: ['A', 'B'],
+      required: options.choiceRequired,
       default: 'A',
       ...(withDontKnow ? { withDontKnow: true } : {}),
       autoAdvanceToNextStep: true,
       autoAdvanceDelay: options.autoAdvanceDelay ?? 10,
       allowResponseChange: options.allowResponseChange ?? false,
       location: options.choiceLocation ?? 'belowStimulus',
-    }, ...(options.includeText ? [{ id: 'note', type: 'shortText' as const, prompt: 'Note' }] : [])],
+    }, ...(options.includeOptionalAutoAdvance && !options.optionalAutoAdvanceFirst ? [optionalAutoAdvanceResponse] : []), ...(options.includeOtherButton ? [{
+      id: 'other',
+      type: 'buttons' as const,
+      prompt: 'Other choice',
+      options: ['X', 'Y'],
+      required: false,
+    }] : []), ...(options.includeText ? [{ id: 'note', type: 'shortText' as const, prompt: 'Note' }] : [])],
     correctAnswer: [{ id: 'choice', answer: expectedAnswer }, ...(options.includeText ? [{ id: 'note', answer: 'good' }] : [])],
   };
   const choiceForm = initializeTrrack({
@@ -183,22 +199,28 @@ async function restoreLockedAutoAdvance(
     false,
     false,
   );
-  render(
-    <Provider store={studyStore.store}>
-      <StudyStoreContext.Provider value={studyStore}>
-        <MantineProvider>
-          <WindowEventsContext.Provider value={{ current: [] }}>
-            <TrialProvenanceBoundary>
-              {options.choiceLocation === 'aboveStimulus' && <ResponseBlock config={autoAdvanceComponent} location="aboveStimulus" status={status} />}
-              <ResponseBlock config={autoAdvanceComponent} location="belowStimulus" status={status} />
-            </TrialProvenanceBoundary>
-          </WindowEventsContext.Provider>
-        </MantineProvider>
-      </StudyStoreContext.Provider>
-    </Provider>,
-  );
+  let unmount = () => {};
+  const mount = () => {
+    const view = render(
+      <Provider store={studyStore.store}>
+        <StudyStoreContext.Provider value={studyStore}>
+          <MantineProvider>
+            <WindowEventsContext.Provider value={{ current: [] }}>
+              <TrialProvenanceBoundary>
+                {options.choiceLocation === 'aboveStimulus' && <ResponseBlock config={autoAdvanceComponent} location="aboveStimulus" status={status} />}
+                <ResponseBlock config={autoAdvanceComponent} location="belowStimulus" status={status} />
+              </TrialProvenanceBoundary>
+            </WindowEventsContext.Provider>
+          </MantineProvider>
+        </StudyStoreContext.Provider>
+      </Provider>,
+    );
+    const { unmount: unmountView } = view;
+    unmount = unmountView;
+  };
+  mount();
 
-  return studyStore;
+  return Object.assign(studyStore, { unmount: () => unmount(), remount: mount });
 }
 
 test('rearms auto-advance for a restored locked button selection without showing Next', async () => {
@@ -219,6 +241,96 @@ test('resubmits a restored correct locked response without consuming another tra
   });
   await waitFor(() => expect(navigate).toHaveBeenCalledTimes(1));
   expect(store.store.getState().checkAnswer.trial_0?.attemptsUsed).toBe(1);
+});
+
+test('keeps Next hidden during a restored feedback delay with another unanswered optional auto-advance response', async () => {
+  const store = await restoreLockedAutoAdvance({
+    attemptsUsed: 1,
+    correct: true,
+    responses: { choice: true },
+    checkedAnswers: { choice: 'A' },
+  }, 'A', false, { autoAdvanceDelay: 500, includeOptionalAutoAdvance: true, optionalAutoAdvanceFirst: true });
+
+  await waitFor(() => expect(store.store.getState().buttonAutoAdvanceContinuationOwner.trial_0?.responseId).toBe('choice'));
+  await waitFor(() => expect(screen.getByTestId('restoration-next').getAttribute('data-hidden')).toBe('true'));
+  expect(navigate).not.toHaveBeenCalled();
+  await waitFor(() => expect(navigate).toHaveBeenCalledTimes(1));
+});
+
+test('cancels a restored continuation when its optional answer is cleared in another response location', async () => {
+  vi.useFakeTimers({ shouldAdvanceTime: true });
+  const store = await restoreLockedAutoAdvance({
+    attemptsUsed: 1,
+    correct: true,
+    responses: { choice: true },
+    checkedAnswers: { choice: 'A' },
+  }, 'A', false, {
+    allowResponseChange: true,
+    autoAdvanceDelay: 5000,
+    choiceRequired: false,
+    includeOptionalAutoAdvance: true,
+    optionalAutoAdvanceFirst: true,
+    optionalAutoAdvanceDefault: true,
+    nextHasPreviousButton: true,
+    choiceLocation: 'aboveStimulus',
+  });
+
+  await waitFor(() => expect(store.store.getState().buttonAutoAdvanceContinuationOwner.trial_0).toMatchObject({
+    responseId: 'choice',
+    location: 'belowStimulus',
+  }));
+  await act(async () => {
+    store.store.dispatch(store.actions.setButtonSelection({ identifier: 'trial_0', responseId: 'choice', selected: false }));
+    store.store.dispatch(store.actions.updateResponseBlockValidation({
+      identifier: 'trial_0', location: 'aboveStimulus', status: true, values: { choice: '' }, replaceValues: true,
+    }));
+  });
+  await waitFor(() => expect(store.store.getState().buttonAutoAdvanceContinuationOwner.trial_0).toBeUndefined());
+  await act(async () => { await vi.advanceTimersByTimeAsync(5000); });
+
+  expect(navigate).not.toHaveBeenCalled();
+});
+
+test('restarts the restored continuation delay after unmount and Previous-style remount', async () => {
+  vi.useFakeTimers();
+  vi.setSystemTime(0);
+  const store = await restoreLockedAutoAdvance({
+    attemptsUsed: 1,
+    correct: true,
+    responses: { choice: true },
+    checkedAnswers: { choice: 'A' },
+  }, 'A', false, { autoAdvanceDelay: 5000 });
+
+  expect(store.store.getState().buttonAutoAdvanceContinuationOwner.trial_0).toBeDefined();
+  expect(navigate).not.toHaveBeenCalled();
+  await act(async () => { store.unmount(); });
+  expect(store.store.getState().buttonAutoAdvanceContinuationOwner.trial_0).toBeUndefined();
+
+  await act(async () => { store.remount(); });
+  expect(store.store.getState().buttonAutoAdvanceContinuationOwner.trial_0?.dueAt).toBeGreaterThan(Date.now());
+  await act(async () => { await vi.advanceTimersByTimeAsync(4999); });
+  expect(navigate).not.toHaveBeenCalled();
+  await act(async () => { await vi.advanceTimersByTimeAsync(1); });
+  expect(navigate).toHaveBeenCalledTimes(1);
+});
+
+test('keeps restored auto-advance running when a different non-auto-advance button changes', async () => {
+  vi.useFakeTimers({ shouldAdvanceTime: true });
+  await restoreLockedAutoAdvance({
+    attemptsUsed: 1,
+    correct: true,
+    responses: { choice: true },
+    checkedAnswers: { choice: 'A', other: '' },
+  }, 'A', false, {
+    allowResponseChange: true,
+    autoAdvanceDelay: 250,
+    includeOtherButton: true,
+  });
+
+  fireEvent.click(screen.getByRole('radio', { name: 'Y' }));
+  await act(async () => { await vi.advanceTimersByTimeAsync(250); });
+
+  expect(navigate).toHaveBeenCalledTimes(1);
 });
 
 test('continues a restored correct response when response changes were allowed', async () => {
@@ -376,14 +488,15 @@ test('does not advance an exhausted incorrect response when failed training is d
   expect(navigate).not.toHaveBeenCalled();
 });
 
-test('continues a restored graded default answer without a recorded button selection', async () => {
+test('does not continue a restored default answer without a recorded button selection', async () => {
   const store = await restoreLockedAutoAdvance({
     attemptsUsed: 1,
     correct: true,
     responses: { choice: true },
     checkedAnswers: { choice: 'A' },
   }, 'A', false, { allowResponseChange: true, selectedButtonResponses: [] });
-  await waitFor(() => expect(navigate).toHaveBeenCalledTimes(1));
+  await waitFor(() => expect(store.store.getState().buttonAutoAdvanceContinuationOwner.trial_0).toBeUndefined());
+  expect(navigate).not.toHaveBeenCalled();
   expect(store.store.getState().checkAnswer.trial_0?.attemptsUsed).toBe(1);
 });
 

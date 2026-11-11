@@ -45,7 +45,7 @@
     "auto-advance-change": {
       "type": "questionnaire",
       "previousButton": true,
-      "instruction": "Press A, B, or C. You can change your answer during the three-second delay; each change restarts it. To test a pending delay, select an option and immediately click Previous. Return with Next: your draft answer is retained and Next is available so you can continue.",
+      "instruction": "Press A, B, or C. You can change your answer during the three-second delay; each change restarts it. To test a pending delay, select an option and immediately click Previous. When you return, your draft answer is retained, but Next stays hidden. Select an option again to restart the delay.",
       "response": [
         {
           "id": "change-response",

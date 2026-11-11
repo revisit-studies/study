@@ -312,6 +312,7 @@ export interface StoreState {
   trialValidation: TrialValidation;
   responseSubmitAttempted: Record<string, boolean>;
   buttonAutoAdvancePending: Record<string, { responseId: string; dueAt: number } | undefined>;
+  buttonAutoAdvanceContinuationOwner: Record<string, { responseId: string; location: ResponseBlockLocation; dueAt: number } | undefined>;
   buttonSelectionIds: Record<string, string[] | undefined>;
   stimulusSubmitAttempted: Record<string, boolean>;
   checkAnswer: Record<string, CheckAnswerState>;

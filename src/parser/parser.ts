@@ -531,7 +531,9 @@ function verifyStudyConfig(studyConfig: StudyConfig, importedLibrariesData: Reco
   Object.entries(studyConfig.components).forEach(([componentName, component]) => {
     const mergedComponent = studyComponentToIndividualComponent(component, studyConfig);
     const componentResponses = mergedComponent.response ?? [];
-    const autoAdvancingButtons = componentResponses.some((response) => response.type === 'buttons' && response.autoAdvanceToNextStep);
+    const autoAdvancingButtons = componentResponses.some((response) => (
+      response.type === 'buttons' && !response.hidden && response.autoAdvanceToNextStep
+    ));
     const answerableResponses = componentResponses.filter((response) => response.type !== 'textOnly' && response.type !== 'divider' && !response.hidden);
     if (autoAdvancingButtons && answerableResponses.length > 1) {
       warnings.push({
