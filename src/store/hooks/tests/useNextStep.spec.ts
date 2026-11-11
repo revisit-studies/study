@@ -1,6 +1,6 @@
 import { renderHook, act } from '@testing-library/react';
 import {
-  beforeEach, describe, expect, test, vi,
+  afterEach, beforeEach, describe, expect, test, vi,
 } from 'vitest';
 import type { Response, StudyConfig } from '../../../parser/types';
 import type {
@@ -234,6 +234,8 @@ describe('getSkipConditionCorrectAnswers', () => {
 // ── useNextStep hook tests ──────────────────────────────────────────────────
 
 describe('useNextStep', () => {
+  afterEach(() => { vi.useRealTimers(); });
+
   beforeEach(() => {
     vi.clearAllMocks();
     mockCurrentStep = 0;
@@ -265,6 +267,25 @@ describe('useNextStep', () => {
   test('isNextDisabled is false when step is a number, not analysis, and responses are valid', () => {
     const { result } = renderHook(() => useNextStep());
     expect(result.current.isNextDisabled).toBe(false);
+  });
+
+  test('enforces component time restrictions for normal submissions without global variables', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(0));
+    mockStudyConfig = makeStudyConfig({ uiConfig: { nextButtonEnableTime: 1000, nextButtonDisableTime: 2000 } });
+    const { result } = renderHook(() => useNextStep());
+
+    await act(async () => { await result.current.goToNextStep(true, true); });
+    expect(mockNavigate).not.toHaveBeenCalled();
+
+    vi.setSystemTime(new Date(1000));
+    await act(async () => { await result.current.goToNextStep(true, true); });
+    expect(mockNavigate).toHaveBeenCalledTimes(1);
+
+    mockNavigate.mockClear();
+    vi.setSystemTime(new Date(2001));
+    await act(async () => { await result.current.goToNextStep(true, true); });
+    expect(mockNavigate).not.toHaveBeenCalled();
   });
 
   test.each<{ status: AssetStatus | undefined; disabled: boolean }>([

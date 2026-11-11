@@ -8,7 +8,7 @@ import {
   afterEach, beforeEach, describe, expect, test, vi,
 } from 'vitest';
 import * as FeedbackAlertModule from '../FeedbackAlert';
-import type { IndividualComponent, StudyConfig } from '../../../parser/types';
+import type { IndividualComponent, Response, StudyConfig } from '../../../parser/types';
 import type { CheckAnswerState, Sequence, StoredAnswer } from '../../../store/types';
 import type { REVISIT_MODE } from '../../../storage/engines/types';
 import { studyStoreCreator, StudyStoreContext } from '../../../store/store';
@@ -20,7 +20,7 @@ import type * as HandleComponentInheritanceModule from '../../../utils/handleCom
 // ── mocks ────────────────────────────────────────────────────────────────────
 
 const {
-  mockStoredAnswerData, capturedNextButtonProps, capturedSwitcherProps, mockIsAnalysis, mockCurrentIdentifier, mockNavigate, mockSaveAnswers, mockTrrackApply, mockAnswerField, mockCustomResponseModule, mockShowNotification, mockAllowFailedTraining, mockProvideFeedback,
+  mockStoredAnswerData, capturedNextButtonProps, capturedSwitcherProps, mockIsAnalysis, mockCurrentIdentifier, mockNavigate, mockSaveAnswers, mockTrrackApply, mockAnswerField, mockCustomResponseModule, mockShowNotification, mockAllowFailedTraining, mockProvideFeedback, mockNextButtonEnableTime,
 } = vi.hoisted(() => ({
   mockStoredAnswerData: {
     formOrder: { response: ['q1'] } as { response: string[] } | undefined,
@@ -37,12 +37,17 @@ const {
   },
   capturedNextButtonProps: {
     onCheckAnswer: undefined as (() => void) | undefined,
+    onNext: undefined as (() => void) | undefined,
+    hideNextButton: undefined as boolean | undefined,
   },
   capturedSwitcherProps: {
     storedAnswer: undefined as Record<string, unknown> | undefined,
     answerFinalized: undefined as boolean | undefined,
+    buttonSelectionMade: undefined as boolean | undefined,
     matrixRowFeedback: undefined as Record<string, string> | undefined,
     onChange: undefined as ((value: unknown, source?: 'keyboard' | 'click') => void) | undefined,
+    onChanges: {} as Record<string, (value: unknown, source?: 'keyboard' | 'click') => void>,
+    dontKnowOnChange: undefined as ((checked: boolean) => void) | undefined,
     indexes: [] as Array<{
       id: string;
       index: number;
@@ -55,11 +60,13 @@ const {
   mockNavigate: vi.fn(),
   mockAllowFailedTraining: { value: true as boolean | undefined },
   mockProvideFeedback: { value: false as boolean | undefined },
+  mockNextButtonEnableTime: { value: undefined as number | undefined },
   mockSaveAnswers: vi.fn(() => Promise.resolve()),
   mockTrrackApply: vi.fn(),
   mockAnswerField: {
     values: {} as Record<string, unknown>,
     isValid: vi.fn(() => true),
+    validate: vi.fn(),
     setValues: vi.fn(),
     setFieldValue: vi.fn(),
     setInitialValues: vi.fn(),
@@ -106,6 +113,7 @@ vi.mock('@trrack/core', () => ({
   },
   initializeTrrack: vi.fn(() => ({
     apply: mockTrrackApply,
+    importObject: vi.fn(),
     getState: () => ({ form: null }),
     currentChange: vi.fn(() => vi.fn()),
     graph: {
@@ -141,6 +149,7 @@ vi.mock('../../../store/hooks/useStudyConfig', () => ({
   useStudyConfig: vi.fn(() => ({
     uiConfig: {
       nextButtonLocation: 'belowStimulus',
+      nextButtonEnableTime: mockNextButtonEnableTime.value,
       provideFeedback: mockProvideFeedback.value,
       allowFailedTraining: mockAllowFailedTraining.value,
       trainingAttempts: 2,
@@ -173,7 +182,7 @@ vi.mock('../utils', () => ({
   generateInitFields: vi.fn(() => ({})),
   mergeReactiveAnswers: vi.fn((_: unknown, values: unknown) => values),
   useAnswerField: vi.fn(() => mockAnswerField),
-  usesStandaloneDontKnowField: vi.fn(() => false),
+  usesStandaloneDontKnowField: vi.fn((response: { withDontKnow?: boolean }) => !!response.withDontKnow),
 }));
 
 vi.mock('../customResponseModules', async (importOriginal) => ({
@@ -184,21 +193,26 @@ vi.mock('../customResponseModules', async (importOriginal) => ({
 
 vi.mock('../ResponseSwitcher', () => ({
   ResponseSwitcher: ({
-    response, storedAnswer, answerFinalized, index, disabled, isDelayedDisabled, form, matrixRowFeedback,
+    response, storedAnswer, answerFinalized, buttonSelectionMade, index, disabled, isDelayedDisabled, form, dontKnowCheckbox, matrixRowFeedback,
   }: {
     response: { id: string; type: string };
     storedAnswer?: Record<string, unknown>;
     answerFinalized?: boolean;
+    buttonSelectionMade?: boolean;
     matrixRowFeedback?: Record<string, string>;
     index: number;
     disabled?: boolean;
     isDelayedDisabled?: boolean;
     form: { onChange?: (value: unknown, source?: 'keyboard' | 'click') => void };
+    dontKnowCheckbox?: { onChange?: (checked: boolean) => void };
   }) => {
     capturedSwitcherProps.storedAnswer = storedAnswer;
     capturedSwitcherProps.answerFinalized = answerFinalized;
+    capturedSwitcherProps.buttonSelectionMade = buttonSelectionMade;
     capturedSwitcherProps.matrixRowFeedback = matrixRowFeedback;
     capturedSwitcherProps.onChange = form.onChange;
+    capturedSwitcherProps.onChanges[response.id] = form.onChange ?? (() => {});
+    capturedSwitcherProps.dontKnowOnChange = dontKnowCheckbox?.onChange;
     capturedSwitcherProps.indexes.push({
       id: response.id, index, disabled, isDelayedDisabled,
     });
@@ -225,9 +239,11 @@ vi.mock('../FeedbackAlert', async (importOriginal) => ({
 
 vi.mock('../../NextButton', () => ({
   NextButton: ({
-    label, disabled, checkAnswer, onCheckAnswer, onNext,
-  }: { label?: string; disabled?: boolean; checkAnswer?: ReactNode; onCheckAnswer?: () => void; onNext: () => void }) => {
+    label, disabled, checkAnswer, onCheckAnswer, onNext, hideNextButton,
+  }: { label?: string; disabled?: boolean; checkAnswer?: ReactNode; onCheckAnswer?: () => void; onNext: () => void; hideNextButton?: boolean }) => {
     capturedNextButtonProps.onCheckAnswer = onCheckAnswer;
+    capturedNextButtonProps.onNext = onNext;
+    capturedNextButtonProps.hideNextButton = hideNextButton;
     return (
       <div>
         {checkAnswer}
@@ -340,14 +356,20 @@ beforeEach(() => {
   mockStoredAnswerData.responseSubmitAttempted = undefined;
   mockStoredAnswerData.checkAnswer = undefined;
   capturedNextButtonProps.onCheckAnswer = undefined;
+  capturedNextButtonProps.onNext = undefined;
+  capturedNextButtonProps.hideNextButton = undefined;
   capturedSwitcherProps.storedAnswer = undefined;
   capturedSwitcherProps.answerFinalized = undefined;
+  capturedSwitcherProps.buttonSelectionMade = undefined;
   capturedSwitcherProps.matrixRowFeedback = undefined;
   capturedSwitcherProps.onChange = undefined;
+  capturedSwitcherProps.onChanges = {};
+  capturedSwitcherProps.dontKnowOnChange = undefined;
   capturedSwitcherProps.indexes = [];
   mockIsAnalysis.value = false;
   mockAllowFailedTraining.value = true;
   mockProvideFeedback.value = false;
+  mockNextButtonEnableTime.value = undefined;
   mockCurrentIdentifier.value = 'trial1_0';
   mockNavigate.mockClear();
   mockSaveAnswers.mockClear();
@@ -355,14 +377,893 @@ beforeEach(() => {
   mockTrrackApply.mockClear();
   mockCustomResponseModule.value = null;
   mockAnswerField.setFieldValue.mockReset();
+  mockAnswerField.validate.mockReset();
 });
 
 // Unmount between tests so window keydown listeners from prior renders don't leak
-afterEach(() => cleanup());
+afterEach(() => {
+  cleanup();
+  vi.useRealTimers();
+});
 
 // ── ResponseBlock ─────────────────────────────────────────────────────────────
 
 describe('ResponseBlock', () => {
+  test('hides Next for button auto-advance unless the component opts in', async () => {
+    const config: IndividualComponent = {
+      ...baseConfig,
+      response: [{
+        id: 'q1', type: 'buttons', prompt: 'Choose', options: ['A', 'B'], autoAdvanceToNextStep: true,
+      }],
+    };
+    await renderWithStore(<ResponseBlock config={config} location="belowStimulus" />);
+    expect(capturedNextButtonProps.hideNextButton).toBe(true);
+
+    cleanup();
+    await renderWithStore(<ResponseBlock config={{ ...config, showNextButtonOnAutoAdvance: true }} location="belowStimulus" />);
+    expect(capturedNextButtonProps.hideNextButton).toBe(false);
+
+    cleanup();
+    const optionalConfig: IndividualComponent = {
+      ...config,
+      response: [{
+        id: 'q1',
+        type: 'buttons',
+        prompt: 'Choose',
+        options: ['A', 'B'],
+        required: false,
+        autoAdvanceToNextStep: true,
+      }],
+    };
+    const { store: optionalStore, studyStore: optionalStudyStore } = await renderWithStore(
+      <ResponseBlock config={optionalConfig} location="belowStimulus" />,
+    );
+    expect(capturedNextButtonProps.hideNextButton).toBe(false);
+    await act(async () => {
+      optionalStore.dispatch(optionalStudyStore.actions.setButtonSelection({
+        identifier: 'trial1_0', responseId: 'q1', selected: true,
+      }));
+    });
+    expect(capturedNextButtonProps.hideNextButton).toBe(true);
+
+    cleanup();
+    await renderWithStore(
+      <ResponseBlock
+        config={config}
+        location="belowStimulus"
+        status={makeStoredAnswer({ endTime: 123, answer: { q1: 'A' } })}
+      />,
+    );
+    expect(capturedNextButtonProps.hideNextButton).toBe(true);
+
+    cleanup();
+    const { store, studyStore } = await renderWithStore(
+      <ResponseBlock
+        config={{ ...config, response: [{ ...config.response![0], location: 'aboveStimulus' }] }}
+        location="belowStimulus"
+        status={makeStoredAnswer({ endTime: -1, answer: { q1: 'A' } })}
+      />,
+    );
+    await act(async () => {
+      store.dispatch(studyStore.actions.setButtonSelection({ identifier: 'trial1_0', responseId: 'q1', selected: true }));
+    });
+    expect(capturedNextButtonProps.hideNextButton).toBe(true);
+
+    cleanup();
+    await renderWithStore(
+      <ResponseBlock
+        config={{ ...config, response: [{ ...config.response![0], hidden: true } as unknown as Response] }}
+        location="belowStimulus"
+      />,
+    );
+    expect(capturedNextButtonProps.hideNextButton).toBe(false);
+  });
+
+  test('keeps manual Next available for an unanswered optional auto-advance button', async () => {
+    const config: IndividualComponent = {
+      ...baseConfig,
+      response: [{
+        id: 'q1',
+        type: 'buttons',
+        prompt: 'Optional choice',
+        options: ['A', 'B'],
+        required: false,
+        autoAdvanceToNextStep: true,
+      }],
+    };
+    await renderWithStore(<ResponseBlock config={config} location="belowStimulus" />);
+
+    expect(capturedNextButtonProps.hideNextButton).toBe(false);
+    act(() => { capturedNextButtonProps.onNext?.(); });
+    expect(mockNavigate).toHaveBeenCalledTimes(1);
+  });
+
+  test('button auto-advance waits for its delay and reveals existing validation errors', async () => {
+    vi.useFakeTimers();
+    const originalScrollIntoView = HTMLElement.prototype.scrollIntoView;
+    HTMLElement.prototype.scrollIntoView = vi.fn();
+    mockAnswerField.values = {};
+    const config: IndividualComponent = {
+      ...baseConfig,
+      response: [{
+        id: 'q1', type: 'buttons', prompt: 'Choose', options: ['A', 'B'], autoAdvanceToNextStep: true, autoAdvanceDelay: 300,
+      }],
+    };
+    const { store } = await renderWithStore(<ResponseBlock config={config} location="belowStimulus" />);
+    try {
+      act(() => { capturedSwitcherProps.onChange?.('A', 'click'); });
+      await act(async () => { vi.advanceTimersByTime(150); });
+      act(() => { capturedSwitcherProps.onChange?.('B', 'keyboard'); });
+      await act(async () => { vi.advanceTimersByTime(299); });
+      expect(store.getState().responseSubmitAttempted.trial1_0).toBe(false);
+      await act(async () => { vi.advanceTimersByTime(1); });
+
+      expect(store.getState().responseSubmitAttempted.trial1_0).toBe(true);
+      expect(mockAnswerField.validate).toHaveBeenCalledTimes(1);
+    } finally {
+      HTMLElement.prototype.scrollIntoView = originalScrollIntoView;
+      vi.useRealTimers();
+    }
+  });
+
+  test('clearing a different button response preserves the pending selection timer', async () => {
+    vi.useFakeTimers();
+    const originalScrollIntoView = HTMLElement.prototype.scrollIntoView;
+    HTMLElement.prototype.scrollIntoView = vi.fn();
+    mockStoredAnswerData.formOrder = { response: ['q1', 'q2'] };
+    mockAnswerField.values = { q1: 'A', q2: '' };
+    mockAnswerField.setFieldValue.mockImplementation((id: string, value: unknown) => {
+      mockAnswerField.values[id] = value as string;
+    });
+    const config: IndividualComponent = {
+      ...baseConfig,
+      response: [
+        {
+          id: 'q1', type: 'buttons', prompt: 'First', options: ['A', 'B'], autoAdvanceToNextStep: true, autoAdvanceDelay: 300,
+        },
+        {
+          id: 'q2', type: 'buttons', prompt: 'Second', options: ['A', 'B'], autoAdvanceToNextStep: true, autoAdvanceDelay: 300,
+        },
+      ],
+    };
+    const { store } = await renderWithStore(<ResponseBlock config={config} location="belowStimulus" />);
+
+    try {
+      act(() => { capturedSwitcherProps.onChanges.q2('B', 'click'); });
+      act(() => { capturedSwitcherProps.onChanges.q1('', 'click'); });
+      await act(async () => { await vi.advanceTimersByTimeAsync(300); });
+
+      expect(store.getState().responseSubmitAttempted.trial1_0).toBe(true);
+    } finally {
+      HTMLElement.prototype.scrollIntoView = originalScrollIntoView;
+    }
+  });
+
+  test('button auto-advance submits an I do not know answer after its delay', async () => {
+    vi.useFakeTimers();
+    mockAnswerField.values = {};
+    const config: IndividualComponent = {
+      ...baseConfig,
+      response: [{
+        id: 'q1',
+        type: 'buttons',
+        prompt: 'Choose',
+        options: ['A', 'B'],
+        required: false,
+        withDontKnow: true,
+        autoAdvanceToNextStep: true,
+        autoAdvanceDelay: 300,
+      }],
+    };
+    await renderWithStore(<ResponseBlock config={config} location="belowStimulus" />);
+
+    act(() => {
+      capturedSwitcherProps.dontKnowOnChange?.(true);
+      capturedSwitcherProps.onChange?.('', 'click');
+    });
+    await act(async () => { await vi.advanceTimersByTimeAsync(300); });
+
+    expect(mockNavigate).toHaveBeenCalled();
+  });
+
+  test('locks an I do not know button selection when auto-advance is disabled', async () => {
+    const config: IndividualComponent = {
+      ...baseConfig,
+      response: [{
+        id: 'q1',
+        type: 'buttons',
+        prompt: 'Choose',
+        options: ['A', 'B'],
+        withDontKnow: true,
+        allowResponseChange: false,
+      }],
+    };
+    const { store } = await renderWithStore(<ResponseBlock config={config} location="belowStimulus" />);
+
+    act(() => { capturedSwitcherProps.dontKnowOnChange?.(true); });
+    act(() => { capturedSwitcherProps.onChange?.('', 'click'); });
+
+    expect(store.getState().buttonSelectionIds.trial1_0).toContain('q1');
+    expect(capturedSwitcherProps.buttonSelectionMade).toBe(true);
+  });
+
+  test('keeps a pending button selection and retries once Next becomes eligible', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(0);
+    mockNextButtonEnableTime.value = 1000;
+    mockAnswerField.values = { q1: 'A' };
+    const config: IndividualComponent = {
+      ...baseConfig,
+      response: [{
+        id: 'q1',
+        type: 'buttons',
+        prompt: 'Choose',
+        options: ['A', 'B'],
+        autoAdvanceToNextStep: true,
+        autoAdvanceDelay: 300,
+        allowResponseChange: false,
+      }],
+    };
+    await renderWithStore(<ResponseBlock config={config} location="belowStimulus" />);
+
+    act(() => { capturedSwitcherProps.onChange?.('A', 'click'); });
+    await act(async () => { await vi.advanceTimersByTimeAsync(300); });
+    expect(mockNavigate).not.toHaveBeenCalled();
+    expect(capturedNextButtonProps.hideNextButton).toBe(true);
+
+    await act(async () => { await vi.advanceTimersByTimeAsync(699); });
+    expect(mockNavigate).not.toHaveBeenCalled();
+    await act(async () => { await vi.advanceTimersByTimeAsync(1); });
+    expect(mockNavigate).toHaveBeenCalled();
+  });
+
+  test('manual Check Answer cancels pending auto grading for the same selection', async () => {
+    vi.useFakeTimers();
+    mockAnswerField.values = { q1: 'incorrect' };
+    const config: IndividualComponent = {
+      ...baseConfig,
+      provideFeedback: true,
+      response: [{
+        id: 'q1',
+        type: 'buttons',
+        prompt: 'Choose',
+        options: ['correct', 'incorrect'],
+        autoAdvanceToNextStep: true,
+        autoAdvanceDelay: 1000,
+        allowResponseChange: false,
+      }],
+      correctAnswer: [{ id: 'q1', answer: 'correct' }],
+    };
+    const { store } = await renderWithStore(<ResponseBlock config={config} location="belowStimulus" />);
+
+    act(() => { capturedSwitcherProps.onChange?.('incorrect', 'click'); });
+    await act(async () => { capturedNextButtonProps.onCheckAnswer?.(); });
+    expect(store.getState().checkAnswer.trial1_0?.attemptsUsed).toBe(1);
+
+    await act(async () => { await vi.advanceTimersByTimeAsync(1000); });
+    expect(store.getState().checkAnswer.trial1_0?.attemptsUsed).toBe(1);
+  });
+
+  test('manual Check Answer retries after auto grading fails', async () => {
+    vi.useFakeTimers();
+    mockAnswerField.values = { q1: 'correct', customScore: 5 };
+    mockStoredAnswerData.formOrder = { response: ['q1', 'customScore'] };
+    mockCustomResponseModule.value = { default: () => null, score: () => 1.5 };
+    const config: IndividualComponent = {
+      ...baseConfig,
+      provideFeedback: true,
+      hideCheckAnswerButton: false,
+      response: [{
+        id: 'q1', type: 'buttons', prompt: 'Choose', options: ['correct'], autoAdvanceToNextStep: true, autoAdvanceDelay: 100,
+      }, {
+        id: 'customScore', type: 'custom', prompt: 'Score', path: 'test-response-functions/assets/CustomPartialScore.tsx', required: false,
+      }],
+      correctAnswer: [{ id: 'q1', answer: 'correct' }, { id: 'customScore', answer: 5 }],
+    };
+    const { store } = await renderWithStore(<ResponseBlock config={config} location="belowStimulus" />);
+
+    act(() => { capturedSwitcherProps.onChanges.q1('correct', 'click'); });
+    await act(async () => { await vi.advanceTimersByTimeAsync(100); });
+    expect(store.getState().checkAnswer.trial1_0).toBeUndefined();
+    expect(mockShowNotification).toHaveBeenCalledWith(expect.objectContaining({ title: 'Unable to Check Answer' }));
+
+    mockCustomResponseModule.value = { default: () => null, score: () => 1 };
+    await act(async () => { capturedNextButtonProps.onCheckAnswer?.(); });
+    expect(store.getState().checkAnswer.trial1_0?.attemptsUsed).toBe(1);
+  });
+
+  test('locked auto-advance selection offers Try again after grading fails', async () => {
+    vi.useFakeTimers();
+    mockAnswerField.values = { q1: 'correct', customScore: 5 };
+    mockStoredAnswerData.formOrder = { response: ['q1', 'customScore'] };
+    mockCustomResponseModule.value = { default: () => null, score: () => 1.5 };
+    const config: IndividualComponent = {
+      ...baseConfig,
+      provideFeedback: true,
+      response: [{
+        id: 'q1', type: 'buttons', prompt: 'Choose', options: ['correct'], autoAdvanceToNextStep: true, autoAdvanceDelay: 100, allowResponseChange: false,
+      }, {
+        id: 'customScore', type: 'custom', prompt: 'Score', path: 'test-response-functions/assets/CustomPartialScore.tsx', required: false,
+      }],
+      correctAnswer: [{ id: 'q1', answer: 'correct' }, { id: 'customScore', answer: 5 }],
+    };
+    const { store, queryByRole, getByRole } = await renderWithStore(<ResponseBlock config={config} location="belowStimulus" />);
+
+    act(() => { capturedSwitcherProps.onChanges.q1('correct', 'click'); });
+    expect(queryByRole('button', { name: 'Try again' })).toBeNull();
+    await act(async () => { await vi.advanceTimersByTimeAsync(100); });
+    expect(store.getState().checkAnswer.trial1_0).toBeUndefined();
+    expect(store.getState().buttonSelectionIds.trial1_0).toContain('q1');
+    expect(mockShowNotification).toHaveBeenCalledWith(expect.objectContaining({ title: 'Unable to Check Answer' }));
+
+    mockCustomResponseModule.value = { default: () => null, score: () => 1 };
+    fireEvent.click(getByRole('button', { name: 'Try again' }));
+    expect(store.getState().checkAnswer.trial1_0?.attemptsUsed).toBe(1);
+    expect(mockNavigate).toHaveBeenCalledTimes(1);
+  });
+
+  test('manual Check Answer continues after a correct auto-advance selection', async () => {
+    vi.useFakeTimers();
+    mockAnswerField.values = { q1: 'correct', q2: '' };
+    mockStoredAnswerData.formOrder = { response: ['q1', 'q2'] };
+    const config: IndividualComponent = {
+      ...baseConfig,
+      provideFeedback: true,
+      response: [{
+        id: 'q1',
+        type: 'buttons',
+        prompt: 'Choose',
+        options: ['correct', 'incorrect'],
+        autoAdvanceToNextStep: true,
+        autoAdvanceDelay: 1000,
+        allowResponseChange: false,
+      }, {
+        id: 'q2',
+        type: 'buttons',
+        prompt: 'Optional choice',
+        options: ['A', 'B'],
+        required: false,
+        autoAdvanceToNextStep: true,
+      }],
+      correctAnswer: [{ id: 'q1', answer: 'correct' }],
+    };
+    const { store } = await renderWithStore(<ResponseBlock config={config} location="belowStimulus" />);
+
+    expect(capturedNextButtonProps.hideNextButton).toBe(false);
+    act(() => { capturedSwitcherProps.onChanges.q1('correct', 'click'); });
+    expect(capturedNextButtonProps.hideNextButton).toBe(true);
+    await act(async () => { capturedNextButtonProps.onCheckAnswer?.(); });
+
+    expect(store.getState().checkAnswer.trial1_0?.attemptsUsed).toBe(1);
+    expect(mockNavigate).not.toHaveBeenCalled();
+    expect(capturedNextButtonProps.hideNextButton).toBe(true);
+    await act(async () => { await vi.advanceTimersByTimeAsync(999); });
+    expect(mockNavigate).not.toHaveBeenCalled();
+    await act(async () => { await vi.advanceTimersByTimeAsync(1); });
+    expect(mockNavigate).toHaveBeenCalledTimes(1);
+  });
+
+  test('manual Check Answer records the response owner so an edit in another location cancels continuation', async () => {
+    vi.useFakeTimers();
+    mockAnswerField.values = { q1: 'correct' };
+    const config: IndividualComponent = {
+      ...baseConfig,
+      provideFeedback: true,
+      response: [{
+        id: 'q1',
+        type: 'buttons',
+        prompt: 'Optional choice',
+        options: ['correct', 'incorrect'],
+        required: false,
+        location: 'aboveStimulus',
+        autoAdvanceToNextStep: true,
+        autoAdvanceDelay: 1000,
+        allowResponseChange: true,
+      }],
+      correctAnswer: [{ id: 'q1', answer: 'correct' }],
+    };
+    const { store } = await renderWithStore(
+      <>
+        <ResponseBlock config={config} location="aboveStimulus" />
+        <ResponseBlock config={config} location="belowStimulus" />
+      </>,
+    );
+
+    act(() => { capturedSwitcherProps.onChanges.q1('correct', 'click'); });
+    await act(async () => { capturedNextButtonProps.onCheckAnswer?.(); });
+    expect(store.getState().buttonAutoAdvanceContinuationOwner.trial1_0).toMatchObject({
+      responseId: 'q1',
+      location: 'belowStimulus',
+    });
+
+    act(() => { capturedSwitcherProps.onChanges.q1('', 'click'); });
+    expect(store.getState().buttonAutoAdvanceContinuationOwner.trial1_0).toBeUndefined();
+    await act(async () => { await vi.advanceTimersByTimeAsync(1000); });
+    expect(mockNavigate).not.toHaveBeenCalled();
+  });
+
+  test('manual Check Answer does not auto-advance when only another response was answered', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(0);
+    mockNextButtonEnableTime.value = 1000;
+    mockStoredAnswerData.formOrder = { response: ['q1', 'q2'] };
+    mockAnswerField.values = { q1: '', q2: '42' };
+    const config: IndividualComponent = {
+      ...baseConfig,
+      provideFeedback: true,
+      response: [{
+        id: 'q1',
+        type: 'buttons',
+        prompt: 'Optional default',
+        options: ['correct', 'incorrect'],
+        required: false,
+        autoAdvanceToNextStep: true,
+        autoAdvanceDelay: 300,
+        allowResponseChange: true,
+      }, {
+        id: 'q2',
+        type: 'shortText',
+        prompt: 'Scored response',
+      }],
+      correctAnswer: [{ id: 'q2', answer: '42' }],
+    };
+    const { store } = await renderWithStore(<ResponseBlock config={config} location="belowStimulus" />);
+
+    expect(store.getState().buttonSelectionIds.trial1_0 ?? []).not.toContain('q1');
+    await act(async () => { capturedNextButtonProps.onCheckAnswer?.(); });
+    expect(store.getState().checkAnswer.trial1_0?.correct).toBe(true);
+    expect(store.getState().buttonAutoAdvanceContinuationOwner.trial1_0).toBeUndefined();
+
+    await act(async () => { await vi.advanceTimersByTimeAsync(1000); });
+    expect(mockNavigate).not.toHaveBeenCalled();
+  });
+
+  test('manual grading does not assign a hidden or unselected default button as the continuation owner', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(0);
+    mockNextButtonEnableTime.value = 1000;
+    mockStoredAnswerData.formOrder = { response: ['hidden', 'visible'] };
+    mockAnswerField.values = { hidden: 'correct', visible: 'correct' };
+    const config: IndividualComponent = {
+      ...baseConfig,
+      provideFeedback: true,
+      response: [{
+        id: 'hidden',
+        type: 'buttons',
+        prompt: 'Hidden default',
+        options: ['correct'],
+        required: false,
+        hidden: true,
+        autoAdvanceToNextStep: true,
+      }, {
+        id: 'visible',
+        type: 'buttons',
+        prompt: 'Visible default',
+        options: ['correct', 'incorrect'],
+        required: false,
+        autoAdvanceToNextStep: true,
+        allowResponseChange: true,
+      }],
+      correctAnswer: [{ id: 'visible', answer: 'correct' }],
+    };
+    const { store } = await renderWithStore(<ResponseBlock config={config} location="belowStimulus" />);
+
+    await act(async () => { capturedNextButtonProps.onCheckAnswer?.(); });
+    expect(store.getState().buttonAutoAdvanceContinuationOwner.trial1_0).toBeUndefined();
+    await act(async () => { await vi.advanceTimersByTimeAsync(1000); });
+    expect(mockNavigate).not.toHaveBeenCalled();
+  });
+
+  test('offers remaining training attempts when a locked auto-advance answer hides Check Answer', async () => {
+    vi.useFakeTimers();
+    mockAnswerField.values = { q1: 'incorrect' };
+    const config: IndividualComponent = {
+      ...baseConfig,
+      provideFeedback: true,
+      trainingAttempts: 2,
+      hideCheckAnswerButton: true,
+      response: [{
+        id: 'q1',
+        type: 'buttons',
+        prompt: 'Choose',
+        options: ['correct', 'incorrect'],
+        autoAdvanceToNextStep: true,
+        autoAdvanceDelay: 100,
+        allowResponseChange: false,
+      }],
+      correctAnswer: [{ id: 'q1', answer: 'correct' }],
+    };
+    const { store, getByRole } = await renderWithStore(<ResponseBlock config={config} location="belowStimulus" />);
+    act(() => { capturedSwitcherProps.onChange?.('incorrect', 'click'); });
+    await act(async () => { await vi.advanceTimersByTimeAsync(100); });
+
+    expect(store.getState().checkAnswer.trial1_0?.attemptsUsed).toBe(1);
+    expect(capturedSwitcherProps.buttonSelectionMade).toBe(true);
+    expect(capturedNextButtonProps.hideNextButton).toBe(true);
+    expect(getByRole('button', { name: 'Try again' })).toBeTruthy();
+
+    fireEvent.click(getByRole('button', { name: 'Try again' }));
+    expect(store.getState().checkAnswer.trial1_0?.attemptsUsed).toBe(2);
+    expect(mockNavigate).toHaveBeenCalledTimes(1);
+  });
+
+  test('manual grading waits for Next eligibility after the selection delay', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(0);
+    mockNextButtonEnableTime.value = 1000;
+    mockAnswerField.values = { q1: 'correct' };
+    const config: IndividualComponent = {
+      ...baseConfig,
+      provideFeedback: true,
+      response: [{
+        id: 'q1',
+        type: 'buttons',
+        prompt: 'Choose',
+        options: ['correct'],
+        autoAdvanceToNextStep: true,
+        autoAdvanceDelay: 300,
+        allowResponseChange: false,
+      }],
+      correctAnswer: [{ id: 'q1', answer: 'correct' }],
+    };
+    await renderWithStore(<ResponseBlock config={config} location="belowStimulus" />);
+    act(() => { capturedSwitcherProps.onChange?.('correct', 'click'); });
+    await act(async () => { capturedNextButtonProps.onCheckAnswer?.(); });
+    await act(async () => { await vi.advanceTimersByTimeAsync(999); });
+    expect(mockNavigate).not.toHaveBeenCalled();
+    await act(async () => { await vi.advanceTimersByTimeAsync(1); });
+    expect(mockNavigate).toHaveBeenCalledTimes(1);
+  });
+
+  test('manual grading waits for a required default auto-advance button to be selected', async () => {
+    mockAnswerField.values = { q1: 'correct' };
+    const config: IndividualComponent = {
+      ...baseConfig,
+      provideFeedback: true,
+      response: [{
+        id: 'q1',
+        type: 'buttons',
+        prompt: 'Choose',
+        options: ['correct'],
+        default: 'correct',
+        required: true,
+        autoAdvanceToNextStep: true,
+        allowResponseChange: false,
+      }],
+      correctAnswer: [{ id: 'q1', answer: 'correct' }],
+    };
+    const { store } = await renderWithStore(<ResponseBlock config={config} location="belowStimulus" />);
+    await act(async () => { capturedNextButtonProps.onCheckAnswer?.(); });
+
+    expect(store.getState().checkAnswer.trial1_0).toBeUndefined();
+    expect(capturedSwitcherProps.buttonSelectionMade).toBe(false);
+    expect(capturedSwitcherProps.indexes.at(-1)?.disabled).toBe(false);
+    expect(mockNavigate).not.toHaveBeenCalled();
+  });
+
+  test('manual Check Answer reveals required validation when an auto-advance button is unselected', async () => {
+    const originalScrollIntoView = HTMLElement.prototype.scrollIntoView;
+    HTMLElement.prototype.scrollIntoView = vi.fn();
+    mockAnswerField.values = { q1: '' };
+    const config: IndividualComponent = {
+      ...baseConfig,
+      provideFeedback: true,
+      response: [{
+        id: 'q1',
+        type: 'buttons',
+        prompt: 'Choose',
+        options: ['A', 'B'],
+        autoAdvanceToNextStep: true,
+      }],
+      correctAnswer: [{ id: 'q1', answer: 'A' }],
+    };
+    try {
+      const { store } = await renderWithStore(<ResponseBlock config={config} location="belowStimulus" />);
+
+      await act(async () => { capturedNextButtonProps.onCheckAnswer?.(); });
+
+      expect(store.getState().responseSubmitAttempted.trial1_0).toBe(true);
+      expect(store.getState().checkAnswer.trial1_0).toBeUndefined();
+      expect(capturedSwitcherProps.indexes.at(-1)?.disabled).toBe(false);
+    } finally {
+      HTMLElement.prototype.scrollIntoView = originalScrollIntoView;
+    }
+  });
+
+  test('manual Check Answer reveals stimulus validation before blocking an unselected auto-advance button', async () => {
+    mockAnswerField.values = { q1: 'A' };
+    const config: IndividualComponent = {
+      ...baseConfig,
+      type: 'website',
+      path: 'about:blank',
+      provideFeedback: true,
+      response: [{
+        id: 'q1',
+        type: 'buttons',
+        prompt: 'Choose',
+        options: ['A', 'B'],
+        autoAdvanceToNextStep: true,
+      }],
+      correctAnswer: [{ id: 'q1', answer: 'A' }],
+    };
+    const { store, studyStore } = await renderWithStore(<ResponseBlock config={config} location="belowStimulus" />);
+    await act(async () => {
+      store.dispatch(studyStore.actions.updateResponseBlockValidation({
+        identifier: 'trial1_0', location: 'stimulus', status: false, values: {}, replaceValues: true,
+      }));
+    });
+
+    await act(async () => { capturedNextButtonProps.onCheckAnswer?.(); });
+
+    expect(store.getState().stimulusSubmitAttempted.trial1_0).toBe(true);
+    expect(store.getState().checkAnswer.trial1_0).toBeUndefined();
+  });
+
+  test('failed manual grading validation can be retried after the stimulus is fixed', async () => {
+    vi.useFakeTimers();
+    mockAnswerField.values = { q1: 'correct' };
+    const config: IndividualComponent = {
+      ...baseConfig,
+      type: 'website',
+      path: 'about:blank',
+      provideFeedback: true,
+      response: [{
+        id: 'q1',
+        type: 'buttons',
+        prompt: 'Choose',
+        options: ['correct'],
+        autoAdvanceToNextStep: true,
+        autoAdvanceDelay: 1000,
+        allowResponseChange: false,
+      }],
+      correctAnswer: [{ id: 'q1', answer: 'correct' }],
+    };
+    const { store, studyStore } = await renderWithStore(<ResponseBlock config={config} location="belowStimulus" />);
+    act(() => { capturedSwitcherProps.onChange?.('correct', 'click'); });
+    await act(async () => {
+      store.dispatch(studyStore.actions.updateResponseBlockValidation({
+        identifier: 'trial1_0', location: 'stimulus', status: false, values: {}, replaceValues: true,
+      }));
+    });
+    await act(async () => { capturedNextButtonProps.onCheckAnswer?.(); });
+    expect(store.getState().checkAnswer.trial1_0).toBeUndefined();
+    await act(async () => {
+      store.dispatch(studyStore.actions.updateResponseBlockValidation({
+        identifier: 'trial1_0', location: 'stimulus', status: true, values: {}, replaceValues: true,
+      }));
+    });
+    await act(async () => { capturedNextButtonProps.onCheckAnswer?.(); });
+    expect(store.getState().checkAnswer.trial1_0?.attemptsUsed).toBe(1);
+    await act(async () => { await vi.advanceTimersByTimeAsync(1000); });
+    expect(mockNavigate).toHaveBeenCalledTimes(1);
+  });
+
+  test('manual grading continuation resumes after a later stimulus validation failure', async () => {
+    vi.useFakeTimers();
+    mockAnswerField.values = { q1: 'correct' };
+    const config: IndividualComponent = {
+      ...baseConfig,
+      type: 'website',
+      path: 'about:blank',
+      provideFeedback: true,
+      response: [{
+        id: 'q1',
+        type: 'buttons',
+        prompt: 'Choose',
+        options: ['correct'],
+        autoAdvanceToNextStep: true,
+        autoAdvanceDelay: 300,
+        allowResponseChange: false,
+      }],
+      correctAnswer: [{ id: 'q1', answer: 'correct' }],
+    };
+    const { store, studyStore } = await renderWithStore(<ResponseBlock config={config} location="belowStimulus" />);
+    act(() => { capturedSwitcherProps.onChange?.('correct', 'click'); });
+    await act(async () => { capturedNextButtonProps.onCheckAnswer?.(); });
+    expect(store.getState().checkAnswer.trial1_0?.attemptsUsed).toBe(1);
+    await act(async () => {
+      store.dispatch(studyStore.actions.updateResponseBlockValidation({
+        identifier: 'trial1_0', location: 'stimulus', status: false, values: {}, replaceValues: true,
+      }));
+    });
+    await act(async () => { await vi.advanceTimersByTimeAsync(300); });
+    expect(mockNavigate).not.toHaveBeenCalled();
+    await act(async () => {
+      store.dispatch(studyStore.actions.updateResponseBlockValidation({
+        identifier: 'trial1_0', location: 'stimulus', status: true, values: {}, replaceValues: true,
+      }));
+    });
+    expect(mockNavigate).toHaveBeenCalledTimes(1);
+    expect(store.getState().checkAnswer.trial1_0?.attemptsUsed).toBe(1);
+  });
+
+  test('auto-advance waits for a loading stimulus to become ready', async () => {
+    vi.useFakeTimers();
+    mockAnswerField.values = { q1: 'A' };
+    const config: IndividualComponent = {
+      ...baseConfig,
+      type: 'image',
+      path: 'about:blank',
+      response: [{
+        id: 'q1',
+        type: 'buttons',
+        prompt: 'Choose',
+        options: ['A'],
+        autoAdvanceToNextStep: true,
+        autoAdvanceDelay: 300,
+        allowResponseChange: false,
+      }],
+    };
+    const { store, studyStore } = await renderWithStore(<ResponseBlock config={config} location="belowStimulus" />);
+    await act(async () => { store.dispatch(studyStore.actions.setAssetStatus({ identifier: 'trial1_0', status: 'loading' })); });
+    act(() => { capturedSwitcherProps.onChange?.('A', 'click'); });
+    await act(async () => { await vi.advanceTimersByTimeAsync(300); });
+    expect(mockNavigate).not.toHaveBeenCalled();
+    await act(async () => { store.dispatch(studyStore.actions.setAssetStatus({ identifier: 'trial1_0', status: 'ready' })); });
+    expect(mockNavigate).toHaveBeenCalledTimes(1);
+  });
+
+  test('offers retry through normal submission after an auto-advance save error', async () => {
+    const config: IndividualComponent = {
+      ...baseConfig,
+      response: [{
+        id: 'q1',
+        type: 'buttons',
+        prompt: 'Choose',
+        options: ['A', 'B'],
+        autoAdvanceToNextStep: true,
+        allowResponseChange: false,
+      }],
+    };
+    const { store, studyStore, getByRole } = await renderWithStore(<ResponseBlock config={config} location="belowStimulus" />);
+    await act(async () => {
+      store.dispatch(studyStore.actions.setGlobalStoreError('Save failed'));
+    });
+
+    fireEvent.click(getByRole('button', { name: 'Retry submission' }));
+    expect(mockNavigate).toHaveBeenCalledTimes(1);
+  });
+
+  test('cancels a pending auto-advance when its conditional response becomes hidden', async () => {
+    vi.useFakeTimers();
+    mockStoredAnswerData.formOrder = undefined;
+    mockAnswerField.values = { controller: 'yes', conditional: 'A' };
+    const config: IndividualComponent = {
+      ...baseConfig,
+      response: [
+        {
+          id: 'controller', type: 'buttons', prompt: 'Show conditional question?', options: ['yes', 'no'],
+        },
+        {
+          id: 'conditional',
+          type: 'buttons',
+          prompt: 'Conditional choice',
+          options: ['A', 'B'],
+          autoAdvanceToNextStep: true,
+          autoAdvanceDelay: 300,
+          visibleIf: { responseId: 'controller', comparison: 'equals', value: 'yes' },
+        },
+      ],
+    };
+    const { store, studyStore } = await renderWithStore(<ResponseBlock config={config} location="belowStimulus" />);
+
+    act(() => { capturedSwitcherProps.onChanges.conditional?.('A', 'click'); });
+    mockAnswerField.values = { controller: 'no' };
+    act(() => { capturedSwitcherProps.onChanges.controller?.('no', 'click'); });
+    await act(async () => {
+      store.dispatch(studyStore.actions.updateResponseBlockValidation({
+        identifier: 'trial1_0', location: 'belowStimulus', status: true, values: mockAnswerField.values, replaceValues: true,
+      }));
+    });
+    await act(async () => { await vi.advanceTimersByTimeAsync(500); });
+
+    expect(store.getState().buttonAutoAdvancePending.trial1_0).toBeUndefined();
+    expect(mockNavigate).not.toHaveBeenCalled();
+  });
+
+  test('clears a conditional button lock even when no auto-advance is pending', async () => {
+    mockStoredAnswerData.formOrder = undefined;
+    mockAnswerField.values = { controller: 'yes', conditional: 'A' };
+    const config: IndividualComponent = {
+      ...baseConfig,
+      response: [
+        {
+          id: 'controller', type: 'buttons', prompt: 'Show conditional question?', options: ['yes', 'no'],
+        },
+        {
+          id: 'conditional',
+          type: 'buttons',
+          prompt: 'Conditional choice',
+          options: ['A', 'B'],
+          allowResponseChange: false,
+          visibleIf: { responseId: 'controller', comparison: 'equals', value: 'yes' },
+        },
+      ],
+    };
+    const { store, studyStore } = await renderWithStore(<ResponseBlock config={config} location="belowStimulus" />);
+    await act(async () => {
+      store.dispatch(studyStore.actions.setButtonSelection({ identifier: 'trial1_0', responseId: 'conditional', selected: true }));
+    });
+
+    mockAnswerField.values = { controller: 'no' };
+    await act(async () => {
+      store.dispatch(studyStore.actions.updateResponseBlockValidation({
+        identifier: 'trial1_0', location: 'belowStimulus', status: true, values: mockAnswerField.values, replaceValues: true,
+      }));
+    });
+
+    expect(store.getState().buttonSelectionIds.trial1_0).toEqual([]);
+  });
+
+  test('auto-advance checks feedback before submitting through the normal flow', async () => {
+    vi.useFakeTimers();
+    mockAnswerField.values = { q1: 'correct' };
+    const config: IndividualComponent = {
+      ...baseConfig,
+      provideFeedback: true,
+      hideCheckAnswerButton: true,
+      response: [{
+        id: 'q1',
+        type: 'buttons',
+        prompt: 'Choose',
+        options: ['correct', 'incorrect'],
+        autoAdvanceToNextStep: true,
+        autoAdvanceDelay: 300,
+      }],
+      correctAnswer: [{ id: 'q1', answer: 'correct' }],
+    };
+    const { container, store } = await renderWithStore(<ResponseBlock config={config} location="belowStimulus" />);
+
+    act(() => { capturedSwitcherProps.onChange?.('correct', 'keyboard'); });
+    await act(async () => { vi.advanceTimersByTime(299); });
+    expect(store.getState().checkAnswer.trial1_0).toBeUndefined();
+    expect(mockNavigate).not.toHaveBeenCalled();
+    await act(async () => { vi.advanceTimersByTime(1); });
+    expect(store.getState().checkAnswer.trial1_0?.correct).toBe(true);
+    expect(container.querySelector('[data-testid="feedback-alert-q1"]')).not.toBeNull();
+    expect(mockNavigate).toHaveBeenCalled();
+  });
+
+  test('rechecks stimulus validation before delayed auto-advance submission', async () => {
+    vi.useFakeTimers();
+    mockAnswerField.values = { q1: 'correct' };
+    const config: IndividualComponent = {
+      ...baseConfig,
+      type: 'website',
+      path: 'about:blank',
+      provideFeedback: true,
+      response: [{
+        id: 'q1',
+        type: 'buttons',
+        prompt: 'Choose',
+        options: ['correct', 'incorrect'],
+        autoAdvanceToNextStep: true,
+        autoAdvanceDelay: 300,
+      }],
+      correctAnswer: [{ id: 'q1', answer: 'correct' }],
+    };
+    const { store, studyStore } = await renderWithStore(<ResponseBlock config={config} location="belowStimulus" />);
+
+    act(() => { capturedSwitcherProps.onChange?.('correct', 'keyboard'); });
+    await act(async () => { vi.advanceTimersByTime(150); });
+    await act(async () => {
+      store.dispatch(studyStore.actions.updateResponseBlockValidation({
+        identifier: 'trial1_0', location: 'stimulus', status: false, values: {}, replaceValues: true,
+      }));
+    });
+    await act(async () => { vi.advanceTimersByTime(150); });
+
+    expect(mockNavigate).not.toHaveBeenCalled();
+    expect(store.getState().stimulusSubmitAttempted.trial1_0).toBe(true);
+    expect(store.getState().checkAnswer.trial1_0).toBeUndefined();
+    await act(async () => {
+      store.dispatch(studyStore.actions.updateResponseBlockValidation({
+        identifier: 'trial1_0', location: 'stimulus', status: true, values: {}, replaceValues: true,
+      }));
+    });
+    expect(mockNavigate).toHaveBeenCalledTimes(1);
+  });
+
   test('shows partial correctness beneath a checkbox question', async () => {
     vi.mocked(isEqual).mockImplementation((left, right) => JSON.stringify(left) === JSON.stringify(right));
     const checkedAnswer = makeStoredAnswer({

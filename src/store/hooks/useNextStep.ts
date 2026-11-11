@@ -98,7 +98,17 @@ export function useNextStep(responses?: Response[], correctAnswers?: Answer[]) {
   const startTime = useMemo(() => Date.now(), [funcIndex, currentStep]);
 
   const windowEvents = useWindowEvents();
-  const goToNextStep = useCallback(async (collectData = true) => {
+  const getNextStepTiming = useCallback(() => {
+    const elapsed = Date.now() - startTime;
+    const enableAfter = resolvedComponentConfig?.nextButtonEnableTime ?? studyConfig.uiConfig?.nextButtonEnableTime ?? 0;
+    const disableAfter = resolvedComponentConfig?.nextButtonDisableTime ?? studyConfig.uiConfig?.nextButtonDisableTime;
+    return {
+      eligible: elapsed >= enableAfter && (disableAfter === undefined || elapsed <= disableAfter),
+      retryAfterMs: elapsed < enableAfter ? enableAfter - elapsed : undefined,
+    };
+  }, [resolvedComponentConfig, startTime, studyConfig]);
+
+  const goToNextStep = useCallback(async (collectData = true, enforceTimeRestrictions = studyConfig.globalVariables !== undefined) => {
     const usesGlobalStore = studyConfig.globalVariables !== undefined;
     let locked = false;
     let navigated = false;
@@ -108,6 +118,9 @@ export function useNextStep(responses?: Response[], correctAnswers?: Answer[]) {
     try {
       if (isNextDisabled) {
         return;
+      }
+      if (collectData && enforceTimeRestrictions) {
+        if (!getNextStepTiming().eligible) return;
       }
       const live = usesGlobalStore ? context.store.getState() : undefined;
       if (usesGlobalStore) {
@@ -128,10 +141,6 @@ export function useNextStep(responses?: Response[], correctAnswers?: Answer[]) {
           const allowFailed = resolvedComponentConfig?.allowFailedTraining ?? studyConfig.uiConfig.allowFailedTraining ?? true;
           bypassResponseValidation = !!training && allowFailed && limit >= 0 && attempts >= limit;
           if (training && !(attempts > 0 && (live!.checkAnswer[identifier]?.correct || (allowFailed && limit >= 0 && attempts >= limit)))) return;
-          const elapsed = Date.now() - startTime;
-          const enableAfter = resolvedComponentConfig?.nextButtonEnableTime ?? studyConfig.uiConfig.nextButtonEnableTime ?? 0;
-          const disableAfter = resolvedComponentConfig?.nextButtonDisableTime ?? studyConfig.uiConfig.nextButtonDisableTime;
-          if (elapsed < enableAfter || (disableAfter !== undefined && elapsed > disableAfter)) return;
         }
         storeDispatch(setGlobalStoreSubmitting(identifier));
         locked = true;
@@ -299,7 +308,16 @@ export function useNextStep(responses?: Response[], correctAnswers?: Answer[]) {
               && (['aboveStimulus', 'belowStimulus', 'sidebar', 'stimulus'] as const).every((location) => currentValidation[location].valid)))
             && isEqual(answer, getPersistedAnswersFromAllLocations(currentValidation, responseConfig, correctAnswerConfig, checkAnswerState, entryStore));
         };
-        if (!preparationIsCurrent()) return;
+        const reportStalePreparation = () => {
+          const current = context.store.getState();
+          if (route === window.location.href && !current.completed && current.participantId === live!.participantId) {
+            storeDispatch(setGlobalStoreError('The response changed while it was being submitted. Please try again.'));
+          }
+        };
+        if (!preparationIsCurrent()) {
+          reportStalePreparation();
+          return;
+        }
         const update = collectData
           ? evaluateGlobalStoreUpdates(studyConfig.globalVariables!, entryStore, responseConfig, answer, patch)
           : { values: { ...entryStore }, operations: [] };
@@ -315,7 +333,14 @@ export function useNextStep(responses?: Response[], correctAnswers?: Answer[]) {
               onClose: () => resolve(false),
             });
           });
-          if (!confirmed || !preparationIsCurrent()) return;
+          if (!confirmed) {
+            storeDispatch(setGlobalStoreError('Submission canceled. You can retry when ready.'));
+            return;
+          }
+          if (!preparationIsCurrent()) {
+            reportStalePreparation();
+            return;
+          }
         }
         const replacing = !!getGlobalStoreNodeState(next.graph, next.nodeId).submission?.replaces && !next.unchanged;
         activeAnswers = projectGlobalStoreAnswers(answers, toSave, replacing);
@@ -424,10 +449,11 @@ export function useNextStep(responses?: Response[], correctAnswers?: Answer[]) {
     } finally {
       if (locked && !navigated) storeDispatch(setGlobalStoreSubmitting(false));
     }
-  }, [startupInteractionBlocked, assetIdentifier, context, entryStore, setGlobalStoreSubmitting, setGlobalStoreError, acceptGlobalStoreSubmission, setResponseSubmitAttempt, setStimulusSubmitAttempt, resolvedComponentConfig, isNextDisabled, currentStep, trialValidation, identifier, storedAnswer, windowEvents, dataCollectionEnabled, clickedPrevious, sequence, answers, startTime, funcIndex, storeDispatch, saveTrialAnswer, storageEngine, setReactiveAnswers, setMatrixAnswersCheckbox, setMatrixAnswersRadio, setRankingAnswers, setAlertModal, studyConfig, participantSequence, navigate, studyId, responseSubmitAttempted, checkAnswerState, responseConfig, correctAnswerConfig]);
+  }, [startupInteractionBlocked, assetIdentifier, context, entryStore, setGlobalStoreSubmitting, setGlobalStoreError, acceptGlobalStoreSubmission, setResponseSubmitAttempt, setStimulusSubmitAttempt, isNextDisabled, currentStep, trialValidation, identifier, storedAnswer, windowEvents, dataCollectionEnabled, clickedPrevious, sequence, answers, startTime, funcIndex, storeDispatch, saveTrialAnswer, storageEngine, setReactiveAnswers, setMatrixAnswersCheckbox, setMatrixAnswersRadio, setRankingAnswers, setAlertModal, studyConfig, participantSequence, navigate, studyId, responseSubmitAttempted, checkAnswerState, responseConfig, correctAnswerConfig, resolvedComponentConfig, getNextStepTiming]);
 
   return {
     isNextDisabled: isNextDisabled || startupInteractionBlocked,
     goToNextStep,
+    getNextStepTiming,
   };
 }

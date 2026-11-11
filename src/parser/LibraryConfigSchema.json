@@ -227,6 +227,10 @@
             ],
             "type": "string"
           },
+          "showNextButtonOnAutoAdvance": {
+            "description": "Show the Next button when a button response auto-advances. Defaults to false.",
+            "type": "boolean"
+          },
           "showTitle": {
             "description": "Controls whether the title should be hidden in the study. If present, will override the title setting in the uiConfig.",
             "type": "boolean"
@@ -332,6 +336,19 @@
       "additionalProperties": false,
       "description": "The ButtonsResponse interface is used to define the properties of a buttons response. ButtonsResponses render as a list of buttons that the participant can click. When a button is clicked, the value of the button is stored in the data file. Participants can cycle through the options using the arrow keys. ```json {   \"id\": \"buttonsResponse\",   \"type\": \"buttons\",   \"prompt\": \"Click a button\",   \"location\": \"belowStimulus\",   \"default\": \"Option 2\",   \"options\": [     \"Option 1\",     \"Option 2\",     \"Option 3\"   ] } ``` In this example, the participant can click one of the buttons labeled \"Option 1\", \"Option 2\", or \"Option 3\".",
       "properties": {
+        "allowResponseChange": {
+          "description": "Whether the participant may change or clear a selected button. Defaults to true.",
+          "type": "boolean"
+        },
+        "autoAdvanceDelay": {
+          "description": "Delay in milliseconds before submitting after a button is selected. Must be non-negative; defaults to 300.",
+          "minimum": 0,
+          "type": "number"
+        },
+        "autoAdvanceToNextStep": {
+          "description": "Automatically submit and advance after a button is selected. Defaults to false.",
+          "type": "boolean"
+        },
         "default": {
           "description": "The default value of the response. Specify one option value as a string.",
           "type": "string"
@@ -1918,6 +1935,10 @@
           ],
           "type": "string"
         },
+        "showNextButtonOnAutoAdvance": {
+          "description": "Show the Next button when a button response auto-advances. Defaults to false.",
+          "type": "boolean"
+        },
         "showTitle": {
           "description": "Controls whether the title should be hidden in the study. If present, will override the title setting in the uiConfig.",
           "type": "boolean"
@@ -2246,6 +2267,10 @@
             "random"
           ],
           "type": "string"
+        },
+        "showNextButtonOnAutoAdvance": {
+          "description": "Show the Next button when a button response auto-advances. Defaults to false.",
+          "type": "boolean"
         },
         "showTitle": {
           "description": "Controls whether the title should be hidden in the study. If present, will override the title setting in the uiConfig.",
@@ -2826,6 +2851,10 @@
             "random"
           ],
           "type": "string"
+        },
+        "showNextButtonOnAutoAdvance": {
+          "description": "Show the Next button when a button response auto-advances. Defaults to false.",
+          "type": "boolean"
         },
         "showTitle": {
           "description": "Controls whether the title should be hidden in the study. If present, will override the title setting in the uiConfig.",
@@ -3536,6 +3565,10 @@
             "random"
           ],
           "type": "string"
+        },
+        "showNextButtonOnAutoAdvance": {
+          "description": "Show the Next button when a button response auto-advances. Defaults to false.",
+          "type": "boolean"
         },
         "showTitle": {
           "description": "Controls whether the title should be hidden in the study. If present, will override the title setting in the uiConfig.",
@@ -4299,6 +4332,10 @@
             "random"
           ],
           "type": "string"
+        },
+        "showNextButtonOnAutoAdvance": {
+          "description": "Show the Next button when a button response auto-advances. Defaults to false.",
+          "type": "boolean"
         },
         "showTitle": {
           "description": "Controls whether the title should be hidden in the study. If present, will override the title setting in the uiConfig.",
@@ -5637,6 +5674,10 @@
           ],
           "type": "string"
         },
+        "showNextButtonOnAutoAdvance": {
+          "description": "Show the Next button when a button response auto-advances. Defaults to false.",
+          "type": "boolean"
+        },
         "showTitle": {
           "description": "Controls whether the title should be hidden in the study. If present, will override the title setting in the uiConfig.",
           "type": "boolean"
@@ -5828,6 +5869,10 @@
             "random"
           ],
           "type": "string"
+        },
+        "showNextButtonOnAutoAdvance": {
+          "description": "Show the Next button when a button response auto-advances. Defaults to false.",
+          "type": "boolean"
         },
         "showTitle": {
           "description": "Controls whether the title should be hidden in the study. If present, will override the title setting in the uiConfig.",
@@ -6024,6 +6069,10 @@
             "random"
           ],
           "type": "string"
+        },
+        "showNextButtonOnAutoAdvance": {
+          "description": "Show the Next button when a button response auto-advances. Defaults to false.",
+          "type": "boolean"
         },
         "showTitle": {
           "description": "Controls whether the title should be hidden in the study. If present, will override the title setting in the uiConfig.",
@@ -6224,6 +6273,10 @@
             "random"
           ],
           "type": "string"
+        },
+        "showNextButtonOnAutoAdvance": {
+          "description": "Show the Next button when a button response auto-advances. Defaults to false.",
+          "type": "boolean"
         },
         "showTitle": {
           "description": "Controls whether the title should be hidden in the study. If present, will override the title setting in the uiConfig.",

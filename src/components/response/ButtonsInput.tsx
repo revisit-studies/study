@@ -88,6 +88,8 @@ export function ButtonsInput({
   response,
   disabled,
   answer,
+  previousAnswer,
+  responseLocked = false,
   error,
   index,
   enumerateQuestions,
@@ -95,6 +97,8 @@ export function ButtonsInput({
   response: ButtonsResponse;
   disabled: boolean;
   answer: { value?: string; onChange?: (value: string, source?: 'keyboard' | 'click') => void };
+  previousAnswer?: Record<string, unknown>;
+  responseLocked?: boolean;
   error?: string | null;
   index: number;
   enumerateQuestions: boolean;
@@ -108,6 +112,11 @@ export function ButtonsInput({
     infoText,
     hideKeyVisual = false,
   } = response;
+  const selectedValue = answer?.value
+    || (response.allowResponseChange === false && responseLocked
+      ? previousAnswer?.[response.id] as string | undefined
+      : '');
+  const isResponseLocked = response.allowResponseChange === false && responseLocked;
 
   const storedAnswer = useStoredAnswer();
   const optionOrders: Record<string, ParsedStringOption[]> = useMemo(() => storedAnswer?.optionOrders ?? {}, [storedAnswer]);
@@ -142,13 +151,13 @@ export function ButtonsInput({
           enumerateQuestions={enumerateQuestions}
           infoText={infoText}
           clearSelectionButton={(
-            <ClearSelectionButton onClick={() => handleValueChange('')} disabled={disabled} visible={!!answer?.value} />
+            <ClearSelectionButton onClick={() => handleValueChange('')} disabled={disabled || isResponseLocked} visible={!!selectedValue} />
           )}
         />
       )}
       description={secondaryText}
       key={response.id}
-      value={answer?.value}
+      value={selectedValue}
       onChange={(value) => handleValueChange(value, 'click')}
       error={error}
       errorProps={{ c: required ? 'red' : 'orange', fz: 'sm', mt: 'xs' }}
@@ -158,7 +167,7 @@ export function ButtonsInput({
         options={orderedOptions}
         onSelect={(val, source) => handleValueChange(val, source ?? 'keyboard')}
         onArrowNavigation={startArrowNavigation}
-        disabled={disabled}
+        disabled={disabled || isResponseLocked}
       />
       <Flex justify="space-between" align="center" gap="xl" mt="xs" p="4px">
         {orderedOptions.map((radio, idx) => {
@@ -168,7 +177,7 @@ export function ButtonsInput({
             <Radio.Card
               key={`radio-${idx}`}
               value={radio.value}
-              disabled={disabled}
+              disabled={disabled || isResponseLocked}
               ref={(node) => {
                 if (node) {
                   optionRefs.current[radio.value] = node;

@@ -49,6 +49,7 @@ export function ResponseSwitcher({
   form,
   storedAnswer,
   answerFinalized,
+  buttonSelectionMade,
   index,
   config,
   dontKnowCheckbox,
@@ -65,6 +66,7 @@ export function ResponseSwitcher({
   form: GetInputPropsReturnType;
   storedAnswer?: StoredAnswer['answer'];
   answerFinalized?: boolean;
+  buttonSelectionMade?: boolean;
   index: number;
   config: IndividualComponent;
   dontKnowCheckbox?: GetInputPropsReturnType;
@@ -88,6 +90,9 @@ export function ResponseSwitcher({
 
   const completed = useStoreSelector((state) => state.completed);
   const usesStandaloneDontKnow = usesStandaloneDontKnowField(response);
+  const buttonResponseLocked = response.type === 'buttons'
+    && response.allowResponseChange === false
+    && buttonSelectionMade;
 
   const finalStoredAnswer = isAnalysis || answerFinalized || completed ? storedAnswer : undefined;
 
@@ -440,6 +445,8 @@ export function ResponseSwitcher({
         response={withTemplatedFields(response)}
         disabled={isDisabled || dontKnowChecked}
         answer={ans as { value: string }}
+        previousAnswer={storedAnswer}
+        responseLocked={buttonResponseLocked}
         error={responseError}
         index={index}
         enumerateQuestions={enumerateQuestions}
@@ -462,12 +469,15 @@ export function ResponseSwitcher({
       {usesStandaloneDontKnow && (
       <Checkbox
         mt="xs"
-        disabled={isDisabled}
+        disabled={isDisabled || buttonResponseLocked}
         label="I don't know"
         classNames={{ input: classes.fixDisabled, label: classes.fixDisabledLabel, icon: classes.fixDisabledIcon }}
         {...dontKnowCheckbox}
         checked={dontKnowValue.checked}
-        onChange={(event) => { dontKnowCheckbox?.onChange(event.currentTarget.checked); form.onChange(fieldInitialValue); }}
+        onChange={(event) => {
+          dontKnowCheckbox?.onChange(event.currentTarget.checked);
+          form.onChange(fieldInitialValue);
+        }}
       />
       )}
       {(response.type === 'divider' || responseDividers) && <Divider mt="xl" mb="xs" />}

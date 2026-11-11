@@ -288,6 +288,7 @@ export interface Sequence {
 
 export type FormElementProvenance = {
   form: StoredAnswer['answer'];
+  selectedButtonResponses?: string[];
   showResponseErrors?: boolean;
   interactionSource?: 'keyboard' | 'click';
 };
@@ -310,6 +311,9 @@ export interface StoreState {
   alertModal: AlertModalState;
   trialValidation: TrialValidation;
   responseSubmitAttempted: Record<string, boolean>;
+  buttonAutoAdvancePending: Record<string, { responseId: string; dueAt: number } | undefined>;
+  buttonAutoAdvanceContinuationOwner: Record<string, { responseId: string; location: ResponseBlockLocation; dueAt: number } | undefined>;
+  buttonSelectionIds: Record<string, string[] | undefined>;
   stimulusSubmitAttempted: Record<string, boolean>;
   checkAnswer: Record<string, CheckAnswerState>;
   reactiveAnswers: Record<string, ValueOf<StoredAnswer['answer']>>;

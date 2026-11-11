@@ -36,6 +36,7 @@ type Props = {
   checkAnswer?: ReactNode;
   onCheckAnswer?: () => void;
   onNext: () => void;
+  hideNextButton?: boolean;
 };
 
 export function NextButton({
@@ -46,6 +47,7 @@ export function NextButton({
   checkAnswer,
   onCheckAnswer,
   onNext,
+  hideNextButton = false,
 }: Props) {
   const { isNextDisabled, goToNextStep } = useNextStep(config?.response, config?.correctAnswer);
   const studyConfig = useStudyConfig();
@@ -116,7 +118,9 @@ export function NextButton({
     warningMessage: nextButtonAutoAdvanceWarningMessage,
   }), [nextButtonAutoAdvanceTime, nextButtonAutoAdvanceWarningMessage, nextButtonAutoAdvanceWarningTime, timer]);
 
-  const nextOnEnter = config?.nextOnEnter ?? studyConfig.uiConfig.nextOnEnter;
+  const nextOnEnterEnabled = config?.nextOnEnter ?? studyConfig.uiConfig.nextOnEnter;
+  const nextOnEnter = !!nextOnEnterEnabled
+    && ((!!checkAnswer && !!onCheckAnswer) || !hideNextButton);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -167,46 +171,48 @@ export function NextButton({
           />
         )}
         {checkAnswer}
-        <Button
-          type="submit"
-          className={classes.nextButton}
-          disabled={nextButtonDisabled}
-          onClick={() => (checkAnswer ? onNext : (onCheckAnswer ?? onNext))()}
-          fw={700}
-          px={location === 'sidebar' && checkAnswer ? 8 : undefined}
-          aria-label={label}
-          rightSection={nextOnEnter && (!checkAnswer || !onCheckAnswer) ? (
-            <Kbd
-              size="xs"
-              aria-hidden="true"
-              style={{
-                backgroundColor: 'transparent',
-                color: 'inherit',
-                boxShadow: 'none',
-                border: 'none',
-                marginTop: -4,
-                fontSize: '16px',
-                fontWeight: 600,
-              }}
-            >
-              ↵
-            </Kbd>
-          ) : undefined}
-          styles={{
-            inner: { alignItems: 'stretch' },
-            section: nextOnEnter && (!checkAnswer || !onCheckAnswer) ? {
-              alignItems: 'center',
-              justifyContent: 'center',
-              padding: '0 8px',
-              marginRight: -16,
-              marginBlock: -1,
-              borderLeft: '1px solid rgba(255, 255, 255, 0.25)',
-              backgroundColor: 'rgba(0, 0, 0, 0.08)',
-            } : undefined,
-          }}
-        >
-          {label}
-        </Button>
+        {!hideNextButton && (
+          <Button
+            type="submit"
+            className={classes.nextButton}
+            disabled={nextButtonDisabled}
+            onClick={() => (checkAnswer ? onNext : (onCheckAnswer ?? onNext))()}
+            fw={700}
+            px={location === 'sidebar' && checkAnswer ? 8 : undefined}
+            aria-label={label}
+            rightSection={nextOnEnter && (!checkAnswer || !onCheckAnswer) ? (
+              <Kbd
+                size="xs"
+                aria-hidden="true"
+                style={{
+                  backgroundColor: 'transparent',
+                  color: 'inherit',
+                  boxShadow: 'none',
+                  border: 'none',
+                  marginTop: -4,
+                  fontSize: '16px',
+                  fontWeight: 600,
+                }}
+              >
+                ↵
+              </Kbd>
+            ) : undefined}
+            styles={{
+              inner: { alignItems: 'stretch' },
+              section: nextOnEnter && (!checkAnswer || !onCheckAnswer) ? {
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: '0 8px',
+                marginRight: -16,
+                marginBlock: -1,
+                borderLeft: '1px solid rgba(255, 255, 255, 0.25)',
+                backgroundColor: 'rgba(0, 0, 0, 0.08)',
+              } : undefined,
+            }}
+          >
+            {label}
+          </Button>
+        )}
       </Group>
       {timer !== undefined && (
         <>
