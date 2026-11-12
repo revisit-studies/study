@@ -81,7 +81,7 @@ function createMockParticipant(overrides: Partial<ParticipantDataWithStatus> & {
   const { participantId, ...rest } = overrides;
   return {
     participantId,
-    participantConfigHash: '', // Legacy fixture; versioned-config tests provide their hash explicitly.
+    participantConfigHash: '', // Fixture for records without a saved config hash.
     sequence: {
       orderPath: '', order: 'fixed', components: [], skip: [], interruptions: [],
     },
@@ -1708,6 +1708,52 @@ describe('utils.tsx', () => {
       const result = getComponentStats(participants, studyConfig);
 
       expect(result[0].correctness).toBe(100);
+    });
+
+    it('scores saved numeric correct ranges in component analysis', () => {
+      const rule = { id: 'q1', lowestCorrect: 22, highestCorrect: 26 };
+      const participants = [
+        createMockParticipant({
+          participantId: 'in-range',
+          completed: true,
+          answers: {
+            comp1_1: createMockAnswer({
+              componentName: 'comp1',
+              startTime: 1,
+              endTime: 10000,
+              answer: { q1: 22 },
+              correctAnswer: [rule],
+            }),
+          },
+        }),
+        createMockParticipant({
+          participantId: 'outside-range',
+          completed: true,
+          answers: {
+            comp1_1: createMockAnswer({
+              componentName: 'comp1',
+              startTime: 1,
+              endTime: 10000,
+              answer: { q1: 27 },
+              correctAnswer: [rule],
+            }),
+          },
+        }),
+      ];
+      const studyConfig = makeConfig({
+        components: {
+          comp1: {
+            type: 'questionnaire',
+            response: [{ id: 'q1', type: 'numerical', prompt: 'Number' }],
+          },
+        },
+      });
+
+      const [stats] = getComponentStats(participants, studyConfig);
+
+      expect(stats.correctness).toBe(50);
+      expect(stats.correctCount).toBe(1);
+      expect(stats.totalQuestionCount).toBe(2);
     });
 
     it('should prefer saved partial response scores in component correctness', () => {

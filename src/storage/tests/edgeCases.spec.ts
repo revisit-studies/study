@@ -8,7 +8,7 @@ import testConfigSimple2 from './testConfigSimple2.json';
 import { generateSequenceArray } from '../../utils/handleRandomSequences';
 import { LocalStorageEngine } from '../engines/LocalStorageEngine';
 import { type StorageEngine } from '../engines/types';
-import { hash } from '../engines/utils/storageEngineHelpers';
+import { hashConfig } from '../engines/utils/storageEngineHelpers';
 import { makeStoredAnswer } from '../../tests/utils';
 
 const studyId = 'test-edge-cases';
@@ -1101,8 +1101,8 @@ describe('StorageEngine edge cases', () => {
       await storageEngine.saveConfig(configSimple);
       await storageEngine.saveConfig(configSimple2);
 
-      const hash1 = await hash(JSON.stringify(configSimple));
-      const hash2 = await hash(JSON.stringify(configSimple2));
+      const hash1 = await hashConfig(configSimple);
+      const hash2 = await hashConfig(configSimple2);
 
       const configs = await storageEngine.getAllConfigsFromHash([hash1, hash2], studyId);
       expect(Object.keys(configs)).toHaveLength(2);
@@ -1126,8 +1126,8 @@ describe('StorageEngine edge cases', () => {
 
       const data1 = await storageEngine.getParticipantData(session1.participantId);
       const data2 = await storageEngine.getParticipantData(session2.participantId);
-      expect(data1!.participantConfigHash).toBe(await hash(JSON.stringify(configSimple)));
-      expect(data2!.participantConfigHash).toBe(await hash(JSON.stringify(configSimple2)));
+      expect(data1!.participantConfigHash).toBe(await hashConfig(configSimple));
+      expect(data2!.participantConfigHash).toBe(await hashConfig(configSimple2));
     });
   });
 

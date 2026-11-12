@@ -94,6 +94,58 @@ const metadata = {
 // ── tests ─────────────────────────────────────────────────────────────────────
 
 describe('studyStoreCreator', () => {
+  test('stores dynamically generated answer rules without changing their configured ranges', async () => {
+    const config: StudyConfig = {
+      ...minimalConfig,
+      components: {
+        intro: {
+          ...minimalConfig.components.intro,
+          correctAnswer: [{
+            id: 'q1', answer: 24, acceptableLow: 23, acceptableHigh: 25,
+          }],
+        },
+      },
+    };
+    const { store, actions } = await studyStoreCreator('test', config, minimalSequence, metadata, {}, modes, 'p1', false, false);
+
+    store.dispatch(actions.pushToFuncSequence({
+      component: 'intro',
+      funcName: 'dynamic',
+      index: 1,
+      funcIndex: 0,
+      parameters: {},
+      correctAnswer: [{
+        id: 'q1', answer: 24, acceptableLow: 23, acceptableHigh: 25,
+      }],
+    }));
+    expect(store.getState().answers.dynamic_1_intro_0.correctAnswer?.[0]).toEqual({
+      id: 'q1', answer: 24, acceptableLow: 23, acceptableHigh: 25,
+    });
+  });
+
+  test('reports invalid dynamic answer bounds as a config error', async () => {
+    const config: StudyConfig = minimalConfig;
+    const { store, actions } = await studyStoreCreator('test', config, minimalSequence, metadata, {}, modes, 'p1', false, false);
+
+    store.dispatch(actions.pushToFuncSequence({
+      component: 'intro',
+      funcName: 'dynamic',
+      index: 1,
+      funcIndex: 0,
+      parameters: {},
+      correctAnswer: [{
+        id: 'q1', answer: 0, acceptableLow: 7, acceptableHigh: 10,
+      }],
+    }));
+
+    expect(store.getState().dynamicConfigError).toMatchObject({
+      message: 'answer must be greater than or equal to acceptableLow (7)',
+      instancePath: '/components/intro/correctAnswer/0',
+      category: 'invalid-config',
+    });
+    expect(store.getState().answers.dynamic_1_intro_0).toBeUndefined();
+  });
+
   test('invalidating a visited unsubmitted trial reinitializes its context and retains its old provenance', async () => {
     const later = makeStoredAnswer({
       identifier: 'later_1', componentName: 'intro', trialOrder: '1', endTime: -1,

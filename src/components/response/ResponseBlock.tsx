@@ -577,14 +577,11 @@ export function ResponseBlock({
     return Object.fromEntries(allResponsesWithDefaults.flatMap((response) => {
       if (!Object.hasOwn(checkAnswerResponses, response.id)) return [];
       const correctAnswer = config.correctAnswer?.find((candidate) => candidate.id === response.id);
-      const applyAlmostCorrectStatus = (answerStatus: AnswerStatus): AnswerStatus => {
-        const isNumericResponse = response.type === 'numerical' || response.type === 'slider';
-        return answerStatus === 'correct'
-          && isNumericResponse
-          && responseAnswerIsAlmostCorrect(checkedAnswerValues?.[response.id], correctAnswer)
-          ? 'almost correct'
-          : answerStatus;
-      };
+      const applyAlmostCorrectStatus = (answerStatus: AnswerStatus): AnswerStatus => (answerStatus === 'correct'
+        && (response.type === 'numerical' || response.type === 'slider')
+        && responseAnswerIsAlmostCorrect(checkedAnswerValues?.[response.id], correctAnswer)
+        ? 'almost correct'
+        : answerStatus);
       const score = checkAnswerScores?.[response.id];
       if (score !== undefined || hasResponseScorer(response)) {
         const scoredStatus: AnswerStatus = checkAnswerResponses[response.id]

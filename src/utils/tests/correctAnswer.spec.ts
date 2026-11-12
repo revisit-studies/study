@@ -4,7 +4,7 @@ import {
 } from '../../parser/types';
 import { makeStoredAnswer } from '../../tests/utils';
 import {
-  compareResponseValues, evaluateSelectionAnswer, getCorrectAnswerDisplayValue, getMatrixCheckboxRowStatuses, getResponseScoreResultError, isResponseAnswered, isResponseScoreCorrect, responseAnswerIsAlmostCorrect, responseAnswerIsCorrect, scoreResponseAnswer, scoreResponseAnswerWithStatus,
+  compareResponseValues, evaluateSelectionAnswer, getCorrectAnswerConfigError, getCorrectAnswerDisplayValue, getMatrixCheckboxRowStatuses, getResponseScoreResultError, isResponseAnswered, isResponseScoreCorrect, responseAnswerIsAlmostCorrect, responseAnswerIsCorrect, scoreResponseAnswer, scoreResponseAnswerWithStatus,
 } from '../correctAnswer';
 
 import { componentAnswersAreCorrect, getComponentAnswerStatus } from '../componentCorrectness';
@@ -16,6 +16,12 @@ const asStoredAnswer = (value: TestStoredAnswer) => value;
 const asCorrectAnswer = (value: TestCorrectAnswer) => value;
 
 describe('correctAnswer utilities', () => {
+  test.each([NaN, Infinity, -Infinity])('rejects non-finite numeric bounds: %s', (bound) => {
+    expect(getCorrectAnswerConfigError({ id: 'numeric', answer: 24, acceptableLow: bound })).toBe(
+      'acceptableLow must be a finite number',
+    );
+  });
+
   test.each([undefined, null, '', [], {}, { row: '' }, { row: [] }, { rows: { first: '', second: null } }])(
     'treats recursively empty values as unanswered: %j',
     (value) => expect(isResponseAnswered(value)).toBe(false),
@@ -271,17 +277,17 @@ describe('correctAnswer utilities', () => {
     test('scores almost-correct answers while distinguishing them from exact and otherwise-correct answers', () => {
       const answer: Answer = {
         id: 'q',
-        answer: 50,
+        answer: 60,
         lowestCorrect: 60,
         highestCorrect: 65,
         acceptableLow: 45,
-        acceptableHigh: 55,
+        acceptableHigh: 65,
         acceptableAnswers: [70],
       };
       expect(responseAnswerIsAlmostCorrect(45, answer)).toBe(true);
       expect(responseAnswerIsAlmostCorrect(55, answer)).toBe(true);
-      expect(responseAnswerIsAlmostCorrect(50, answer)).toBe(false);
       expect(responseAnswerIsAlmostCorrect(60, answer)).toBe(false);
+      expect(responseAnswerIsAlmostCorrect(65, answer)).toBe(false);
       expect(responseAnswerIsAlmostCorrect(70, answer)).toBe(false);
       expect(responseAnswerIsAlmostCorrect(44, answer)).toBe(false);
       expect(scoreResponseAnswer(45, answer, { id: 'q', type: 'numerical', prompt: '' })).toBe(1);

@@ -313,8 +313,8 @@ function withStore(studyStore: StudyStore, ui: ReactNode) {
   );
 }
 
-async function renderWithStore(ui: ReactNode) {
-  const studyStore = await makeStudyStore();
+async function renderWithStore(ui: ReactNode, answers: Record<string, StoredAnswer> = {}) {
+  const studyStore = await makeStudyStore({}, answers);
   const utils = render(withStore(studyStore, ui));
   return { ...utils, studyStore, store: studyStore.store };
 }
@@ -421,6 +421,30 @@ describe('ResponseBlock', () => {
     expect(alert?.textContent).toContain('within an acceptable margin of error');
   });
 
+  test('does not show almost-correct feedback for a numeric answer in a text response', async () => {
+    const checkedAnswer = makeStoredAnswer({
+      answer: { q1: '24' },
+      checkAnswer: {
+        attemptsUsed: 1,
+        correct: true,
+        responses: { q1: true },
+        checkedAnswers: { q1: '24' },
+      },
+    });
+    const config: IndividualComponent = {
+      type: 'questionnaire',
+      provideFeedback: true,
+      response: [{ id: 'q1', type: 'shortText', prompt: 'Enter a value' }],
+      correctAnswer: [{
+        id: 'q1', answer: 25, acceptableLow: 22, acceptableHigh: 28,
+      }],
+    };
+    mockAnswerField.values = { q1: '24' };
+    const { container } = await renderWithStore(<ResponseBlock config={config} location="belowStimulus" status={checkedAnswer} />);
+
+    expect(container.querySelector('[data-testid="feedback-alert-q1"]')?.getAttribute('data-title')).toBe('Correct Answer');
+  });
+
   test('does not show answer totals before checking an enabled training page', async () => {
     const config: IndividualComponent = {
       type: 'questionnaire',
@@ -488,6 +512,33 @@ describe('ResponseBlock', () => {
     const { container } = await renderWithStore(<ResponseBlock config={config} location="belowStimulus" />);
 
     expect(container.querySelector('[role="status"]')?.textContent).toBe('incorrect');
+  });
+
+  test('keeps a Likert response label correct when its answer is in the almost-correct range', async () => {
+    const checkedAnswer = makeStoredAnswer({
+      answer: { q1: 4 },
+      checkAnswer: {
+        attemptsUsed: 1,
+        correct: true,
+        responses: { q1: true },
+        checkedAnswers: { q1: 4 },
+      },
+    });
+    const config: IndividualComponent = {
+      type: 'questionnaire',
+      provideFeedback: true,
+      response: [{
+        id: 'q1', type: 'likert', prompt: 'Rate this', numItems: 5,
+      }],
+      correctAnswer: [{
+        id: 'q1', answer: 5, acceptableLow: 3, acceptableHigh: 5,
+      }],
+    };
+    mockAnswerField.values = { q1: 4 };
+    const { container } = await renderWithStore(<ResponseBlock config={config} location="belowStimulus" status={checkedAnswer} />);
+
+    expect(container.querySelector('[role="status"]')?.textContent).toBe('correct');
+    expect(container.querySelector('[data-testid="feedback-alert-q1"]')?.getAttribute('data-title')).toBe('Correct Answer');
   });
 
   test('shows partially correct overall feedback when all matrix rows are partial', async () => {

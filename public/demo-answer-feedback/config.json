@@ -145,6 +145,13 @@
           "prompt": "Enter a non-positive value.",
           "secondaryText": "Correct: <=0; Incorrect: 1. There is no lower bound.",
           "placeholder": "Upper bound only"
+        },
+        {
+          "id": "acceptable-range",
+          "type": "numerical",
+          "prompt": "Estimate the value.",
+          "secondaryText": "60 is exactly correct. Values from 55 through 65 are almost correct.",
+          "placeholder": "Estimate"
         }
       ],
       "correctAnswer": [
@@ -185,6 +192,20 @@
             "hints": [
               "Try zero or a negative number.",
               "Hint: there is no lower bound; zero is accepted."
+            ]
+          }
+        },
+        {
+          "id": "acceptable-range",
+          "answer": 60,
+          "acceptableLow": 55,
+          "acceptableHigh": 65,
+          "feedback": {
+            "correctText": "That is exactly right.",
+            "incorrectText": "Try an estimate closer to 60.",
+            "hints": [
+              "Estimate a little above or below 60.",
+              "Hint: values from 55 through 65 are almost correct."
             ]
           }
         }

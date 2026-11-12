@@ -17,6 +17,7 @@ import { studyComponentToIndividualComponent } from '../utils/handleComponentInh
 import { randomizeOptions, randomizeQuestionOrder, randomizeForm } from '../utils/handleResponseRandomization';
 import { getInitialStimulusValidation } from '../components/response/stimulusErrors';
 import { getInitialGlobalVariables } from '../utils/globalStore';
+import { getCorrectAnswerConfigError } from '../utils/correctAnswer';
 import type { GlobalStoreGraph } from './globalStoreProvenance';
 import { getGlobalStoreNodeState } from './globalStoreProvenance';
 import { appendProvenanceTraversalEvent } from './provenance';
@@ -182,6 +183,7 @@ export async function studyStoreCreator(
     answers: Object.keys(answers).length > 0 ? answers : emptyAnswers,
     sequence,
     config,
+    dynamicConfigError: undefined,
     showStudyBrowser: true,
     showHelpText: false,
     alertModal: initialAlertModal ?? { show: false, message: '', title: '' },
@@ -278,16 +280,25 @@ export async function studyStoreCreator(
       },
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       pushToFuncSequence(state, { payload }: PayloadAction<{ component: string, funcName: string, index: number, funcIndex: number, parameters: Record<string, any> | undefined, correctAnswer: Answer[] | undefined }>) {
-        if (!state.funcSequence[payload.funcName]) {
-          state.funcSequence[payload.funcName] = [];
-        }
-
-        if (state.funcSequence[payload.funcName].length > payload.funcIndex) {
+        if (state.funcSequence[payload.funcName]?.length > payload.funcIndex) {
           return;
         }
 
         const componentConfig = studyComponentToIndividualComponent(state.config.components[payload.component] || { response: [] }, config);
-
+        const correctAnswer = payload.correctAnswer || componentConfig.correctAnswer || [];
+        const invalidAnswerIndex = correctAnswer.findIndex((answer) => getCorrectAnswerConfigError(answer));
+        if (invalidAnswerIndex !== -1) {
+          const message = getCorrectAnswerConfigError(correctAnswer[invalidAnswerIndex])!;
+          state.dynamicConfigError = {
+            message,
+            instancePath: `/components/${payload.component}/correctAnswer/${invalidAnswerIndex}`,
+            params: { action: 'Fix the answer and its numeric bounds' },
+            category: 'invalid-config',
+          };
+          return;
+        }
+        state.dynamicConfigError = undefined;
+        if (!state.funcSequence[payload.funcName]) state.funcSequence[payload.funcName] = [];
         const identifier = `${payload.funcName}_${payload.index}_${payload.component}_${payload.funcIndex}`;
 
         state.funcSequence[payload.funcName].push(payload.component);
@@ -307,7 +318,7 @@ export async function studyStoreCreator(
             payload.parameters || getComponentParameters(componentConfig),
             state.sequence.parameters,
           ),
-          correctAnswer: payload.correctAnswer || componentConfig.correctAnswer || [],
+          correctAnswer,
           optionOrders: randomizeOptions(componentConfig),
           questionOrders: randomizeQuestionOrder(componentConfig),
           formOrder: randomizeForm(componentConfig),

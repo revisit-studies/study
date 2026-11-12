@@ -35,7 +35,7 @@ import { verifyTextResponseConstraints } from '../utils/textResponseConstraints'
 import { responseValueKeys, visibilityControllerTypes } from '../utils/responseVisibility';
 import { getDropdownOptions } from '../utils/dropdownOptions';
 import { normalizeKeyMapping } from '../utils/keyMapping';
-import { hasResponseScorer } from '../utils/correctAnswer';
+import { getCorrectAnswerConfigError, hasResponseScorer } from '../utils/correctAnswer';
 
 const modules = import.meta.glob(
   [
@@ -502,17 +502,12 @@ function verifyCorrectAnswers(
   errors: ParsedConfig<StudyConfig>['errors'],
 ) {
   component.correctAnswer?.forEach((answer, index) => {
-    const hasAnswer = Object.hasOwn(answer, 'answer');
-    const hasAlmostCorrectRange = answer.acceptableLow !== undefined || answer.acceptableHigh !== undefined;
-    const hasCorrectRange = answer.lowestCorrect !== undefined || answer.highestCorrect !== undefined;
-    const hasValidAlmostCorrectAnswer = typeof answer.answer === 'number'
-      || (typeof answer.answer === 'string' && answer.answer.trim() !== '' && Number.isFinite(Number(answer.answer)));
-    if ((!hasAlmostCorrectRange || (hasAnswer && hasValidAlmostCorrectAnswer))
-      && (hasAnswer || answer.acceptableAnswers?.length || hasCorrectRange || hasAlmostCorrectRange)) return;
+    const validationError = getCorrectAnswerConfigError(answer, true);
+    if (!validationError) return;
     errors.push({
-      message: 'A correctAnswer must define an answer, a non-empty acceptableAnswers list, or a lowestCorrect/highestCorrect numeric bound; acceptableLow/acceptableHigh require a numeric answer',
+      message: validationError,
       instancePath: `${basePath}/correctAnswer/${index}`,
-      params: { action: 'Define answer, acceptableAnswers, lowestCorrect, or highestCorrect; use acceptableLow/acceptableHigh with a numeric answer' },
+      params: { action: validationError },
       category: 'invalid-config',
     });
   });
@@ -526,8 +521,13 @@ function verifyStudyConfig(studyConfig: StudyConfig, importedLibrariesData: Reco
   verifyLibraryUsage(studyConfig, errors, warnings, importedLibrariesData);
   errors.push(...verifyGlobalStoreConfig(studyConfig));
 
+  const usedBaseComponents = new Set(Object.values(studyConfig.components).flatMap((component) => (
+    component && 'baseComponent' in component ? [component.baseComponent] : []
+  )));
   Object.entries(studyConfig.baseComponents ?? {}).forEach(([componentName, component]) => {
-    verifyCorrectAnswers(`/baseComponents/${componentName}`, component, errors);
+    if (!usedBaseComponents.has(componentName)) {
+      verifyCorrectAnswers(`/baseComponents/${componentName}`, component, errors);
+    }
     verifyTextResponseConstraints(`/baseComponents/${componentName}`, component, errors, warnings);
     verifyDateTimeResponseConstraints(`/baseComponents/${componentName}`, component, errors, true);
     verifyDropdownResponseConstraints(`/baseComponents/${componentName}`, component, errors);

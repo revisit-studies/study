@@ -12,6 +12,8 @@ import {
 import { mergeComponentConfigs, studyComponentToIndividualComponent } from '../utils/handleComponentInheritance';
 import { PREFIX } from '../utils/Prefix';
 import { getSequenceFlatMapWithInterruptions } from '../utils/getSequenceFlatMap';
+import { getCorrectAnswerConfigError } from '../utils/correctAnswer';
+import type { Sequence } from '../store/types';
 
 const ajv = new Ajv({ allowUnionTypes: true });
 ajv.addSchema(librarySchema);
@@ -27,6 +29,13 @@ type SequenceWithImportReference = StudyConfig['sequence'] & {
 type LibraryConfigWithInheritanceMetadata = LibraryConfig & {
   __revisitInheritedComponentMetadata?: Record<string, { baseComponent: string; withSidebar?: boolean }>;
 };
+
+export class ParticipantConfigValidationError extends Error {
+  constructor(readonly issue: ParserErrorWarning) {
+    super(issue.message);
+    this.name = 'ParticipantConfigValidationError';
+  }
+}
 
 function normalizeLibraryMacroReference(reference: string): string {
   let normalizedReference = reference;
@@ -278,9 +287,10 @@ function deepFillTemplateStrings<T>(value: T, vars: Record<string, unknown>): T 
     return value.map((item) => deepFillTemplateStrings(item, vars)) as unknown as T;
   }
   if (value && typeof value === 'object') {
-    return Object.fromEntries(
+    const materialized = Object.fromEntries(
       Object.entries(value).map(([key, child]) => [key, deepFillTemplateStrings(child, vars)]),
-    ) as T;
+    );
+    return materialized as T;
   }
   return value;
 }
@@ -1650,6 +1660,7 @@ export function compileFactorBlocks(
 export function materializeParticipantConfig(
   config: StudyConfig,
   globalParameters: Record<string, unknown>,
+  participantSequence: StudyConfig['sequence'] | Sequence = config.sequence,
 ): StudyConfig {
   const components = Object.fromEntries(
     Object.entries(config.components).map(([componentId, component]) => {
@@ -1668,6 +1679,22 @@ export function materializeParticipantConfig(
       ];
     }),
   );
+
+  const instantiatedComponents = new Set(getSequenceFlatMapWithInterruptions(participantSequence));
+  Object.entries(components).forEach(([componentId, component]) => {
+    if (!instantiatedComponents.has(componentId)) return;
+    component.correctAnswer?.forEach((answer, index) => {
+      const validationError = getCorrectAnswerConfigError(answer);
+      if (validationError) {
+        throw new ParticipantConfigValidationError({
+          message: validationError,
+          instancePath: `/components/${componentId}/correctAnswer/${index}`,
+          params: { action: 'Fix the answer and its numeric bounds' },
+          category: 'invalid-config',
+        });
+      }
+    });
+  });
 
   return { ...config, components };
 }

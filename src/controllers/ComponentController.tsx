@@ -28,6 +28,7 @@ import {
 import { StudyEnd } from '../components/StudyEnd';
 import { TrainingFailed } from '../components/TrainingFailed';
 import { ResourceNotFound } from '../ResourceNotFound';
+import { ErrorLoadingConfig } from '../components/ErrorLoadingConfig';
 import { TimedOut } from '../components/TimedOut';
 import { findBlockForStep } from '../utils/getSequenceFlatMap';
 import { VegaController, VegaProvState } from './VegaController';
@@ -51,6 +52,7 @@ export function ComponentController() {
   const completed = useStoreSelector((state) => state.completed);
   const globalStoreSubmitting = useStoreSelector((state) => state.globalStoreSubmitting);
   const globalStoreError = useStoreSelector((state) => state.globalStoreError);
+  const dynamicConfigError = useStoreSelector((state) => state.dynamicConfigError);
   const studyConfig = useStudyConfig();
   const currentStep = useCurrentStep();
   const currentComponent = useCurrentComponent();
@@ -261,6 +263,10 @@ export function ComponentController() {
   // This avoids issues with the component config being undefined for the end of the study.
   if (currentComponent === 'end' || (completed && !isAnalysis)) {
     return <StudyEnd />;
+  }
+
+  if (dynamicConfigError) {
+    return <ErrorLoadingConfig issues={[dynamicConfigError]} type="error" />;
   }
 
   if (currentComponent === '__dynamicLoading') {

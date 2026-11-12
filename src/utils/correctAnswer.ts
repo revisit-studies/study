@@ -20,6 +20,49 @@ type ResponseFunctionModule = {
 
 export const RESPONSE_CORRECTNESS_THRESHOLD = 1;
 
+function getCorrectAnswerBoundsError(answer: Answer, allowTemplate = false): string | undefined {
+  const boundPairs = [
+    ['acceptableLow', answer.acceptableLow, 'acceptableHigh', answer.acceptableHigh],
+    ['lowestCorrect', answer.lowestCorrect, 'highestCorrect', answer.highestCorrect],
+  ] as const;
+  const hasBounds = boundPairs.some(([, low, , high]) => low !== undefined || high !== undefined);
+  if (!hasBounds) return undefined;
+
+  for (const [lowName, low, highName, high] of boundPairs) {
+    if (low !== undefined && !Number.isFinite(low)) return `${lowName} must be a finite number`;
+    if (high !== undefined && !Number.isFinite(high)) return `${highName} must be a finite number`;
+    if (low !== undefined && high !== undefined && low > high) {
+      return `${lowName} cannot be greater than ${highName}`;
+    }
+  }
+
+  if (answer.answer === undefined) return undefined;
+  if (allowTemplate && typeof answer.answer === 'string' && /\{\{\s*[A-Za-z_][\w-]*\s*\}\}/.test(answer.answer)) return undefined;
+  const numericAnswer = typeof answer.answer === 'number'
+    ? Number.isFinite(answer.answer) ? answer.answer : undefined
+    : typeof answer.answer === 'string' && answer.answer.trim() !== '' && Number.isFinite(Number(answer.answer))
+      ? Number(answer.answer)
+      : undefined;
+  if (numericAnswer === undefined) return 'answer must be a finite number when numeric bounds are set';
+
+  for (const [lowName, low, highName, high] of boundPairs) {
+    if (low !== undefined && numericAnswer < low) return `answer must be greater than or equal to ${lowName} (${low})`;
+    if (high !== undefined && numericAnswer > high) return `answer must be less than or equal to ${highName} (${high})`;
+  }
+  return undefined;
+}
+
+export function getCorrectAnswerConfigError(answer: Answer, allowTemplate = false): string | undefined {
+  const hasAnswer = answer.answer !== undefined;
+  const hasAlmostCorrectBounds = answer.acceptableLow !== undefined || answer.acceptableHigh !== undefined;
+  const hasCorrectBounds = answer.lowestCorrect !== undefined || answer.highestCorrect !== undefined;
+  if ((!hasAnswer && !answer.acceptableAnswers?.length && !hasCorrectBounds)
+    || (hasAlmostCorrectBounds && !hasAnswer)) {
+    return 'A correctAnswer must define an answer, a non-empty acceptableAnswers list, or a lowestCorrect/highestCorrect numeric bound; acceptableLow/acceptableHigh require a numeric answer';
+  }
+  return getCorrectAnswerBoundsError(answer, allowTemplate);
+}
+
 export function answerSnapshotMatches(
   checkAnswer: Pick<CheckAnswerState, 'answerSnapshot'> | undefined,
   answer: StoredAnswer['answer'],
@@ -344,7 +387,10 @@ export function responseAnswerIsAlmostCorrect(
     correctAnswer.answer,
     correctAnswer.lowestCorrect,
     correctAnswer.highestCorrect,
-    { ...options, acceptableAnswers: correctAnswer.acceptableAnswers },
+    {
+      ...options,
+      acceptableAnswers: correctAnswer.acceptableAnswers,
+    },
   );
 }
 
