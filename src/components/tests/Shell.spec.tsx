@@ -16,7 +16,7 @@ import { generateSequenceArray } from '../../utils/handleRandomSequences';
 import { getStudyConfig, resolveConfigKey } from '../../utils/fetchConfig';
 import { makeGlobalConfig, makeStudyConfig } from '../../tests/utils';
 import { studyStoreCreator } from '../../store/store';
-import { parseConditionParam } from '../../utils/handleConditionLogic';
+import { filterSequenceByCondition, parseConditionParam } from '../../utils/handleConditionLogic';
 import { parseStudyConfig } from '../../parser/parser';
 import { StageCapacityExceededError, StageOnlyDisabledConditionsHaveCapacityError } from '../../storage/engines/types';
 import { useStudyColorMode } from '../AppThemeProvider';
@@ -87,6 +87,7 @@ vi.mock('../../utils/encryptDecryptIndex', () => ({
 
 vi.mock('../../storage/engines/utils/storageEngineHelpers', () => ({
   hash: vi.fn(() => 'abc123'),
+  hashConfig: vi.fn(() => Promise.resolve('abc123')),
 }));
 
 vi.mock('../../utils/getStaticAsset', () => ({
@@ -271,6 +272,9 @@ describe('Shell', () => {
 
   afterEach(() => {
     cleanup();
+    vi.mocked(filterSequenceByCondition).mockReturnValue({
+      id: 'root', order: 'fixed', components: [], skip: [], orderPath: 'root',
+    });
     vi.useRealTimers();
     vi.clearAllMocks();
     vi.unstubAllGlobals();
@@ -658,20 +662,16 @@ describe('Shell', () => {
     await waitFor(() => expect(routingMountCount).toBe(1), { timeout: 3000 });
     await act(async () => resolveStudyInitialization?.());
     await waitFor(() => expect(vi.mocked(studyStoreCreator)).toHaveBeenCalled(), { timeout: 3000 });
-    expect(mockStorageEngine.initializeParticipantSession).toHaveBeenCalledWith(
-      expect.any(Object),
-      mockActiveConfig,
-      expect.any(Object),
-      undefined,
-      {
-        modesDocument: {
-          developmentModeEnabled: false,
-          dataSharingEnabled: false,
-          dataCollectionEnabled: true,
-        },
-        sequenceArray: ['seq1'],
+    const bootstrapData = mockStorageEngine.initializeParticipantSession.mock.calls[0][4];
+    expect(bootstrapData).toMatchObject({
+      modesDocument: {
+        developmentModeEnabled: false,
+        dataSharingEnabled: false,
+        dataCollectionEnabled: true,
       },
-    );
+      sequenceArray: ['seq1'],
+      validateSequence: expect.any(Function),
+    });
     await waitFor(() => expect(fetch).toHaveBeenCalled());
     await waitFor(() => expect(queryByTestId('study-loading-barrier')).toBeNull(), { timeout: 3000 });
     expect(getByTestId('study-interface').getAttribute('aria-busy')).toBe('false');
@@ -859,7 +859,13 @@ describe('Shell', () => {
     };
 
     render(<Shell globalConfig={globalConfig} />);
-    await waitFor(() => expect(mockStorageEngine!.initializeParticipantSession).toHaveBeenCalledWith({}, expect.anything(), expect.anything(), undefined, { modesDocument: expect.anything(), sequenceArray: ['saved-order'] }));
+    await waitFor(() => expect(mockStorageEngine!.initializeParticipantSession).toHaveBeenCalled());
+    const bootstrapData = mockStorageEngine!.initializeParticipantSession.mock.calls[0][4];
+    expect(bootstrapData).toMatchObject({
+      modesDocument: expect.anything(),
+      sequenceArray: ['saved-order'],
+      validateSequence: expect.any(Function),
+    });
     expect(mockStorageEngine!.getOrCreateSequenceArray).toHaveBeenCalledWith(expect.any(String), expect.any(Function));
   });
 

@@ -465,7 +465,7 @@ test('Test questionnaire component with responses and randomizing questions and 
   await moveRankingItem(page, 'C', 'available', 'selected');
   const checkAnswer = page.getByRole('button', { name: 'Check Answer', exact: true });
   await checkAnswer.click();
-  await expect(page.getByRole('alert')).toHaveCount(5);
+  await expect(page.getByRole('alert')).toHaveCount(6);
 
   await page.getByRole('checkbox', { name: 'A', exact: true }).uncheck();
   await page.getByRole('checkbox', { name: 'C', exact: true }).uncheck();
@@ -491,7 +491,21 @@ test('Test questionnaire component with responses and randomizing questions and 
   await moveRankingItem(page, 'C', 'selected', 'available');
   await moveRankingItem(page, 'B', 'available', 'selected');
   await checkAnswer.click();
-  await expect(page.getByRole('alert')).toHaveCount(5);
+  await expect(page.getByRole('alert')).toHaveCount(6);
+
+  // The Form Elements demo includes an exact answer and an inclusive almost-correct margin.
+  const almostCorrectSlider = page.locator('[data-question-id="almost-correct-slider"]').getByRole('slider');
+  await expect(almostCorrectSlider).toBeVisible();
+  await almostCorrectSlider.focus();
+  await almostCorrectSlider.press('Home');
+  for (let step = 0; step < 58; step += 1) {
+    await almostCorrectSlider.press('ArrowRight');
+  }
+  await expect(almostCorrectSlider).toHaveAttribute('aria-valuenow', '58');
+  await page.getByRole('button', { name: 'Check Answer', exact: true }).click();
+  const almostCorrectAlert = page.getByRole('alert', { name: 'Almost Correct', exact: true });
+  await expect(almostCorrectAlert).toContainText('Almost Correct');
+  await expect(almostCorrectAlert).toContainText('The correct answer is 60');
   await expect(page.getByRole('button', { name: 'Next', exact: true })).toBeEnabled();
   await nextClick(page);
 

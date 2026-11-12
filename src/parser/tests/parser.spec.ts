@@ -9,6 +9,7 @@ import { isDynamicBlock, isFactorBlock } from '../utils';
 import { generateSequenceArray } from '../../utils/handleRandomSequences';
 import { resolveResponseVisibility } from '../../utils/responseVisibility';
 import { getSequenceFlatMap } from '../../utils/getSequenceFlatMap';
+import type { Sequence } from '../../store/types';
 
 global.fetch = vi.fn();
 
@@ -3519,10 +3520,14 @@ describe('standalone correct-answer acceptance rules', () => {
   test.each([
     { answer: 0 },
     { acceptableAnswers: [-3, 0, 3] },
-    { acceptableLow: -1, acceptableHigh: 1 },
-    { acceptableLow: 0 },
-    { acceptableHigh: 0 },
+    { lowestCorrect: -1, highestCorrect: 1 },
+    { lowestCorrect: 0 },
+    { highestCorrect: 0 },
     { answer: 0, acceptableLow: -1, acceptableHigh: 1 },
+    { answer: 23, acceptableLow: 23, acceptableHigh: 25 },
+    { answer: 25, acceptableLow: 23, acceptableHigh: 25 },
+    { answer: 0, lowestCorrect: 0 },
+    { answer: 0, highestCorrect: 0 },
     { answer: 0, acceptableAnswers: [1, 2] },
   ])('accepts %j', async (definition) => {
     const config = makeConfig(definition);
@@ -3531,25 +3536,216 @@ describe('standalone correct-answer acceptance rules', () => {
     expect(parsed.components['Numeric Ranges'].correctAnswer?.[0]).toEqual({ id: 'closed-range', ...definition });
   });
 
-  test.each([{}, { acceptableAnswers: [] }])('rejects an empty acceptance rule %j', async (definition) => {
+  test.each([
+    { answer: 0, acceptableLow: 1 },
+    { answer: 2, acceptableHigh: 1 },
+    { answer: 0, lowestCorrect: 1 },
+    { answer: 2, highestCorrect: 1 },
+    { answer: 0, acceptableLow: 2, acceptableHigh: 1 },
+    { answer: 0, lowestCorrect: 2, highestCorrect: 1 },
+  ])('rejects answers outside or inverted numeric bounds: %j', async (definition) => {
     const parsed = await parseStudyConfig(JSON.stringify(makeConfig(definition)));
     expect(parsed.errors).toContainEqual(expect.objectContaining({
       instancePath: '/components/Numeric Ranges/correctAnswer/0',
-      message: 'A correctAnswer must define an answer, a non-empty acceptableAnswers list, or a numeric bound',
+    }));
+  });
+
+  test.each([
+    ['NaN', '.nan'],
+    ['positive infinity', '.inf'],
+    ['negative infinity', '-.inf'],
+  ])('rejects a %s numeric bound in parser errors', async (_description, yamlValue) => {
+    const config = makeConfig({ answer: 24, acceptableLow: 23, acceptableHigh: 25 });
+    const yaml = JSON.stringify(config).replace('"acceptableLow":23', `"acceptableLow": ${yamlValue}`);
+
+    const parsed = await parseStudyConfig(yaml);
+
+    expect(parsed.errors).toContainEqual(expect.objectContaining({
+      instancePath: '/components/Numeric Ranges/correctAnswer/0/acceptableLow',
+      message: 'must be number',
+    }));
+  });
+
+  test('rejects answers outside their almost-correct range', async () => {
+    const config = makeConfig({ answer: 0, acceptableLow: 7, acceptableHigh: 10 });
+
+    const parsed = await parseStudyConfig(JSON.stringify(config));
+
+    expect(parsed.errors).toContainEqual(expect.objectContaining({
+      instancePath: '/components/Numeric Ranges/correctAnswer/0',
+      message: 'answer must be greater than or equal to acceptableLow (7)',
+    }));
+  });
+
+  test('accepts and materializes numeric answer templates with almost-correct bounds', async () => {
+    const config = makeConfig({ answer: '{{target}}', acceptableLow: 23, acceptableHigh: 25 });
+    const parsed = await parseStudyConfig(JSON.stringify(config));
+    expect(parsed.errors).toEqual([]);
+
+    const materialized = materializeParticipantConfig(parsed, { target: 24 });
+    expect(materialized.components['Numeric Ranges'].correctAnswer?.[0].answer).toBe('24');
+  });
+
+  test('validates composed numeric answer templates after materialization', async () => {
+    const config = makeConfig({ answer: '-{{magnitude}}', acceptableLow: -25, acceptableHigh: -23 });
+    const parsed = await parseStudyConfig(JSON.stringify(config));
+    expect(parsed.errors).toEqual([]);
+
+    const materialized = materializeParticipantConfig(parsed, { magnitude: 24 });
+    expect(materialized.components['Numeric Ranges'].correctAnswer?.[0].answer).toBe('-24');
+    expect(() => materializeParticipantConfig(parsed, { magnitude: 30 })).toThrow(
+      'answer must be greater than or equal to acceptableLow (-25)',
+    );
+  });
+
+  test.each([
+    ['blank', '', 'answer must be a finite number'],
+    ['nonnumeric', 'not a number', 'answer must be a finite number'],
+    ['outside its bounds', 22, 'answer must be greater than or equal to acceptableLow (23)'],
+    ['unresolved', undefined, 'answer must be a finite number'],
+  ])('rejects a %s materialized answer with almost-correct bounds', async (_description, target, expectedError) => {
+    const config = makeConfig({ answer: '{{target}}', acceptableLow: 23, acceptableHigh: 25 });
+    const parsed = await parseStudyConfig(JSON.stringify(config));
+    expect(parsed.errors).toEqual([]);
+
+    expect(() => materializeParticipantConfig(parsed, target === undefined ? {} : { target })).toThrow(
+      expectedError,
+    );
+  });
+
+  test('reports resolved bound failures as parser issues', async () => {
+    const parsed = await parseStudyConfig(JSON.stringify(makeConfig({
+      answer: '{{target}}', acceptableLow: 23, acceptableHigh: 25,
+    })));
+    expect(parsed.errors).toEqual([]);
+    let materializationError: unknown;
+    try {
+      const assignedSequence: Sequence = {
+        id: 'assigned',
+        order: 'fixed',
+        orderPath: 'assigned',
+        components: ['Numeric Ranges'],
+        parameters: { target: 22 },
+        skip: [],
+      };
+      materializeParticipantConfig(parsed, assignedSequence.parameters || {}, assignedSequence);
+    } catch (error) {
+      materializationError = error;
+    }
+
+    expect(materializationError).toMatchObject({
+      name: 'ParticipantConfigValidationError',
+      issue: {
+        instancePath: '/components/Numeric Ranges/correctAnswer/0',
+        message: 'answer must be greater than or equal to acceptableLow (23)',
+        category: 'invalid-config',
+      },
+    });
+  });
+
+  test('does not validate an unused imported answer template', () => {
+    const importedTemplate = {
+      type: 'questionnaire' as const,
+      response: [],
+      correctAnswer: [{
+        id: 'q1', answer: '{{target}}', acceptableLow: 23, acceptableHigh: 25,
+      }],
+    };
+    const config = {
+      $schema: '',
+      studyMetadata: {},
+      uiConfig: {},
+      components: {
+        importedTemplate,
+        trial: { baseComponent: 'answerTemplate', parameters: { target: 24 } },
+      },
+      baseComponents: { answerTemplate: importedTemplate },
+      sequence: { order: 'fixed', components: ['trial'] },
+    } as unknown as StudyConfig;
+
+    const materialized = materializeParticipantConfig(config, {});
+
+    expect(materialized.components.trial.correctAnswer?.[0].answer).toBe('24');
+    expect(materialized.components.importedTemplate.correctAnswer?.[0].answer).toBe('{{target}}');
+  });
+
+  test('validates only the assigned conditional branch after participant parameters resolve', async () => {
+    const config = makeConfig({ answer: '{{target}}', acceptableLow: 23, acceptableHigh: 25 });
+    config.components.Alternate = {
+      ...config.components['Numeric Ranges'],
+      correctAnswer: [{
+        id: 'alternate', answer: '{{target}}', acceptableLow: 31, acceptableHigh: 33,
+      }],
+    };
+    config.sequence.components.push('Alternate');
+    const parsed = await parseStudyConfig(JSON.stringify(config));
+    expect(parsed.errors).toEqual([]);
+
+    const firstAssignment = materializeParticipantConfig(parsed, { target: 24 }, {
+      ...parsed.sequence,
+      components: ['Numeric Ranges'],
+    });
+    const secondAssignment = materializeParticipantConfig(parsed, { target: 32 }, {
+      ...parsed.sequence,
+      components: ['Alternate'],
+    });
+
+    expect(firstAssignment.components['Numeric Ranges'].correctAnswer?.[0].answer).toBe('24');
+    expect(secondAssignment.components.Alternate.correctAnswer?.[0].answer).toBe('32');
+  });
+
+  test.each([
+    {},
+    { acceptableAnswers: [] },
+    { acceptableLow: 0 },
+    { acceptableHigh: 0 },
+    { answer: 'not numeric', acceptableLow: 0 },
+  ])('rejects an invalid acceptance rule %j', async (definition) => {
+    const parsed = await parseStudyConfig(JSON.stringify(makeConfig(definition)));
+    expect(parsed.errors).toContainEqual(expect.objectContaining({
+      instancePath: '/components/Numeric Ranges/correctAnswer/0',
     }));
   });
 
   test('validates acceptance rules inherited from base components', async () => {
-    const config = makeConfig({ acceptableHigh: 0 });
+    const config = makeConfig({ acceptableLow: 23, acceptableHigh: 25 });
     config.baseComponents = { rangeBase: config.components['Numeric Ranges'] };
-    config.components['Numeric Ranges'] = { baseComponent: 'rangeBase' };
+    config.components['Numeric Ranges'] = {
+      baseComponent: 'rangeBase',
+      correctAnswer: [{ id: 'closed-range', answer: 24 }],
+    };
     expect((await parseStudyConfig(JSON.stringify(config))).errors).toEqual([]);
-    config.baseComponents.rangeBase.correctAnswer[0] = { id: 'closed-range' };
+    config.components['Numeric Ranges'].correctAnswer = [{ id: 'closed-range' }];
     const parsed = await parseStudyConfig(JSON.stringify(config));
     expect(parsed.errors).toContainEqual(expect.objectContaining({
-      instancePath: '/baseComponents/rangeBase/correctAnswer/0',
+      instancePath: '/components/Numeric Ranges/correctAnswer/0',
+    }));
+
+    const unusedBase = makeConfig({ answer: 0 });
+    unusedBase.baseComponents = { unused: { ...unusedBase.components['Numeric Ranges'], correctAnswer: [{ id: 'unused' }] } };
+    const parsedUnusedBase = await parseStudyConfig(JSON.stringify(unusedBase));
+    expect(parsedUnusedBase.errors).toContainEqual(expect.objectContaining({
+      instancePath: '/baseComponents/unused/correctAnswer/0',
     }));
   });
+});
+
+test('test-parser-errors study config displays numeric answer-bound parser errors', async () => {
+  vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+    text: () => Promise.resolve(readFileSync('public/libraries/test/config.json', 'utf8')),
+  }));
+  const parsed = await parseStudyConfig(readFileSync('public/test-parser-errors/config.json', 'utf8'));
+
+  expect(parsed.errors).toContainEqual(expect.objectContaining({
+    instancePath: '/components/answer-higher/correctAnswer/0',
+    message: 'answer must be less than or equal to highestCorrect (15)',
+    category: 'invalid-config',
+  }));
+  expect(parsed.errors).toContainEqual(expect.objectContaining({
+    instancePath: '/components/answer-lower/correctAnswer/0',
+    message: 'answer must be greater than or equal to lowestCorrect (13)',
+    category: 'invalid-config',
+  }));
 });
 
 test.each([['date', '11/02/2026'], ['time', '12:30']])('followup: validates materialized %s defaults', async (type, value) => {

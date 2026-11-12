@@ -117,6 +117,42 @@
           ]
         }],
       "type": "questionnaire"
+    },
+    "answer-higher":{
+      "response": [
+        {
+          "id": "answer-higher",
+          "type": "numerical",
+          "prompt": "What is 10+4",
+          "location": "belowStimulus"
+        }],
+      "type": "questionnaire",
+      "correctAnswer": [
+        {
+          "id": "answer-higher",
+          "answer": 18,
+          "lowestCorrect": 13,
+          "highestCorrect": 15
+        }
+      ]
+    },
+    "answer-lower":{
+      "response": [
+        {
+          "id": "answer-lower",
+          "type": "numerical",
+          "prompt": "What is 10+4",
+          "location": "belowStimulus"
+        }],
+      "type": "questionnaire",
+      "correctAnswer": [
+        {
+          "id": "answer-lower",
+          "answer": 10,
+          "lowestCorrect": 13,
+          "highestCorrect": 15
+        }
+      ]
     }
   },
   "sequence": {
@@ -170,7 +206,9 @@
       "workingBaseComponentFromLibrary",
       "missingComponentFromLibrary",
       "color-mapper",
-      "math-mapper"
+      "math-mapper",
+      "answer-higher",
+      "answer-lower"
     ]
   }
 }

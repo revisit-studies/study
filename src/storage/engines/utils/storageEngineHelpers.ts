@@ -39,6 +39,10 @@ export async function hash(input: string) {
   return hashHex;
 }
 
+export function hashConfig(config: StudyConfig) {
+  return hash(JSON.stringify(config));
+}
+
 export function isParticipantData(obj: unknown): obj is ParticipantData {
   const potentialParticipantData = obj as ParticipantData;
   return typeof potentialParticipantData === 'object' && potentialParticipantData && potentialParticipantData.participantId !== undefined;

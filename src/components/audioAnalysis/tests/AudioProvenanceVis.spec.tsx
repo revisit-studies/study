@@ -119,7 +119,7 @@ vi.mock('../../../utils/syncReplay', () => ({
 }));
 
 vi.mock('@trrack/core', () => {
-  const Registry = { create: vi.fn(() => ({})) };
+  const Registry = { create: vi.fn(() => ({ register: vi.fn(() => vi.fn()) })) };
   const initializeTrrack = vi.fn(() => ({
     importObject: mockImportObject,
     getState: mockGetState,

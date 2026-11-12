@@ -43,6 +43,7 @@
     "demo-form-elements",
     "demo-training",
     "demo-answer-feedback",
+    "test-almost-correct",
     "demo-html-trrack",
     "demo-svelte-trrack",
     "demo-react-trrack",
@@ -173,6 +174,11 @@
     "demo-answer-feedback": {
       "tab": "Demo Studies",
       "path": "demo-answer-feedback/config.json"
+    },
+    "test-almost-correct": {
+      "tab": "Tests",
+      "path": "test-almost-correct/config.json",
+      "test": true
     },
     "demo-training": {
       "tab": "Demo Studies",

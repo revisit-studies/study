@@ -238,8 +238,8 @@
         {
           "id": "res-Q7",
           "answer": 24,
-          "acceptableLow": 23,
-          "acceptableHigh": 25
+          "lowestCorrect": 23,
+          "highestCorrect": 25
         }
       ],
       "meta": {

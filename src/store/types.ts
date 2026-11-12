@@ -4,7 +4,7 @@ import type { ConfigureTrrackOptions, Trrack } from '@trrack/core';
 import type { GetInputPropsReturnType } from '@mantine/form/lib/types';
 import type { GlobalStoreGraph, GlobalStoreProvenanceState } from './globalStoreProvenance';
 import type {
-  GlobalStoreValues, Answer, ComponentBlock, ConfigResponseBlockLocation, CustomResponse, InterruptionBlock, JsonValue, ParsedStringOption, ParticipantData, ResponseBlockLocation, SkipConditions, StudyConfig, ValueOf,
+  GlobalStoreValues, Answer, ComponentBlock, ConfigResponseBlockLocation, CustomResponse, InterruptionBlock, JsonValue, ParsedStringOption, ParserErrorWarning, ParticipantData, ResponseBlockLocation, SkipConditions, StudyConfig, ValueOf,
 } from '../parser/types';
 import { type REVISIT_MODE } from '../storage/engines/types';
 import type { StimulusIssueReason } from '../components/response/stimulusErrors';
@@ -305,6 +305,7 @@ export interface StoreState {
   answers: ParticipantData['answers'];
   sequence: Sequence;
   config: StudyConfig;
+  dynamicConfigError?: ParserErrorWarning;
   showStudyBrowser: boolean;
   showHelpText: boolean;
   alertModal: AlertModalState;

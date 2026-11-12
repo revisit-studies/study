@@ -20,6 +20,49 @@ type ResponseFunctionModule = {
 
 export const RESPONSE_CORRECTNESS_THRESHOLD = 1;
 
+function getCorrectAnswerBoundsError(answer: Answer, allowTemplate = false): string | undefined {
+  const boundPairs = [
+    ['acceptableLow', answer.acceptableLow, 'acceptableHigh', answer.acceptableHigh],
+    ['lowestCorrect', answer.lowestCorrect, 'highestCorrect', answer.highestCorrect],
+  ] as const;
+  const hasBounds = boundPairs.some(([, low, , high]) => low !== undefined || high !== undefined);
+  if (!hasBounds) return undefined;
+
+  for (const [lowName, low, highName, high] of boundPairs) {
+    if (low !== undefined && !Number.isFinite(low)) return `${lowName} must be a finite number`;
+    if (high !== undefined && !Number.isFinite(high)) return `${highName} must be a finite number`;
+    if (low !== undefined && high !== undefined && low > high) {
+      return `${lowName} cannot be greater than ${highName}`;
+    }
+  }
+
+  if (answer.answer === undefined) return undefined;
+  if (allowTemplate && typeof answer.answer === 'string' && /\{\{\s*[A-Za-z_][\w-]*\s*\}\}/.test(answer.answer)) return undefined;
+  const numericAnswer = typeof answer.answer === 'number'
+    ? Number.isFinite(answer.answer) ? answer.answer : undefined
+    : typeof answer.answer === 'string' && answer.answer.trim() !== '' && Number.isFinite(Number(answer.answer))
+      ? Number(answer.answer)
+      : undefined;
+  if (numericAnswer === undefined) return 'answer must be a finite number when numeric bounds are set';
+
+  for (const [lowName, low, highName, high] of boundPairs) {
+    if (low !== undefined && numericAnswer < low) return `answer must be greater than or equal to ${lowName} (${low})`;
+    if (high !== undefined && numericAnswer > high) return `answer must be less than or equal to ${highName} (${high})`;
+  }
+  return undefined;
+}
+
+export function getCorrectAnswerConfigError(answer: Answer, allowTemplate = false): string | undefined {
+  const hasAnswer = answer.answer !== undefined;
+  const hasAlmostCorrectBounds = answer.acceptableLow !== undefined || answer.acceptableHigh !== undefined;
+  const hasCorrectBounds = answer.lowestCorrect !== undefined || answer.highestCorrect !== undefined;
+  if ((!hasAnswer && !answer.acceptableAnswers?.length && !hasCorrectBounds)
+    || (hasAlmostCorrectBounds && !hasAnswer)) {
+    return 'A correctAnswer must define an answer, a non-empty acceptableAnswers list, or a lowestCorrect/highestCorrect numeric bound; acceptableLow/acceptableHigh require a numeric answer';
+  }
+  return getCorrectAnswerBoundsError(answer, allowTemplate);
+}
+
 export function answerSnapshotMatches(
   checkAnswer: Pick<CheckAnswerState, 'answerSnapshot'> | undefined,
   answer: StoredAnswer['answer'],
@@ -101,7 +144,7 @@ export function getResponseValidationResultError(result: unknown, path: string):
   return null;
 }
 
-export type AnswerStatus = 'correct' | 'incorrect' | 'partially correct';
+export type AnswerStatus = 'correct' | 'almost correct' | 'incorrect' | 'partially correct';
 
 export function evaluateSelectionAnswer(
   userAnswer: unknown,
@@ -194,58 +237,65 @@ export function getMatrixQuestionIds(response?: Response): string[] | undefined 
     : undefined;
 }
 
-/** Use the complete accepted rule when no preferred exact answer is configured. */
+/** Describe the configured answer and any correctness ranges. */
 export function getCorrectAnswerDisplayValue(rule?: Answer): unknown {
-  if (rule?.answer !== undefined) return rule.answer;
-  const { acceptableAnswers, acceptableLow, acceptableHigh } = rule ?? {};
-  if (acceptableAnswers === undefined && acceptableLow === undefined && acceptableHigh === undefined) return undefined;
-  if (acceptableAnswers !== undefined && acceptableLow === undefined && acceptableHigh === undefined) return acceptableAnswers;
+  if (!rule) return undefined;
+  const {
+    answer, acceptableAnswers, lowestCorrect, highestCorrect, acceptableLow, acceptableHigh,
+  } = rule;
+  const hasAdditionalRules = acceptableAnswers !== undefined
+    || lowestCorrect !== undefined
+    || highestCorrect !== undefined
+    || acceptableLow !== undefined
+    || acceptableHigh !== undefined;
+  if (answer !== undefined && !hasAdditionalRules) return answer;
+  if (answer === undefined && acceptableAnswers !== undefined
+    && lowestCorrect === undefined && highestCorrect === undefined
+    && acceptableLow === undefined && acceptableHigh === undefined) return acceptableAnswers;
+  if (!hasAdditionalRules && answer === undefined) return undefined;
   return {
+    ...(answer !== undefined ? { answer } : {}),
     ...(acceptableAnswers !== undefined ? { acceptableAnswers } : {}),
+    ...(lowestCorrect !== undefined ? { lowestCorrect } : {}),
+    ...(highestCorrect !== undefined ? { highestCorrect } : {}),
     ...(acceptableLow !== undefined ? { acceptableLow } : {}),
     ...(acceptableHigh !== undefined ? { acceptableHigh } : {}),
   };
 }
 
-export function responseAnswerIsCorrect(
-  responseUserAnswer: StoredAnswer['answer'][string] | undefined,
+function numericAnswerIsInRange(value: unknown, lowest?: number, highest?: number): boolean {
+  if (lowest === undefined && highest === undefined) return false;
+  if ((typeof value !== 'number' && typeof value !== 'string')
+    || String(value).trim() === '') return false;
+  const numericValue = Number(value);
+  return Number.isFinite(numericValue)
+    && (lowest === undefined || numericValue >= lowest)
+    && (highest === undefined || numericValue <= highest);
+}
+
+function responseAnswerMatchesValue(
+  responseUserAnswer: Exclude<StoredAnswer['answer'][string], undefined>,
   responseCorrectAnswer: Answer['answer'],
-  acceptableLow?: number,
-  acceptableHigh?: number,
   options: {
     ignoreArrayOrder?: boolean;
-    acceptableAnswers?: Answer['acceptableAnswers'];
     caseSensitive?: boolean;
     matrixQuestionIds?: string[];
-  } = {},
+  },
 ): boolean {
-  if (responseUserAnswer === undefined) return false;
-  if (options.acceptableAnswers?.some((answer) => responseAnswerIsCorrect(responseUserAnswer, answer, undefined, undefined, {
-    ignoreArrayOrder: options.ignoreArrayOrder,
-    caseSensitive: options.caseSensitive,
-    matrixQuestionIds: options.matrixQuestionIds,
-  }))) return true;
-
-  // Numeric bounds define accepted answers independently of a preferred answer.
-  if (acceptableLow !== undefined || acceptableHigh !== undefined) {
-    if ((typeof responseUserAnswer !== 'number' && typeof responseUserAnswer !== 'string')
-      || String(responseUserAnswer).trim() === '') return false;
-    const value = Number(responseUserAnswer);
-    return Number.isFinite(value)
-      && (acceptableLow === undefined || value >= acceptableLow)
-      && (acceptableHigh === undefined || value <= acceptableHigh);
-  }
-
-  if (responseCorrectAnswer === undefined) return false;
-
   if (typeof responseUserAnswer === 'string' && typeof responseCorrectAnswer === 'string') {
-    const matchesText = options.caseSensitive === false
+    const stringMatches = options.caseSensitive === false
       ? responseUserAnswer.toLowerCase() === responseCorrectAnswer.toLowerCase()
       : responseUserAnswer === responseCorrectAnswer;
-    if (matchesText) return true;
+    if (stringMatches) return true;
+    const userAnswerNumber = Number(responseUserAnswer);
+    const correctAnswerNumber = Number(responseCorrectAnswer);
+    return responseUserAnswer.trim() !== ''
+      && responseCorrectAnswer.trim() !== ''
+      && Number.isFinite(userAnswerNumber)
+      && Number.isFinite(correctAnswerNumber)
+      && userAnswerNumber === correctAnswerNumber;
   }
 
-  // Handle numeric-string comparison for likert and slider responses.
   if ((typeof responseUserAnswer === 'number' || typeof responseUserAnswer === 'string')
     && (typeof responseCorrectAnswer === 'string' || typeof responseCorrectAnswer === 'number')) {
     const userAnswerNumber = Number(responseUserAnswer);
@@ -254,15 +304,14 @@ export function responseAnswerIsCorrect(
       || (hasNumericAnswer && String(responseCorrectAnswer).trim() !== '' && userAnswerNumber === Number(responseCorrectAnswer));
   }
 
-  // Checkbox and dropdown answers ignore selection order; ranking answers do not.
   if (Array.isArray(responseUserAnswer) && Array.isArray(responseCorrectAnswer)) {
     return compareResponseValues(responseUserAnswer, responseCorrectAnswer, 'equals', {
       ignoreArrayOrder: options.ignoreArrayOrder ?? true,
     });
   }
 
-  // Handle array of object (e.g. matrix-radio and matrix-checkbox)
-  if (responseUserAnswer !== null && typeof responseUserAnswer === 'object' && !Array.isArray(responseUserAnswer) && Array.isArray(responseCorrectAnswer)) {
+  if (responseUserAnswer !== null && typeof responseUserAnswer === 'object'
+    && !Array.isArray(responseUserAnswer) && Array.isArray(responseCorrectAnswer)) {
     const userAnswerObject = responseUserAnswer as Record<string, unknown>;
     const userAnswerArray = options.matrixQuestionIds
       ? options.matrixQuestionIds.map((questionId) => userAnswerObject[questionId])
@@ -275,14 +324,11 @@ export function responseAnswerIsCorrect(
 
     if (userAnswerArray.length !== responseCorrectAnswer.length) return false;
 
-    // Check matrix-checkbox
     const isMatrixCheckbox = Array.isArray(responseCorrectAnswer[0]);
     if (isMatrixCheckbox) {
       return userAnswerArray.every((userVal, idx) => {
         const correctVal = responseCorrectAnswer[idx];
-        if (!Array.isArray(correctVal)) return false;
-
-        return matrixCheckboxSelectionsAreEqual(userVal, correctVal);
+        return Array.isArray(correctVal) && matrixCheckboxSelectionsAreEqual(userVal, correctVal);
       });
     }
 
@@ -290,6 +336,62 @@ export function responseAnswerIsCorrect(
   }
 
   return compareResponseValues(responseUserAnswer, responseCorrectAnswer, 'equals');
+}
+
+export function responseAnswerIsCorrect(
+  responseUserAnswer: StoredAnswer['answer'][string] | undefined,
+  responseCorrectAnswer: Answer['answer'],
+  lowestCorrect?: number,
+  highestCorrect?: number,
+  options: {
+    ignoreArrayOrder?: boolean;
+    acceptableAnswers?: Answer['acceptableAnswers'];
+    acceptableLow?: number;
+    acceptableHigh?: number;
+    caseSensitive?: boolean;
+    matrixQuestionIds?: string[];
+  } = {},
+): boolean {
+  if (responseUserAnswer === undefined) return false;
+  if (options.acceptableAnswers?.some((answer) => responseAnswerIsCorrect(responseUserAnswer, answer, undefined, undefined, {
+    ignoreArrayOrder: options.ignoreArrayOrder,
+    caseSensitive: options.caseSensitive,
+    matrixQuestionIds: options.matrixQuestionIds,
+  }))) return true;
+
+  if (numericAnswerIsInRange(responseUserAnswer, lowestCorrect, highestCorrect)) return true;
+  if (responseCorrectAnswer === undefined) return false;
+  const exact = responseAnswerMatchesValue(responseUserAnswer, responseCorrectAnswer, options);
+  const almostRange = numericAnswerIsInRange(responseUserAnswer, options.acceptableLow, options.acceptableHigh);
+  if (exact) return true;
+  return almostRange;
+}
+
+export function responseAnswerIsAlmostCorrect(
+  responseUserAnswer: StoredAnswer['answer'][string] | undefined,
+  correctAnswer: Answer | undefined,
+  options: {
+    ignoreArrayOrder?: boolean;
+    acceptableAnswers?: Answer['acceptableAnswers'];
+    caseSensitive?: boolean;
+    matrixQuestionIds?: string[];
+  } = {},
+): boolean {
+  if (!correctAnswer || correctAnswer.answer === undefined
+    || (correctAnswer.acceptableLow === undefined && correctAnswer.acceptableHigh === undefined)
+    || !numericAnswerIsInRange(responseUserAnswer, correctAnswer.acceptableLow, correctAnswer.acceptableHigh)) {
+    return false;
+  }
+  return !responseAnswerIsCorrect(
+    responseUserAnswer,
+    correctAnswer.answer,
+    correctAnswer.lowestCorrect,
+    correctAnswer.highestCorrect,
+    {
+      ...options,
+      acceptableAnswers: correctAnswer.acceptableAnswers,
+    },
+  );
 }
 
 export type ResponseAnswerScoreResult = { score: number | null; error: boolean };
@@ -338,11 +440,13 @@ export function scoreResponseAnswerWithStatus(
       score: Number(responseAnswerIsCorrect(
         gradingValue,
         correctAnswer.answer,
-        correctAnswer.acceptableLow,
-        correctAnswer.acceptableHigh,
+        correctAnswer.lowestCorrect,
+        correctAnswer.highestCorrect,
         {
           ignoreArrayOrder: shouldIgnoreArrayOrder(response),
           acceptableAnswers: correctAnswer.acceptableAnswers,
+          acceptableLow: correctAnswer.acceptableLow,
+          acceptableHigh: correctAnswer.acceptableHigh,
           caseSensitive: correctAnswer.caseSensitive,
           matrixQuestionIds: getMatrixQuestionIds(response),
         },
@@ -375,11 +479,13 @@ export function scoreResponseAnswerWithStatus(
     score: Number(responseAnswerIsCorrect(
       value,
       correctAnswer.answer,
-      correctAnswer.acceptableLow,
-      correctAnswer.acceptableHigh,
+      correctAnswer.lowestCorrect,
+      correctAnswer.highestCorrect,
       {
         ignoreArrayOrder: shouldIgnoreArrayOrder(response),
         acceptableAnswers: correctAnswer.acceptableAnswers,
+        acceptableLow: correctAnswer.acceptableLow,
+        acceptableHigh: correctAnswer.acceptableHigh,
         caseSensitive: correctAnswer.caseSensitive,
         matrixQuestionIds: getMatrixQuestionIds(response),
       },

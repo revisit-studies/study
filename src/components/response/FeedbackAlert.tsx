@@ -17,15 +17,26 @@ export function formatTrainingFeedback(text: string, attemptsUsed: number, train
 /** Describe all accepted answers when training attempts are exhausted. */
 export function formatCorrectAnswer(answer: Answer): string {
   const format = (value: unknown) => (typeof value === 'object' ? JSON.stringify(value) : String(value));
-  let primary = answer.answer === undefined ? undefined : format(answer.answer);
-  if (answer.acceptableLow !== undefined && answer.acceptableHigh !== undefined) {
-    primary = `${answer.acceptableLow} to ${answer.acceptableHigh} (inclusive)`;
-  } else if (answer.acceptableLow !== undefined) {
-    primary = `at least ${answer.acceptableLow}`;
-  } else if (answer.acceptableHigh !== undefined) {
-    primary = `at most ${answer.acceptableHigh}`;
-  }
-  return [...(primary === undefined ? [] : [primary]), ...(answer.acceptableAnswers ?? []).map(format)].join(' or ');
+  const formatRange = (low?: number, high?: number) => (
+    low !== undefined && high !== undefined
+      ? `${low} to ${high} (inclusive)`
+      : low !== undefined
+        ? `at least ${low}`
+        : high !== undefined
+          ? `at most ${high}`
+          : undefined
+  );
+  const exactAnswer = answer.answer === undefined ? undefined : format(answer.answer);
+  const correctRange = formatRange(answer.lowestCorrect, answer.highestCorrect);
+  const almostCorrectRange = formatRange(answer.acceptableLow, answer.acceptableHigh);
+  const ranges = [
+    correctRange === undefined ? undefined : `correct range: ${correctRange}`,
+    almostCorrectRange === undefined ? undefined : `almost-correct range: ${almostCorrectRange}`,
+  ].filter((range): range is string => range !== undefined);
+  const primary = exactAnswer === undefined
+    ? ranges.join('; ')
+    : `${exactAnswer}${ranges.length > 0 ? ` (${ranges.join('; ')})` : ''}`;
+  return [...(primary ? [primary] : []), ...(answer.acceptableAnswers ?? []).map(format)].join(' or ');
 }
 
 export function FeedbackAlert({
