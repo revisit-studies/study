@@ -1,0 +1,36 @@
+{
+    "H-task1": {
+        "prompt": "Select the European account which has liked the most tweets.",
+        "replyType": [
+            "singleNodeSelection"
+        ],
+        "replyCount": 1
+    },
+    "H-task2": {
+        "prompt": "Select all of Lane's neighbors that are people and have more friends than followers.",
+        "replyType": [
+            "multipleNodeSelection"
+        ],
+        "replyCount": {
+            "type": "at least",
+            "value": 1
+        }
+    },
+    "H-task3": {
+        "prompt": "Select the *institution* from North America that has retweeted Jeffrey and mentioned Robert. ",
+        "replyType": [
+            "singleNodeSelection"
+        ],
+        "replyCount": 1
+    },
+    "H-task4": {
+        "prompt": "Which person is frequently retweeted in this network despite having few tweets and likes?",
+        "replyType": [
+            "multipleNodeSelection"
+        ],
+        "replyCount": {
+            "type": "at least",
+            "value": 1
+        }
+    }
+}

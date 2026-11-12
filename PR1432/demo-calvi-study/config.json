@@ -1,0 +1,70 @@
+{
+  "$schema": "../../src/parser/StudyConfigSchema.json",
+  "studyMetadata": {
+    "title": "CALVI Mixed Question Bank",
+    "version": "pilot",
+    "authors": ["The reVISit Team"],
+    "date": "2026-08-21",
+    "description": "A single randomized 30-question CALVI sequence containing 15 real and 15 trick questions from the CALVI library.",
+    "organizations": ["University of Utah"]
+  },
+  "uiConfig": {
+    "contactEmail": "contact@revisit.dev",
+    "logoPath": "revisitAssets/revisitLogoSquare.svg",
+    "withProgressBar": true,
+    "withSidebar": true,
+    "autoDownloadStudy": false,
+    "stylesheetPath": "library-calvi/assets/image.css",
+    "studyEndMsg": "Thank you for completing the CALVI question bank."
+  },
+  "importedLibraries": ["calvi"],
+  "components": {
+    "introduction": {
+      "type": "markdown",
+      "path": "demo-calvi-study/assets/introduction.md",
+      "response": []
+    }
+  },
+  "sequence": {
+    "order": "fixed",
+    "components": [
+      "introduction",
+      {
+        "id": "calviMixedQuestions",
+        "order": "random",
+        "components": [
+          "$calvi.components.N1",
+          "$calvi.components.N2",
+          "$calvi.components.N3",
+          "$calvi.components.N4",
+          "$calvi.components.N5",
+          "$calvi.components.N6",
+          "$calvi.components.N7",
+          "$calvi.components.N8",
+          "$calvi.components.N9",
+          "$calvi.components.N10",
+          "$calvi.components.N11",
+          "$calvi.components.N12",
+          "$calvi.components.N13",
+          "$calvi.components.N14",
+          "$calvi.components.N15",
+          "$calvi.components.T3",
+          "$calvi.components.T10",
+          "$calvi.components.T14",
+          "$calvi.components.T20",
+          "$calvi.components.T25",
+          "$calvi.components.T26",
+          "$calvi.components.T30",
+          "$calvi.components.T35",
+          "$calvi.components.T37",
+          "$calvi.components.T40",
+          "$calvi.components.T42",
+          "$calvi.components.T43",
+          "$calvi.components.T47",
+          "$calvi.components.T48",
+          "$calvi.components.T49"
+        ]
+      }
+    ]
+  }
+}

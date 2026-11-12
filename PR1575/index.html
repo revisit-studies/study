@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/study/PR1575/revisitAssets/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ReVISit</title>
+
+    <!-- Required for react browser router on GitHub pages -->
+    <script type="text/javascript">
+      // Single Page Apps for GitHub Pages
+      // MIT License
+      // https://github.com/rafgraph/spa-github-pages
+      // This script checks to see if a redirect is present in the query string,
+      // converts it back into the correct url and adds it to the // browser's history using window.history.replaceState(...),
+      // which won't cause the browser to attempt to load the new url.
+      // When the single page app is loaded further down in this file,
+      // the correct url will be waiting in the browser's history for
+      // the single page app to route accordingly.
+      (function(l) {
+        if (l.search[1] === '/' ) {
+          var decoded = l.search.slice(1).split('&').map(function(s) { 
+            return s.replace(/~and~/g, '&')
+          }).join('?');
+          window.history.replaceState(null, null,
+              l.pathname.slice(0, -1) + decoded + l.hash
+          );
+        }
+      }(window.location))
+    </script>
+
+    <script type="module" crossorigin src="/study/PR1575/assets/index-3ZPc3wR0.js"></script>
+    <link rel="modulepreload" crossorigin href="/study/PR1575/assets/rolldown-runtime-C0FnF6B9.js">
+    <link rel="modulepreload" crossorigin href="/study/PR1575/assets/react-C21x__mS.js">
+    <link rel="modulepreload" crossorigin href="/study/PR1575/assets/react-dom-BddMPX6d.js">
+    <link rel="modulepreload" crossorigin href="/study/PR1575/assets/clamp-BVhf2JRQ.js">
+    <link rel="modulepreload" crossorigin href="/study/PR1575/assets/use-id-DNOlRwW-.js">
+    <link rel="modulepreload" crossorigin href="/study/PR1575/assets/to-int-BUxqyWcn.js">
+    <link rel="modulepreload" crossorigin href="/study/PR1575/assets/clsx-DB0hHKMi.js">
+    <link rel="modulepreload" crossorigin href="/study/PR1575/assets/jsx-runtime-BdxMnOeJ.js">
+    <link rel="modulepreload" crossorigin href="/study/PR1575/assets/Box-PGTJSlQD.js">
+    <link rel="modulepreload" crossorigin href="/study/PR1575/assets/Transition-aCo6zR0E.js">
+    <link rel="modulepreload" crossorigin href="/study/PR1575/assets/use-merged-ref-DALjXO0h.js">
+    <link rel="modulepreload" crossorigin href="/study/PR1575/assets/use-uncontrolled-D6JyaPJK.js">
+    <link rel="modulepreload" crossorigin href="/study/PR1575/assets/use-resize-observer-SAJz6oIT.js">
+    <link rel="modulepreload" crossorigin href="/study/PR1575/assets/create-safe-context-DyY1EXuR.js">
+    <link rel="modulepreload" crossorigin href="/study/PR1575/assets/get-env-MimdSsZv.js">
+    <link rel="modulepreload" crossorigin href="/study/PR1575/assets/get-contrast-color-Bsrot_68.js">
+    <link rel="modulepreload" crossorigin href="/study/PR1575/assets/DirectionProvider-BP370mPs.js">
+    <link rel="modulepreload" crossorigin href="/study/PR1575/assets/Group-CcgU2c1a.js">
+    <link rel="modulepreload" crossorigin href="/study/PR1575/assets/Text-dOurbzd1.js">
+    <link rel="modulepreload" crossorigin href="/study/PR1575/assets/UnstyledButton-BHBAO2FW.js">
+    <link rel="modulepreload" crossorigin href="/study/PR1575/assets/Loader-2DR3LRn-.js">
+    <link rel="modulepreload" crossorigin href="/study/PR1575/assets/Button-CdFV4XvU.js">
+    <link rel="modulepreload" crossorigin href="/study/PR1575/assets/Stack-DV1zb9it.js">
+    <link rel="modulepreload" crossorigin href="/study/PR1575/assets/value-DZLSVLrJ.js">
+    <link rel="modulepreload" crossorigin href="/study/PR1575/assets/defaultLocale-xNPunHPA.js">
+    <link rel="modulepreload" crossorigin href="/study/PR1575/assets/init-ZlXS9mIS.js">
+    <link rel="modulepreload" crossorigin href="/study/PR1575/assets/linear-CjRz_khA.js">
+    <link rel="modulepreload" crossorigin href="/study/PR1575/assets/extent-V-JVJWfI.js">
+    <link rel="modulepreload" crossorigin href="/study/PR1575/assets/ordinal-BdBDtYTt.js">
+    <link rel="modulepreload" crossorigin href="/study/PR1575/assets/select-9NOwYGpe.js">
+    <link rel="modulepreload" crossorigin href="/study/PR1575/assets/timer-D012sKj0.js">
+    <link rel="modulepreload" crossorigin href="/study/PR1575/assets/src-Dv7b162y.js">
+    <link rel="modulepreload" crossorigin href="/study/PR1575/assets/nice--vROP43K.js">
+    <link rel="modulepreload" crossorigin href="/study/PR1575/assets/defaultLocale-CxryeJm7.js">
+    <link rel="modulepreload" crossorigin href="/study/PR1575/assets/time-Cog8wFQq.js">
+    <link rel="modulepreload" crossorigin href="/study/PR1575/assets/colors-Cg5Vh3br.js">
+    <link rel="modulepreload" crossorigin href="/study/PR1575/assets/Tableau10-D6E-d9_A.js">
+    <link rel="modulepreload" crossorigin href="/study/PR1575/assets/floating-ui.react-dom-BCxsn7dt.js">
+    <link rel="modulepreload" crossorigin href="/study/PR1575/assets/floating-ui.react-BWxchz-k.js">
+    <link rel="modulepreload" crossorigin href="/study/PR1575/assets/Tooltip-sww6tZeA.js">
+    <link rel="modulepreload" crossorigin href="/study/PR1575/assets/Center-C1cdsdjx.js">
+    <link rel="modulepreload" crossorigin href="/study/PR1575/assets/XAxisBar-Diy76OpT.js">
+    <link rel="modulepreload" crossorigin href="/study/PR1575/assets/YAxis-DuQ45jm-.js">
+    <link rel="modulepreload" crossorigin href="/study/PR1575/assets/Paintbrush-xiC0fhXR.js">
+    <link rel="modulepreload" crossorigin href="/study/PR1575/assets/Scatter-BWc99-CC.js">
+    <link rel="modulepreload" crossorigin href="/study/PR1575/assets/ScrollArea-Da-fG0Hk.js">
+    <link rel="modulepreload" crossorigin href="/study/PR1575/assets/VLAT9-Fj0SgjkE.js">
+    <link rel="modulepreload" crossorigin href="/study/PR1575/assets/CloseButton-Dq6uYAsY.js">
+    <link rel="modulepreload" crossorigin href="/study/PR1575/assets/Input-BbDeVGgr.js">
+    <link rel="modulepreload" crossorigin href="/study/PR1575/assets/Radio-DLStj6bx.js">
+    <link rel="modulepreload" crossorigin href="/study/PR1575/assets/Paper-BHWvYKwz.js">
+    <link rel="modulepreload" crossorigin href="/study/PR1575/assets/tslib.es6-BmVIhgZL.js">
+    <link rel="modulepreload" crossorigin href="/study/PR1575/assets/InputBase-DN_maBPf.js">
+    <link rel="modulepreload" crossorigin href="/study/PR1575/assets/Alert-DSOG1g65.js">
+    <link rel="modulepreload" crossorigin href="/study/PR1575/assets/Badge-Dlac1IPC.js">
+    <link rel="modulepreload" crossorigin href="/study/PR1575/assets/Code-DgU2xkUE.js">
+    <link rel="modulepreload" crossorigin href="/study/PR1575/assets/Textarea-CGZIpmdK.js">
+    <link rel="modulepreload" crossorigin href="/study/PR1575/assets/List-B2yJgzvH.js">
+    <link rel="modulepreload" crossorigin href="/study/PR1575/assets/Title-D6PsYCX0.js">
+    <link rel="modulepreload" crossorigin href="/study/PR1575/assets/preload-helper-DIxgtu8a.js">
+    <link rel="modulepreload" crossorigin href="/study/PR1575/assets/axis-ChvWZg1j.js">
+    <link rel="modulepreload" crossorigin href="/study/PR1575/assets/Scatter-ni1c2g07.js">
+    <link rel="modulepreload" crossorigin href="/study/PR1575/assets/core-DrGgzIQk.js">
+    <link rel="modulepreload" crossorigin href="/study/PR1575/assets/parseTrialOrder-BUR5eZ70.js">
+    <link rel="modulepreload" crossorigin href="/study/PR1575/assets/useStudyState-SZA57D_n.js">
+    <link rel="modulepreload" crossorigin href="/study/PR1575/assets/feature-BywtEtBB.js">
+    <link rel="modulepreload" crossorigin href="/study/PR1575/assets/max-Db0q5_zr.js">
+    <link rel="modulepreload" crossorigin href="/study/PR1575/assets/range-EplFIxc7.js">
+    <link rel="modulepreload" crossorigin href="/study/PR1575/assets/path-7kX8DvBT.js">
+    <link rel="modulepreload" crossorigin href="/study/PR1575/assets/dsv-BSut97vP.js">
+    <link rel="modulepreload" crossorigin href="/study/PR1575/assets/dsv-tOojWCBj.js">
+    <link rel="modulepreload" crossorigin href="/study/PR1575/assets/constant-DPxBEEHv.js">
+    <link rel="modulepreload" crossorigin href="/study/PR1575/assets/pack-CVmrkqHC.js">
+    <link rel="modulepreload" crossorigin href="/study/PR1575/assets/band-D9osr4BM.js">
+    <link rel="modulepreload" crossorigin href="/study/PR1575/assets/mapUtils-BvokImux.js">
+    <link rel="modulepreload" crossorigin href="/study/PR1575/assets/constant-BavaVCea.js">
+    <link rel="modulepreload" crossorigin href="/study/PR1575/assets/math-Bi_r_ZWc.js">
+    <link rel="modulepreload" crossorigin href="/study/PR1575/assets/arc-cNArTdj5.js">
+    <link rel="modulepreload" crossorigin href="/study/PR1575/assets/array-BifhSqXX.js">
+    <link rel="modulepreload" crossorigin href="/study/PR1575/assets/step-CqgdNM3U.js">
+    <link rel="modulepreload" crossorigin href="/study/PR1575/assets/pie-Dwj_UUNL.js">
+    <link rel="modulepreload" crossorigin href="/study/PR1575/assets/trrack-tdAyBrRF.js">
+    <link rel="modulepreload" crossorigin href="/study/PR1575/assets/trrackCodeMirror-Df8UNeEd.js">
+    <link rel="modulepreload" crossorigin href="/study/PR1575/assets/vlatQ-CfRPDrcR.js">
+    <link rel="modulepreload" crossorigin href="/study/PR1575/assets/YAxisBar-ByrF929Y.js">
+    <link rel="modulepreload" crossorigin href="/study/PR1575/assets/Bar-BNGVvApK.js">
+    <link rel="modulepreload" crossorigin href="/study/PR1575/assets/useChartDimensions-BrG8hkTM.js">
+    <link rel="modulepreload" crossorigin href="/study/PR1575/assets/Bars-JZUFxnUP.js">
+    <link rel="modulepreload" crossorigin href="/study/PR1575/assets/NumericAxisV-Cv8SiAcX.js">
+    <link rel="modulepreload" crossorigin href="/study/PR1575/assets/OrdinalAxisHWithDotMarks-DCyXOaxM.js">
+    <link rel="modulepreload" crossorigin href="/study/PR1575/assets/Bubbles-X-NFH3qT.js">
+    <link rel="modulepreload" crossorigin href="/study/PR1575/assets/DotMarks-fvBUsFz6.js">
+    <link rel="modulepreload" crossorigin href="/study/PR1575/assets/Slices-CkmzfwM4.js">
+    <link rel="modulepreload" crossorigin href="/study/PR1575/assets/SlicesDotMarks-CR6YB12v.js">
+    <link rel="modulepreload" crossorigin href="/study/PR1575/assets/utils-BH3kYm3x.js">
+    <link rel="modulepreload" crossorigin href="/study/PR1575/assets/types-B3sXyyMq.js">
+    <link rel="stylesheet" crossorigin href="/study/PR1575/assets/index-nvKVjEXn.css">
+  </head>
+  <body style="margin: 0;">
+    <style>
+      /* Global style overrides */
+      .no-last-child-bottom-padding > *:last-child {
+        padding-bottom: 0 !important;
+      }
+
+      .no-last-child-bottom-padding {
+        font-weight: 500;
+      }
+
+      .required-asterisk {
+        color: var(--mantine-color-red-text);
+        margin-left: 4px;
+      }
+    </style>
+
+    <div id="root"></div>
+  </body>
+</html>

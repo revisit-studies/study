@@ -1,0 +1,47 @@
+{
+  "$schema": "../../src/parser/StudyConfigSchema.json",
+  "studyMetadata": {
+    "title": "CALVI Mixed Question Bank",
+    "version": "pilot",
+    "authors": ["The reVISit Team"],
+    "date": "2026-08-21",
+    "description": "A single randomized 30-question CALVI sequence containing 15 real and 15 trick questions from the CALVI library.",
+    "organizations": ["University of Utah"]
+  },
+  "uiConfig": {
+    "contactEmail": "contact@revisit.dev",
+    "logoPath": "revisitAssets/revisitLogoSquare.svg",
+    "withProgressBar": true,
+    "withSidebar": true,
+    "autoDownloadStudy": false,
+    "stylesheetPath": "library-calvi/assets/image.css",
+    "studyEndMsg": "Thank you for completing the CALVI question bank."
+  },
+  "importedLibraries": ["calvi"],
+  "factors": {
+    "calviQuestion": [
+      "N1", "N2", "N3", "N4", "N5", "N6", "N7", "N8", "N9", "N10", "N11", "N12", "N13", "N14", "N15",
+      "T3", "T10", "T14", "T20", "T25", "T26", "T30", "T35", "T37", "T40", "T42", "T43", "T47", "T48", "T49"
+    ]
+  },
+  "components": {
+    "introduction": {
+      "type": "markdown",
+      "path": "demo-calvi-study/assets/introduction.md",
+      "response": []
+    }
+  },
+  "sequence": {
+    "order": "fixed",
+    "components": [
+      "introduction",
+      {
+        "type": "factor",
+        "id": "calviMixedQuestions",
+        "factor": "calviQuestion",
+        "components": "$calvi.components.{{calviQuestion}}",
+        "order": "random"
+      }
+    ]
+  }
+}
