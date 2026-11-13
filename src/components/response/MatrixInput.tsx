@@ -215,7 +215,7 @@ export function MatrixInput({
   const answerColumn = 2;
   const rightLabelColumn = 3;
   const columns = hasRightQuestionLabels ? 'auto 1fr auto' : 'auto 1fr';
-  const minWidth = 140 + (_n * 80) + (hasRightQuestionLabels ? 140 : 0);
+  const minWidth = 120 + (_n * 56) + (hasRightQuestionLabels ? 120 : 0);
   return (
     <>
       {prompt.length > 0 && (
@@ -239,7 +239,7 @@ export function MatrixInput({
           gridTemplateRows: 'auto 1fr',
           '--matrix-min-width': `${minWidth}px`,
         } as CSSProperties}
-        m="md"
+        m="sm"
         mt="xs"
       >
 
@@ -294,7 +294,7 @@ export function MatrixInput({
                 overflow: 'hidden',
                 overflowWrap: 'anywhere',
               }}
-              px={4}
+              px={2}
             >
               <OptionLabel
                 label={
@@ -341,8 +341,8 @@ export function MatrixInput({
                 backgroundColor: (idx + 1) % 2 === 0 ? 'light-dark(var(--mantine-color-gray-2), var(--mantine-color-dark-6))' : 'var(--mantine-color-body)',
               }}
               ta="right"
-              p="sm"
-              miw={140}
+              p="xs"
+              miw={120}
               maw={400}
             >
               <OptionLabel
@@ -449,8 +449,8 @@ export function MatrixInput({
                   backgroundColor: (idx + 1) % 2 === 0 ? 'light-dark(var(--mantine-color-gray-2), var(--mantine-color-dark-6))' : 'var(--mantine-color-body)',
                 }}
                 ta="left"
-                p="sm"
-                miw={140}
+                p="xs"
+                miw={120}
                 maw={400}
               >
                 {questionsByValue[questionKey]?.rightLabel && (

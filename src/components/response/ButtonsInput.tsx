@@ -4,7 +4,9 @@ import {
 import {
   IconArrowDown, IconArrowLeft, IconArrowRight, IconArrowUp,
 } from '@tabler/icons-react';
-import React, { useMemo, useRef } from 'react';
+import React, {
+  useEffect, useMemo, useRef, useState,
+} from 'react';
 import ClearSelectionButton from './ClearSelectionButton';
 import { ButtonsResponse, ParsedStringOption } from '../../parser/types';
 import classes from './css/ButtonsInput.module.css';
@@ -13,6 +15,7 @@ import { InputLabel } from './InputLabel';
 import { OptionLabel } from './OptionLabel';
 import { parseStringOptions } from '../../utils/stringOptions';
 import { KeyMapper } from './KeyMapper';
+import { getButtonColumnSpans, getButtonRowSizes } from './buttonLayout';
 
 const renderSymbol = (symbol: string) => (
   <span
@@ -100,6 +103,8 @@ export function ButtonsInput({
   enumerateQuestions: boolean;
 }) {
   const optionRefs = useRef<Record<string, HTMLButtonElement | null>>({});
+  const buttonsRef = useRef<HTMLDivElement>(null);
+  const [buttonRows, setButtonRows] = useState(1);
   const {
     prompt,
     required,
@@ -116,6 +121,44 @@ export function ButtonsInput({
     () => parseStringOptions(optionOrders[response.id] || options),
     [optionOrders, options, response.id],
   );
+  const buttonRowSizes = buttonRows === 1
+    ? [orderedOptions.length]
+    : [Math.ceil(orderedOptions.length / 2), Math.floor(orderedOptions.length / 2)];
+  const buttonColumnSpans = getButtonColumnSpans(orderedOptions.length, buttonRowSizes);
+
+  useEffect(() => {
+    const container = buttonsRef.current;
+    if (!container || typeof ResizeObserver === 'undefined') return undefined;
+
+    const updateRows = () => {
+      const buttons = Array.from(container.querySelectorAll<HTMLButtonElement>('[data-button-option]'));
+      if (buttons.length < 2) {
+        setButtonRows(1);
+        return;
+      }
+      const containerStyle = getComputedStyle(container);
+      const availableWidth = container.clientWidth
+        - Number.parseFloat(containerStyle.paddingLeft)
+        - Number.parseFloat(containerStyle.paddingRight);
+      const previousColumns = container.style.gridTemplateColumns;
+      const previousSpans = buttons.map((button) => button.style.gridColumn);
+      container.style.gridTemplateColumns = `repeat(${buttons.length}, max-content)`;
+      buttons.forEach((button) => {
+        button.style.gridColumn = 'auto';
+      });
+      const optionWidths = buttons.map((button) => button.getBoundingClientRect().width);
+      container.style.gridTemplateColumns = previousColumns;
+      buttons.forEach((button, buttonIndex) => {
+        button.style.gridColumn = previousSpans[buttonIndex];
+      });
+      setButtonRows(getButtonRowSizes(optionWidths, availableWidth, Number.parseFloat(containerStyle.columnGap) || 0).length);
+    };
+
+    const observer = new ResizeObserver(updateRows);
+    observer.observe(container);
+    updateRows();
+    return () => observer.disconnect();
+  }, [orderedOptions]);
 
   const handleValueChange = (value: string, source: 'keyboard' | 'click' = 'click') => {
     answer?.onChange?.(value, source);
@@ -160,7 +203,18 @@ export function ButtonsInput({
         onArrowNavigation={startArrowNavigation}
         disabled={disabled}
       />
-      <Flex justify="space-between" align="center" gap="xl" mt="xs" p="4px">
+      <Flex
+        ref={buttonsRef}
+        justify="space-between"
+        align="stretch"
+        gap="md"
+        mt="xs"
+        p="4px"
+        style={{
+          display: 'grid',
+          gridTemplateColumns: `repeat(${buttonRowSizes[0] * buttonColumnSpans[0]}, minmax(0, 1fr))`,
+        }}
+      >
         {orderedOptions.map((radio, idx) => {
           const hasKeyVisual = !hideKeyVisual && Boolean(radio.key);
 
@@ -177,8 +231,11 @@ export function ButtonsInput({
                 }
               }}
               className={classes.root}
+              data-button-option
               style={{
-                overflow: 'hidden',
+                gridColumn: `span ${buttonColumnSpans[idx]}`,
+                minWidth: 0,
+                overflow: 'visible',
                 padding: 0,
               }}
             >
@@ -193,7 +250,7 @@ export function ButtonsInput({
                   align="center"
                   justify="center"
                   gap="xs"
-                  style={{ flex: 1, padding: '6px 12px' }}
+                  style={{ flex: 1, minWidth: 0, padding: '6px 8px' }}
                 >
                   <OptionLabel label={radio.label} infoText={radio.infoText} button fw={700} />
                 </Flex>

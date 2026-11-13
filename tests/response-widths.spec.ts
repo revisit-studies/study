@@ -73,21 +73,74 @@ test('form blocks and stimulus center within the available space and allow study
 });
 
 test('wide matrix choices stay scrollable inside the form', async ({ page }) => {
-  await page.setViewportSize({ width: 500, height: 900 });
+  await page.setViewportSize({ width: 1440, height: 900 });
   await page.route('**/demo-form-elements/config.json', async (route) => {
     const result = await route.fetch();
     const config = await result.json();
     config.uiConfig.withSidebar = false;
+    config.components['Form Elements'].response.find((response: { id: string }) => response.id === 'multi-custom').answerOptions = Array.from(
+      { length: 10 },
+      (_, index) => `Choice ${index + 1}`,
+    );
     await route.fulfill({ response: result, json: config });
   });
   await page.goto('/demo-form-elements/reviewer-Form%20Elements');
   await page.getByRole('complementary').locator('.mantine-CloseButton-root').click();
-  const matrix = page.locator('#q-multi-satisfaction');
-  const scrollRegion = matrix.locator('..');
+  const response = page.locator('#multi-custom');
+  const matrix = response.locator('.matrix-grid');
+  const scrollRegion = response.locator('..');
+  await expect.poll(() => scrollRegion.evaluate((element) => element.scrollWidth - element.clientWidth)).toBeLessThanOrEqual(1);
+  const columnAlignment = await matrix.evaluate((element) => {
+    const header = element.children[1].children[0].getBoundingClientRect();
+    const checkbox = element.children[3].querySelector('input[type="checkbox"]')!.getBoundingClientRect();
+    return Math.abs((header.left + header.right) / 2 - (checkbox.left + checkbox.right) / 2);
+  });
+  expect(columnAlignment).toBeLessThanOrEqual(1);
+
+  await page.setViewportSize({ width: 500, height: 900 });
   expect(await scrollRegion.evaluate((element) => element.scrollWidth - element.clientWidth)).toBeGreaterThan(0);
   expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(1);
-  await matrix.getByRole('radio').first().check();
-  await expect(matrix.getByRole('radio').first()).toBeChecked();
+  await matrix.getByRole('checkbox').first().check();
+  await expect(matrix.getByRole('checkbox').first()).toBeChecked();
+});
+
+test('full-width buttons use one row when they fit and balanced two-row layouts when they do not', async ({ page }) => {
+  await page.setViewportSize({ width: 500, height: 900 });
+  let optionCount = 6;
+  await page.route('**/demo-form-elements/config.json', async (route) => {
+    const result = await route.fetch();
+    const config = await result.json();
+    config.uiConfig.withSidebar = false;
+    config.components['Form Elements'].response.find((response: { id: string }) => response.id === 'q-buttons').options = Array.from({ length: optionCount }, (_, index) => (
+      optionCount === 10 ? `Long button option ${index + 1}` : `Option ${index + 1}`
+    ));
+    await route.fulfill({ response: result, json: config });
+  });
+  await page.goto('/demo-form-elements/reviewer-Form%20Elements');
+  await page.getByRole('complementary').locator('.mantine-CloseButton-root').click();
+
+  const buttons = page.locator('#q-buttons [data-button-option]');
+  for (const [count, sizes] of [[6, [3, 3]], [7, [4, 3]], [10, [5, 5]]] as const) {
+    optionCount = count;
+    await resetClientStudyState(page);
+    await page.goto('/demo-form-elements/reviewer-Form%20Elements');
+    await page.getByRole('complementary').locator('.mantine-CloseButton-root').click();
+    await expect(buttons).toHaveCount(count);
+    await expect.poll(() => buttons.evaluateAll((elements) => {
+      const tops = [...new Set(elements.map((element) => Math.round(element.getBoundingClientRect().top)))].sort();
+      return tops.map((top) => elements.filter((element) => Math.round(element.getBoundingClientRect().top) === top).length);
+    })).toEqual(sizes);
+  }
+  await expect(buttons.first()).toContainText('Long button option 1');
+  await expect(buttons.last()).toContainText('Long button option 10');
+
+  optionCount = 4;
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await resetClientStudyState(page);
+  await page.goto('/demo-form-elements/reviewer-Form%20Elements');
+  await page.getByRole('complementary').locator('.mantine-CloseButton-root').click();
+  await expect(buttons).toHaveCount(4);
+  await expect.poll(() => buttons.evaluateAll((elements) => new Set(elements.map((element) => Math.round(element.getBoundingClientRect().top))).size)).toBe(1);
 });
 
 test('default answer widths leave questions and long text full width', async ({ page }) => {

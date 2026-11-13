@@ -5,7 +5,7 @@
     "version": "pilot",
     "authors": ["The reVISit Team"],
     "date": "2026-08-20",
-    "description": "An HTML Stroop test that crosses five color words with two congruence levels to generate 10 trials.",
+    "description": "An HTML Stroop test that crosses ten color words with two congruence levels to generate 10 trials.",
     "organizations": ["University of Utah", "WPI", "University of Toronto"]
   },
   "uiConfig": {
@@ -18,7 +18,7 @@
     "windowEventDebounceTime": 200
   },
   "factors": {
-    "color": ["RED", "YELLOW", "GREEN", "BLUE", "BLACK"],
+    "color": ["RED", "ORANGE", "YELLOW", "GREEN", "BLUE", "PURPLE", "PINK", "BROWN", "GRAY", "BLACK"],
     "congruence": ["neutral", "incongruent"],
     "stroopConditions": {
       "action": "cross",
@@ -34,14 +34,19 @@
         {
           "id": "response",
           "prompt": "Report the word's ink color, not the color named by the word. Use the buttons or the corresponding number key.",
-          "secondaryText": "Keyboard shortcuts: 1-5",
+          "secondaryText": "Keyboard shortcuts: 1-0",
           "type": "buttons",
           "options": [
             {"label": "RED", "value": "RED", "key": "1"},
-            {"label": "YELLOW", "value": "YELLOW", "key": "2"},
-            {"label": "GREEN", "value": "GREEN", "key": "3"},
-            {"label": "BLUE", "value": "BLUE", "key": "4"},
-            {"label": "BLACK", "value": "BLACK", "key": "5"}
+            {"label": "ORANGE", "value": "ORANGE", "key": "2"},
+            {"label": "YELLOW", "value": "YELLOW", "key": "3"},
+            {"label": "GREEN", "value": "GREEN", "key": "4"},
+            {"label": "BLUE", "value": "BLUE", "key": "5"},
+            {"label": "PURPLE", "value": "PURPLE", "key": "6"},
+            {"label": "PINK", "value": "PINK", "key": "7"},
+            {"label": "BROWN", "value": "BROWN", "key": "8"},
+            {"label": "GRAY", "value": "GRAY", "key": "9"},
+            {"label": "BLACK", "value": "BLACK", "key": "0"}
           ],
           "location": "belowStimulus",
           "required": true
