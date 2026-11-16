@@ -63,6 +63,7 @@ describe('Factor Templates', () => {
           parameters: { arm: '{{arm}}' },
         },
       },
+      sequence: { order: 'fixed', components: ['trial'] },
     } as unknown as StudyConfig;
 
     const materialized = materializeParticipantConfig(config, { arm: 1 });

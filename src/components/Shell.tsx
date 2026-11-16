@@ -40,7 +40,7 @@ import { ErrorLoadingConfig } from './ErrorLoadingConfig';
 import { ResourceNotFound } from '../ResourceNotFound';
 import { encryptIndex } from '../utils/encryptDecryptIndex';
 import { parseStudyConfig } from '../parser/parser';
-import { hash } from '../storage/engines/utils/storageEngineHelpers';
+import { hashConfig } from '../storage/engines/utils/storageEngineHelpers';
 import {
   StageCapacityExceededError,
   StageNoAvailableConditionsError,
@@ -54,7 +54,7 @@ import {
   resolveParticipantConditions,
 } from '../utils/handleConditionLogic';
 import { StartupErrorScreen } from './StartupErrorScreen';
-import { materializeParticipantConfig } from '../parser/libraryParser';
+import { materializeParticipantConfig, ParticipantConfigValidationError } from '../parser/libraryParser';
 import { useStudyColorMode } from './AppThemeProvider';
 import {
   StartupInteractionProvider,
@@ -495,7 +495,7 @@ function StudyShell({ globalConfig }: { globalConfig: GlobalConfig }) {
         await storageEngine.initializeStudyDb(canonicalStudyId);
         if (!isCurrentStartup()) return;
 
-        const activeHashPromise = hash(JSON.stringify(activeConfig));
+        const activeHashPromise = hashConfig(activeConfig);
 
         await storageEngine.saveConfig(activeConfig);
         if (!isCurrentStartup()) return;
@@ -519,12 +519,30 @@ function StudyShell({ globalConfig }: { globalConfig: GlobalConfig }) {
           colorMode: initialColorMode,
         };
 
+        let prevalidatedRuntimeConfig: StudyConfig | undefined;
+        const admissionCondition = resolveParticipantConditions({
+          urlCondition: studyCondition,
+          participantSearchParamCondition: searchParamsObject.condition,
+          allowUrlOverride: resolvedModes.developmentModeEnabled,
+        });
+
         let participantSession = await storageEngine.initializeParticipantSession(
           searchParamsObject,
           activeConfig,
           initialMetadata,
           participantId || urlParticipantId,
-          { modesDocument: resolvedModes, sequenceArray },
+          {
+            modesDocument: resolvedModes,
+            sequenceArray,
+            validateSequence: (sequence) => {
+              const assignedSequence = filterSequenceByCondition(sequence, admissionCondition);
+              prevalidatedRuntimeConfig = materializeParticipantConfig(
+                activeConfig,
+                assignedSequence.parameters || {},
+                assignedSequence,
+              );
+            },
+          },
         );
 
         if (!isCurrentStartup()) return;
@@ -560,9 +578,10 @@ function StudyShell({ globalConfig }: { globalConfig: GlobalConfig }) {
         const filteredParticipantSequence = filterSequenceByCondition(participantSession.sequence, resolvedCondition);
         // Resolve participant-global templates only after loading the participant's persisted
         // sequence, while keeping the canonical config used for hashing unchanged.
-        const runtimeConfig = materializeParticipantConfig(
+        const runtimeConfig = prevalidatedRuntimeConfig ?? materializeParticipantConfig(
           participantConfig,
           filteredParticipantSequence.parameters || {},
+          filteredParticipantSequence,
         );
         const globalProvenance = participantSession.globalStoreHead
           ? await storageEngine.getProvenance(GLOBAL_STORE_TASK, participantSession.participantId, true) : null;
@@ -647,6 +666,10 @@ function StudyShell({ globalConfig }: { globalConfig: GlobalConfig }) {
       } catch (error) {
         if (!isCurrentStartup()) return;
         console.error('Error initializing user store routing:', error);
+        if (error instanceof ParticipantConfigValidationError) {
+          setActiveConfig((current) => current && ({ ...current, errors: [...(current.errors ?? []), error.issue] }));
+          return;
+        }
         if (
           error instanceof StageCapacityExceededError
           || error instanceof StageNoAvailableConditionsError
@@ -697,6 +720,7 @@ function StudyShell({ globalConfig }: { globalConfig: GlobalConfig }) {
           const fallbackConfig = materializeParticipantConfig(
             activeConfig,
             fallbackSequence.parameters || {},
+            fallbackSequence,
           );
 
           const emptyStore = await studyStoreCreator(
@@ -722,6 +746,10 @@ function StudyShell({ globalConfig }: { globalConfig: GlobalConfig }) {
           setStartupPhase('ready');
         } catch (fallbackError) {
           console.error('Error initializing fallback study store:', fallbackError);
+          if (fallbackError instanceof ParticipantConfigValidationError && isCurrentStartup()) {
+            setActiveConfig((current) => current && ({ ...current, errors: [...(current.errors ?? []), fallbackError.issue] }));
+            return;
+          }
           if (isCurrentStartup()) {
             setStartupError({ error, retryParticipantStartup: true });
             setStartupPhase('error');

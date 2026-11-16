@@ -44,7 +44,7 @@ import { useStoredAnswer } from '../../store/hooks/useStoredAnswer';
 import { useNextStep } from '../../store/hooks/useNextStep';
 import { useIsAnalysis } from '../../store/hooks/useIsAnalysis';
 import {
-  getSavedScoresForAnswer, hasResponseScorer, isRequiredResponseUngraded, isResponseAnsweredForScoring, isResponseScoreCorrect, scoreResponseAnswer, scoreResponseAnswerWithStatus,
+  getSavedScoresForAnswer, hasResponseScorer, isRequiredResponseUngraded, isResponseAnsweredForScoring, isResponseScoreCorrect, responseAnswerIsAlmostCorrect, scoreResponseAnswerWithStatus,
   AnswerStatus, evaluateSelectionAnswer, getMatrixCheckboxRowStatuses,
 } from '../../utils/correctAnswer';
 import { getHelpTextPath } from '../../utils/handleComponentInheritance';
@@ -576,14 +576,19 @@ export function ResponseBlock({
     if (!checkAnswerResponses) return {};
     return Object.fromEntries(allResponsesWithDefaults.flatMap((response) => {
       if (!Object.hasOwn(checkAnswerResponses, response.id)) return [];
+      const correctAnswer = config.correctAnswer?.find((candidate) => candidate.id === response.id);
+      const applyAlmostCorrectStatus = (answerStatus: AnswerStatus): AnswerStatus => (answerStatus === 'correct'
+        && (response.type === 'numerical' || response.type === 'slider')
+        && responseAnswerIsAlmostCorrect(checkedAnswerValues?.[response.id], correctAnswer)
+        ? 'almost correct'
+        : answerStatus);
       const score = checkAnswerScores?.[response.id];
-      if (score !== undefined || hasResponseScorer(response)) {
+      if (score !== undefined) {
         const scoredStatus: AnswerStatus = checkAnswerResponses[response.id]
           ? 'correct'
           : score !== undefined && score > 0 ? 'partially correct' : 'incorrect';
         return [[response.id, scoredStatus]];
       }
-      const answer = config.correctAnswer?.find((correct) => correct.id === response.id);
       const answerStatus: AnswerStatus = response.type === 'matrix-checkbox'
         ? (() => {
           const rowStatuses = Object.values(matrixRowFeedback[response.id] ?? {});
@@ -592,15 +597,15 @@ export function ResponseBlock({
           if (rowStatuses.every((rowStatus) => rowStatus === 'incorrect')) return 'incorrect';
           return 'partially correct';
         })()
-        : response.type === 'checkbox' && answer
+        : response.type === 'checkbox' && correctAnswer
           ? checkAnswerResponses[response.id]
             ? 'correct'
             : checkedAnswerValues
-              && evaluateSelectionAnswer(checkedAnswerValues[response.id], answer.answer, answer.acceptableAnswers) === 'partially correct'
+              && evaluateSelectionAnswer(checkedAnswerValues[response.id], correctAnswer.answer, correctAnswer.acceptableAnswers) === 'partially correct'
               ? 'partially correct'
               : 'incorrect'
           : checkAnswerResponses[response.id] ? 'correct' : 'incorrect';
-      return [[response.id, answerStatus]];
+      return [[response.id, applyAlmostCorrectStatus(answerStatus)]];
     }));
   }, [allResponsesWithDefaults, checkAnswerResponses, checkAnswerScores, checkedAnswerValues, config.correctAnswer, matrixRowFeedback]);
   const alertConfig = useMemo(() => Object.fromEntries(allResponsesWithDefaults.map((response) => {
@@ -616,7 +621,20 @@ export function ResponseBlock({
     const responseFeedback = config.correctAnswer?.find((answer) => answer.id === response.id)?.feedback;
     const responseStatus = responseStatuses[response.id];
     const formatMessage = (text: string) => formatTrainingFeedback(text, attemptsUsed, trainingAttempts);
-    if (responseStatus === 'correct') {
+    if (responseStatus === 'correct' || responseStatus === 'almost correct') {
+      if (responseStatus === 'almost correct') {
+        const preferredAnswer = config.correctAnswer?.find((answer) => answer.id === response.id)?.answer;
+        const formattedAnswer = typeof preferredAnswer === 'object' ? JSON.stringify(preferredAnswer) : String(preferredAnswer);
+        return [response.id, {
+          visible: true,
+          title: 'Almost Correct',
+          message: `You have answered the question almost correctly. The correct answer is ${formattedAnswer}, but your response is within an acceptable margin of error.`,
+          color: 'lime',
+          retryAllowed: false,
+          showHelpTextLink: false,
+          fitHeight: true,
+        }];
+      }
       return [response.id, {
         visible: true, title: 'Correct Answer', message: formatMessage(getTrainingFeedbackText(responseFeedback?.correctText, attemptsUsed) ?? 'You have answered the question correctly.'), color: 'green', retryAllowed: false, showHelpTextLink: false, fitHeight: responseFeedback !== undefined,
       }];
@@ -672,20 +690,22 @@ export function ResponseBlock({
         return response?.required !== false || isResponseAnsweredForScoring(response, allAnswers[answer.id], allAnswers);
       });
     const scores: Record<string, number> = {};
+    const computedScores: Record<string, number | null> = {};
     const scoringErrors: string[] = [];
     applicableCorrectAnswers.forEach((answer) => {
       const response = allResponsesWithDefaults.find((r) => r.id === answer.id);
       if (response?.path && isResponseAnsweredForScoring(response, allAnswers[answer.id], allAnswers)) {
-        const score = scoreResponseAnswer(
+        const result = scoreResponseAnswerWithStatus(
           allAnswers[answer.id],
           answer,
           response,
           allAnswers,
         );
-        if (score === null) {
+        if (result.error) {
           scoringErrors.push(response.id);
-        } else if (hasResponseScorer(response)) {
-          scores[answer.id] = score;
+        } else {
+          computedScores[answer.id] = result.score;
+          if (result.scorerResultUsed && result.score !== null) scores[answer.id] = result.score;
         }
       }
     });
@@ -706,7 +726,9 @@ export function ResponseBlock({
         }
         const score = Object.hasOwn(scores, configCorrectAnswer.id)
           ? scores[configCorrectAnswer.id]
-          : scoreResponseAnswerWithStatus(suppliedAnswer, configCorrectAnswer, response, allAnswers).score;
+          : Object.hasOwn(computedScores, configCorrectAnswer.id)
+            ? computedScores[configCorrectAnswer.id]
+            : scoreResponseAnswerWithStatus(suppliedAnswer, configCorrectAnswer, response, allAnswers).score;
         return [configCorrectAnswer.id, isResponseScoreCorrect(score, configCorrectAnswer.correctnessThreshold) === true];
       }),
     );

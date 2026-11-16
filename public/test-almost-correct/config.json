@@ -1,0 +1,71 @@
+{
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v3.0.0/src/parser/StudyConfigSchema.json",
+  "studyMetadata": {
+    "title": "Almost Correct Feedback Test",
+    "version": "pilot",
+    "authors": [
+      "The reVISit Team"
+    ],
+    "date": "2026-11-10",
+    "description": "A demo of exact, almost-correct, and incorrect numerical slider feedback.",
+    "organizations": [
+      "University of Utah",
+      "WPI"
+    ]
+  },
+  "uiConfig": {
+    "contactEmail": "contact@revisit.dev",
+    "helpTextPath": "test-almost-correct/assets/introduction.md",
+    "logoPath": "revisitAssets/revisitLogoSquare.svg",
+    "withProgressBar": true,
+    "autoDownloadStudy": false,
+    "withSidebar": false
+  },
+  "components": {
+    "Introduction": {
+      "type": "markdown",
+      "path": "test-almost-correct/assets/introduction.md",
+      "response": []
+    },
+    "Slider Feedback": {
+      "type": "questionnaire",
+      "provideFeedback": true,
+      "trainingAttempts": 3,
+      "allowFailedTraining": true,
+      "response": [
+        {
+          "id": "estimate",
+          "type": "slider",
+          "prompt": "Estimate the value shown in the example.",
+          "secondaryText": "The exact answer is 60. Values from 55 through 65 are accepted as almost correct.",
+          "startingValue": 50,
+          "options": [
+            {
+              "label": "0",
+              "value": 0
+            },
+            {
+              "label": "100",
+              "value": 100
+            }
+          ]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "estimate",
+          "answer": 60,
+          "acceptableLow": 55,
+          "acceptableHigh": 65
+        }
+      ]
+    }
+  },
+  "sequence": {
+    "order": "fixed",
+    "components": [
+      "Introduction",
+      "Slider Feedback"
+    ]
+  }
+}

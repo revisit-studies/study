@@ -6,12 +6,14 @@ import { GLOBAL_STORE_TASK, getGlobalStoreNodeState, getGlobalStoreNodeStates } 
 import type { GlobalStoreGraph } from '../../store/globalStoreProvenance';
 import { StudyConfig } from '../../parser/types';
 import { DISTINCT_COLOR_PALETTE } from '../../utils/colors';
-import { ParticipantMetadata, Sequence, StoredProvenance } from '../../store/types';
+import {
+  ParticipantMetadata, Sequence, StoredProvenance,
+} from '../../store/types';
 import { ParticipantData, ParticipantDataWithStatus } from '../types';
 import {
   countParticipantStatuses, getSequenceAssignmentStatus, statusConsumesCapacity,
 } from '../participantStatus';
-import { hash, isParticipantData } from './utils/storageEngineHelpers';
+import { hashConfig, isParticipantData } from './utils/storageEngineHelpers';
 import { shouldPreferCachedParticipantData } from './utils/participantDataRecovery';
 import { RevisitNotification } from '../../utils/notifications';
 import { parseConditionParam } from '../../utils/handleConditionLogic';
@@ -188,6 +190,7 @@ export type ModesAndStageData = {
 export type ParticipantSessionBootstrapData = {
   modesDocument: Record<REVISIT_MODE, boolean> & { stage?: StageData };
   sequenceArray: Sequence[];
+  validateSequence?: (sequence: Sequence) => void;
 };
 
 export interface ConditionData {
@@ -1383,16 +1386,19 @@ export abstract class StorageEngine {
     await this._runWithLock(ADMISSION_POLICY_LOCK_KEY, async () => {
       if (!this.studyId) throw new Error('Study ID is not set');
       const currentConfigHash = await this._getCurrentConfigHash();
-      const configHash = await hash(JSON.stringify(config));
-      const storedConfig = currentConfigHash === configHash
-        ? await this._getFromStorage(`configs/${configHash}`, 'config') : null;
-      if (storedConfig && Object.keys(storedConfig).length > 0) return;
+      const configHash = await hashConfig(config);
+      const isActiveConfig = currentConfigHash === configHash;
       const keys = getConfigConditionKeys(config);
-      await this.validateStageConditions(this.studyId, keys);
+      if (isActiveConfig) {
+        const archivedConfig = await this._getFromStorage(`configs/${configHash}`, 'config', this.studyId, true);
+        if (archivedConfig && Object.keys(archivedConfig).length > 0) return;
+      } else {
+        await this.validateStageConditions(this.studyId, keys);
+      }
       await this._pushToStorage(`configs/${configHash}`, 'config', config);
       await this._cacheStorageObject(`configs/${configHash}`, 'config');
       // Failed uploads must not advance the append-only condition definitions.
-      await this.activateConfig(configHash, keys);
+      if (!isActiveConfig) await this.activateConfig(configHash, keys);
     });
   }
 
@@ -1403,7 +1409,10 @@ export abstract class StorageEngine {
 
   // Gets all configs from the storage engine based on the provided temporary hashes and studyId.
   async getAllConfigsFromHash(tempHashes: string[], studyId: string) {
-    const allConfigs = tempHashes.map(async (singleHash) => [singleHash, await this._getFromStorage(`configs/${singleHash}`, 'config', studyId)]);
+    const allConfigs = tempHashes.map(async (singleHash) => {
+      const config = await this._getFromStorage(`configs/${singleHash}`, 'config', studyId);
+      return [singleHash, config];
+    });
     const configs = (await Promise.all(allConfigs)) as [string, StudyConfig][];
     return Object.fromEntries(configs);
   }
@@ -1700,8 +1709,9 @@ export abstract class StorageEngine {
     return this._runWithLock(getParticipantLockKey(participantId), async () => {
       const assignment = await this._getSequenceAssignment(participantId);
       const latest = await this._getFromStorage(`participants/${participantId}`, 'participantData', undefined, true, true);
-      return isParticipantData(latest) && assignment && assignment.completed !== null
+      const participant = isParticipantData(latest) && assignment && assignment.completed !== null
         ? { ...latest, finalized: true } : latest;
+      return participant;
     });
   }
 
@@ -1728,7 +1738,7 @@ export abstract class StorageEngine {
       const current = await this._getFromStorage(`participants/${this.currentParticipantId}`, 'participantData');
       if (isParticipantData(current)) {
         cachedParticipant = current;
-        await this.cacheParticipantDataSnapshot(current, this.currentParticipantId);
+        await this.cacheParticipantDataSnapshot(cachedParticipant, this.currentParticipantId);
       }
     }
     if (cachedParticipant && (cachedParticipant.globalStoreRevision !== undefined || config.globalVariables !== undefined)
@@ -1802,18 +1812,17 @@ export abstract class StorageEngine {
         }
       }
 
-      const participantConfigHash = await hash(JSON.stringify(config));
+      const participantConfigHash = await hashConfig(config);
       const parsedConditions = parseConditionParam(searchParams.condition);
       const conditions = parsedConditions.length > 0 ? parsedConditions : undefined;
-      let sequence: { currentRow: Sequence; creationIndex: number; stage?: string; reservationToken?: string };
+      let sequence: { currentRow: Sequence; creationIndex: number; stage?: string; reservationToken?: string } | undefined;
       try {
         sequence = await this._getSequence(conditions, { modes, stageData, sequenceArray: bootstrapData?.sequenceArray }, config, participantConfigHash);
+        bootstrapData?.validateSequence?.(sequence.currentRow);
       } catch (error) {
-        // _getSequence writes the sequence assignment before it picks a row, so a
-        // later failure leaves an assignment that occupies a stage slot with no
-        // participant record for an admin to reject. Release it here, while the
-        // assignment lock is still held, so the slot stays recoverable.
-        await this.releaseInitialSequenceAssignment();
+        // Release the assigned slot if sequence validation fails before we persist
+        // a participant record, just as for an assignment-selection failure.
+        if (modes.dataCollectionEnabled) await this.releaseInitialSequenceAssignment(sequence);
         throw error;
       }
       const { currentRow, creationIndex } = sequence;

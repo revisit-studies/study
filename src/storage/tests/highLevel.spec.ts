@@ -8,8 +8,10 @@ import { ParticipantMetadata, StudyConfig } from '../../parser/types';
 import testConfigSimple from './testConfigSimple.json';
 import testConfigSimple2 from './testConfigSimple2.json';
 import { generateSequenceArray } from '../../utils/handleRandomSequences';
-import { hash } from '../engines/utils/storageEngineHelpers';
-import { Sequence, StoredAnswer, TrrackedProvenance } from '../../store/types';
+import { hashConfig } from '../engines/utils/storageEngineHelpers';
+import {
+  Sequence, StoredAnswer, TrrackedProvenance,
+} from '../../store/types';
 import { LocalStorageEngine } from '../engines/LocalStorageEngine';
 import {
   SequenceAssignment, StorageEngine, StorageObject, StorageObjectType, getBetweenSubjectsCombinationKey,
@@ -18,6 +20,8 @@ import { filterSequenceByCondition } from '../../utils/handleConditionLogic';
 import { getParticipantDataStatus } from '../participantStatus';
 import { createEmptyProvenance } from '../../store/provenance';
 import { createGlobalStoreSubmission, GLOBAL_STORE_TASK } from '../../store/globalStoreProvenance';
+import { studyComponentToIndividualComponent } from '../../utils/handleComponentInheritance';
+import { scoreResponseAnswer } from '../../utils/correctAnswer';
 
 const studyId = 'test-study';
 const configSimple = testConfigSimple as StudyConfig;
@@ -432,7 +436,7 @@ describe.each([
   });
 
   test('saveConfig and getAllConfigsFromHash work correctly', async () => {
-    const configHash = await hash(JSON.stringify(configSimple));
+    const configHash = await hashConfig(configSimple);
     await storageEngine.saveConfig(configSimple);
 
     let storedHashes = await storageEngine.getAllConfigsFromHash([configHash], studyId);
@@ -441,7 +445,7 @@ describe.each([
     expect(storedHashes[configHash]).toEqual(configSimple);
 
     // Save a new config with a different hash
-    const configComplexHash = await hash(JSON.stringify(configSimple2));
+    const configComplexHash = await hashConfig(configSimple2);
     await storageEngine.saveConfig(configSimple2);
     storedHashes = await storageEngine.getAllConfigsFromHash([configHash, configComplexHash], studyId);
     expect(Object.keys(storedHashes).length).toBe(2);
@@ -478,9 +482,9 @@ describe.each([
     expect(setHashSpy).not.toHaveBeenCalled();
   });
 
-  test('saveConfig checks the existing blob without scanning assignments when the hash is unchanged', async () => {
+  test('saveConfig checks an unchanged config archive without scanning assignments', async () => {
     await storageEngine.saveConfig(configSimple);
-    const configHash = await hash(JSON.stringify(configSimple));
+    const configHash = await hashConfig(configSimple);
     const getFromStorageSpy = vi.spyOn(
       storageEngine as unknown as { _getFromStorage: (...args: unknown[]) => Promise<unknown> },
       '_getFromStorage',
@@ -489,20 +493,65 @@ describe.each([
 
     await storageEngine.saveConfig(configSimple);
 
-    expect(getFromStorageSpy).toHaveBeenCalledExactlyOnceWith(`configs/${configHash}`, 'config');
+    expect(getFromStorageSpy).toHaveBeenCalledWith(`configs/${configHash}`, 'config', studyId, true);
     expect(assignmentsSpy).not.toHaveBeenCalled();
   });
 
-  test('regression: saving an unchanged config repairs its missing active blob', async () => {
+  test('saveConfig restores a missing archive for the active config', async () => {
     await storageEngine.saveConfig(configSimple);
-    const configHash = await hash(JSON.stringify(configSimple));
-    // @ts-expect-error remove the archived blob while retaining the active pointer
-    await storageEngine._deleteFromStorage(`configs/${configHash}`, 'config');
+    const configHash = await hashConfig(configSimple);
+    await (storageEngine as unknown as {
+      _deleteFromStorage: (prefix: string, type: 'config') => Promise<void>;
+    })._deleteFromStorage(`configs/${configHash}`, 'config');
 
     await storageEngine.saveConfig(configSimple);
 
-    expect((await storageEngine.getAllConfigsFromHash([configHash], studyId))[configHash]).toEqual(configSimple);
+    const storedConfigs = await storageEngine.getAllConfigsFromHash([configHash], studyId);
+    expect(storedConfigs[configHash]).toEqual(configSimple);
+  });
+
+  test('saveConfig does not replace an archive when its existence check fails', async () => {
+    await storageEngine.saveConfig(configSimple);
+    const getFromStorageSpy = vi.spyOn(
+      storageEngine as unknown as { _getFromStorage: (...args: unknown[]) => Promise<unknown> },
+      '_getFromStorage',
+    ).mockRejectedValueOnce(new Error('Temporary storage read failure'));
+    const pushSpy = vi.spyOn(
+      storageEngine as unknown as { _pushToStorage: StorageEngine['_pushToStorage'] },
+      '_pushToStorage',
+    );
+
+    await expect(storageEngine.saveConfig(configSimple)).rejects.toThrow('Temporary storage read failure');
+
+    expect(getFromStorageSpy).toHaveBeenCalledWith(expect.any(String), 'config', studyId, true);
+    expect(pushSpy).not.toHaveBeenCalled();
+  });
+
+  test('saveConfig stores configured acceptable and correct ranges under its current identity', async () => {
+    const config = structuredClone(configSimple);
+    config.components.testComponent.correctAnswer = [
+      {
+        id: 'q1', answer: 24, lowestCorrect: 22, highestCorrect: 26, acceptableLow: 23, acceptableHigh: 25,
+      },
+    ];
+    const configHash = await hashConfig(config);
+
+    await storageEngine.saveConfig(config);
+
     expect(await storageEngine.getCurrentConfigHash(studyId)).toBe(configHash);
+    expect((await storageEngine.getAllConfigsFromHash([configHash], studyId))[configHash]
+      .components.testComponent.correctAnswer).toEqual(config.components.testComponent.correctAnswer);
+  });
+
+  test('getAllConfigsFromHash preserves missing config results for existing missing-config handling', async () => {
+    vi.spyOn(
+      storageEngine as unknown as { _getFromStorage: (...args: unknown[]) => Promise<unknown> },
+      '_getFromStorage',
+    ).mockResolvedValueOnce({});
+
+    await expect(storageEngine.getAllConfigsFromHash(['missing-config'], studyId)).resolves.toEqual({
+      'missing-config': {},
+    });
   });
 
   test.each(['finalized cache', 'newer unuploaded cache', 'missing participant cache'] as const)(
@@ -644,7 +693,7 @@ describe.each([
     expect(participantData).toEqual(participantSession);
     expect(participantData!.participantId).toBe(participantId);
     expect(participantData!.participantId).toBe(participantSession.participantId);
-    expect(participantData!.participantConfigHash).toEqual(await hash(JSON.stringify(configSimple)));
+    expect(participantData!.participantConfigHash).toEqual(await hashConfig(configSimple));
     expect(participantData!.sequence).toEqual(sequenceArray[0]);
     expect(participantData!.participantIndex).toEqual(1);
     expect(participantData!.answers).toEqual({});
@@ -1083,6 +1132,75 @@ describe.each([
     const participantData = await storageEngine.getParticipantData(participantId);
     expect(participantData).toBeDefined();
     expect(participantData!.participantId).toBe(participantId);
+  });
+
+  test('saves and reloads almost-correct and correct ranges in participant data', async () => {
+    const participant = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
+    const currentAnswer: StoredAnswer = {
+      answer: { q1: 24 },
+      identifier: 'current-task',
+      componentName: 'current-task',
+      trialOrder: '0',
+      incorrectAnswers: {},
+      startTime: 1,
+      endTime: 2,
+      windowEvents: [],
+      timedOut: false,
+      helpButtonClickedCount: 0,
+      parameters: {},
+      correctAnswer: [{
+        id: 'q1', answer: 24, acceptableLow: 23, acceptableHigh: 25,
+      }, {
+        id: 'q2', lowestCorrect: 0, highestCorrect: 5,
+      }],
+      optionOrders: {},
+      questionOrders: {},
+    };
+    await storageEngine.saveAnswers({ 'current-task': currentAnswer });
+
+    expect((await storageEngine.getParticipantData(participant.participantId))?.answers['current-task'].correctAnswer).toEqual([
+      {
+        id: 'q1', answer: 24, acceptableLow: 23, acceptableHigh: 25,
+      },
+      { id: 'q2', lowestCorrect: 0, highestCorrect: 5 },
+    ]);
+    expect(scoreResponseAnswer(24, currentAnswer.correctAnswer?.[0])).toBe(1);
+    expect(scoreResponseAnswer(3, currentAnswer.correctAnswer?.[1])).toBe(1);
+  });
+
+  test('loads configured ranges and inherited ranges from the archive', async () => {
+    const currentConfig = structuredClone(configSimple);
+    currentConfig.components.testComponent.correctAnswer = [{
+      id: 'q1', answer: 24, acceptableLow: 23, acceptableHigh: 25,
+    }];
+    currentConfig.baseComponents = {
+      almostCorrectBase: {
+        type: 'questionnaire',
+        response: [],
+        correctAnswer: [{ id: 'q2', lowestCorrect: 23, highestCorrect: 25 }],
+      },
+    };
+    currentConfig.components.inheritedChild = {
+      baseComponent: 'almostCorrectBase',
+      correctAnswer: [{ id: 'q2', answer: 24 }],
+    };
+    await storageEngine.saveConfig(currentConfig);
+    const currentHash = await storageEngine.getCurrentConfigHash(studyId);
+    if (!currentHash) throw new Error('Expected saved config hash');
+    const [archivedConfig] = Object.values(await storageEngine.getAllConfigsFromHash([currentHash], studyId));
+    expect(archivedConfig.components.testComponent.correctAnswer).toEqual(currentConfig.components.testComponent.correctAnswer);
+    expect(studyComponentToIndividualComponent(archivedConfig.components.inheritedChild, archivedConfig).correctAnswer).toEqual([
+      {
+        id: 'q2', answer: 24, lowestCorrect: 23, highestCorrect: 25,
+      },
+    ]);
+    expect(scoreResponseAnswer(24, archivedConfig.components.testComponent.correctAnswer?.[0])).toBe(1);
+    const inherited = studyComponentToIndividualComponent(archivedConfig.components.inheritedChild, archivedConfig);
+    expect(inherited.correctAnswer?.[0]).toMatchObject({
+      id: 'q2', answer: 24, lowestCorrect: 23, highestCorrect: 25,
+    });
+    expect(scoreResponseAnswer(24, inherited.correctAnswer?.[0])).toBe(1);
+    expect(scoreResponseAnswer(22, inherited.correctAnswer?.[0])).toBe(0);
   });
 
   // getParticipantTags, addParticipantTags, removeParticipantTags tests

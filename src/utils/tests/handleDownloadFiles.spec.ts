@@ -11,8 +11,27 @@ import {
   handleTaskRecordings,
 } from '../handleDownloadFiles';
 import { makeStudyConfig, makeStorageEngine } from '../../tests/utils';
+import { getCorrectAnswerConfigError } from '../correctAnswer';
 
 const mockUrl = 'blob:mock-object-url';
+
+function makeRangeConfig() {
+  const config = makeStudyConfig({
+    components: {
+      ranges: {
+        type: 'questionnaire',
+        response: [],
+        correctAnswer: [{
+          id: 'q1', answer: 8, lowestCorrect: 7, highestCorrect: 10,
+        }],
+      },
+    },
+  });
+  const rule = config.components.ranges.correctAnswer?.[0];
+  if (!rule) throw new Error('The range fixture must include a correct-answer rule');
+  expect(getCorrectAnswerConfigError(rule)).toBeUndefined();
+  return config;
+}
 
 let clickSpy: ReturnType<typeof vi.spyOn>;
 
@@ -43,7 +62,6 @@ describe('handleTaskAudio', () => {
     expect(clickSpy).toHaveBeenCalled();
     expect(URL.revokeObjectURL).toHaveBeenCalledWith(mockUrl);
   });
-
   test('calls storageEngine.getAudioUrl when no audioUrl is provided', async () => {
     const audioUrl = 'https://example.com/fetched-audio.webm';
     const storageEngine = makeStorageEngine({
@@ -137,6 +155,18 @@ describe('downloadConfigFile', () => {
     expect(clickSpy).toHaveBeenCalledOnce();
     expect(URL.revokeObjectURL).toHaveBeenCalledWith(mockUrl);
   });
+
+  test('downloads configured valid numeric ranges', async () => {
+    const config = makeRangeConfig();
+
+    await downloadConfigFile({ studyId: 'my-study', hash: 'range', config });
+
+    const blob = vi.mocked(URL.createObjectURL).mock.calls[0][0] as Blob;
+    const downloadedConfig = JSON.parse(await blob.text());
+    expect(downloadedConfig.components.ranges.correctAnswer[0]).toEqual({
+      id: 'q1', answer: 8, lowestCorrect: 7, highestCorrect: 10,
+    });
+  });
 });
 
 describe('downloadConfigFilesZip', () => {
@@ -151,6 +181,25 @@ describe('downloadConfigFilesZip', () => {
 
     expect(URL.createObjectURL).toHaveBeenCalledWith(expect.any(Blob));
     expect(clickSpy).toHaveBeenCalledOnce();
+  });
+
+  test('archives configured valid numeric ranges', async () => {
+    const config = makeRangeConfig();
+
+    await downloadConfigFilesZip({
+      studyId: 'zip-study',
+      configs: [{ hash: 'range', config }],
+      hashes: ['range'],
+    });
+
+    const blob = vi.mocked(URL.createObjectURL).mock.calls[0][0] as Blob;
+    const zip = await JSZip.loadAsync(blob);
+    const configFile = zip.file('zip-study_range_config.json');
+    expect(configFile).toBeDefined();
+    const downloadedConfig = JSON.parse(await configFile!.async('string'));
+    expect(downloadedConfig.components.ranges.correctAnswer[0]).toEqual({
+      id: 'q1', answer: 8, lowestCorrect: 7, highestCorrect: 10,
+    });
   });
 
   test('skips entries whose hash is not in the hashes list', async () => {

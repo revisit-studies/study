@@ -4,7 +4,7 @@ import {
 } from '../../parser/types';
 import { makeStoredAnswer } from '../../tests/utils';
 import {
-  compareResponseValues, evaluateSelectionAnswer, getMatrixCheckboxRowStatuses, getResponseScoreResultError, isResponseAnswered, isResponseScoreCorrect, responseAnswerIsCorrect, scoreResponseAnswer, scoreResponseAnswerWithStatus,
+  compareResponseValues, evaluateSelectionAnswer, getCorrectAnswerConfigError, getCorrectAnswerDisplayValue, getMatrixCheckboxRowStatuses, getResponseScoreResultError, isResponseAnswered, isResponseScoreCorrect, responseAnswerIsAlmostCorrect, responseAnswerIsCorrect, scoreResponseAnswer, scoreResponseAnswerWithStatus,
 } from '../correctAnswer';
 
 import { componentAnswersAreCorrect, getComponentAnswerStatus } from '../componentCorrectness';
@@ -16,6 +16,12 @@ const asStoredAnswer = (value: TestStoredAnswer) => value;
 const asCorrectAnswer = (value: TestCorrectAnswer) => value;
 
 describe('correctAnswer utilities', () => {
+  test.each([NaN, Infinity, -Infinity])('rejects non-finite numeric bounds: %s', (bound) => {
+    expect(getCorrectAnswerConfigError({ id: 'numeric', answer: 24, acceptableLow: bound })).toBe(
+      'acceptableLow must be a finite number',
+    );
+  });
+
   test.each([undefined, null, '', [], {}, { row: '' }, { row: [] }, { rows: { first: '', second: null } }])(
     'treats recursively empty values as unanswered: %j',
     (value) => expect(isResponseAnswered(value)).toBe(false),
@@ -63,7 +69,7 @@ describe('correctAnswer utilities', () => {
     expect(scoreResponseAnswer('usa', textAnswer, textResponse)).toBe(1);
     expect(scoreResponseAnswer('Canada', textAnswer, textResponse)).toBe(0);
     expect(componentAnswersAreCorrect({ q: 'usa' }, [textAnswer], [textResponse])).toBe(true);
-    expect(scoreResponseAnswer(3, { id: 'q', acceptableLow: 1, acceptableHigh: 5 }, { id: 'q', type: 'numerical', prompt: '' })).toBe(1);
+    expect(scoreResponseAnswer(3, { id: 'q', lowestCorrect: 1, highestCorrect: 5 }, { id: 'q', type: 'numerical', prompt: '' })).toBe(1);
 
     const matrixResponse: Response = {
       id: 'q', type: 'matrix-checkbox', prompt: '', questionOptions: ['10', '2'], answerOptions: ['A', 'B'],
@@ -71,6 +77,14 @@ describe('correctAnswer utilities', () => {
     const matrixAnswer: Answer = { id: 'q', acceptableAnswers: [[['A'], ['B']]] };
     expect(scoreResponseAnswer({ 2: 'B', 10: 'A' }, matrixAnswer, matrixResponse)).toBe(1);
     expect(scoreResponseAnswer({ 2: 'A', 10: 'B' }, matrixAnswer, matrixResponse)).toBe(0);
+  });
+
+  test('preserves legacy bound-only correct answers', () => {
+    const answer: Answer = { id: 'q', acceptableLow: 55, acceptableHigh: 65 };
+    const response: Response = { id: 'q', type: 'numerical', prompt: '' };
+    expect(getCorrectAnswerConfigError(answer)).toBeUndefined();
+    expect(scoreResponseAnswer(58, answer, response)).toBe(1);
+    expect(scoreResponseAnswer(54, answer, response)).toBe(0);
   });
 
   test('built-in responses can use a custom component file as their scoring module', () => {
@@ -86,6 +100,12 @@ describe('correctAnswer utilities', () => {
     };
     expect(scoreResponseAnswer(5, undefined, response)).toBe(0.5);
     expect(scoreResponseAnswer('10', undefined, response)).toBe(1);
+    expect(scoreResponseAnswerWithStatus(5, undefined, response)).toEqual({
+      score: 0.5, error: false, scorerResultUsed: true,
+    });
+    expect(scoreResponseAnswerWithStatus('58', {
+      id: 'q', answer: 60, acceptableLow: 55, acceptableHigh: 65,
+    }, { ...response, type: 'slider', options: [] })).toEqual({ score: 1, error: false, scorerResultUsed: false });
   });
 
   test('a validation-only module does not score answers', () => {
@@ -126,8 +146,12 @@ describe('correctAnswer utilities', () => {
       id: 'score', type: 'numerical', prompt: 'Score', path: 'test-response-functions/assets/GameScore.ts', withDontKnow: true,
     };
     const answers = { score: 10, 'score-dontKnow': true };
-    expect(scoreResponseAnswerWithStatus(10, { id: 'score', answer: 10 }, response, answers)).toEqual({ score: 0, error: false });
-    expect(scoreResponseAnswerWithStatus(10, undefined, response, answers)).toEqual({ score: null, error: false });
+    expect(scoreResponseAnswerWithStatus(10, { id: 'score', answer: 10 }, response, answers)).toEqual({
+      score: 0, error: false, scorerResultUsed: false,
+    });
+    expect(scoreResponseAnswerWithStatus(10, undefined, response, answers)).toEqual({
+      score: null, error: false, scorerResultUsed: false,
+    });
   });
 
   test('a study score module can score partial overlap for a built-in checkbox', () => {
@@ -208,38 +232,42 @@ describe('correctAnswer utilities', () => {
       expect(responseAnswerIsCorrect(54, 50, undefined, 55)).toBe(true);
     });
 
-    test('supports acceptable range when numeric answer is provided', () => {
+    test('combines exact answers with an independent correct range', () => {
       expect(responseAnswerIsCorrect(8, 0, 7, 10)).toBe(true);
       expect(responseAnswerIsCorrect(6, 0, 7, 10)).toBe(false);
       expect(responseAnswerIsCorrect(11, 0, 7, 10)).toBe(false);
+      expect(responseAnswerIsCorrect(0, 0, 7, 10)).toBe(true);
     });
 
-    test('supports acceptable low-only and high-only bounds', () => {
+    test('supports one-sided correct bounds', () => {
       expect(responseAnswerIsCorrect(8, 0, 7)).toBe(true);
       expect(responseAnswerIsCorrect(6, 0, 7)).toBe(false);
       expect(responseAnswerIsCorrect(4, 0, undefined, 5)).toBe(true);
       expect(responseAnswerIsCorrect(6, 0, undefined, 5)).toBe(false);
     });
 
-    test('supports zero-value acceptable bounds', () => {
-      expect(responseAnswerIsCorrect(0, 5, 0, 2)).toBe(true);
-      expect(responseAnswerIsCorrect(2, 5, 0, 2)).toBe(true);
-      expect(responseAnswerIsCorrect(3, 5, 0, 2)).toBe(false);
-      expect(responseAnswerIsCorrect(0, 5, 0)).toBe(true);
-      expect(responseAnswerIsCorrect(-1, 5, 0)).toBe(false);
-      expect(responseAnswerIsCorrect(0, 5, undefined, 0)).toBe(true);
-      expect(responseAnswerIsCorrect(1, 5, undefined, 0)).toBe(false);
+    test('supports zero-value almost-correct bounds', () => {
+      const options = { acceptableLow: 0, acceptableHigh: 2 };
+      expect(responseAnswerIsCorrect(0, 5, undefined, undefined, options)).toBe(true);
+      expect(responseAnswerIsCorrect(2, 5, undefined, undefined, options)).toBe(true);
+      expect(responseAnswerIsCorrect(3, 5, undefined, undefined, options)).toBe(false);
+      expect(responseAnswerIsCorrect(0, 5, undefined, undefined, { acceptableLow: 0 })).toBe(true);
+      expect(responseAnswerIsCorrect(-1, 5, undefined, undefined, { acceptableLow: 0 })).toBe(false);
+      expect(responseAnswerIsCorrect(0, 5, undefined, undefined, { acceptableHigh: 0 })).toBe(true);
+      expect(responseAnswerIsCorrect(1, 5, undefined, undefined, { acceptableHigh: 0 })).toBe(false);
     });
 
-    test('treats numeric strings consistently with acceptable bounds', () => {
-      expect(responseAnswerIsCorrect('8', 0, 7, 10)).toBe(true);
-      expect(responseAnswerIsCorrect('6', 0, 7, 10)).toBe(false);
+    test('treats numeric strings consistently with almost-correct bounds', () => {
+      const options = { acceptableLow: 7, acceptableHigh: 10 };
+      expect(responseAnswerIsCorrect('8', 0, undefined, undefined, options)).toBe(true);
+      expect(responseAnswerIsCorrect('6', 0, undefined, undefined, options)).toBe(false);
     });
 
     test.each(['', ' ', 'not a number', Infinity, -Infinity, NaN, null, undefined])('rejects invalid numerical answers %s even with a zero or open bound', (value) => {
-      expect(responseAnswerIsCorrect(value, 0, 0, 10)).toBe(false);
-      expect(responseAnswerIsCorrect(value, 0, undefined, 10)).toBe(false);
-      expect(responseAnswerIsCorrect(value, undefined, 0, 10)).toBe(false);
+      const options = { acceptableLow: 0, acceptableHigh: 10 };
+      expect(responseAnswerIsCorrect(value, 0, undefined, undefined, options)).toBe(false);
+      expect(responseAnswerIsCorrect(value, 0, undefined, undefined, { acceptableHigh: 10 })).toBe(false);
+      expect(responseAnswerIsCorrect(value, undefined, 0, undefined)).toBe(false);
       expect(responseAnswerIsCorrect(value, undefined, undefined, 10)).toBe(false);
     });
 
@@ -262,6 +290,36 @@ describe('correctAnswer utilities', () => {
       expect(responseAnswerIsCorrect(10, 8, 7, 10, options)).toBe(true);
       expect(responseAnswerIsCorrect(20, 8, 7, 10, options)).toBe(true);
       expect(responseAnswerIsCorrect(11, 8, 7, 10, options)).toBe(false);
+    });
+
+    test('scores almost-correct answers while distinguishing them from exact and otherwise-correct answers', () => {
+      const answer: Answer = {
+        id: 'q',
+        answer: 60,
+        lowestCorrect: 60,
+        highestCorrect: 65,
+        acceptableLow: 45,
+        acceptableHigh: 65,
+        acceptableAnswers: [70],
+      };
+      expect(responseAnswerIsAlmostCorrect(45, answer)).toBe(true);
+      expect(responseAnswerIsAlmostCorrect(55, answer)).toBe(true);
+      expect(responseAnswerIsAlmostCorrect(60, answer)).toBe(false);
+      expect(responseAnswerIsAlmostCorrect(65, answer)).toBe(false);
+      expect(responseAnswerIsAlmostCorrect(70, answer)).toBe(false);
+      expect(responseAnswerIsAlmostCorrect(44, answer)).toBe(false);
+      expect(scoreResponseAnswer(45, answer, { id: 'q', type: 'numerical', prompt: '' })).toBe(1);
+      expect(scoreResponseAnswer(44, answer, { id: 'q', type: 'numerical', prompt: '' })).toBe(0);
+    });
+
+    test('exports exact answers and both inclusive range types', () => {
+      expect(getCorrectAnswerDisplayValue({ id: 'q', answer: 50 })).toBe(50);
+      expect(getCorrectAnswerDisplayValue({ id: 'q', acceptableAnswers: ['A', 'B'] })).toEqual(['A', 'B']);
+      expect(getCorrectAnswerDisplayValue({
+        id: 'q', answer: 50, lowestCorrect: 40, highestCorrect: 60, acceptableLow: 45, acceptableHigh: 55,
+      })).toEqual({
+        answer: 50, lowestCorrect: 40, highestCorrect: 60, acceptableLow: 45, acceptableHigh: 55,
+      });
     });
 
     test('treats each alternative array as a complete answer and preserves ranking order', () => {
@@ -580,8 +638,8 @@ describe('correctAnswer utilities', () => {
         {
           id: 'slider1',
           answer: 0,
-          acceptableLow: 7,
-          acceptableHigh: 10,
+          lowestCorrect: 7,
+          highestCorrect: 10,
         },
       ];
 
@@ -602,8 +660,8 @@ describe('correctAnswer utilities', () => {
         {
           id: 'slider1',
           answer: 0,
-          acceptableLow: 7,
-          acceptableHigh: 10,
+          lowestCorrect: 7,
+          highestCorrect: 10,
         },
       ];
 

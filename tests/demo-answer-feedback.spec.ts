@@ -32,15 +32,20 @@ test('the answer feedback demo grades responses and advances through each feedba
   const inclusiveRange = page.getByPlaceholder('Inclusive range');
   const lowerBound = page.getByPlaceholder('Lower bound only');
   const upperBound = page.getByPlaceholder('Upper bound only');
+  const estimate = page.getByPlaceholder('Estimate');
   await inclusiveRange.fill('11');
   await lowerBound.fill('-1');
   await upperBound.fill('1');
+  await estimate.fill('0');
   await page.getByRole('button', { name: 'Check Answer', exact: true }).click();
-  await expect(page.getByRole('alert')).toHaveCount(3);
+  await expect(page.getByRole('alert')).toHaveCount(4);
   await inclusiveRange.fill('-10');
   await lowerBound.fill('0');
   await upperBound.fill('0');
+  await estimate.fill('55');
   await page.getByRole('button', { name: 'Check Answer', exact: true }).click();
+  const almostCorrectAlert = page.getByRole('alert', { name: 'Almost Correct', exact: true });
+  await expect(almostCorrectAlert).toContainText('Almost Correct');
   await expect(page.getByRole('button', { name: 'Next', exact: true })).toBeEnabled();
   await nextClick(page);
 

@@ -10,7 +10,7 @@ import testConfigSimple from './testConfigSimple.json';
 import testConfigSimple2 from './testConfigSimple2.json';
 import { makeStoredAnswer } from '../../tests/utils';
 import { generateSequenceArray } from '../../utils/handleRandomSequences';
-import { hash } from '../engines/utils/storageEngineHelpers';
+import { hash, hashConfig } from '../engines/utils/storageEngineHelpers';
 import { Sequence } from '../../store/types';
 import {
   StorageEngine, getParticipantLockKey, getBetweenSubjectsCombinationKey, SequenceAssignment, StoredUser, RuntimeStudySettings,
@@ -781,7 +781,7 @@ describe.each([
     const modes = await storageEngine.getModes(studyId);
     expect(modes.autoTimeoutMinutes).toBe(30);
     expect(modes.stage?.allStages[0].conditionKeys).toHaveLength(2);
-    expect(await storageEngine.getCurrentConfigHash(studyId)).toBe(await hash(JSON.stringify(appended)));
+    expect(await storageEngine.getCurrentConfigHash(studyId)).toBe(await hashConfig(appended));
   });
 
   test('failed config activation commits neither the definitions nor the active hash', async () => {
@@ -792,7 +792,7 @@ describe.each([
     await storageEngine.initializeParticipantSession({}, original, participantMetadata, 'first');
     failConfigActivation = true;
     await expect(storageEngine.saveConfig(appended)).rejects.toThrow('Failed to activate study config');
-    expect(await storageEngine.getCurrentConfigHash(studyId)).toBe(await hash(JSON.stringify(original)));
+    expect(await storageEngine.getCurrentConfigHash(studyId)).toBe(await hashConfig(original));
     expect((await storageEngine.getStageData(studyId)).allStages[0].conditionKeys).toHaveLength(1);
     await expect(storageEngine.saveConfig(original)).resolves.toBeUndefined();
     await expect(storageEngine.initializeParticipantSession({}, original, participantMetadata, 'second')).resolves.toBeDefined();
@@ -803,8 +803,8 @@ describe.each([
       ...configSimple, uiConfig: { ...configSimple.uiConfig, numSequences: 4 }, factors: { group: ['A'] }, betweenSubjects: ['group'],
     };
     const appended: StudyConfig = { ...original, factors: { group: ['A', 'B'] } };
-    const oldHash = await hash(JSON.stringify(original));
-    const currentHash = await hash(JSON.stringify(appended));
+    const oldHash = await hashConfig(original);
+    const currentHash = await hashConfig(appended);
     await storageEngine.saveConfig(original);
     const oldOrders = generateSequenceArray(original);
     await storageEngine.saveConfig(appended);
@@ -820,7 +820,7 @@ describe.each([
   });
 
   test('saveConfig and getAllConfigsFromHash work correctly', async () => {
-    const configHash = await hash(JSON.stringify(configSimple));
+    const configHash = await hashConfig(configSimple);
     await storageEngine.saveConfig(configSimple);
 
     let storedHashes = await storageEngine.getAllConfigsFromHash([configHash], studyId);
@@ -829,7 +829,7 @@ describe.each([
     expect(storedHashes[configHash]).toEqual(configSimple);
 
     // Save a new config with a different hash
-    const configComplexHash = await hash(JSON.stringify(configSimple2));
+    const configComplexHash = await hashConfig(configSimple2);
     await storageEngine.saveConfig(configSimple2);
     storedHashes = await storageEngine.getAllConfigsFromHash([configHash, configComplexHash], studyId);
     expect(Object.keys(storedHashes).length).toBe(2);
@@ -866,7 +866,7 @@ describe.each([
     expect(participantData).toEqual(participantSession);
     expect(participantData!.participantId).toBe(participantId);
     expect(participantData!.participantId).toBe(participantSession.participantId);
-    expect(participantData!.participantConfigHash).toEqual(await hash(JSON.stringify(configSimple)));
+    expect(participantData!.participantConfigHash).toEqual(await hashConfig(configSimple));
     expect(participantData!.sequence).toEqual(sequenceArray[0]);
     expect(participantData!.participantIndex).toEqual(1);
     expect(participantData!.answers).toEqual({});
@@ -1803,7 +1803,7 @@ describe.each([
 
   test('clearing live data allows the unchanged config to be saved again', async () => {
     await storageEngine.saveConfig(configSimple);
-    const configHash = await hash(JSON.stringify(configSimple));
+    const configHash = await hashConfig(configSimple);
 
     expect((await storageEngine.removeSnapshotOrLive(studyId, studyId)).status).toBe('SUCCESS');
     await storageEngine.saveConfig(configSimple);

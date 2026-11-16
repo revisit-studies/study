@@ -32,7 +32,8 @@ export function projectHistoricalGlobalStore(graph: GlobalStoreGraph, nodeId: st
     };
   });
   getActiveGlobalStoreSubmissions(historicalGraph).forEach(({ submission }) => {
-    answers[submission.answer.identifier] = structuredClone(submission.answer);
+    const answer = structuredClone(submission.answer);
+    answers[answer.identifier] = answer;
   });
   return { graph: historicalGraph, answers };
 }

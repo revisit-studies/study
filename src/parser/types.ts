@@ -1304,7 +1304,7 @@ export interface ResponseFeedback {
 /**
  * The Answer interface is used to define the properties of an answer. Answers are used to define the correct answer for a task. These are generally used in training tasks or if skip logic is required based on the answer.
  *
- * Answers are used to defined correct answers for a task. These are generally used in training tasks or if skip logic is required based on the answer. The answer field is used to define the correct answer to the question. The acceptableLow and acceptableHigh fields are used to define a range of acceptable answers (inclusive, also used for skip logic and analysis). For example, if the correct answer is 5, and the acceptableLow is 4 and the acceptableHigh is 6, then any answer between 4 and 6 will be considered correct.
+ * The answer field defines the exact or preferred answer. lowestCorrect and highestCorrect define inclusive numeric bounds that count as correct independently of the answer. acceptableLow and acceptableHigh define inclusive bounds around a numeric answer that count as almost correct while still allowing progression.
  *
  * Here's an example of how to use the Answer interface to define the correct answer to a question:
  *
@@ -1335,9 +1335,13 @@ export interface Answer {
   /** The exact or preferred answer. Optional when acceptableAnswers or a numeric bound defines accepted answers. */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   answer?: any;
-  /** The acceptable low value for the answer. This is used to define a range of acceptable answers. */
+  /** Inclusive lower bound of the numeric range that counts as correct. */
+  lowestCorrect?: number;
+  /** Inclusive upper bound of the numeric range that counts as correct. */
+  highestCorrect?: number;
+  /** Inclusive lower bound of the almost-correct range around a numeric answer. */
   acceptableLow?: number;
-  /** The acceptable high value for the answer. This is used to define a range of acceptable answers. */
+  /** Inclusive upper bound of the almost-correct range around a numeric answer. */
   acceptableHigh?: number;
   /** Minimum score from 0 to 1 required for this answer to be considered correct. Defaults to 1. @minimum 0 @maximum 1 */
   correctnessThreshold?: number;
