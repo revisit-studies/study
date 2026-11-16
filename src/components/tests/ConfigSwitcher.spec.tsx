@@ -340,8 +340,9 @@ describe('ConfigSwitcher', () => {
 
     const view = await act(async () => render(<ConfigSwitcher globalConfig={globalConfig} studyConfigs={studyConfigs} />));
 
-    expect(view.getByRole('alert').textContent).toBe('Unable to load study visibility for: test-study. Check the storage connection and try again.');
+    expect(view.getByRole('alert').textContent).toBe('1 study is hidden because study visibility could not be loaded. Check the storage connection and try again.');
     expect(view.queryByText('Test Study')).toBeNull();
+    expect(view.getByRole('link', { name: 'getting started guide' }).getAttribute('href')).toBe('https://revisit.dev/docs/getting-started/');
     expect(engine.getParticipantsStatusCounts).not.toHaveBeenCalled();
     expect(engine.getConditionData).not.toHaveBeenCalled();
     consoleSpy.mockRestore();
@@ -439,6 +440,15 @@ describe('ConfigSwitcher', () => {
       <ConfigSwitcher globalConfig={globalConfig} studyConfigs={studyConfigs} />,
     ));
     expect(container).toBeDefined();
+  });
+
+  test('introduces the gallery with links to the reVISit documentation while loading', async () => {
+    const view = await act(async () => render(
+      <ConfigSwitcher globalConfig={globalConfig} studyConfigs={{}} />,
+    ));
+    expect(view.getByText(/open-source framework for designing, running, and analyzing user studies/)).toBeDefined();
+    expect(view.getByRole('link', { name: 'reVISit website' }).getAttribute('href')).toBe('https://revisit.dev/');
+    expect(view.getByRole('link', { name: 'getting started guide' }).getAttribute('href')).toBe('https://revisit.dev/docs/getting-started/');
   });
 
   test('renders with empty studyConfigs', async () => {
@@ -732,7 +742,7 @@ describe('ConfigSwitcher', () => {
       <ConfigSwitcher globalConfig={multiGlobalConfig} studyConfigs={configs} />,
     ));
 
-    await waitFor(() => expect(container.textContent).toContain('Unable to load study visibility for: failed-study. Check the storage connection and try again.'));
+    await waitFor(() => expect(container.textContent).toContain('1 study is hidden because study visibility could not be loaded. Check the storage connection and try again.'));
     expect(container.textContent).toContain('Test Study');
     expect(container.textContent).toContain('Ready to Collect Data');
     expect(container.textContent).not.toContain('Failed Study');
@@ -756,10 +766,8 @@ describe('ConfigSwitcher', () => {
       <ConfigSwitcher globalConfig={multiGlobalConfig} studyConfigs={configs} />,
     ));
 
-    await waitFor(() => {
-      expect(container.textContent).toContain('failed-study-a');
-      expect(container.textContent).toContain('failed-study-b');
-    });
+    await waitFor(() => expect(container.textContent).toContain('2 studies are hidden because study visibility could not be loaded.'));
+    expect(container.textContent).not.toContain('failed-study-a');
     expect(container.textContent).not.toContain('No studies found.');
     expect(mockEngine.getModes).toHaveBeenCalledTimes(2);
     consoleSpy.mockRestore();

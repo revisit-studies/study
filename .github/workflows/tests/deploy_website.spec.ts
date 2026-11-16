@@ -129,3 +129,12 @@ test('release regression: a downstream repository can publish without an existin
   expect(git(directory, ['--git-dir', remote, 'show', 'gh-pages:index.html'])).toBe('<h1>Study</h1>');
   expect(git(directory, ['--git-dir', remote, 'ls-tree', '--name-only', 'gh-pages'])).not.toContain('README.md');
 });
+
+test('only the official main Firebase build is indexable and declares a canonical URL', () => {
+  const builds = Object.values(workflow.jobs).flatMap(({ steps }) => steps).filter(({ run }) => run?.includes('yarn build'));
+  const indexable = builds.filter(({ env }) => env?.VITE_NOINDEX !== 'true');
+
+  expect(indexable.map(({ name }) => name)).toEqual(['Build main deployment']);
+  expect(indexable[0].run).toContain('VITE_CANONICAL_URL=https://revisit.dev/study/ yarn build');
+  expect(builds.filter(({ run }) => run?.includes('VITE_CANONICAL_URL'))).toHaveLength(1);
+});

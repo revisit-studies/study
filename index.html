@@ -4,7 +4,14 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/revisitAssets/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>ReVISit</title>
+    <title>ReVISit Studies</title>
+    <!-- Keep the description in sync with SITE_DESCRIPTION in src/utils/seoHeadTags.ts. The canonical URL, robots, and JSON-LD tags are injected at build time. -->
+    <meta name="description" content="Studies built with reVISit, an open-source framework for designing, running, and analyzing user studies of interactive data visualizations." />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="ReVISit" />
+    <meta property="og:title" content="ReVISit Studies" />
+    <meta property="og:description" content="Studies built with reVISit, an open-source framework for designing, running, and analyzing user studies of interactive data visualizations." />
+    <meta name="twitter:card" content="summary" />
 
     <!-- Required for react browser router on GitHub pages -->
     <script type="text/javascript">
@@ -47,7 +54,21 @@
       }
     </style>
 
-    <div id="root"></div>
+    <!-- Fallback for crawlers and visitors without JavaScript; React replaces it on mount. -->
+    <div id="root">
+      <main style="max-width: 640px; margin: 48px auto; padding: 0 16px; font-family: system-ui, sans-serif; line-height: 1.5;">
+        <h1>ReVISit Studies</h1>
+        <p>
+          Studies built with reVISit, an open-source framework for designing, running, and analyzing user studies of interactive data visualizations.
+          Study designers write a JSON study configuration, and reVISit handles the participant flow, data collection, and analysis.
+        </p>
+        <p>
+          Learn more on the <a href="https://revisit.dev/">reVISit website</a>, follow the <a href="https://revisit.dev/docs/getting-started/">getting started guide</a>,
+          or view the source on <a href="https://github.com/revisit-studies/study">GitHub</a>.
+        </p>
+        <noscript><p>These studies run in your browser and need JavaScript.</p></noscript>
+      </main>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

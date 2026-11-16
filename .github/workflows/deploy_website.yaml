@@ -33,7 +33,7 @@ jobs:
       - name: Build main deployment
         run: |
           if [ "$GITHUB_REPOSITORY" = "revisit-studies/study" ]; then
-            VITE_RECAPTCHA_ENTERPRISE_SITE_KEY=6LeksfUtAAAAADwbkOg-HyN8ZkMD04uIbJvrSWeX VITE_STORAGE_ENGINE=firebase VITE_REPO_URL=https://github.com/revisit-studies/study/tree/main/public/ yarn build
+            VITE_RECAPTCHA_ENTERPRISE_SITE_KEY=6LeksfUtAAAAADwbkOg-HyN8ZkMD04uIbJvrSWeX VITE_STORAGE_ENGINE=firebase VITE_REPO_URL=https://github.com/revisit-studies/study/tree/main/public/ VITE_CANONICAL_URL=https://revisit.dev/study/ yarn build
           else
             if [ -z "$VITE_STORAGE_ENGINE" ]; then unset VITE_STORAGE_ENGINE; fi
             yarn build
@@ -60,6 +60,7 @@ jobs:
           VITE_BASE_PATH: "/${{ github.event.repository.name }}/supabase/"
           VITE_REPO_URL: "https://github.com/revisit-studies/study/tree/main/public/"
           VITE_STORAGE_ENGINE: supabase
+          VITE_NOINDEX: "true"
 
       - name: Deploy current-only main Supabase snapshot
         if: ${{ github.repository == 'revisit-studies/study' }}
@@ -91,6 +92,7 @@ jobs:
         env:
           VITE_STORAGE_ENGINE: ${{ vars.VITE_STORAGE_ENGINE }}
           VITE_BASE_PATH: "/${{ github.event.repository.name }}/dev/"
+          VITE_NOINDEX: "true"
 
       - uses: actions/checkout@v7
         with:
@@ -110,6 +112,7 @@ jobs:
           VITE_BASE_PATH: "/${{ github.event.repository.name }}/dev-supabase/"
           VITE_REPO_URL: "https://github.com/revisit-studies/study/tree/dev/public/"
           VITE_STORAGE_ENGINE: supabase
+          VITE_NOINDEX: "true"
 
       - name: Deploy current-only dev Supabase snapshot
         if: ${{ github.repository == 'revisit-studies/study' }}
@@ -149,6 +152,7 @@ jobs:
         env:
           VITE_STORAGE_ENGINE: ${{ vars.VITE_STORAGE_ENGINE }}
           VITE_BASE_PATH: "/${{ github.event.repository.name }}/PR${{ github.event.number }}/"
+          VITE_NOINDEX: "true"
 
       - name: Build with github environment variables
         if: ${{ github.repository == 'revisit-studies/study' && vars.VITE_STORAGE_ENGINE != '' }}
@@ -157,6 +161,7 @@ jobs:
           VITE_RECAPTCHA_ENTERPRISE_SITE_KEY: "6LeksfUtAAAAADwbkOg-HyN8ZkMD04uIbJvrSWeX"
           VITE_STORAGE_ENGINE: ${{ vars.VITE_STORAGE_ENGINE }}
           VITE_BASE_PATH: "/${{ github.event.repository.name }}/PR${{ github.event.number }}/"
+          VITE_NOINDEX: "true"
 
       - uses: actions/checkout@v7
         with:

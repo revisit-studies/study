@@ -41,6 +41,7 @@ export function AppHeader({
     .sort((a, b) => b.localeCompare(a, undefined, { numeric: true }))[0];
 
   const inAnalysis = matchPath('/analysis/*', location.pathname) !== null;
+  const onLandingPage = matchPath('/', location.pathname) !== null;
   const showThemeToggle = ['/', '/settings', '/login'].some((path) => matchPath(path, location.pathname)) || inAnalysis;
 
   return (
@@ -50,7 +51,8 @@ export function AppHeader({
           <Flex align="center" onClick={() => navigate('/')} style={{ cursor: 'pointer' }}>
             <Image w={40} src={`${PREFIX}revisitAssets/revisitLogoSquare.svg`} alt="Revisit Logo" />
             <Space w="md" />
-            <Title order={4} style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            {/* The landing page has no other page heading, so its title is the H1. */}
+            <Title order={onLandingPage ? 1 : 4} size="h4" style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
               {inAnalysis ? 'ReVISit Analytics Platform' : 'ReVISit Studies'}
             </Title>
           </Flex>

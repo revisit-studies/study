@@ -67,7 +67,7 @@ function HomeRoute({
 
   return (
     <>
-      <PageTitle title="ReVISit | Home" />
+      <PageTitle title="ReVISit Studies" />
       <AppShell
         padding="md"
         header={{ height: 70 }}

@@ -484,6 +484,16 @@ export function ConfigSwitcher({
           src={`${PREFIX}revisitAssets/revisitLogoSquare.svg`}
           alt="reVISit"
         />
+        <Text c="dimmed" ta="center" mb="xl">
+          Studies built with reVISit, an open-source framework for designing, running, and analyzing user studies of interactive data visualizations. Learn more on the
+          {' '}
+          <Anchor href="https://revisit.dev/" target="_blank">reVISit website</Anchor>
+          {' '}
+          or follow the
+          {' '}
+          <Anchor href="https://revisit.dev/docs/getting-started/" target="_blank">getting started guide</Anchor>
+          .
+        </Text>
         {isLoadingStudies && (
           <>
             <Text c="dimmed" ta="center" mt="sm" mb="md">Loading studies...</Text>
@@ -523,11 +533,11 @@ export function ConfigSwitcher({
         {!isLoadingStudies && (
           <>
             {modeLoadErrors.length > 0 && (
-              <Text c="red" role="alert" mb="md">
-                Unable to load study visibility for:
+              // Study names are logged to the console; listing them all here buries the page content.
+              <Text c="dimmed" size="sm" ta="center" role="alert" mb="md">
+                {modeLoadErrors.length === 1 ? '1 study is' : `${modeLoadErrors.length} studies are`}
                 {' '}
-                {modeLoadErrors.join(', ')}
-                . Check the storage connection and try again.
+                hidden because study visibility could not be loaded. Check the storage connection and try again.
               </Text>
             )}
             {tabs.length > 0 && (
