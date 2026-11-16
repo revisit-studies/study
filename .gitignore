@@ -37,3 +37,4 @@ supabase/volumes/
 /supabase-migration-backup/
 
 coverage/
+.firebaserc
