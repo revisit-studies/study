@@ -44,15 +44,7 @@ export function StatsView(
             : (
               <Flex direction="row">
                 {/* Trial selection sidebar */}
-                <Box
-                  w={340}
-                  style={{
-                    height: '70vh',
-                    maxHeight: 700,
-                    minHeight: 0,
-                    flexShrink: 0,
-                  }}
-                >
+                <Box w={340}>
                   <StepsPanel participantAnswers={{}} studyConfig={studyConfig} isAnalysis />
                 </Box>
 

@@ -5,14 +5,12 @@ import {
 import {
   afterEach, describe, expect, test, vi,
 } from 'vitest';
-import type { Answer, StudyConfig } from '../../../parser/types';
+import type { Answer, NumericalResponse, StudyConfig } from '../../../parser/types';
 import { Sequence, StoredAnswer } from '../../../store/types';
 import { makeStudyConfig, makeStoredAnswer } from '../../../tests/utils';
 import { getDynamicComponentsForBlock } from '../StepsPanel.utils';
 import { StepsPanel } from '../StepsPanel';
 import { UNKNOWN_ANSWER_LABEL } from '../UnknownAnswerIcon';
-
-const mockLocation = vi.hoisted(() => ({ pathname: '/' }));
 
 // ── mocks ─────────────────────────────────────────────────────────────────────
 
@@ -36,7 +34,7 @@ vi.mock('../../../routes/utils', () => ({
 const mockNavigate = vi.fn();
 vi.mock('react-router', () => ({
   useNavigate: () => mockNavigate,
-  useLocation: () => ({ pathname: mockLocation.pathname, search: '' }),
+  useLocation: () => ({ pathname: '/', search: '' }),
 }));
 
 vi.mock('../../../utils/getSequenceFlatMap', () => ({
@@ -50,22 +48,23 @@ vi.mock('../../../utils/encryptDecryptIndex', () => ({
 
 vi.mock('../../../parser/utils', () => ({
   isDynamicBlock: (block: { order?: string }) => block.order === 'dynamic',
-  isInheritedComponent: (component: { baseComponent?: string }) => 'baseComponent' in component,
+  isInheritedComponent: () => false,
 }));
-
-type MockBoxProps = {
-  children: ReactNode;
-  onMouseEnter?: () => void;
-  onMouseLeave?: () => void;
-};
 
 vi.mock('@mantine/core', () => ({
   Badge: ({ children }: { children: ReactNode }) => <span>{children}</span>,
-  Box: forwardRef<HTMLDivElement, MockBoxProps>(function Box({ children, onMouseEnter, onMouseLeave }, ref) { // eslint-disable-line prefer-arrow-callback
-    return <div ref={ref} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>{children}</div>;
+  Box: forwardRef<HTMLDivElement, { children: ReactNode }>(function Box({ children }, ref) { // eslint-disable-line prefer-arrow-callback
+    return <div ref={ref}>{children}</div>;
   }),
   Code: ({ children }: { children: ReactNode }) => <code>{children}</code>,
   Flex: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+  HoverCard: Object.assign(
+    ({ children }: { children: ReactNode }) => <div>{children}</div>,
+    {
+      Target: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+      Dropdown: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+    },
+  ),
   NavLink: ({ children, label, onClick }: { children?: ReactNode; label?: ReactNode; onClick?: () => void }) => (
     <div role="link" onClick={onClick}>
       {label}
@@ -74,26 +73,9 @@ vi.mock('@mantine/core', () => ({
   ),
   Text: ({ children }: { children: ReactNode }) => <p>{children}</p>,
   Tooltip: ({ children }: { children: ReactNode }) => children,
-  Button: ({
-    children,
-    onClick,
-    onMouseEnter,
-    onMouseLeave,
-    'aria-expanded': ariaExpanded,
-    'aria-label': ariaLabel,
-    'aria-controls': ariaControls,
-  }: {
-    children: ReactNode;
-    onClick?: () => void;
-    onMouseEnter?: () => void;
-    onMouseLeave?: () => void;
-    'aria-expanded'?: boolean;
-    'aria-label'?: string;
-    'aria-controls'?: string;
-  }) => (
-    <button type="button" onClick={onClick} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave} aria-expanded={ariaExpanded} aria-label={ariaLabel} aria-controls={ariaControls}>{children}</button>
+  Button: ({ children, onClick }: { children: ReactNode; onClick?: () => void }) => (
+    <button type="button" onClick={onClick}>{children}</button>
   ),
-  Collapse: ({ children, expanded, id }: { children: ReactNode; expanded: boolean; id?: string }) => (expanded ? <div id={id}>{children}</div> : null),
 }));
 
 vi.mock('@tabler/icons-react', () => ({
@@ -109,7 +91,6 @@ vi.mock('@tabler/icons-react', () => ({
     color?: string;
   }) => <span aria-label={ariaLabel} data-color={color}>icon-check</span>,
   IconChevronUp: () => null,
-  IconChevronDown: () => null,
   IconDice3: () => null,
   IconDice5: () => null,
   IconInfoCircle: () => null,
@@ -143,7 +124,7 @@ const minimalStudyConfig = makeStudyConfig({
   sequence: minimalSequence,
 });
 
-afterEach(() => { cleanup(); mockLocation.pathname = '/'; });
+afterEach(() => { cleanup(); });
 
 // ── component rendering tests ──────────────────────────────────────────────────
 
@@ -200,128 +181,6 @@ describe('StepsPanel rendering', () => {
       />,
     ));
     expect(container).toBeDefined();
-  });
-
-  test('shows only parameters, responses, and correct answer in order as JSON blocks', async () => {
-    const studyConfig = makeStudyConfig({
-      components: {
-        intro: {
-          type: 'markdown',
-          path: 'intro.md',
-          parameters: { dataset: 'study.csv' },
-          response: [
-            { id: 'q1', type: 'shortText', prompt: 'First answer' },
-            { id: 'q2', type: 'shortText', prompt: 'Second answer' },
-          ],
-          correctAnswer: [
-            { id: 'q1', answer: 'expected' },
-            { id: 'q2', answer: 'also expected' },
-          ],
-        },
-      },
-      sequence: minimalSequence,
-    });
-    mockLocation.pathname = '/test-study/reviewer-intro';
-    const { container, getByRole } = await act(async () => render(
-      <StepsPanel participantAnswers={{}} studyConfig={studyConfig} />,
-    ));
-
-    const labels = ['Parameters', 'Responses', 'Correct Answer'];
-    const labelPositions = labels.map((label) => container.textContent!.indexOf(label));
-    expect(labelPositions[0]).toBeGreaterThanOrEqual(0);
-    expect(labelPositions[0]).toBeLessThan(labelPositions[1]);
-    expect(labelPositions[1]).toBeLessThan(labelPositions[2]);
-    expect(container.textContent).not.toContain('Study Config');
-    expect(container.textContent).not.toContain('Participant Answer');
-    const blocks = Array.from(container.querySelectorAll('code')).map((element) => element.textContent);
-    expect(blocks[0]).toContain('"dataset": "study.csv"');
-    expect(blocks[1]).toContain('"prompt": "First answer"');
-    expect(blocks[1]).not.toMatch(/^\s*[{[]/);
-    expect(blocks[2]).toContain('"prompt": "Second answer"');
-    expect(blocks[3]).toContain('"answer": "expected"');
-    expect(blocks[3]).not.toMatch(/^\s*[{[]/);
-    expect(blocks[4]).toContain('"answer": "also expected"');
-    expect(blocks[4]).not.toMatch(/^\s*[{[]/);
-    const inspectorToggle = getByRole('button', { name: 'Component details' });
-    expect(inspectorToggle.getAttribute('aria-expanded')).toBe('true');
-    const inspectorId = inspectorToggle.getAttribute('aria-controls');
-    expect(inspectorId).toBeTruthy();
-    expect(document.getElementById(inspectorId!)).not.toBeNull();
-    labels.forEach((label) => {
-      const sectionToggle = getByRole('button', { name: label });
-      expect(sectionToggle.getAttribute('aria-expanded')).toBe('true');
-      fireEvent.click(sectionToggle);
-      expect(sectionToggle.getAttribute('aria-expanded')).toBe('false');
-      expect(document.getElementById(sectionToggle.getAttribute('aria-controls')!)).toBeNull();
-    });
-  });
-
-  test('shows an empty state when the route does not resolve to a component', async () => {
-    const { container } = await act(async () => render(
-      <StepsPanel participantAnswers={{}} studyConfig={minimalStudyConfig} />,
-    ));
-    expect(container.textContent).toContain('No component is selected.');
-  });
-
-  test('reopens sections for a newly selected component', async () => {
-    const studyConfig = makeStudyConfig({
-      components: {
-        intro: {
-          type: 'markdown', path: 'intro.md', response: [{ id: 'intro-q', type: 'shortText', prompt: 'Intro response' }],
-        },
-        other: {
-          type: 'markdown', path: 'other.md', response: [{ id: 'other-q', type: 'shortText', prompt: 'Other response' }],
-        },
-      },
-      sequence: minimalSequence,
-    });
-    mockLocation.pathname = '/test-study/reviewer-intro';
-    const { getByRole, rerender } = await act(async () => render(
-      <StepsPanel participantAnswers={{}} studyConfig={studyConfig} />,
-    ));
-    expect(document.body.textContent).toContain('"prompt": "Intro response"');
-    const responsesToggle = getByRole('button', { name: 'Responses' });
-    fireEvent.click(responsesToggle);
-    expect(responsesToggle.getAttribute('aria-expanded')).toBe('false');
-
-    mockLocation.pathname = '/test-study/reviewer-other';
-    await act(async () => rerender(<StepsPanel participantAnswers={{}} studyConfig={studyConfig} />));
-    expect(getByRole('button', { name: 'Component details' })).toBeDefined();
-    expect(getByRole('button', { name: 'Responses' }).getAttribute('aria-expanded')).toBe('true');
-    expect(document.body.textContent).toContain('"prompt": "Other response"');
-  });
-
-  test('temporarily highlights a matching response and clears it on hover end', async () => {
-    const studyConfig = makeStudyConfig({
-      components: {
-        intro: {
-          type: 'markdown',
-          path: 'intro.md',
-          response: [{ id: 'q1', type: 'shortText', prompt: 'Answer' }],
-        },
-      },
-      sequence: minimalSequence,
-    });
-    const questionElement = document.createElement('div');
-    questionElement.dataset.questionId = 'q1';
-    questionElement.style.outline = '1px solid red';
-    const responseElement = document.createElement('div');
-    responseElement.id = 'q1';
-    questionElement.appendChild(responseElement);
-    document.body.appendChild(questionElement);
-    mockLocation.pathname = '/test-study/reviewer-intro';
-    const { container, unmount } = await act(async () => render(
-      <StepsPanel participantAnswers={{}} studyConfig={studyConfig} />,
-    ));
-    const responseEntry = Array.from(container.querySelectorAll('code'))
-      .filter((element) => element.textContent?.includes('"id": "q1"') && element.textContent?.includes('"prompt": "Answer"'))
-      .at(-1)!;
-    fireEvent.mouseEnter(responseEntry.parentElement!);
-    expect(questionElement.style.outline).toContain('var(--mantine-color-blue-5)');
-    fireEvent.mouseLeave(responseEntry.parentElement!);
-    expect(questionElement.style.outline).toBe('1px solid red');
-    unmount();
-    questionElement.remove();
   });
 
   test('renders a study containing a dynamic block', async () => {
@@ -519,6 +378,97 @@ describe('StepsPanel answer status indicators', () => {
     expect(unanswered.container.querySelector(`[aria-label="${UNKNOWN_ANSWER_LABEL}"]`)).toBeNull();
     expect(unanswered.container.textContent).not.toContain('icon-check');
     expect(unanswered.container.textContent).not.toContain('icon-x');
+  });
+});
+
+describe('StepsPanel Show more/less buttons', () => {
+  // correctAnswer with 7 keys produces 9-line JSON (> INITIAL_CLAMP=6)
+  const longCorrectAnswer: Answer[] = [
+    { id: 'q1', answer: 1 },
+    { id: 'q2', answer: 2 },
+    { id: 'q3', answer: 3 },
+    { id: 'q4', answer: 4 },
+    { id: 'q5', answer: 5 },
+    { id: 'q6', answer: 6 },
+    { id: 'q7', answer: 7 },
+  ];
+
+  // response array with enough items to exceed INITIAL_CLAMP lines
+  const longResponse: NumericalResponse[] = [
+    { id: 'r1', type: 'numerical', prompt: 'A' },
+    { id: 'r2', type: 'numerical', prompt: 'B' },
+    { id: 'r3', type: 'numerical', prompt: 'C' },
+  ];
+
+  const configWithLongAnswers = makeStudyConfig({
+    uiConfig: {
+      withSidebar: true,
+      sidebarWidth: 300,
+      showTitleBar: true,
+    },
+    components: {
+      intro: {
+        type: 'markdown',
+        path: 'intro.md',
+        response: longResponse,
+        correctAnswer: longCorrectAnswer,
+      },
+    },
+    sequence: minimalSequence,
+  });
+
+  const participantAnswer = makeStoredAnswer({
+    answer: { q1: 1 },
+    identifier: 'intro_0',
+    componentName: 'intro',
+    trialOrder: 'root_0',
+    startTime: 0,
+    endTime: 100,
+  });
+
+  test('renders Show more button when correctAnswer JSON exceeds INITIAL_CLAMP', async () => {
+    const { getAllByRole } = await act(async () => render(
+      <StepsPanel
+        participantSequence={minimalSequence}
+        participantAnswers={{ intro_0: participantAnswer }}
+        studyConfig={configWithLongAnswers}
+      />,
+    ));
+    const buttons = getAllByRole('button');
+    expect(buttons.some((b) => b.textContent?.includes('Show'))).toBe(true);
+  });
+
+  test('clicking Show more toggles correctAnswer clamp to Show less', async () => {
+    const { getAllByRole } = await act(async () => render(
+      <StepsPanel
+        participantSequence={minimalSequence}
+        participantAnswers={{ intro_0: participantAnswer }}
+        studyConfig={configWithLongAnswers}
+      />,
+    ));
+    const buttons = getAllByRole('button');
+    const showMoreBtn = buttons.find((b) => b.textContent === 'Show more');
+    expect(showMoreBtn).toBeDefined();
+    await act(async () => { fireEvent.click(showMoreBtn!); });
+    const btnsAfter = getAllByRole('button');
+    expect(btnsAfter.some((b) => b.textContent === 'Show less')).toBe(true);
+  });
+
+  test('clicking all Show more buttons covers response clamp handler', async () => {
+    const { getAllByRole } = await act(async () => render(
+      <StepsPanel
+        participantSequence={minimalSequence}
+        participantAnswers={{ intro_0: participantAnswer }}
+        studyConfig={configWithLongAnswers}
+      />,
+    ));
+    // Click every Show more button (covers both correctAnswer and response clamp handlers)
+    const showMoreBtns = getAllByRole('button').filter((b) => b.textContent === 'Show more');
+    for (const btn of showMoreBtns) {
+      act(() => { fireEvent.click(btn); });
+    }
+    const btnsAfter = getAllByRole('button');
+    expect(btnsAfter.some((b) => b.textContent === 'Show less')).toBe(true);
   });
 });
 
