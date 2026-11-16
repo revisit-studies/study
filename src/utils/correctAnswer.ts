@@ -45,10 +45,9 @@ function getCorrectAnswerBoundsError(answer: Answer, allowTemplate = false): str
       : undefined;
   if (numericAnswer === undefined) return 'answer must be a finite number when numeric bounds are set';
 
-  for (const [lowName, low, highName, high] of boundPairs) {
-    if (low !== undefined && numericAnswer < low) return `answer must be greater than or equal to ${lowName} (${low})`;
-    if (high !== undefined && numericAnswer > high) return `answer must be less than or equal to ${highName} (${high})`;
-  }
+  const [lowName, low, highName, high] = boundPairs[0];
+  if (low !== undefined && numericAnswer < low) return `answer must be greater than or equal to ${lowName} (${low})`;
+  if (high !== undefined && numericAnswer > high) return `answer must be less than or equal to ${highName} (${high})`;
   return undefined;
 }
 
@@ -56,8 +55,7 @@ export function getCorrectAnswerConfigError(answer: Answer, allowTemplate = fals
   const hasAnswer = answer.answer !== undefined;
   const hasAlmostCorrectBounds = answer.acceptableLow !== undefined || answer.acceptableHigh !== undefined;
   const hasCorrectBounds = answer.lowestCorrect !== undefined || answer.highestCorrect !== undefined;
-  if ((!hasAnswer && !answer.acceptableAnswers?.length && !hasCorrectBounds)
-    || (hasAlmostCorrectBounds && !hasAnswer)) {
+  if (!hasAnswer && !answer.acceptableAnswers?.length && !hasCorrectBounds && !hasAlmostCorrectBounds) {
     return 'A correctAnswer must define an answer, a non-empty acceptableAnswers list, or a lowestCorrect/highestCorrect numeric bound; acceptableLow/acceptableHigh require a numeric answer';
   }
   return getCorrectAnswerBoundsError(answer, allowTemplate);
@@ -360,6 +358,13 @@ export function responseAnswerIsCorrect(
   }))) return true;
 
   if (numericAnswerIsInRange(responseUserAnswer, lowestCorrect, highestCorrect)) return true;
+  // Before acceptableLow/acceptableHigh were used for almost-correct feedback,
+  // bound-only answers used them as the correct range.
+  if (responseCorrectAnswer === undefined && numericAnswerIsInRange(
+    responseUserAnswer,
+    options.acceptableLow,
+    options.acceptableHigh,
+  )) return true;
   if (responseCorrectAnswer === undefined) return false;
   const exact = responseAnswerMatchesValue(responseUserAnswer, responseCorrectAnswer, options);
   const almostRange = numericAnswerIsInRange(responseUserAnswer, options.acceptableLow, options.acceptableHigh);
@@ -394,7 +399,7 @@ export function responseAnswerIsAlmostCorrect(
   );
 }
 
-export type ResponseAnswerScoreResult = { score: number | null; error: boolean };
+export type ResponseAnswerScoreResult = { score: number | null; error: boolean; scorerResultUsed: boolean };
 
 /** Return a score and distinguish a valid ungraded result from a failed scoring configuration. */
 export function scoreResponseAnswerWithStatus(
@@ -407,11 +412,11 @@ export function scoreResponseAnswerWithStatus(
   const customModule = response?.type === 'custom' && response.path ? getCustomResponseModule(response) : null;
   if (response?.path && response.type === 'custom' && !customModule) {
     console.error(`Unable to load custom response module at ${response.path}`);
-    return { score: null, error: true };
+    return { score: null, error: true, scorerResultUsed: false };
   }
   if (response?.path && response.type !== 'custom' && !module) {
     console.error(`Unable to load response module at ${response.path}`);
-    return { score: null, error: true };
+    return { score: null, error: true, scorerResultUsed: false };
   }
   let scoreFunction: ((currentValue: unknown) => unknown) | undefined;
   if (response?.type === 'custom') {
@@ -428,13 +433,13 @@ export function scoreResponseAnswerWithStatus(
     if (module.score) scoreFunction = (currentValue: unknown) => module.score?.(currentValue, values, response, correctAnswer?.answer);
   }
   if (value === undefined) {
-    return { score: correctAnswer ? 0 : null, error: false };
+    return { score: correctAnswer ? 0 : null, error: false, scorerResultUsed: false };
   }
   const scoringValue = normalizeResponseValue(response, value);
   if (!isResponseAnsweredForScoring(response, value, values)) {
     const gradingValue = isResponseDontKnowSelected(response, values) ? null : value;
     if (!correctAnswer) {
-      return { score: null, error: false };
+      return { score: null, error: false, scorerResultUsed: false };
     }
     return {
       score: Number(responseAnswerIsCorrect(
@@ -452,6 +457,7 @@ export function scoreResponseAnswerWithStatus(
         },
       )),
       error: false,
+      scorerResultUsed: false,
     };
   }
   let result: unknown = null;
@@ -459,20 +465,20 @@ export function scoreResponseAnswerWithStatus(
     result = scoreFunction ? scoreFunction(scoringValue) : null;
   } catch (error) {
     console.error(`Validation function at ${response?.path} failed`, error);
-    return { score: null, error: true };
+    return { score: null, error: true, scorerResultUsed: false };
   }
   const resultError = getResponseScoreResultError(result, response?.path ?? 'unknown path');
   if (resultError) {
     console.error(resultError);
-    return { score: null, error: true };
+    return { score: null, error: true, scorerResultUsed: false };
   }
   if (result !== null) {
-    if (typeof result === 'boolean') return { score: Number(result), error: false };
-    if (typeof result === 'number') return { score: result, error: false };
+    if (typeof result === 'boolean') return { score: Number(result), error: false, scorerResultUsed: true };
+    if (typeof result === 'number') return { score: result, error: false, scorerResultUsed: true };
   }
 
   if (!correctAnswer) {
-    return { score: null, error: false };
+    return { score: null, error: false, scorerResultUsed: false };
   }
 
   return {
@@ -491,6 +497,7 @@ export function scoreResponseAnswerWithStatus(
       },
     )),
     error: false,
+    scorerResultUsed: false,
   };
 }
 

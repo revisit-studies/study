@@ -421,6 +421,59 @@ describe('ResponseBlock', () => {
     expect(alert?.textContent).toContain('within an acceptable margin of error');
   });
 
+  test('preserves a correct custom scorer result inside the almost-correct range', async () => {
+    const checkedAnswer = makeStoredAnswer({
+      answer: { q1: 58 },
+      checkAnswer: {
+        attemptsUsed: 1,
+        correct: true,
+        responses: { q1: true },
+        scores: { q1: 1 },
+        checkedAnswers: { q1: 58 },
+      },
+    });
+    const config: IndividualComponent = {
+      type: 'questionnaire',
+      provideFeedback: true,
+      response: [{
+        id: 'q1', type: 'numerical', prompt: 'Choose a value', path: 'test-response-functions/assets/SliderScore.ts',
+      }],
+      correctAnswer: [{
+        id: 'q1', answer: 60, acceptableLow: 55, acceptableHigh: 65,
+      }],
+    };
+    mockAnswerField.values = { q1: 58 };
+    const { container } = await renderWithStore(<ResponseBlock config={config} location="belowStimulus" status={checkedAnswer} />);
+
+    expect(container.querySelector('[data-testid="feedback-alert-q1"]')?.getAttribute('data-title')).toBe('Correct Answer');
+  });
+
+  test('shows almost-correct feedback when a custom scorer falls back to answer matching', async () => {
+    const checkedAnswer = makeStoredAnswer({
+      answer: { q1: '58' },
+      checkAnswer: {
+        attemptsUsed: 1,
+        correct: true,
+        responses: { q1: true },
+        checkedAnswers: { q1: '58' },
+      },
+    });
+    const config: IndividualComponent = {
+      type: 'questionnaire',
+      provideFeedback: true,
+      response: [{
+        id: 'q1', type: 'slider', prompt: 'Choose a value', options: [], path: 'test-response-functions/assets/GameScore.ts',
+      }],
+      correctAnswer: [{
+        id: 'q1', answer: 60, acceptableLow: 55, acceptableHigh: 65,
+      }],
+    };
+    mockAnswerField.values = { q1: '58' };
+    const { container } = await renderWithStore(<ResponseBlock config={config} location="belowStimulus" status={checkedAnswer} />);
+
+    expect(container.querySelector('[data-testid="feedback-alert-q1"]')?.getAttribute('data-title')).toBe('Almost Correct');
+  });
+
   test('does not show almost-correct feedback for a numeric answer in a text response', async () => {
     const checkedAnswer = makeStoredAnswer({
       answer: { q1: '24' },

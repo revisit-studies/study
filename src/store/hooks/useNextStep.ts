@@ -171,9 +171,9 @@ export function useNextStep(responses?: Response[], correctAnswers?: Answer[]) {
           return;
         }
         const savedScore = savedScores?.[correctAnswer.id];
-        const { score, error } = savedScore === undefined
+        const { score, error, scorerResultUsed } = savedScore === undefined
           ? scoreResponseAnswerWithStatus(answer[correctAnswer.id], correctAnswer, response, answer)
-          : { score: savedScore, error: false };
+          : { score: savedScore, error: false, scorerResultUsed: true };
         if (error) {
           hasScoringError = true;
           return;
@@ -181,7 +181,7 @@ export function useNextStep(responses?: Response[], correctAnswers?: Answer[]) {
         if (score !== null) {
           currentScores[correctAnswer.id] = score;
           responseScores[correctAnswer.id] = isResponseScoreCorrect(score, correctAnswer.correctnessThreshold) ?? false;
-          if (hasResponseScorer(response) || savedScores?.[correctAnswer.id] !== undefined) scores[correctAnswer.id] = score;
+          if (scorerResultUsed || savedScores?.[correctAnswer.id] !== undefined) scores[correctAnswer.id] = score;
         }
       });
       responseConfig.forEach((response) => {

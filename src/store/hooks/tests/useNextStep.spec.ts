@@ -400,6 +400,37 @@ describe('useNextStep', () => {
     });
   });
 
+  test('does not cache answer-matching fallback as a custom score', async () => {
+    mockCheckAnswer = {
+      trial1_0: { attemptsUsed: 1, correct: true, responses: { q1: true } },
+    };
+    mockTrialValidation = {
+      trial1_0: {
+        aboveStimulus: { valid: true, values: {} },
+        belowStimulus: { valid: true, values: { q1: '58' } },
+        sidebar: { valid: true, values: {} },
+        stimulus: { valid: true, values: {} },
+        provenanceGraph: {
+          aboveStimulus: undefined,
+          belowStimulus: undefined,
+          sidebar: undefined,
+          stimulus: undefined,
+        },
+      },
+    };
+    const response = {
+      id: 'q1', type: 'slider' as const, prompt: 'Answer', options: [], path: 'test-response-functions/assets/GameScore.ts',
+    };
+    const { result } = renderHook(() => useNextStep([response], [{
+      id: 'q1', answer: 60, acceptableLow: 55, acceptableHigh: 65,
+    }]));
+    await act(async () => { await result.current.goToNextStep(); });
+
+    const savedPayload = mockSaveTrialAnswer.mock.calls[0][0] as StoredAnswer;
+    expect(savedPayload.checkAnswer).toMatchObject({ correct: true, responses: { q1: true } });
+    expect(savedPayload.checkAnswer?.scores).toBeUndefined();
+  });
+
   test('submission keeps a required scorer-only response unresolved when its scorer returns null', async () => {
     mockCheckAnswer = {
       trial1_0: { attemptsUsed: 1, correct: true, responses: { scored: true } },

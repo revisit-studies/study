@@ -3524,6 +3524,10 @@ describe('standalone correct-answer acceptance rules', () => {
     { lowestCorrect: 0 },
     { highestCorrect: 0 },
     { answer: 0, acceptableLow: -1, acceptableHigh: 1 },
+    { acceptableLow: -1, acceptableHigh: 1 },
+    { answer: 0, lowestCorrect: 7, highestCorrect: 10 },
+    { answer: 0, lowestCorrect: 7 },
+    { answer: 18, highestCorrect: 15 },
     { answer: 23, acceptableLow: 23, acceptableHigh: 25 },
     { answer: 25, acceptableLow: 23, acceptableHigh: 25 },
     { answer: 0, lowestCorrect: 0 },
@@ -3534,13 +3538,12 @@ describe('standalone correct-answer acceptance rules', () => {
     const parsed = await parseStudyConfig(JSON.stringify(config));
     expect(parsed.errors).toEqual([]);
     expect(parsed.components['Numeric Ranges'].correctAnswer?.[0]).toEqual({ id: 'closed-range', ...definition });
+    expect(() => materializeParticipantConfig(parsed, {})).not.toThrow();
   });
 
   test.each([
     { answer: 0, acceptableLow: 1 },
     { answer: 2, acceptableHigh: 1 },
-    { answer: 0, lowestCorrect: 1 },
-    { answer: 2, highestCorrect: 1 },
     { answer: 0, acceptableLow: 2, acceptableHigh: 1 },
     { answer: 0, lowestCorrect: 2, highestCorrect: 1 },
   ])('rejects answers outside or inverted numeric bounds: %j', async (definition) => {
@@ -3697,8 +3700,6 @@ describe('standalone correct-answer acceptance rules', () => {
   test.each([
     {},
     { acceptableAnswers: [] },
-    { acceptableLow: 0 },
-    { acceptableHigh: 0 },
     { answer: 'not numeric', acceptableLow: 0 },
   ])('rejects an invalid acceptance rule %j', async (definition) => {
     const parsed = await parseStudyConfig(JSON.stringify(makeConfig(definition)));
@@ -3716,6 +3717,8 @@ describe('standalone correct-answer acceptance rules', () => {
     };
     expect((await parseStudyConfig(JSON.stringify(config))).errors).toEqual([]);
     config.components['Numeric Ranges'].correctAnswer = [{ id: 'closed-range' }];
+    expect((await parseStudyConfig(JSON.stringify(config))).errors).toEqual([]);
+    config.baseComponents.rangeBase.correctAnswer = [{ id: 'closed-range', acceptableLow: 26, acceptableHigh: 25 }];
     const parsed = await parseStudyConfig(JSON.stringify(config));
     expect(parsed.errors).toContainEqual(expect.objectContaining({
       instancePath: '/components/Numeric Ranges/correctAnswer/0',
@@ -3738,12 +3741,12 @@ test('test-parser-errors study config displays numeric answer-bound parser error
 
   expect(parsed.errors).toContainEqual(expect.objectContaining({
     instancePath: '/components/answer-higher/correctAnswer/0',
-    message: 'answer must be less than or equal to highestCorrect (15)',
+    message: 'answer must be less than or equal to acceptableHigh (15)',
     category: 'invalid-config',
   }));
   expect(parsed.errors).toContainEqual(expect.objectContaining({
     instancePath: '/components/answer-lower/correctAnswer/0',
-    message: 'answer must be greater than or equal to lowestCorrect (13)',
+    message: 'answer must be greater than or equal to acceptableLow (13)',
     category: 'invalid-config',
   }));
 });

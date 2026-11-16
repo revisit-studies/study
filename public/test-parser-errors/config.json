@@ -131,8 +131,8 @@
         {
           "id": "answer-higher",
           "answer": 18,
-          "lowestCorrect": 13,
-          "highestCorrect": 15
+          "acceptableLow": 13,
+          "acceptableHigh": 15
         }
       ]
     },
@@ -149,8 +149,8 @@
         {
           "id": "answer-lower",
           "answer": 10,
-          "lowestCorrect": 13,
-          "highestCorrect": 15
+          "acceptableLow": 13,
+          "acceptableHigh": 15
         }
       ]
     }

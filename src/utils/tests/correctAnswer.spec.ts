@@ -79,6 +79,14 @@ describe('correctAnswer utilities', () => {
     expect(scoreResponseAnswer({ 2: 'A', 10: 'B' }, matrixAnswer, matrixResponse)).toBe(0);
   });
 
+  test('preserves legacy bound-only correct answers', () => {
+    const answer: Answer = { id: 'q', acceptableLow: 55, acceptableHigh: 65 };
+    const response: Response = { id: 'q', type: 'numerical', prompt: '' };
+    expect(getCorrectAnswerConfigError(answer)).toBeUndefined();
+    expect(scoreResponseAnswer(58, answer, response)).toBe(1);
+    expect(scoreResponseAnswer(54, answer, response)).toBe(0);
+  });
+
   test('built-in responses can use a custom component file as their scoring module', () => {
     const response: Response = {
       id: 'q', type: 'numerical', prompt: 'Score', path: 'test-response-functions/assets/CustomPartialScore.tsx',
@@ -92,6 +100,12 @@ describe('correctAnswer utilities', () => {
     };
     expect(scoreResponseAnswer(5, undefined, response)).toBe(0.5);
     expect(scoreResponseAnswer('10', undefined, response)).toBe(1);
+    expect(scoreResponseAnswerWithStatus(5, undefined, response)).toEqual({
+      score: 0.5, error: false, scorerResultUsed: true,
+    });
+    expect(scoreResponseAnswerWithStatus('58', {
+      id: 'q', answer: 60, acceptableLow: 55, acceptableHigh: 65,
+    }, { ...response, type: 'slider', options: [] })).toEqual({ score: 1, error: false, scorerResultUsed: false });
   });
 
   test('a validation-only module does not score answers', () => {
@@ -132,8 +146,12 @@ describe('correctAnswer utilities', () => {
       id: 'score', type: 'numerical', prompt: 'Score', path: 'test-response-functions/assets/GameScore.ts', withDontKnow: true,
     };
     const answers = { score: 10, 'score-dontKnow': true };
-    expect(scoreResponseAnswerWithStatus(10, { id: 'score', answer: 10 }, response, answers)).toEqual({ score: 0, error: false });
-    expect(scoreResponseAnswerWithStatus(10, undefined, response, answers)).toEqual({ score: null, error: false });
+    expect(scoreResponseAnswerWithStatus(10, { id: 'score', answer: 10 }, response, answers)).toEqual({
+      score: 0, error: false, scorerResultUsed: false,
+    });
+    expect(scoreResponseAnswerWithStatus(10, undefined, response, answers)).toEqual({
+      score: null, error: false, scorerResultUsed: false,
+    });
   });
 
   test('a study score module can score partial overlap for a built-in checkbox', () => {

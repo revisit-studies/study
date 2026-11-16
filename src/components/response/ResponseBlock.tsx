@@ -44,7 +44,7 @@ import { useStoredAnswer } from '../../store/hooks/useStoredAnswer';
 import { useNextStep } from '../../store/hooks/useNextStep';
 import { useIsAnalysis } from '../../store/hooks/useIsAnalysis';
 import {
-  getSavedScoresForAnswer, hasResponseScorer, isRequiredResponseUngraded, isResponseAnsweredForScoring, isResponseScoreCorrect, responseAnswerIsAlmostCorrect, scoreResponseAnswer, scoreResponseAnswerWithStatus,
+  getSavedScoresForAnswer, hasResponseScorer, isRequiredResponseUngraded, isResponseAnsweredForScoring, isResponseScoreCorrect, responseAnswerIsAlmostCorrect, scoreResponseAnswerWithStatus,
   AnswerStatus, evaluateSelectionAnswer, getMatrixCheckboxRowStatuses,
 } from '../../utils/correctAnswer';
 import { getHelpTextPath } from '../../utils/handleComponentInheritance';
@@ -583,11 +583,11 @@ export function ResponseBlock({
         ? 'almost correct'
         : answerStatus);
       const score = checkAnswerScores?.[response.id];
-      if (score !== undefined || hasResponseScorer(response)) {
+      if (score !== undefined) {
         const scoredStatus: AnswerStatus = checkAnswerResponses[response.id]
           ? 'correct'
           : score !== undefined && score > 0 ? 'partially correct' : 'incorrect';
-        return [[response.id, applyAlmostCorrectStatus(scoredStatus)]];
+        return [[response.id, scoredStatus]];
       }
       const answerStatus: AnswerStatus = response.type === 'matrix-checkbox'
         ? (() => {
@@ -690,20 +690,22 @@ export function ResponseBlock({
         return response?.required !== false || isResponseAnsweredForScoring(response, allAnswers[answer.id], allAnswers);
       });
     const scores: Record<string, number> = {};
+    const computedScores: Record<string, number | null> = {};
     const scoringErrors: string[] = [];
     applicableCorrectAnswers.forEach((answer) => {
       const response = allResponsesWithDefaults.find((r) => r.id === answer.id);
       if (response?.path && isResponseAnsweredForScoring(response, allAnswers[answer.id], allAnswers)) {
-        const score = scoreResponseAnswer(
+        const result = scoreResponseAnswerWithStatus(
           allAnswers[answer.id],
           answer,
           response,
           allAnswers,
         );
-        if (score === null) {
+        if (result.error) {
           scoringErrors.push(response.id);
-        } else if (hasResponseScorer(response)) {
-          scores[answer.id] = score;
+        } else {
+          computedScores[answer.id] = result.score;
+          if (result.scorerResultUsed && result.score !== null) scores[answer.id] = result.score;
         }
       }
     });
@@ -724,7 +726,9 @@ export function ResponseBlock({
         }
         const score = Object.hasOwn(scores, configCorrectAnswer.id)
           ? scores[configCorrectAnswer.id]
-          : scoreResponseAnswerWithStatus(suppliedAnswer, configCorrectAnswer, response, allAnswers).score;
+          : Object.hasOwn(computedScores, configCorrectAnswer.id)
+            ? computedScores[configCorrectAnswer.id]
+            : scoreResponseAnswerWithStatus(suppliedAnswer, configCorrectAnswer, response, allAnswers).score;
         return [configCorrectAnswer.id, isResponseScoreCorrect(score, configCorrectAnswer.correctnessThreshold) === true];
       }),
     );
