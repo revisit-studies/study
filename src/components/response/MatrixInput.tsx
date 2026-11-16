@@ -215,7 +215,6 @@ export function MatrixInput({
   const answerColumn = 2;
   const rightLabelColumn = 3;
   const columns = hasRightQuestionLabels ? 'auto 1fr auto' : 'auto 1fr';
-  const minWidth = 120 + (_n * 56) + (hasRightQuestionLabels ? 120 : 0);
   return (
     <>
       {prompt.length > 0 && (
@@ -237,7 +236,6 @@ export function MatrixInput({
           display: 'grid',
           gridTemplateColumns: columns,
           gridTemplateRows: 'auto 1fr',
-          '--matrix-min-width': `${minWidth}px`,
         } as CSSProperties}
         m="sm"
         mt="xs"
@@ -291,12 +289,13 @@ export function MatrixInput({
                 justifyContent: 'center',
                 textAlign: 'center',
                 fontSize: '0.8em',
-                overflow: 'hidden',
+                overflow: 'visible',
                 overflowWrap: 'anywhere',
               }}
               px={2}
             >
               <OptionLabel
+                wrap
                 label={
                   (isMatrixDontKnowValue(entry.value) || isMatrixDontKnowValue(entry.label))
                     ? "I don't  \nknow"

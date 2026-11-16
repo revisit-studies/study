@@ -54,7 +54,7 @@ test('completes all 25 Markdown Stroop pairs with one assigned font size', async
   await waitForStudyEndMessage(page);
 });
 
-test('completes all 10 HTML Stroop conditions using number shortcuts', async ({ page }) => {
+test('completes all 20 HTML Stroop conditions using number shortcuts', async ({ page }) => {
   await resetClientStudyState(page);
   await openStudyFromLanding(page, 'Factor-demos', 'Stroop Test in HTML with Factors');
   await nextClick(page);

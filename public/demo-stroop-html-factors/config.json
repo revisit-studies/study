@@ -5,7 +5,7 @@
     "version": "pilot",
     "authors": ["The reVISit Team"],
     "date": "2026-08-20",
-    "description": "An HTML Stroop test that crosses ten color words with two congruence levels to generate 10 trials.",
+    "description": "An HTML Stroop test that crosses ten color words with two congruence levels to generate 20 trials.",
     "organizations": ["University of Utah", "WPI", "University of Toronto"]
   },
   "uiConfig": {
