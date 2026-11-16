@@ -3475,7 +3475,7 @@ describe('training feedback configuration', () => {
     const config = JSON.parse(readFileSync('public/demo-training/config.json', 'utf8'));
     config.components['simple-dropbox'].correctAnswer[0].acceptableAnswers = ['Stacked Bar'];
     config.components['simple-dropbox'].correctAnswer[0].feedback = {
-      correctText: ['Good choice', 'You got it!'], incorrectText: 'Try again', hints: ['Think about the shape', 'Hint: choose a bar'], exhaustedText: 'Training finished',
+      correctText: ['Good choice', 'You got it!'], incorrectText: 'Try again', incorrectTextByValue: { '100% Stacked Bar': 'This option hides the total.' }, hints: ['Think about the shape', 'Hint: choose a bar'], exhaustedText: 'Training finished',
     };
     return config;
   };
@@ -3499,6 +3499,7 @@ describe('training feedback configuration', () => {
     ['acceptableAnswers', 'Bar'],
     ['feedback', { correctText: 4 }],
     ['feedback', { incorrectText: ['Try again', 4] }],
+    ['feedback', { incorrectTextByValue: { a: 4 } }],
     ['feedback', { hints: 'Try a bar' }],
     ['feedback', { hints: ['First hint', 4] }],
   ])('rejects invalid %s', async (field, value) => {

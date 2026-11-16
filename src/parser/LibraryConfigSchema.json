@@ -4589,6 +4589,13 @@
             }
           ],
           "description": "Message when this response is incorrect. Also used after the final attempt when exhaustedText is absent."
+        },
+        "incorrectTextByValue": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Incorrect-feedback message selected by the submitted option value. Falls back to incorrectText when no value matches.",
+          "type": "object"
         }
       },
       "type": "object"

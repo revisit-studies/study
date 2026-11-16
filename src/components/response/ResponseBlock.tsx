@@ -614,6 +614,13 @@ export function ResponseBlock({
       return [response.id, hiddenAlert];
     }
     const responseFeedback = config.correctAnswer?.find((answer) => answer.id === response.id)?.feedback;
+    const checkedValue = checkedAnswerValues?.[response.id];
+    const valueFeedback = (response.type === 'radio' || response.type === 'buttons' || response.type === 'likert' || response.type === 'dropdown')
+      && (typeof checkedValue === 'string' || typeof checkedValue === 'number')
+      && responseFeedback?.incorrectTextByValue
+      && Object.hasOwn(responseFeedback.incorrectTextByValue, String(checkedValue))
+      ? responseFeedback.incorrectTextByValue[String(checkedValue)]
+      : undefined;
     const responseStatus = responseStatuses[response.id];
     const formatMessage = (text: string) => formatTrainingFeedback(text, attemptsUsed, trainingAttempts);
     if (responseStatus === 'correct') {
@@ -635,7 +642,10 @@ export function ResponseBlock({
     }
     const exhausted = trainingAttempts >= 0 && attemptsUsed >= trainingAttempts;
     const isPartiallyCorrect = responseStatus === 'partially correct';
-    message = formatMessage(getTrainingFeedbackText(exhausted ? responseFeedback?.exhaustedText ?? responseFeedback?.incorrectText : responseFeedback?.incorrectText, attemptsUsed) ?? message);
+    const incorrectText = exhausted
+      ? responseFeedback?.exhaustedText ?? valueFeedback ?? responseFeedback?.incorrectText
+      : valueFeedback ?? responseFeedback?.incorrectText;
+    message = formatMessage(getTrainingFeedbackText(incorrectText, attemptsUsed) ?? message);
     if (isPartiallyCorrect) message = `Your answer is partially correct. ${message}`;
     const hint = exhausted ? undefined : getTrainingFeedbackText(responseFeedback?.hints, attemptsUsed);
     if (partialScore !== undefined && partialScore >= 0 && partialScore <= 1) {
@@ -644,7 +654,7 @@ export function ResponseBlock({
     return [response.id, {
       visible: true, title: isPartiallyCorrect ? 'Partially Correct' : 'Incorrect Answer', message, color: isPartiallyCorrect ? 'orange' : 'red', retryAllowed: !exhausted, showHelpTextLink: responseFeedback === undefined && getHelpTextPath(config, studyConfig) !== undefined, fitHeight: responseFeedback !== undefined, hint: hint === undefined ? undefined : formatMessage(hint),
     }];
-  })), [allResponsesWithDefaults, allowFailedTraining, attemptsUsed, checkAnswerResponses, checkAnswerScores, config, hasCorrectAnswerFeedback, responseStatuses, studyConfig, trainingAttempts]);
+  })), [allResponsesWithDefaults, allowFailedTraining, attemptsUsed, checkAnswerResponses, checkAnswerScores, checkedAnswerValues, config, hasCorrectAnswerFeedback, responseStatuses, studyConfig, trainingAttempts]);
   const checkAnswerProvideFeedback = useCallback(() => {
     if (hasStimulusIssue) {
       revealStimulusErrors();

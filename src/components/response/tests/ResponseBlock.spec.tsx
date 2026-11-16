@@ -2135,6 +2135,73 @@ describe('custom training feedback', () => {
     expect(container.textContent).not.toContain('Helpful hint');
   });
 
+  test.each([
+    ['mean', 'The mean changes with extreme values.'],
+    ['range', 'The range measures spread.'],
+    ['mode', 'Try another option.'],
+  ])('uses option-specific incorrect feedback for the checked value %s', async (checkedValue, expectedMessage) => {
+    const optionConfig: IndividualComponent = {
+      type: 'questionnaire',
+      provideFeedback: true,
+      response: [{
+        id: 'q1', type: 'radio', prompt: 'Choose one', options: ['mean', 'median', 'mode', 'range'], optionOrder: 'random',
+      }],
+      correctAnswer: [{
+        id: 'q1',
+        answer: 'median',
+        feedback: {
+          incorrectText: 'Try another option.',
+          incorrectTextByValue: {
+            mean: 'The mean changes with extreme values.',
+            range: 'The range measures spread.',
+          },
+        },
+      }],
+    };
+    const status = makeStoredAnswer({
+      answer: { q1: 'range' },
+      checkAnswer: {
+        attemptsUsed: 1,
+        correct: false,
+        responses: { q1: false },
+        checkedAnswers: { q1: checkedValue },
+      },
+    });
+    const { container } = await renderWithStore(<ResponseBlock config={optionConfig} location="belowStimulus" status={status} />);
+    expect(container.querySelector('[data-testid="feedback-alert-q1"]')?.textContent).toContain(expectedMessage);
+  });
+
+  test('uses exhausted feedback before an option-specific message', async () => {
+    const optionConfig: IndividualComponent = {
+      type: 'questionnaire',
+      provideFeedback: true,
+      trainingAttempts: 1,
+      response: [{
+        id: 'q1', type: 'radio', prompt: 'Choose one', options: ['wrong', 'right'],
+      }],
+      correctAnswer: [{
+        id: 'q1',
+        answer: 'right',
+        feedback: {
+          exhaustedText: 'No more attempts.',
+          incorrectTextByValue: { wrong: 'That choice is wrong.' },
+        },
+      }],
+    };
+    const status = makeStoredAnswer({
+      answer: { q1: 'wrong' },
+      checkAnswer: {
+        attemptsUsed: 1,
+        correct: false,
+        responses: { q1: false },
+        checkedAnswers: { q1: 'wrong' },
+      },
+    });
+    const { container } = await renderWithStore(<ResponseBlock config={optionConfig} location="belowStimulus" status={status} />);
+    expect(container.querySelector('[data-testid="feedback-alert-q1"]')?.textContent).toContain('No more attempts.');
+    expect(container.querySelector('[data-testid="feedback-alert-q1"]')?.textContent).not.toContain('That choice is wrong.');
+  });
+
   test('clears hints when the answer is correct', async () => {
     mockStoredAnswerData.formOrder = { response: ['q1', 'q2'] };
     mockStoredAnswerData.checkAnswer = { attemptsUsed: 2, correct: true, responses: { q2: true } };

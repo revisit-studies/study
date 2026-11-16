@@ -320,6 +320,8 @@ test('Test questionnaire component with responses and randomizing questions and 
   const customResponseNextButton = page.getByRole('button', { name: 'Next', exact: true });
   const checkCustomResponseButton = page.getByRole('button', { name: 'Check Answer', exact: true });
   await expect(page.getByText('Pick a chart type and set your confidence.')).toBeVisible();
+  const typicalValue = page.getByRole('radio', { name: 'Mean' });
+  await typicalValue.check();
   const scoreNumberInput = page.getByPlaceholder('Enter a number from 0 to 10');
   await expect(page.getByText('How close can you get to 10? Enter a whole number. Try 5.5 for a custom validation error, 5 for 50% credit, then 10 for full credit.')).toBeVisible();
   await expect(customResponseNextButton).toBeDisabled();
@@ -335,7 +337,9 @@ test('Test questionnaire component with responses and randomizing questions and 
   await expect(page.getByText('"chartType":"Bar"')).toBeVisible();
   await checkCustomResponseButton.click();
   await expect(page.getByText(/You scored 50% on this question/)).toBeVisible();
+  await expect(page.getByRole('alert').filter({ hasText: 'The mean changes when an extreme value is added.' })).toHaveCount(1);
   await scoreNumberInput.fill('10');
+  await page.getByRole('radio', { name: 'Median' }).check();
   await checkCustomResponseButton.click();
   await expect(page.getByText('You have answered the question correctly.')).toBeVisible();
   await expect(customResponseNextButton).toBeEnabled();
@@ -465,7 +469,13 @@ test('Test questionnaire component with responses and randomizing questions and 
   await moveRankingItem(page, 'C', 'available', 'selected');
   const checkAnswer = page.getByRole('button', { name: 'Check Answer', exact: true });
   await checkAnswer.click();
-  await expect(page.getByRole('alert')).toHaveCount(5);
+  const answerFeedbackAlerts = page.getByRole('alert');
+  await expect(answerFeedbackAlerts).toHaveCount(5);
+  await expect(answerFeedbackAlerts.filter({ hasText: 'Those selections do not form an accepted pair.' })).toHaveCount(1);
+  await expect(answerFeedbackAlerts.filter({ hasText: 'Not all of the options are correct or you missed some.' })).toHaveCount(1);
+  await expect(answerFeedbackAlerts.filter({ hasText: 'Some rows are missing a correct trait or include a trait that does not apply.' })).toHaveCount(1);
+  await expect(answerFeedbackAlerts.filter({ hasText: 'Those colors do not form an accepted pair.' })).toHaveCount(1);
+  await expect(answerFeedbackAlerts.filter({ hasText: 'Both the selected letters and their order matter.' })).toHaveCount(1);
 
   await page.getByRole('checkbox', { name: 'A', exact: true }).uncheck();
   await page.getByRole('checkbox', { name: 'C', exact: true }).uncheck();
@@ -491,7 +501,12 @@ test('Test questionnaire component with responses and randomizing questions and 
   await moveRankingItem(page, 'C', 'selected', 'available');
   await moveRankingItem(page, 'B', 'available', 'selected');
   await checkAnswer.click();
-  await expect(page.getByRole('alert')).toHaveCount(5);
+  await expect(answerFeedbackAlerts).toHaveCount(5);
+  await expect(answerFeedbackAlerts.filter({ hasText: 'You chose one complete accepted letter pair.' })).toHaveCount(1);
+  await expect(answerFeedbackAlerts.filter({ hasText: 'You chose all correct options.' })).toHaveCount(1);
+  await expect(answerFeedbackAlerts.filter({ hasText: 'All five rows match the accepted traits.' })).toHaveCount(1);
+  await expect(answerFeedbackAlerts.filter({ hasText: 'You chose one complete accepted color pair.' })).toHaveCount(1);
+  await expect(answerFeedbackAlerts.filter({ hasText: 'Your letters are in an accepted order.' })).toHaveCount(1);
   await expect(page.getByRole('button', { name: 'Next', exact: true })).toBeEnabled();
   await nextClick(page);
 
