@@ -21,6 +21,7 @@ export function ErrorLoadingConfig({
     'undefined-base-component',
     'undefined-component',
     'sequence-validation',
+    'response-validation',
     'skip-validation',
     // warning
     'unused-component',

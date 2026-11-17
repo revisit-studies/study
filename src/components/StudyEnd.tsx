@@ -195,7 +195,7 @@ export function StudyEnd() {
   const automaticRetryLabel = `${failedAttemptCount}/3 retries`;
 
   return (
-    <Center style={{ height: '100%' }}>
+    <Center data-trial-identifier="end" style={{ height: '100%' }}>
       <Flex direction="column">
         {completed || !dataCollectionEnabled
           ? (processedStudyEndMsg

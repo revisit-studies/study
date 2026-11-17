@@ -1,6 +1,7 @@
 /* eslint-disable no-await-in-loop */
 import { test, expect, Page } from '@playwright/test';
 import {
+  advanceStudyStep,
   moveRankingItem,
   nextClick,
   readParticipantRecording,
@@ -192,6 +193,14 @@ test('Test questionnaire component with responses and randomizing questions and 
   // Go to the next page
   await nextClick(page);
 
+  // Selecting an option submits the auto-advance component and opens Conditional Responses.
+  await expect(page.getByText('Button Auto-Advance', { exact: true })).toBeVisible();
+  await advanceStudyStep(
+    page,
+    async () => page.getByRole('radio', { name: 'A', exact: true }).click(),
+    page.getByText('Conditional Responses', { exact: true }),
+  );
+
   // Conditional responses validate only while visible and clear when hidden.
   const universityName = page.getByLabel('Name of University');
   const graduationYear = page.getByLabel(/Graduation year$/);
@@ -259,7 +268,7 @@ test('Test questionnaire component with responses and randomizing questions and 
   await page.getByRole('radio', { name: 'No', exact: true }).check();
   await nextClick(page);
   await expect.poll(async () => (
-    await readParticipantRecording(page, 'demo-form-elements', 'Conditional Responses_2')
+    await readParticipantRecording(page, 'demo-form-elements', 'Conditional Responses_3')
   )?.answer).toEqual({ conditionalTitle: '', attendedUniversity: 'no' });
 
   // Go to the next page

@@ -151,17 +151,20 @@ export async function nextClick(page: Page, timeout = 10000) {
   throw new Error('Timed out clicking Next button');
 }
 
-export async function advanceStudyStep(page: Page, advance = () => nextClick(page)) {
+export async function advanceStudyStep(page: Page, advance = () => nextClick(page), destination?: Locator) {
+  const currentTrial = () => page.getByRole('main').evaluate((main) => main.querySelector('[data-trial-identifier]')?.getAttribute('data-trial-identifier') ?? null);
   const previousPath = new URL(page.url()).pathname;
-  const previousMain = await page.getByRole('main').elementHandle();
+  const previousTrial = destination ? undefined : await currentTrial();
   await advance();
   await page.waitForURL((url) => url.pathname !== previousPath, { waitUntil: 'commit', timeout: 30000 });
   await expect(page.getByTestId('study-interface')).toHaveAttribute('aria-busy', 'false', { timeout: 30000 });
-  if (previousMain) {
-    await expect.poll(() => previousMain.evaluate((node) => node.isConnected), { timeout: 30000 }).toBe(false);
-    await previousMain.dispose();
+  if (!destination) {
+    await expect.poll(async () => {
+      const renderedTrial = await currentTrial();
+      return renderedTrial !== null && renderedTrial !== previousTrial;
+    }, { timeout: 30000 }).toBe(true);
   }
-  await expect(page.getByRole('main')).toBeVisible({ timeout: 30000 });
+  await expect(destination ?? page.getByRole('main')).toBeVisible({ timeout: 30000 });
 }
 
 export async function moveRankingItem(

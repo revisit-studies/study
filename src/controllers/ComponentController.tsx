@@ -323,6 +323,7 @@ export function ComponentController() {
       <Box
         inert={!!globalStoreSubmitting && !isAnalysis}
         id={currentComponent}
+        data-trial-identifier={currentIdentifier}
         className={`stimulus ${currentConfig.type}`}
         style={stimulusContainerStyle}
       >

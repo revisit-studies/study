@@ -1226,6 +1226,12 @@ export interface ButtonsResponse extends BaseResponse {
   optionOrder?: 'fixed' | 'random';
   /** Set to true to hide keybinding indicators on buttons. Defaults to false when keymapping is active, else false. */
   hideKeyVisual?: boolean;
+  /** Automatically submit and advance after a button is selected. Defaults to false. */
+  autoAdvanceToNextStep?: boolean;
+  /** Delay in milliseconds before submitting after a button is selected. Must be non-negative; defaults to 300. @minimum 0 */
+  autoAdvanceDelay?: number;
+  /** Whether the participant may change or clear a selected button. Defaults to true. */
+  allowResponseChange?: boolean;
 }
 
 /**
@@ -1401,6 +1407,8 @@ export interface BaseIndividualComponent {
   nextButtonDisableTime?: number;
   /** The time in milliseconds after which the participant is automatically advanced to the next component without saving answers from the current component. */
   nextButtonAutoAdvanceTime?: number;
+  /** Show the Next button when a button response auto-advances. Defaults to false. */
+  showNextButtonOnAutoAdvance?: boolean;
   /** The time in milliseconds before auto-advance when the warning message is shown. Defaults to 30000. */
   nextButtonAutoAdvanceWarningTime?: number;
   /** The warning message shown before auto-advance. Include `{seconds}` to interpolate the remaining number and `{unit}` to interpolate `second`/`seconds`. */
@@ -2423,7 +2431,7 @@ export interface LibraryConfig {
   baseComponents?: BaseComponents;
 }
 
-export type ErrorWarningCategory = 'invalid-config' | 'invalid-library-config' | 'undefined-library' | 'undefined-base-component' | 'undefined-component' | 'sequence-validation' | 'skip-validation' | 'unused-component' | 'disabled-sidebar' | 'empty-sidebar' | 'default-contact-email' | 'default-firebase-config' | 'default-supabase-config';
+export type ErrorWarningCategory = 'invalid-config' | 'invalid-library-config' | 'undefined-library' | 'undefined-base-component' | 'undefined-component' | 'sequence-validation' | 'response-validation' | 'skip-validation' | 'unused-component' | 'disabled-sidebar' | 'empty-sidebar' | 'default-contact-email' | 'default-firebase-config' | 'default-supabase-config';
 
 /**
  * @ignore

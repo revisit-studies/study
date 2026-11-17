@@ -360,6 +360,29 @@
         }
       ]
     },
+    "Auto-Advance Buttons": {
+      "type": "questionnaire",
+      "response": [
+        {
+          "id": "autoAdvanceTitle",
+          "type": "textOnly",
+          "prompt": "# Button Auto-Advance\n\nSelecting an option submits this component and advances after a one-second delay. You can change your choice during the delay; each selection restarts it."
+        },
+        {
+          "id": "autoAdvanceChoice",
+          "type": "buttons",
+          "prompt": "Choose an option",
+          "options": [
+            { "label": "A", "value": "a", "key": "a" },
+            { "label": "B", "value": "b", "key": "b" },
+            { "label": "C", "value": "c", "key": "c" }
+          ],
+          "autoAdvanceToNextStep": true,
+          "autoAdvanceDelay": 1000,
+          "allowResponseChange": true
+        }
+      ]
+    },
     "Conditional Responses": {
       "type": "questionnaire",
       "response": [
@@ -1627,6 +1650,7 @@
     "components": [
       "Introduction",
       "Form Elements",
+      "Auto-Advance Buttons",
       "Conditional Responses",
       "Next Button Alignment",
       "Text Validation",

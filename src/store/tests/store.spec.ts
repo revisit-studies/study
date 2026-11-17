@@ -103,12 +103,16 @@ describe('studyStoreCreator', () => {
     });
     const { store, actions } = await studyStoreCreator('test', minimalConfig, minimalSequence, metadata, { later_1: later }, modes, 'p1', false, false);
     const saved = initializeTrrack({ registry: Registry.create(), initialState: { budgetAtEntry: 70 } }).graph.backend;
+    store.dispatch(actions.setButtonSelection({ identifier: 'later_1', responseId: 'q1', selected: true }));
+    store.dispatch(actions.setButtonAutoAdvancePending({ identifier: 'later_1', responseId: 'q1', dueAt: Date.now() + 1000 }));
     store.dispatch(actions.restoreTrialProvenance({ identifier: 'later_1', provenance: { ...createEmptyProvenance(), stimulus: saved }, responseValues: {} }));
     const revised = createGlobalStoreSubmission(undefined, { budget: 100 }, earlier, { budget: 90 }, [], {});
     store.dispatch(actions.acceptGlobalStoreSubmission({
       graph: revised.graph, revision: 1, answers: { intro_0: earlier, later_1: later }, invalidateAfter: '0',
     }));
     const retained = store.getState().trialValidation.later_1.provenanceGraph.stimulus!;
+    expect(store.getState().buttonSelectionIds.later_1).toBeUndefined();
+    expect(store.getState().buttonAutoAdvancePending.later_1).toBeUndefined();
     const resumed = initializeResumedTrrack({ registry: Registry.create(), initialState: { budgetAtEntry: 90 } }, retained);
     expect(resumed.getState()).toEqual({ budgetAtEntry: 90 });
     expect(resumed.graph.backend.nodes[saved.root]).toMatchObject({ id: saved.root, state: saved.nodes[saved.root].state, createdOn: saved.nodes[saved.root].createdOn });
@@ -609,6 +613,31 @@ describe('studyStoreCreator', () => {
     store.dispatch(actions.deleteDynamicBlockAnswers({ currentStep: 5, funcIndex: 0, funcName: 'myFunc' }));
     expect(store.getState().checkAnswer.myFunc_5_intro_0).toBeUndefined();
     expect(store.getState().checkAnswer.intro_0).toBeDefined();
+  });
+
+  test('deleteDynamicBlockAnswers clears button state before regenerating the same trial', async () => {
+    const { store, actions } = await studyStoreCreator('test', minimalConfig, minimalSequence, metadata, emptyAnswers, modes, 'p1', false, false);
+    for (let funcIndex = 0; funcIndex < 2; funcIndex += 1) {
+      store.dispatch(actions.pushToFuncSequence({
+        component: 'intro', funcName: 'myFunc', index: 5, funcIndex, parameters: {}, correctAnswer: [],
+      }));
+      const identifier = `myFunc_5_intro_${funcIndex}`;
+      store.dispatch(actions.setButtonSelection({ identifier, responseId: 'choice', selected: true }));
+      store.dispatch(actions.setButtonAutoAdvancePending({ identifier, responseId: 'choice', dueAt: 1000 }));
+    }
+
+    store.dispatch(actions.deleteDynamicBlockAnswers({ currentStep: 5, funcIndex: 1, funcName: 'myFunc' }));
+    expect(store.getState().buttonSelectionIds.myFunc_5_intro_1).toBeUndefined();
+    expect(store.getState().buttonAutoAdvancePending.myFunc_5_intro_1).toBeUndefined();
+    expect(store.getState().buttonSelectionIds.myFunc_5_intro_0).toEqual(['choice']);
+    expect(store.getState().buttonAutoAdvancePending.myFunc_5_intro_0).toEqual({ responseId: 'choice', dueAt: 1000 });
+
+    store.dispatch(actions.pushToFuncSequence({
+      component: 'intro', funcName: 'myFunc', index: 5, funcIndex: 1, parameters: {}, correctAnswer: [],
+    }));
+    expect(store.getState().answers.myFunc_5_intro_1).toBeDefined();
+    expect(store.getState().buttonSelectionIds.myFunc_5_intro_1).toBeUndefined();
+    expect(store.getState().buttonAutoAdvancePending.myFunc_5_intro_1).toBeUndefined();
   });
 });
 

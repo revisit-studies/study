@@ -115,7 +115,11 @@ vi.mock('@tabler/icons-react', () => ({
 
 describe('NextButton', () => {
   beforeEach(() => {
-    vi.mocked(useNextStep).mockImplementation(() => ({ isNextDisabled: mockIsNextDisabled, goToNextStep: mockGoToNextStep }));
+    vi.mocked(useNextStep).mockImplementation(() => ({
+      isNextDisabled: mockIsNextDisabled,
+      goToNextStep: mockGoToNextStep,
+      getNextStepTiming: () => ({ eligible: true, retryAfterMs: undefined }),
+    }));
     vi.mocked(useStudyConfig).mockImplementation(() => makeStudyConfig({ uiConfig: mockStudyConfig.uiConfig }));
     vi.mocked(ReactRouter.useNavigate).mockReturnValue(mockNavigate);
     mockIsNextDisabled = false;
@@ -149,6 +153,52 @@ describe('NextButton', () => {
   test('renders button with custom label', () => {
     const html = renderToStaticMarkup(<NextButton label="Continue" onNext={vi.fn()} />);
     expect(html).toContain('Continue');
+  });
+
+  test('does not render or trigger the hidden Next action from Enter', () => {
+    mockStudyConfig.uiConfig.nextOnEnter = true;
+    const onNext = vi.fn();
+    const { queryByRole } = render(<NextButton hideNextButton onNext={onNext} />);
+
+    fireEvent.keyDown(window, { key: 'Enter' });
+
+    expect(queryByRole('button', { name: 'Next' })).toBeNull();
+    expect(onNext).not.toHaveBeenCalled();
+  });
+
+  test('keeps Enter available for a visible Check Answer control when Next is hidden', async () => {
+    const onNext = vi.fn();
+    const onCheckAnswer = vi.fn();
+    mockStudyConfig.uiConfig.nextOnEnter = true;
+    const checkAnswer = <button type="button" onClick={onCheckAnswer}>Check Answer</button>;
+    const { getByRole } = render(
+      <NextButton hideNextButton checkAnswer={checkAnswer} onCheckAnswer={onCheckAnswer} onNext={onNext} />,
+    );
+
+    fireEvent.keyDown(window, { key: 'Enter' });
+
+    expect(getByRole('button', { name: 'Check Answer' })).toBeTruthy();
+    expect(onCheckAnswer).toHaveBeenCalledTimes(1);
+    expect(onNext).not.toHaveBeenCalled();
+  });
+
+  test('does not trigger Check Answer from Enter when nextOnEnter is disabled', () => {
+    const onCheckAnswer = vi.fn();
+    mockStudyConfig.uiConfig.nextOnEnter = true;
+    const checkAnswer = <button type="button" onClick={onCheckAnswer}>Check Answer</button>;
+    render(
+      <NextButton
+        config={{ type: 'questionnaire', response: [], nextOnEnter: false }}
+        hideNextButton
+        checkAnswer={checkAnswer}
+        onCheckAnswer={onCheckAnswer}
+        onNext={vi.fn()}
+      />,
+    );
+
+    fireEvent.keyDown(window, { key: 'Enter' });
+
+    expect(onCheckAnswer).not.toHaveBeenCalled();
   });
 
   test('does not render PreviousButton when config.previousButton is false', () => {
