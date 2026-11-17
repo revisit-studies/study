@@ -42,10 +42,12 @@ export function useRecording() {
   const studyConfig = useStudyConfig();
 
   const { recordScreenFPS, recordAudio } = studyConfig.uiConfig;
+  const requireEntireScreen = studyConfig.uiConfig.requireEntireScreen ?? false;
 
   const recordVideoRef = useRef<HTMLVideoElement>(null);
   const webcamVideoRef = useRef<HTMLVideoElement>(null);
   const [screenRecordingError, setRecordingError] = useState<string | null>(null);
+  const [screenCaptureVerificationError, setScreenCaptureVerificationError] = useState<string | null>(null);
   const [audioRecordingError, setAudioRecordingError] = useState<string | null>(null);
   const [isScreenRecording, setIsScreenRecording] = useState(false);
   const [isAudioRecording, setIsAudioRecording] = useState(false);
@@ -488,13 +490,26 @@ export function useRecording() {
       setAudioRecordingError(null);
 
       screenStream = includeScreen ? await navigator.mediaDevices.getDisplayMedia({
-        video: { displaySurface: 'browser', ...(recordScreenFPS ? { frameRate: { ideal: recordScreenFPS } } : {}) },
+        video: { displaySurface: requireEntireScreen ? 'monitor' : 'browser', ...(recordScreenFPS ? { frameRate: { ideal: recordScreenFPS } } : {}) },
         audio: false,
         // @ts-expect-error: experimental (selfBrowserSurface and preferCurrentTab are not yet standardized)
         // https://developer.mozilla.org/en-US/docs/Web/API/MediaDevices/getDisplayMedia#selfbrowsersurface
-        selfBrowserSurface: 'include',
-        preferCurrentTab: true,
+        selfBrowserSurface: requireEntireScreen ? 'exclude' : 'include',
+        preferCurrentTab: !requireEntireScreen,
       }) : null;
+      if (includeScreen && requireEntireScreen) {
+        const displaySurface = screenStream?.getVideoTracks()[0]?.getSettings().displaySurface;
+        if (displaySurface !== 'monitor') {
+          stopMediaTracks(screenStream);
+          screenStream = null;
+          setScreenCaptureVerificationError(displaySurface
+            ? 'Please share an entire monitor. Tab and window sharing cannot be used for this study.'
+            : 'This browser cannot verify whole-monitor sharing. Please use a supported browser to continue.');
+          setRecordingError('Whole-monitor sharing could not be verified');
+          return;
+        }
+      }
+      setScreenCaptureVerificationError(null);
       attachEndedHandler(screenStream);
       if (!isCurrentAttempt() || (includeScreen && !hasLiveTracks(screenStream))) {
         stopAcquiredStreams();
@@ -574,7 +589,7 @@ export function useRecording() {
       }
       document.title = pageTitle;
     }
-  }, [currentComponentHasClickToRecord, dataCollectionEnabled, pageTitle, recordAudio, recordScreenFPS, stopScreenCapture]);
+  }, [currentComponentHasClickToRecord, dataCollectionEnabled, pageTitle, recordAudio, recordScreenFPS, requireEntireScreen, stopScreenCapture]);
 
   const startScreenCapture = useCallback(() => {
     startMediaCapture({
@@ -693,6 +708,8 @@ export function useRecording() {
     startScreenRecording,
     stopScreenRecording,
     screenRecordingError,
+    screenCaptureVerificationError,
+    requireEntireScreen,
     audioRecordingError,
     isScreenRecording,
     isAudioRecording,

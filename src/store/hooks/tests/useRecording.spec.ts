@@ -26,6 +26,7 @@ let mockRecordingConfig = {
   currentComponentHasClickToRecord: false,
 };
 let mockCurrentComponent = 'intro';
+let mockRequireEntireScreen = false;
 let mockIdentifier = 'intro_0';
 let mockGlobalStoreEnabled = false;
 let mockCompleted = false;
@@ -39,13 +40,18 @@ const mockRecorderStartAudioStates: boolean[][] = [];
 
 // ── media mocks ────────────────────────────────────────────────────────────────
 
-const mockTrackFactory = () => ({
-  stop: vi.fn(),
-  enabled: true,
-  addEventListener: vi.fn(),
-  removeEventListener: vi.fn(),
-  clone: vi.fn(() => mockTrackFactory()),
-});
+const mockTrackFactory = (displaySurface: string | null = 'browser') => {
+  const settings = displaySurface === null ? {} : { displaySurface };
+  return {
+    readyState: 'live',
+    getSettings: vi.fn(() => settings),
+    stop: vi.fn(),
+    enabled: true,
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+    clone: vi.fn(() => mockTrackFactory()),
+  };
+};
 
 class MockMediaStream {
   _tracks: ReturnType<typeof mockTrackFactory>[];
@@ -121,7 +127,13 @@ function renderWithMantine(ui: React.ReactElement) {
 vi.mock('../useStudyConfig', () => ({
   useStudyConfig: () => ({
     globalVariables: mockGlobalStoreEnabled ? { budget: { initialValue: 100 } } : undefined,
-    uiConfig: { recordScreenFPS: undefined, recordAudio: false, recordWebcam: false },
+    uiConfig: {
+      recordScreenFPS: undefined,
+      recordAudio: false,
+      recordWebcam: false,
+      requireEntireScreen: mockRequireEntireScreen,
+      recordScreen: true,
+    },
     sequence: {
       id: 'root', order: 'fixed', components: ['intro', 'end'], skip: [],
     },
@@ -173,6 +185,7 @@ beforeEach(() => {
     currentComponentHasClickToRecord: false,
   };
   mockCurrentComponent = 'intro';
+  mockRequireEntireScreen = false;
   mockIdentifier = 'intro_0';
   mockGlobalStoreEnabled = false;
   mockAssetOwner.trialAssetEntry = undefined;
@@ -284,6 +297,33 @@ describe('useRecording', () => {
 // the promise. Use waitFor to poll until the state updates settle.
 
 describe('useRecording startScreenCapture', () => {
+  test.each([
+    ['window', 'window', 'Please share an entire monitor. Tab and window sharing cannot be used for this study.'],
+    ['tab', 'browser', 'Please share an entire monitor. Tab and window sharing cannot be used for this study.'],
+    ['missing metadata', null, 'This browser cannot verify whole-monitor sharing. Please use a supported browser to continue.'],
+  ])('rejects %s capture for requireEntireScreen', async (_name, displaySurface, message) => {
+    mockRequireEntireScreen = true;
+    mockRecordingConfig = { ...mockRecordingConfig, studyHasScreenRecording: true };
+    const invalidStream = new MockMediaStream([mockTrackFactory(displaySurface as string | null)]);
+    vi.mocked(navigator.mediaDevices.getDisplayMedia).mockResolvedValue(invalidStream as unknown as MediaStream);
+    const { result } = renderHook(() => useRecording());
+    act(() => { result.current.startScreenCapture(); });
+    await waitFor(() => expect(result.current.screenCaptureVerificationError).toBe(message));
+    expect(result.current.isScreenCapturing).toBe(false);
+    expect(invalidStream.getTracks()[0].stop).toHaveBeenCalledOnce();
+  });
+
+  test('accepts a live monitor capture when requireEntireScreen is enabled', async () => {
+    mockRequireEntireScreen = true;
+    mockRecordingConfig = { ...mockRecordingConfig, studyHasScreenRecording: true };
+    const monitorStream = new MockMediaStream([mockTrackFactory('monitor')]);
+    vi.mocked(navigator.mediaDevices.getDisplayMedia).mockResolvedValue(monitorStream as unknown as MediaStream);
+    const { result } = renderHook(() => useRecording());
+    act(() => { result.current.startScreenCapture(); });
+    await waitFor(() => expect(result.current.isScreenCapturing).toBe(true));
+    expect(result.current.screenCaptureVerificationError).toBeNull();
+  });
+
   test('success path: sets isScreenCapturing, isAudioCapturing, isMediaCapturing', async () => {
     mockRecordingConfig = {
       ...mockRecordingConfig,

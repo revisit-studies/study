@@ -20,11 +20,14 @@ function ScreenRecordingPermission({ setAnswer }: StimulusParams<undefined>) {
     isWebcamCapturing: webcamCapturing,
     isMediaCapturing: mediaCapturing,
     screenRecordingError,
+    screenCaptureVerificationError,
+    requireEntireScreen,
     audioRecordingError,
     audioMediaStream,
   } = useRecordingContext();
 
   const [audioCapturingSuccess, setAudioCapturingSuccess] = useState(false);
+  const [multipleDisplays, setMultipleDisplays] = useState<boolean | null>(null);
   const { dataCollectionEnabled } = useStoreSelector((state) => state.modes);
   const setupComplete = useMemo(
     () => screenCapturing
@@ -39,6 +42,19 @@ function ScreenRecordingPermission({ setAnswer }: StimulusParams<undefined>) {
       webcamCapturing,
     ],
   );
+
+  useEffect(() => {
+    if (!requireEntireScreen) return;
+    const detectDisplays = async () => {
+      try {
+        const details = await (window as Window & { getScreenDetails?: () => Promise<{ screens: Screen[] }> }).getScreenDetails?.();
+        if (details) setMultipleDisplays(details.screens.length > 1);
+      } catch {
+        setMultipleDisplays(null);
+      }
+    };
+    void detectDisplays();
+  }, [requireEntireScreen, screenCapturing]);
 
   useEffect(() => {
     if (!dataCollectionEnabled) {
@@ -118,6 +134,12 @@ function ScreenRecordingPermission({ setAnswer }: StimulusParams<undefined>) {
         . If you&apos;re not comfortable, you may exit and return the study.
       </p>
       <p>Follow the steps below to grant the required permissions.</p>
+      {requireEntireScreen && (
+        <p>
+          This study requires you to share one entire monitor. Choose a screen or monitor in the browser prompt; sharing a tab or application window will not unlock the study. Use only one monitor while participating.
+        </p>
+      )}
+      {requireEntireScreen && multipleDisplays && <p role="status">More than one display was detected. Please use only one monitor while participating.</p>}
 
       <ol>
         <li>
@@ -128,6 +150,7 @@ function ScreenRecordingPermission({ setAnswer }: StimulusParams<undefined>) {
             {mediaCapturing ? 'Stop Recording' : 'Start Recording'}
           </Button>
           {screenRecordingError && <p style={{ color: 'red' }}>{screenRecordingError}</p>}
+          {screenCaptureVerificationError && <p role="alert" style={{ color: 'red' }}>{screenCaptureVerificationError}</p>}
           {audioRecordingError && <p style={{ color: 'red' }}>{audioRecordingError}</p>}
           <p><i>Please make sure you are recording the correct tab or window. Otherwise, stop and re-share the correct one.</i></p>
         </li>

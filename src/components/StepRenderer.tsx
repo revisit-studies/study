@@ -1,5 +1,5 @@
 import {
-  ActionIcon, AppShell, Button, Flex, Menu, useComputedColorScheme,
+  ActionIcon, AppShell, Button, Flex, Menu, Text, useComputedColorScheme,
 } from '@mantine/core';
 import { Outlet } from 'react-router';
 import {
@@ -60,6 +60,7 @@ export function StepRenderer() {
   const windowEventDebounceTime = useMemo(() => componentConfig.windowEventDebounceTime ?? studyConfig.uiConfig.windowEventDebounceTime ?? 100, [componentConfig, studyConfig]);
 
   const captureGamepad = useMemo(() => componentConfig.captureGamepad ?? studyConfig.uiConfig.captureGamepad ?? false, [componentConfig, studyConfig]);
+  const requireEntireScreen = studyConfig.uiConfig.requireEntireScreen ?? false;
 
   useFetchStylesheet(studyConfig?.uiConfig.stylesheetPath);
 
@@ -93,6 +94,48 @@ export function StepRenderer() {
   }, [dispatch, setAlertModal, storageEngine]);
 
   // Attach event listeners
+  useEffect(() => {
+    if (!requireEntireScreen || !(componentConfig.recordScreen ?? studyConfig.uiConfig.recordScreen)) return undefined;
+
+    const push = (event: EventType) => windowEvents.current.push(event);
+    const pointerOut = (event: PointerEvent) => {
+      if (!event.relatedTarget) push([Date.now(), 'studyactivity', 'pointer-left']);
+    };
+    const pointerOver = (event: PointerEvent) => {
+      if (!event.relatedTarget) push([Date.now(), 'studyactivity', 'pointer-entered']);
+    };
+    const focus = () => push([Date.now(), 'studyactivity', 'focus-regained']);
+    const blur = () => push([Date.now(), 'studyactivity', 'focus-lost']);
+    const visibility = () => push([Date.now(), 'studyactivity', document.visibilityState === 'hidden' ? 'hidden' : 'visible']);
+    let active = true;
+    window.addEventListener('pointerout', pointerOut);
+    window.addEventListener('pointerover', pointerOver);
+    window.addEventListener('focus', focus);
+    window.addEventListener('blur', blur);
+    document.addEventListener('visibilitychange', visibility);
+
+    const captureDisplayStatus = async () => {
+      let status: 'single' | 'multiple' | 'unknown' = 'unknown';
+      try {
+        const screenDetails = await (window as Window & { getScreenDetails?: () => Promise<{ screens: Screen[] }> }).getScreenDetails?.();
+        if (screenDetails) status = screenDetails.screens.length > 1 ? 'multiple' : 'single';
+      } catch {
+        status = 'unknown';
+      }
+      if (active) push([Date.now(), 'displaystatus', status]);
+    };
+    captureDisplayStatus();
+
+    return () => {
+      active = false;
+      window.removeEventListener('pointerout', pointerOut);
+      window.removeEventListener('pointerover', pointerOver);
+      window.removeEventListener('focus', focus);
+      window.removeEventListener('blur', blur);
+      document.removeEventListener('visibilitychange', visibility);
+    };
+  }, [componentConfig.recordScreen, currentComponent, requireEntireScreen, studyConfig.uiConfig.recordScreen]);
+
   useEffect(() => {
     // Focus
     const focusListener = debounce((e: FocusEvent) => {
@@ -454,7 +497,18 @@ export function StepRenderer() {
                     }}
                   >
                     {!startupInteractionBlocked && isAnalysis && <GlobalStoreHistory />}
-                    {!startupInteractionBlocked && <Outlet />}
+                    {!startupInteractionBlocked && (studyConfig.uiConfig.requireEntireScreen
+                      && (componentConfig.recordScreen ?? studyConfig.uiConfig.recordScreen ?? false)
+                      && modes.dataCollectionEnabled
+                      && !screenRecording.isScreenCapturing
+                      ? (
+                        <Flex direction="column" align="center" justify="center" gap="sm" p="xl" role="alert">
+                          <Text>This recorded task is locked until you share an entire monitor.</Text>
+                          <Button onClick={screenRecording.startScreenCapture}>Share entire monitor</Button>
+                          {screenRecording.screenCaptureVerificationError && <Text c="red">{screenRecording.screenCaptureVerificationError}</Text>}
+                          {screenRecording.screenRecordingError && <Text c="red">{screenRecording.screenRecordingError}</Text>}
+                        </Flex>
+                      ) : <Outlet />)}
                   </div>
                 </AppShell.Main>
               </TrialProvenanceBoundary>

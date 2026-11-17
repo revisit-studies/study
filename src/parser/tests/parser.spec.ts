@@ -149,6 +149,24 @@ describe('Study and iframe color mode config parsing', () => {
     expect(result.uiConfig).not.toHaveProperty('colorMode');
   });
 
+  test('accepts requireEntireScreen when screen recording is enabled', async () => {
+    const config = makeStudyConfig() as StudyConfig;
+    config.uiConfig = { ...config.uiConfig, recordScreen: true, requireEntireScreen: true };
+    const result = await parseStudyConfig(JSON.stringify(config));
+    expect(result.errors).toEqual([]);
+    expect(result.uiConfig.requireEntireScreen).toBe(true);
+  });
+
+  test('rejects requireEntireScreen without screen recording', async () => {
+    const config = makeStudyConfig() as StudyConfig;
+    config.uiConfig = { ...config.uiConfig, requireEntireScreen: true };
+    const result = await parseStudyConfig(JSON.stringify(config));
+    expect(result.errors).toContainEqual(expect.objectContaining({
+      instancePath: '/uiConfig/requireEntireScreen',
+      message: 'requireEntireScreen requires uiConfig.recordScreen to be true',
+    }));
+  });
+
   test.each(['user', 'auto', 'userPreference ', null, true])('rejects invalid color mode %s', async (colorMode) => {
     const result = await parseStudyConfig(JSON.stringify(makeStudyConfig(colorMode)));
 

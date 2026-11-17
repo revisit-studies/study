@@ -292,6 +292,25 @@ export function AllTasksTimeline({
   }, [xScale, maxHeight, participantData.answers, timelineMode]);
 
   const hoveredTask = tasks.find((task) => task.identifier === hoveredTaskIdentifier);
+  const studyActivityMarkers = useMemo(() => Object.entries(participantData.answers || {}).flatMap(([identifier, answer]) => (
+    answer.windowEvents || []
+  ).flatMap((event) => {
+    if (event[1] === 'studyactivity') {
+      const labels = {
+        'pointer-left': 'Pointer left study page',
+        'pointer-entered': 'Pointer re-entered study page',
+        'focus-lost': 'Study window lost focus',
+        'focus-regained': 'Study window regained focus',
+        hidden: 'Study page became hidden',
+        visible: 'Study page became visible',
+      };
+      return [{ identifier, timestamp: event[0], label: labels[event[2]] }];
+    }
+    if (event[1] === 'displaystatus') {
+      return [{ identifier, timestamp: event[0], label: `Display status: ${event[2]}` }];
+    }
+    return [];
+  })), [participantData.answers]);
 
   return (
     <Box
@@ -330,6 +349,18 @@ export function AllTasksTimeline({
           );
         })}
         {tasks.map((t) => t.line)}
+        {studyActivityMarkers.map((marker, index) => (
+          <Tooltip withinPortal key={`${marker.identifier}-${marker.timestamp}-${index}`} label={`${marker.label} (${marker.identifier})`}>
+            <circle
+              cx={xScale(marker.timestamp)}
+              cy={maxHeight - 35}
+              r={5}
+              fill="var(--mantine-color-violet-filled)"
+              aria-label={`${marker.label} for ${marker.identifier}`}
+              data-testid="study-activity-marker"
+            />
+          </Tooltip>
+        ))}
         {tasks.filter((t) => t.identifier !== hoveredTaskIdentifier).map((t) => t.label)}
         {browsedAway}
         {hoveredTask?.label}

@@ -49,13 +49,15 @@ type MouseMoveEvent = [number, 'mousemove', number[]];
 type ResizeEvent = [number, 'resize', number[]];
 type ScrollEvent = [number, 'scroll', number[]];
 type VisibilityEvent = [number, 'visibility', string];
+type StudyActivityEvent = [number, 'studyactivity', 'pointer-left' | 'pointer-entered' | 'focus-lost' | 'focus-regained' | 'hidden' | 'visible'];
+type DisplayStatusEvent = [number, 'displaystatus', 'single' | 'multiple' | 'unknown'];
 // Gamepad input is polled rather than delivered as DOM events, so these timestamps
 // mark when the poll observed the change, within one animation frame of the press.
 type GamepadConnectionEvent = [number, 'gamepadconnection', string];
 type GamepadButtonDownEvent = [number, 'gamepadbuttondown', string];
 type GamepadButtonUpEvent = [number, 'gamepadbuttonup', string];
 type GamepadAxisEvent = [number, 'gamepadaxis', number[]];
-export type EventType = MouseMoveEvent | MouseDownEvent | MouseUpEvent | KeydownEvent | KeyupEvent | ScrollEvent | FocusEvent | InputEvent | ResizeEvent | VisibilityEvent | GamepadConnectionEvent | GamepadButtonDownEvent | GamepadButtonUpEvent | GamepadAxisEvent;
+export type EventType = MouseMoveEvent | MouseDownEvent | MouseUpEvent | KeydownEvent | KeyupEvent | ScrollEvent | FocusEvent | InputEvent | ResizeEvent | VisibilityEvent | StudyActivityEvent | DisplayStatusEvent | GamepadConnectionEvent | GamepadButtonDownEvent | GamepadButtonUpEvent | GamepadAxisEvent;
 
 export type ValidationStatus = {
   valid: boolean;

@@ -360,6 +360,27 @@ describe('AllTasksTimeline', () => {
     expect(html).toContain('<rect');
   });
 
+  test('shows accessible markers for whole-screen study activity and display status', () => {
+    const participant = makeParticipant({
+      answers: {
+        trial1_0: makeAnswer({
+          windowEvents: [
+            [t0 + 1_000, 'studyactivity', 'pointer-left'],
+            [t0 + 2_000, 'studyactivity', 'focus-lost'],
+            [t0 + 3_000, 'displaystatus', 'multiple'],
+          ],
+        }),
+      },
+    });
+    const html = renderToStaticMarkup(
+      <AllTasksTimeline participantData={participant} width={600} studyId="test-study" studyConfig={emptyConfig} maxLength={undefined} />,
+    );
+    expect(html).toContain('Pointer left study page for trial1_0');
+    expect(html).toContain('Study window lost focus for trial1_0');
+    expect(html).toContain('Display status: multiple for trial1_0');
+    expect(html).toContain('data-testid="study-activity-marker"');
+  });
+
   test('uses equal-width task slots and omits browsed-away intervals in uniform mode', () => {
     const participant = makeParticipant({
       answers: {
