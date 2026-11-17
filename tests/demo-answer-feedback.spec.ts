@@ -1,6 +1,7 @@
 /* eslint-disable no-await-in-loop */
 import { expect, test } from '@playwright/test';
 import {
+  advanceStudyStep,
   moveRankingItem,
   nextClick,
   openStudyFromLanding,
@@ -28,7 +29,7 @@ test('the answer feedback demo grades responses and advances through each feedba
   await page.getByRole('radio', { name: 'Median' }).check();
   await checkAnswer.click();
   await expect(optionFeedback).toContainText('Correct—the median is less affected by extreme values.');
-  await nextClick(page);
+  await advanceStudyStep(page);
 
   // Exact answers and lists: show incorrect feedback, then correct the responses.
   const exactNumber = page.getByPlaceholder('Exact number');
