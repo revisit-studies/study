@@ -1009,16 +1009,48 @@
           "min": 0,
           "max": 10,
           "path": "test-response-functions/assets/PartialScore.response.ts"
+        },
+        {
+          "id": "divider3",
+          "type": "divider"
+        },
+        {
+          "id": "option-feedback-title",
+          "type": "textOnly",
+          "prompt": "Try **Mean** and **Range** to see different explanations for incorrect choices. **Median** is correct."
+        },
+        {
+          "id": "typical-value",
+          "type": "radio",
+          "prompt": "Which measure is least affected by extreme values?",
+          "optionOrder": "fixed",
+          "options": [
+            { "label": "Mean", "value": "mean" },
+            { "label": "Median", "value": "median" },
+            { "label": "Maximum", "value": "maximum" },
+            { "label": "Range", "value": "range" }
+          ]
         }
       ],
       "correctAnswer": [
         {
           "id": "score-number-demo",
           "answer": 10
+        },
+        {
+          "id": "typical-value",
+          "answer": "median",
+          "feedback": {
+            "correctText": "Correct—the median is less affected by extreme values.",
+            "incorrectText": "Try again and consider what happens when one value is unusually large.",
+            "incorrectTextByValue": {
+              "mean": "The mean changes when an extreme value is added.",
+              "range": "The range measures spread, not a typical value."
+            }
+          }
         }
       ],
-      "provideFeedback": true,
-      "trainingAttempts": 2,
+      "trainingAttempts": 4,
       "allowFailedTraining": true
     },
     "Randomizing Options": {

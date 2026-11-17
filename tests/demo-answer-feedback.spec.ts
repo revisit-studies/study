@@ -1,6 +1,7 @@
 /* eslint-disable no-await-in-loop */
 import { expect, test } from '@playwright/test';
 import {
+  advanceStudyStep,
   moveRankingItem,
   nextClick,
   openStudyFromLanding,
@@ -12,6 +13,24 @@ test('the answer feedback demo grades responses and advances through each feedba
   await openStudyFromLanding(page, 'Demo Studies', 'Answer Validation and Feedback Demo');
   await nextClick(page);
 
+  // Option-specific feedback follows the checked value, despite randomized display order.
+  const optionFeedback = page.getByRole('alert');
+  const checkAnswer = page.getByRole('button', { name: 'Check Answer', exact: true });
+  await page.getByRole('radio', { name: 'Mean' }).check();
+  await checkAnswer.click();
+  await expect(optionFeedback).toContainText('The mean changes when an extreme value is added.');
+  await page.getByRole('radio', { name: 'Range' }).check();
+  await expect(optionFeedback).toContainText('The mean changes when an extreme value is added.');
+  await checkAnswer.click();
+  await expect(optionFeedback).toContainText('The range measures spread, not a typical value.');
+  await page.getByRole('radio', { name: 'Maximum' }).check();
+  await checkAnswer.click();
+  await expect(optionFeedback).toContainText('Try again and consider what happens when one value is unusually large.');
+  await page.getByRole('radio', { name: 'Median' }).check();
+  await checkAnswer.click();
+  await expect(optionFeedback).toContainText('Correct—the median is less affected by extreme values.');
+  await advanceStudyStep(page);
+
   // Exact answers and lists: show incorrect feedback, then correct the responses.
   const exactNumber = page.getByPlaceholder('Exact number');
   const country = page.getByPlaceholder('Country name');
@@ -19,12 +38,12 @@ test('the answer feedback demo grades responses and advances through each feedba
   await exactNumber.fill('3');
   await country.fill('Canada');
   await numberList.fill('6');
-  await page.getByRole('button', { name: 'Check Answer', exact: true }).click();
+  await checkAnswer.click();
   await expect(page.getByRole('alert')).toHaveCount(3);
   await exactNumber.fill('4');
   await country.fill('US');
   await numberList.fill('1');
-  await page.getByRole('button', { name: 'Check Answer', exact: true }).click();
+  await checkAnswer.click();
   await expect(page.getByRole('alert')).toHaveCount(3);
   await nextClick(page);
 

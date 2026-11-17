@@ -1295,6 +1295,8 @@ export interface ResponseFeedback {
   correctText?: string | string[];
   /** Message when this response is incorrect. Also used after the final attempt when exhaustedText is absent. */
   incorrectText?: string | string[];
+  /** Incorrect-feedback message selected by the submitted option value. Falls back to incorrectText when no value matches. */
+  incorrectTextByValue?: Record<string, string>;
   /** Message when this response is incorrect and all attempts have been used. */
   exhaustedText?: string | string[];
   /** Progressive hints shown alongside incorrect feedback while attempts remain. One per trial-wide answer-checking attempt, repeating the final hint for later attempts. */
