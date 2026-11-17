@@ -22,15 +22,19 @@ import {
   IconX,
   IconChevronDown,
 } from '@tabler/icons-react';
-import { useNavigate, useLocation } from 'react-router';
+import { useNavigate, useLocation, useParams } from 'react-router';
 import type { GlobalStoreGraph } from '../../store/globalStoreProvenance';
+import { getGlobalStoreEntryValues } from '../../store/globalStoreProvenance';
 import type { ParticipantData, Response, StudyConfig } from '../../parser/types';
 import type { Sequence, StoredAnswer } from '../../store/types';
-import { addPathToComponentBlock } from '../../utils/getSequenceFlatMap';
+import { addPathToComponentBlock, findFuncBlock, getSequenceFlatMap } from '../../utils/getSequenceFlatMap';
 import { useStudyId } from '../../routes/utils';
-import { encryptIndex } from '../../utils/encryptDecryptIndex';
+import { encryptIndex, parseStepIndex } from '../../utils/encryptDecryptIndex';
 import { isDynamicBlock } from '../../parser/utils';
 import { getComponentAnswerStatus } from '../../utils/componentCorrectness';
+import { getSavedScoresForAnswer } from '../../utils/correctAnswer';
+import { resolveResponseVisibility, responseValueKeys } from '../../utils/responseVisibility';
+import { parseTrialOrder } from '../../utils/parseTrialOrder';
 import { studyComponentToIndividualComponent } from '../../utils/handleComponentInheritance';
 import { UnknownAnswerIcon } from './UnknownAnswerIcon';
 import {
@@ -153,7 +157,35 @@ type SequenceWithImportReference = Sequence & {
   __revisitImportedSequenceRef?: string;
 };
 
-type InspectorSectionName = 'Parameters' | 'Responses' | 'Correct Answer';
+type InspectorSectionName = 'Parameters' | 'Responses' | 'Correct Answer' | 'Participant Answer' | 'Description' | 'Task Meta';
+
+function getActiveParticipantItem(
+  sequence: Sequence | undefined,
+  answers: ParticipantData['answers'],
+  stepIndex: number,
+  funcIndex: number | null,
+): Pick<ComponentStepItem, 'componentName' | 'componentAnswer'> | undefined {
+  if (!sequence) return undefined;
+  const componentName = getSequenceFlatMap(sequence)[stepIndex];
+  if (!componentName) return undefined;
+  const dynamicBlock = findFuncBlock(componentName, sequence);
+  if (!dynamicBlock || !isDynamicBlock(dynamicBlock)) {
+    return funcIndex === null ? { componentName, componentAnswer: answers[`${componentName}_${stepIndex}`] } : undefined;
+  }
+  if (funcIndex === null) return undefined;
+
+  const matchingAnswer = Object.entries(answers).find(([key, answer]) => {
+    const order = parseTrialOrder(answer.trialOrder);
+    return answer.componentName
+      && order.step === stepIndex
+      && order.funcIndex === funcIndex
+      && key === `${dynamicBlock.id}_${stepIndex}_${answer.componentName}_${funcIndex}`;
+  });
+  if (!matchingAnswer) return undefined;
+
+  const [, answer] = matchingAnswer;
+  return { componentName: answer.componentName, componentAnswer: answer };
+}
 
 function stringifyObjectFields(value: unknown): string {
   const serialized = JSON.stringify(value, null, 2);
@@ -283,12 +315,16 @@ function findExcludedComponents(
 export function StepsPanel({
   globalGraph,
   participantSequence,
+  activeParticipantSequence,
+  activeParticipantAnswers,
   participantAnswers,
   studyConfig,
   isAnalysis,
 }: {
   globalGraph?: GlobalStoreGraph;
   participantSequence?: Sequence;
+  activeParticipantSequence?: Sequence;
+  activeParticipantAnswers?: ParticipantData['answers'];
   participantAnswers: ParticipantData['answers'];
   studyConfig: StudyConfig;
   isAnalysis?: boolean;
@@ -304,37 +340,43 @@ export function StepsPanel({
   const [renderedFlatTree, setRenderedFlatTree] = useState<StepItem[]>([]);
   const [inspectorOpen, setInspectorOpen] = useState(true);
   const [collapsedSections, setCollapsedSections] = useState<Partial<Record<InspectorSectionName, boolean>>>({});
-  const highlightedResponseRef = useRef<{ element: HTMLElement; outline: string; outlineOffset: string } | null>(null);
+  const highlightedElementsRef = useRef<Array<{ element: HTMLElement; outline: string; outlineOffset: string }>>([]);
   // Map from item.path -> index in `fullFlatTree` for O(1) range checks
   const fullIndexByPathRef = useRef<Map<string, number>>(new Map());
 
   const studyId = useStudyId();
   const navigate = useNavigate();
   const location = useLocation();
+  const { trialId } = useParams();
   const inspectorId = useId();
 
   const clearResponseHighlight = useCallback(() => {
-    if (highlightedResponseRef.current) {
-      const { element, outline, outlineOffset } = highlightedResponseRef.current;
+    highlightedElementsRef.current.forEach(({ element, outline, outlineOffset }) => {
       element.style.outline = outline;
       element.style.outlineOffset = outlineOffset;
-      highlightedResponseRef.current = null;
-    }
+    });
+    highlightedElementsRef.current = [];
   }, []);
 
   const highlightResponse = useCallback((responseId: string) => {
     clearResponseHighlight();
-    const responseElement = document.getElementById(responseId);
-    const questionElement = responseElement?.closest<HTMLElement>('[data-question-id]') ?? responseElement;
-    if (questionElement) {
-      highlightedResponseRef.current = {
-        element: questionElement,
-        outline: questionElement.style.outline,
-        outlineOffset: questionElement.style.outlineOffset,
-      };
-      questionElement.style.outline = '3px solid var(--mantine-color-blue-5)';
-      questionElement.style.outlineOffset = '2px';
-    }
+    const questionElement = Array.from(document.querySelectorAll<HTMLElement>('[data-question-id]'))
+      .find((element) => element.dataset.questionId === responseId);
+    if (!questionElement) return;
+
+    const stimulusElement = document.querySelector<HTMLElement>('.stimulus');
+    const elementsToHighlight = stimulusElement?.hasChildNodes()
+      ? [questionElement, stimulusElement]
+      : [questionElement];
+    highlightedElementsRef.current = elementsToHighlight.map((element) => ({
+      element,
+      outline: element.style.outline,
+      outlineOffset: element.style.outlineOffset,
+    }));
+    elementsToHighlight.forEach((element) => {
+      element.style.outline = '3px solid var(--mantine-color-blue-5)';
+      element.style.outlineOffset = '2px';
+    });
   }, [clearResponseHighlight]);
 
   const fullOrder = useMemo(() => {
@@ -800,6 +842,7 @@ export function StepsPanel({
   });
 
   const selectedComponent = useMemo(() => {
+    const pathname = location.pathname.replace(/\/+$/, '') || '/';
     const getSelection = (name: string, answer?: StoredAnswer) => {
       const sourceConfig = studyConfig.components[name];
       return sourceConfig
@@ -811,22 +854,65 @@ export function StepsPanel({
         : undefined;
     };
     if (isAnalysis) {
-      const name = decodeURIComponent(location.pathname.split('/').at(-1) ?? '');
-      return getSelection(name);
+      return trialId ? getSelection(trialId) : undefined;
     }
-    const activeItem = fullFlatTree.find((item): item is ComponentStepItem => item.type === 'component' && item.href === location.pathname);
+    const activeSequence = activeParticipantSequence ?? participantSequence;
+    const activeAnswers = activeParticipantAnswers ?? participantAnswers;
+    const routeSegments = pathname.split('/').filter(Boolean);
+    const stepIndex = routeSegments[0] === studyId ? parseStepIndex(routeSegments[1] ?? '') : null;
+    const hasFuncIndex = stepIndex !== null && routeSegments.length > 2;
+    const funcIndex = hasFuncIndex ? parseStepIndex(routeSegments[2]) : null;
+    const routeItem = stepIndex !== null
+      ? getActiveParticipantItem(activeSequence, activeAnswers, stepIndex, funcIndex)
+      : undefined;
+    const activeItem = hasFuncIndex
+      ? routeItem
+      : fullFlatTree.find((item): item is ComponentStepItem => item.type === 'component' && item.href === pathname) ?? routeItem;
     if (activeItem) return getSelection(activeItem.componentName, activeItem.componentAnswer);
-    const routeName = decodeURIComponent(location.pathname.split('/').at(-1) ?? '').replace(/^reviewer-/, '');
+    if (hasFuncIndex) return undefined;
+    const routeName = decodeURIComponent(pathname.split('/').at(-1) ?? '').replace(/^reviewer-/, '');
     return getSelection(routeName);
-  }, [fullFlatTree, isAnalysis, location.pathname, studyConfig]);
+  }, [activeParticipantAnswers, activeParticipantSequence, fullFlatTree, isAnalysis, location.pathname, participantAnswers, participantSequence, studyConfig, studyId, trialId]);
   const selectedCorrectAnswers = selectedComponent?.answer?.correctAnswer
     ?? selectedComponent?.config.correctAnswer
     ?? [];
+  const participantAnswerValues = selectedComponent?.answer?.answer;
+  const visibilityStore = useMemo(() => {
+    if (selectedComponent?.answer?.globalStoreEntry) return selectedComponent.answer.globalStoreEntry;
+    if (!selectedComponent?.answer) return undefined;
+    return getGlobalStoreEntryValues(
+      globalGraph,
+      studyConfig.globalVariables ?? {},
+      selectedComponent.answer.identifier,
+    );
+  }, [globalGraph, selectedComponent, studyConfig.globalVariables]);
+  const participantAnswerResolution = selectedComponent && participantAnswerValues
+    ? resolveResponseVisibility(
+      selectedComponent.config.response,
+      participantAnswerValues,
+      {},
+      selectedComponent.answer?.correctAnswer ?? selectedComponent.config.correctAnswer ?? [],
+      getSavedScoresForAnswer(selectedComponent.answer?.checkAnswer, participantAnswerValues),
+      visibilityStore,
+    )
+    : undefined;
+  const visibleResponseIds = participantAnswerResolution?.visibleIds ?? new Set<string>();
+  const resolvedParticipantAnswerValues = participantAnswerResolution?.answers ?? {};
+  const participantResponseAnswers = selectedComponent && participantAnswerValues
+    ? selectedComponent.config.response
+      .filter((response) => visibleResponseIds.has(response.id)
+        && response.type !== 'textOnly'
+        && response.type !== 'divider'
+        && !response.hidden)
+      .flatMap(responseValueKeys)
+      .filter((responseKey) => Object.hasOwn(resolvedParticipantAnswerValues, responseKey))
+      .map((responseKey) => [responseKey, resolvedParticipantAnswerValues[responseKey]] as const)
+    : [];
 
   useEffect(() => {
     setCollapsedSections({});
     clearResponseHighlight();
-  }, [selectedComponent?.name, clearResponseHighlight]);
+  }, [location.pathname, selectedComponent?.name, clearResponseHighlight]);
 
   useEffect(() => () => clearResponseHighlight(), [clearResponseHighlight]);
 
@@ -1144,6 +1230,41 @@ export function StepsPanel({
                     ))
                     : <Text size="sm" c="dimmed">No correct answer configured.</Text>}
                 </InspectorSection>
+                {participantResponseAnswers.length > 0 && (
+                  <InspectorSection
+                    title="Participant Answer"
+                    id={`${inspectorId}-participant-answer`}
+                    expanded={!collapsedSections['Participant Answer']}
+                    onToggle={() => setCollapsedSections((previous) => ({ ...previous, 'Participant Answer': !previous['Participant Answer'] }))}
+                  >
+                    {participantResponseAnswers.map(([responseId, answer]) => (
+                      <Box key={responseId} mb={8}>
+                        <Text size="xs" fw={700}>{responseId}</Text>
+                        <Code block>{JSON.stringify(answer, null, 2)}</Code>
+                      </Box>
+                    ))}
+                  </InspectorSection>
+                )}
+                {selectedComponent.config.description && (
+                  <InspectorSection
+                    title="Description"
+                    id={`${inspectorId}-description`}
+                    expanded={!collapsedSections.Description}
+                    onToggle={() => setCollapsedSections((previous) => ({ ...previous, Description: !previous.Description }))}
+                  >
+                    <Text size="sm">{selectedComponent.config.description}</Text>
+                  </InspectorSection>
+                )}
+                {selectedComponent.config.meta && Object.keys(selectedComponent.config.meta).length > 0 && (
+                  <InspectorSection
+                    title="Task Meta"
+                    id={`${inspectorId}-task-meta`}
+                    expanded={!collapsedSections['Task Meta']}
+                    onToggle={() => setCollapsedSections((previous) => ({ ...previous, 'Task Meta': !previous['Task Meta'] }))}
+                  >
+                    <Code block>{JSON.stringify(selectedComponent.config.meta, null, 2)}</Code>
+                  </InspectorSection>
+                )}
               </>
             ) : <Text size="sm" c="dimmed">No component is selected.</Text>}
           </Box>
