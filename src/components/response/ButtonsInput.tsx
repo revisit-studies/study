@@ -4,7 +4,9 @@ import {
 import {
   IconArrowDown, IconArrowLeft, IconArrowRight, IconArrowUp,
 } from '@tabler/icons-react';
-import React, { useMemo, useRef } from 'react';
+import React, {
+  useEffect, useMemo, useRef, useState,
+} from 'react';
 import ClearSelectionButton from './ClearSelectionButton';
 import { ButtonsResponse, ParsedStringOption } from '../../parser/types';
 import classes from './css/ButtonsInput.module.css';
@@ -13,6 +15,7 @@ import { InputLabel } from './InputLabel';
 import { OptionLabel } from './OptionLabel';
 import { parseStringOptions } from '../../utils/stringOptions';
 import { KeyMapper } from './KeyMapper';
+import { getButtonRowSizes } from './buttonLayout';
 
 const renderSymbol = (symbol: string) => (
   <span
@@ -100,6 +103,8 @@ export function ButtonsInput({
   enumerateQuestions: boolean;
 }) {
   const optionRefs = useRef<Record<string, HTMLButtonElement | null>>({});
+  const buttonsRef = useRef<HTMLDivElement>(null);
+  const [buttonRows, setButtonRows] = useState(1);
   const {
     prompt,
     required,
@@ -116,6 +121,84 @@ export function ButtonsInput({
     () => parseStringOptions(optionOrders[response.id] || options),
     [optionOrders, options, response.id],
   );
+  const firstRowSize = Math.ceil(orderedOptions.length / 2);
+  const rowSize = Math.max(1, buttonRows === 1 ? orderedOptions.length : firstRowSize);
+  const [minimumButtonWidth, setMinimumButtonWidth] = useState(48);
+  const [buttonGap, setButtonGap] = useState('var(--mantine-spacing-xl)');
+
+  useEffect(() => {
+    const container = buttonsRef.current;
+    if (!container || typeof ResizeObserver === 'undefined') return undefined;
+
+    const updateRows = () => {
+      const buttons = Array.from(container.querySelectorAll<HTMLButtonElement>('[data-button-option]'));
+      if (buttons.length < 2) {
+        setButtonRows(1);
+        return;
+      }
+      const grid = container.querySelector<HTMLElement>('[data-button-grid]');
+      if (!grid) return;
+      const containerStyle = getComputedStyle(container);
+      const availableWidth = container.clientWidth
+        - Number.parseFloat(containerStyle.paddingLeft)
+        - Number.parseFloat(containerStyle.paddingRight);
+      const previousColumnGap = grid.style.columnGap;
+      const previousRowGap = grid.style.rowGap;
+      const previousColumns = grid.style.gridTemplateColumns;
+      const previousWidth = grid.style.width;
+      const previousStyles = buttons.map((button) => ({
+        width: button.style.width,
+        minWidth: button.style.minWidth,
+        gridColumn: button.style.gridColumn,
+        gridRow: button.style.gridRow,
+      }));
+      grid.style.columnGap = 'var(--mantine-spacing-xl)';
+      const regularGap = Number.parseFloat(getComputedStyle(grid).columnGap) || 0;
+      grid.style.columnGap = 'var(--mantine-spacing-xs)';
+      const compactGap = Number.parseFloat(getComputedStyle(grid).columnGap) || 0;
+      grid.style.gridTemplateColumns = `repeat(${buttons.length}, max-content)`;
+      grid.style.width = 'max-content';
+      buttons.forEach((button) => {
+        button.style.width = 'max-content';
+        button.style.minWidth = '0';
+        button.style.gridColumn = '';
+        button.style.gridRow = '';
+      });
+      const optionWidths = buttons.map((button) => button.getBoundingClientRect().width);
+      buttons.forEach((button, buttonIndex) => {
+        button.style.width = previousStyles[buttonIndex].width;
+        button.style.minWidth = previousStyles[buttonIndex].minWidth;
+        button.style.gridColumn = previousStyles[buttonIndex].gridColumn;
+        button.style.gridRow = previousStyles[buttonIndex].gridRow;
+      });
+      grid.style.gridTemplateColumns = previousColumns;
+      grid.style.width = previousWidth;
+      grid.style.columnGap = previousColumnGap;
+      grid.style.rowGap = previousRowGap;
+      const keyMinimumWidths = buttons.map((button) => {
+        const keyIndicator = button.querySelector<HTMLElement>('[data-key-indicator]');
+        if (!keyIndicator) return 50;
+        const icon = keyIndicator.querySelector('svg');
+        return 50 + 21 + (icon?.getBoundingClientRect().width ?? 0);
+      });
+      const nextMinimumWidth = Math.max(...keyMinimumWidths);
+      const rowsWithRegularGap = getButtonRowSizes(optionWidths, availableWidth, regularGap, nextMinimumWidth);
+      const rowsWithCompactGap = getButtonRowSizes(optionWidths, availableWidth, compactGap, nextMinimumWidth);
+      const fitsWithRegularGap = rowsWithRegularGap.length === 1;
+      const nextButtonRows = fitsWithRegularGap || rowsWithCompactGap.length === 1 ? 1 : 2;
+      const buttonsPerRow = nextButtonRows === 1 ? buttons.length : Math.ceil(buttons.length / 2);
+      const widestButton = Math.max(nextMinimumWidth, ...optionWidths);
+      const rowFitsWithRegularGap = widestButton * buttonsPerRow + regularGap * (buttonsPerRow - 1) <= availableWidth;
+      setMinimumButtonWidth(nextMinimumWidth);
+      setButtonRows(nextButtonRows);
+      setButtonGap(rowFitsWithRegularGap ? 'var(--mantine-spacing-xl)' : 'var(--mantine-spacing-xs)');
+    };
+
+    const observer = new ResizeObserver(updateRows);
+    observer.observe(container);
+    updateRows();
+    return () => observer.disconnect();
+  }, [orderedOptions]);
 
   const handleValueChange = (value: string, source: 'keyboard' | 'click' = 'click') => {
     answer?.onChange?.(value, source);
@@ -160,80 +243,122 @@ export function ButtonsInput({
         onArrowNavigation={startArrowNavigation}
         disabled={disabled}
       />
-      <Flex justify="space-between" align="center" gap="xl" mt="xs" p="4px">
-        {orderedOptions.map((radio, idx) => {
-          const hasKeyVisual = !hideKeyVisual && Boolean(radio.key);
+      <div
+        ref={buttonsRef}
+        data-button-scroll-region
+        style={{
+          width: '100%',
+          minWidth: 0,
+          padding: '4px',
+          boxSizing: 'border-box',
+          marginTop: 'var(--mantine-spacing-xs)',
+          overflowX: 'auto',
+        }}
+      >
+        <div
+          data-button-grid
+          style={{
+            display: 'grid',
+            width: `max(100%, calc(${minimumButtonWidth}px * ${rowSize} + ${buttonGap} * ${rowSize - 1}))`,
+            gridTemplateColumns: `repeat(${rowSize * (buttonRows === 2 ? 2 : 1)}, minmax(${buttonRows === 2 ? 0 : minimumButtonWidth}px, 1fr))`,
+            gridTemplateRows: buttonRows === 2 ? 'repeat(2, 1fr)' : undefined,
+            columnGap: buttonGap,
+            rowGap: '18px',
+          }}
+        >
+          {orderedOptions.map((radio, idx) => {
+            const hasKeyVisual = !hideKeyVisual && Boolean(radio.key);
+            const secondRow = idx >= firstRowSize;
+            const column = secondRow
+              ? (orderedOptions.length % 2 ? 2 : 1) + (idx - firstRowSize) * 2
+              : idx * 2 + 1;
 
-          return (
-            <Radio.Card
-              key={`radio-${idx}`}
-              value={radio.value}
-              disabled={disabled}
-              ref={(node) => {
-                if (node) {
-                  optionRefs.current[radio.value] = node;
-                } else {
-                  delete optionRefs.current[radio.value];
-                }
-              }}
-              className={classes.root}
-              style={{
-                overflow: 'hidden',
-                padding: 0,
-              }}
-            >
-              <div
+            return (
+              <Radio.Card
+                key={`radio-${idx}`}
+                value={radio.value}
+                disabled={disabled}
+                ref={(node) => {
+                  if (node) {
+                    optionRefs.current[radio.value] = node;
+                  } else {
+                    delete optionRefs.current[radio.value];
+                  }
+                }}
+                className={classes.root}
+                data-button-option
                 style={{
-                  display: 'flex',
-                  alignItems: 'stretch',
-                  minHeight: 'var(--response-button-min-height)',
+                  width: '100%',
+                  overflow: 'hidden',
+                  padding: 0,
+                  minWidth: buttonRows === 2 ? `${minimumButtonWidth}px` : 0,
+                  gridColumn: buttonRows === 2 ? `${column} / span 2` : undefined,
+                  gridRow: buttonRows === 2 ? (secondRow ? 2 : 1) : undefined,
                 }}
               >
-                <Flex
-                  align="center"
-                  justify="center"
-                  gap="xs"
-                  style={{ flex: 1, padding: '6px 12px' }}
+                <div
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'row',
+                    alignItems: 'stretch',
+                    minHeight: 'var(--response-button-min-height)',
+                  }}
                 >
-                  <OptionLabel label={radio.label} infoText={radio.infoText} button fw={700} />
-                </Flex>
-
-                {hasKeyVisual && (
                   <Flex
                     align="center"
                     justify="center"
+                    gap="xs"
                     style={{
-                      flexShrink: 0,
-                      alignSelf: 'stretch',
+                      flex: 1,
+                      minWidth: 24,
+                      padding: '6px 12px',
                     }}
                   >
-                    <Kbd
-                      size="xs"
-                      aria-hidden="true"
+                    <OptionLabel label={radio.label} infoText={radio.infoText} button fw={700} />
+                  </Flex>
+
+                  {hasKeyVisual && (
+                    <Flex
+                      align="center"
+                      justify="center"
+                      data-key-indicator
                       style={{
-                        color: 'inherit',
-                        boxShadow: 'none',
-                        border: 'none',
-                        fontSize: '12px',
-                        fontWeight: 600,
-                        padding: '0 10px',
+                        flexShrink: 1,
+                        minWidth: 0,
+                        maxWidth: 'calc(100% - 48px)',
                         alignSelf: 'stretch',
-                        display: 'flex',
-                        alignItems: 'center',
-                        borderRadius: 0,
-                        borderLeft: '1px solid rgba(255, 255, 255, 0.25)',
-                        backgroundColor: 'rgba(0, 0, 0, 0.08)',
                       }}
                     >
-                      {formatKeyForDisplay(radio.key as never)}
-                    </Kbd>
-                  </Flex>
-                )}
-              </div>
-            </Radio.Card>
-          );
-        })}
-      </Flex>
+                      <Kbd
+                        size="xs"
+                        aria-hidden="true"
+                        style={{
+                          color: 'inherit',
+                          boxShadow: 'none',
+                          border: 'none',
+                          fontSize: '12px',
+                          fontWeight: 600,
+                          padding: '0 10px',
+                          alignSelf: 'stretch',
+                          display: 'flex',
+                          alignItems: 'center',
+                          borderRadius: 0,
+                          borderLeft: '1px solid rgba(255, 255, 255, 0.25)',
+                          backgroundColor: 'rgba(0, 0, 0, 0.08)',
+                        }}
+                      >
+                        <span style={{ minWidth: 0, maxWidth: '100%', overflowWrap: 'anywhere' }}>
+                          {formatKeyForDisplay(radio.key as never)}
+                        </span>
+                      </Kbd>
+                    </Flex>
+                  )}
+                </div>
+              </Radio.Card>
+            );
+          })}
+        </div>
+      </div>
     </Radio.Group>
   );
 }
