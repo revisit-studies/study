@@ -1,17 +1,18 @@
 import {
-  useCallback, useEffect, useMemo, useState, useRef,
+  useCallback, useEffect, useMemo, useState, useRef, useId,
 } from 'react';
+import type { ReactNode } from 'react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import {
   Badge,
   Box,
   Code,
   Flex,
-  HoverCard,
   NavLink,
   Text,
   Tooltip,
   Button,
+  Collapse,
 } from '@mantine/core';
 import {
   IconArrowsShuffle, IconBinaryTree, IconBrain, IconCheck, IconChevronUp, IconDice3, IconDice5, IconInfoCircle,
@@ -19,16 +20,21 @@ import {
   IconPackageImport,
   IconUserPlus,
   IconX,
+  IconChevronDown,
 } from '@tabler/icons-react';
-import { useNavigate, useLocation } from 'react-router';
+import { useNavigate, useLocation, useParams } from 'react-router';
 import type { GlobalStoreGraph } from '../../store/globalStoreProvenance';
+import { getGlobalStoreEntryValues } from '../../store/globalStoreProvenance';
 import type { ParticipantData, Response, StudyConfig } from '../../parser/types';
 import type { Sequence, StoredAnswer } from '../../store/types';
-import { addPathToComponentBlock } from '../../utils/getSequenceFlatMap';
+import { addPathToComponentBlock, findFuncBlock, getSequenceFlatMap } from '../../utils/getSequenceFlatMap';
 import { useStudyId } from '../../routes/utils';
-import { encryptIndex } from '../../utils/encryptDecryptIndex';
+import { encryptIndex, parseStepIndex } from '../../utils/encryptDecryptIndex';
 import { isDynamicBlock } from '../../parser/utils';
 import { getComponentAnswerStatus } from '../../utils/componentCorrectness';
+import { getSavedScoresForAnswer } from '../../utils/correctAnswer';
+import { resolveResponseVisibility, responseValueKeys } from '../../utils/responseVisibility';
+import { parseTrialOrder } from '../../utils/parseTrialOrder';
 import { studyComponentToIndividualComponent } from '../../utils/handleComponentInheritance';
 import { UnknownAnswerIcon } from './UnknownAnswerIcon';
 import {
@@ -151,6 +157,79 @@ type SequenceWithImportReference = Sequence & {
   __revisitImportedSequenceRef?: string;
 };
 
+type InspectorSectionName = 'Parameters' | 'Responses' | 'Correct Answer' | 'Participant Answer' | 'Description' | 'Task Meta';
+
+function getActiveParticipantItem(
+  sequence: Sequence | undefined,
+  answers: ParticipantData['answers'],
+  stepIndex: number,
+  funcIndex: number | null,
+): Pick<ComponentStepItem, 'componentName' | 'componentAnswer'> | undefined {
+  if (!sequence) return undefined;
+  const componentName = getSequenceFlatMap(sequence)[stepIndex];
+  if (!componentName) return undefined;
+  const dynamicBlock = findFuncBlock(componentName, sequence);
+  if (!dynamicBlock || !isDynamicBlock(dynamicBlock)) {
+    return funcIndex === null ? { componentName, componentAnswer: answers[`${componentName}_${stepIndex}`] } : undefined;
+  }
+  if (funcIndex === null) return undefined;
+
+  const matchingAnswer = Object.entries(answers).find(([key, answer]) => {
+    const order = parseTrialOrder(answer.trialOrder);
+    return answer.componentName
+      && order.step === stepIndex
+      && order.funcIndex === funcIndex
+      && key === `${dynamicBlock.id}_${stepIndex}_${answer.componentName}_${funcIndex}`;
+  });
+  if (!matchingAnswer) return undefined;
+
+  const [, answer] = matchingAnswer;
+  return { componentName: answer.componentName, componentAnswer: answer };
+}
+
+function stringifyObjectFields(value: unknown): string {
+  const serialized = JSON.stringify(value, null, 2);
+  if (!serialized) return '';
+  if (!serialized.startsWith('{\n')) return serialized;
+  return serialized
+    .split('\n')
+    .slice(1, -1)
+    .map((line) => {
+      if (line.startsWith('  ')) return line.slice(2);
+      return line;
+    })
+    .join('\n');
+}
+
+function InspectorSection({
+  title, id, expanded, onToggle, children,
+}: {
+  title: InspectorSectionName;
+  id: string;
+  expanded: boolean;
+  onToggle: () => void;
+  children: ReactNode;
+}) {
+  return (
+    <Box mb="xs">
+      <Button
+        fullWidth
+        variant="subtle"
+        justify="space-between"
+        aria-expanded={expanded}
+        aria-controls={id}
+        onClick={onToggle}
+      >
+        <Text fw={700} size="sm">{title}</Text>
+        {expanded ? <IconChevronDown size={16} /> : <IconChevronUp size={16} />}
+      </Button>
+      <Collapse id={id} expanded={expanded}>
+        <Box px="xs">{children}</Box>
+      </Collapse>
+    </Box>
+  );
+}
+
 function parseLibraryComponentReference(componentName: string, factorLabels: Map<string, string>) {
   const separator = componentName.includes('.components.')
     ? '.components.'
@@ -236,34 +315,69 @@ function findExcludedComponents(
 export function StepsPanel({
   globalGraph,
   participantSequence,
+  activeParticipantSequence,
+  activeParticipantAnswers,
   participantAnswers,
   studyConfig,
   isAnalysis,
 }: {
   globalGraph?: GlobalStoreGraph;
   participantSequence?: Sequence;
+  activeParticipantSequence?: Sequence;
+  activeParticipantAnswers?: ParticipantData['answers'];
   participantAnswers: ParticipantData['answers'];
   studyConfig: StudyConfig;
   isAnalysis?: boolean;
 }) {
   // Constants
-  const INITIAL_CLAMP = 6;
   const ROW_HEIGHT = 32; // px, fixed height for each row
   const INDENT_SIZE = 24; // px, indentation per level
   const BASE_PADDING = 12; // px, base left padding
   const VIRTUALIZER_OVERSCAN = 10; // number of items to render outside viewport
 
   // Per-row clamp state, keyed by idx
-  const [correctAnswerClampMap, setCorrectAnswerClampMap] = useState<Record<string, number | undefined>>({});
-  const [responseClampMap, setResponseClampMap] = useState<Record<string, number | undefined>>({});
   const [fullFlatTree, setFullFlatTree] = useState<StepItem[]>([]);
   const [renderedFlatTree, setRenderedFlatTree] = useState<StepItem[]>([]);
+  const [inspectorOpen, setInspectorOpen] = useState(true);
+  const [collapsedSections, setCollapsedSections] = useState<Partial<Record<InspectorSectionName, boolean>>>({});
+  const highlightedElementsRef = useRef<Array<{ element: HTMLElement; outline: string; outlineOffset: string }>>([]);
   // Map from item.path -> index in `fullFlatTree` for O(1) range checks
   const fullIndexByPathRef = useRef<Map<string, number>>(new Map());
 
   const studyId = useStudyId();
   const navigate = useNavigate();
   const location = useLocation();
+  const { trialId } = useParams();
+  const inspectorId = useId();
+
+  const clearResponseHighlight = useCallback(() => {
+    highlightedElementsRef.current.forEach(({ element, outline, outlineOffset }) => {
+      element.style.outline = outline;
+      element.style.outlineOffset = outlineOffset;
+    });
+    highlightedElementsRef.current = [];
+  }, []);
+
+  const highlightResponse = useCallback((responseId: string) => {
+    clearResponseHighlight();
+    const questionElement = Array.from(document.querySelectorAll<HTMLElement>('[data-question-id]'))
+      .find((element) => element.dataset.questionId === responseId);
+    if (!questionElement) return;
+
+    const stimulusElement = document.querySelector<HTMLElement>('.stimulus');
+    const elementsToHighlight = stimulusElement?.hasChildNodes()
+      ? [questionElement, stimulusElement]
+      : [questionElement];
+    highlightedElementsRef.current = elementsToHighlight.map((element) => ({
+      element,
+      outline: element.style.outline,
+      outlineOffset: element.style.outlineOffset,
+    }));
+    elementsToHighlight.forEach((element) => {
+      element.style.outline = '3px solid var(--mantine-color-blue-5)';
+      element.style.outlineOffset = '2px';
+    });
+  }, [clearResponseHighlight]);
 
   const fullOrder = useMemo(() => {
     let r = structuredClone(studyConfig.sequence) as Sequence;
@@ -611,16 +725,6 @@ export function StepsPanel({
       fullIndexByPathRef.current.set(it.path, i);
     });
 
-    // Map over tree and set correctAnswerClampMap and responseClampMap
-    const clampMap = Object.fromEntries(newFlatTree.map((item) => {
-      if (item.type === 'component' && item.href) {
-        return [item.href, INITIAL_CLAMP];
-      }
-      return null;
-    }).filter((item): item is [string, number] => item !== null));
-    setCorrectAnswerClampMap(structuredClone(clampMap));
-    setResponseClampMap(structuredClone(clampMap));
-
     // Set full and rendered flat tree
     setFullFlatTree(newFlatTree);
     setRenderedFlatTree(newFlatTree);
@@ -737,102 +841,174 @@ export function StepsPanel({
     overscan: VIRTUALIZER_OVERSCAN,
   });
 
+  const selectedComponent = useMemo(() => {
+    const pathname = location.pathname.replace(/\/+$/, '') || '/';
+    const getSelection = (name: string, answer?: StoredAnswer) => {
+      const sourceConfig = studyConfig.components[name];
+      return sourceConfig
+        ? {
+          name,
+          config: studyComponentToIndividualComponent(sourceConfig, studyConfig),
+          answer,
+        }
+        : undefined;
+    };
+    if (isAnalysis) {
+      return trialId ? getSelection(trialId) : undefined;
+    }
+    const activeSequence = activeParticipantSequence ?? participantSequence;
+    const activeAnswers = activeParticipantAnswers ?? participantAnswers;
+    const routeSegments = pathname.split('/').filter(Boolean);
+    const stepIndex = routeSegments[0] === studyId ? parseStepIndex(routeSegments[1] ?? '') : null;
+    const hasFuncIndex = stepIndex !== null && routeSegments.length > 2;
+    const funcIndex = hasFuncIndex ? parseStepIndex(routeSegments[2]) : null;
+    const routeItem = stepIndex !== null
+      ? getActiveParticipantItem(activeSequence, activeAnswers, stepIndex, funcIndex)
+      : undefined;
+    const activeItem = hasFuncIndex
+      ? routeItem
+      : fullFlatTree.find((item): item is ComponentStepItem => item.type === 'component' && item.href === pathname) ?? routeItem;
+    if (activeItem) return getSelection(activeItem.componentName, activeItem.componentAnswer);
+    if (hasFuncIndex) return undefined;
+    const routeName = decodeURIComponent(pathname.split('/').at(-1) ?? '').replace(/^reviewer-/, '');
+    return getSelection(routeName);
+  }, [activeParticipantAnswers, activeParticipantSequence, fullFlatTree, isAnalysis, location.pathname, participantAnswers, participantSequence, studyConfig, studyId, trialId]);
+  const selectedCorrectAnswers = selectedComponent?.answer?.correctAnswer
+    ?? selectedComponent?.config.correctAnswer
+    ?? [];
+  const participantAnswerValues = selectedComponent?.answer?.answer;
+  const visibilityStore = useMemo(() => {
+    if (selectedComponent?.answer?.globalStoreEntry) return selectedComponent.answer.globalStoreEntry;
+    if (!selectedComponent?.answer) return undefined;
+    return getGlobalStoreEntryValues(
+      globalGraph,
+      studyConfig.globalVariables ?? {},
+      selectedComponent.answer.identifier,
+    );
+  }, [globalGraph, selectedComponent, studyConfig.globalVariables]);
+  const participantAnswerResolution = selectedComponent && participantAnswerValues
+    ? resolveResponseVisibility(
+      selectedComponent.config.response,
+      participantAnswerValues,
+      {},
+      selectedComponent.answer?.correctAnswer ?? selectedComponent.config.correctAnswer ?? [],
+      getSavedScoresForAnswer(selectedComponent.answer?.checkAnswer, participantAnswerValues),
+      visibilityStore,
+    )
+    : undefined;
+  const visibleResponseIds = participantAnswerResolution?.visibleIds ?? new Set<string>();
+  const resolvedParticipantAnswerValues = participantAnswerResolution?.answers ?? {};
+  const participantResponseAnswers = selectedComponent && participantAnswerValues
+    ? selectedComponent.config.response
+      .filter((response) => visibleResponseIds.has(response.id)
+        && response.type !== 'textOnly'
+        && response.type !== 'divider'
+        && !response.hidden)
+      .flatMap(responseValueKeys)
+      .filter((responseKey) => Object.hasOwn(resolvedParticipantAnswerValues, responseKey))
+      .map((responseKey) => [responseKey, resolvedParticipantAnswerValues[responseKey]] as const)
+    : [];
+
+  useEffect(() => {
+    setCollapsedSections({});
+    clearResponseHighlight();
+  }, [location.pathname, selectedComponent?.name, clearResponseHighlight]);
+
+  useEffect(() => () => clearResponseHighlight(), [clearResponseHighlight]);
+
   return (
     <Box
-      ref={parentRef}
       style={{
         height: '100%',
-        overflow: 'auto',
-        position: 'relative',
+        minHeight: 0,
+        display: 'flex',
+        flexDirection: 'column',
+        overflow: 'hidden',
       }}
     >
-      <Box style={{ height: `${virtualizer.getTotalSize()}px`, position: 'relative', width: '100%' }}>
-        {virtualizer.getVirtualItems().map((virtualRow) => {
-          const idx = virtualRow.index;
-          const item = renderedFlatTree[idx];
-          const {
-            label,
-            indentLevel,
-            isExcluded,
-            exclusionReason,
-            parentExclusionReason,
-          } = item;
-          const comp = item.type === 'component' ? item : undefined;
-          const block = item.type === 'block' ? item : undefined;
-          const isComponent = !!comp;
-          const isSkipped = exclusionReason === 'skipped';
-          const showExclusionBadge = isExcluded && exclusionReason && exclusionReason !== parentExclusionReason;
-          const {
-            href,
-            isInterruption,
-            component,
-            componentAnswer,
-            componentName,
-            isLibraryImport: isComponentLibraryImport,
-            importedLibraryName: componentImportedLibraryName,
-          } = (comp ?? {}) as Partial<ComponentStepItem>;
-          const {
-            order,
-            orderPath,
-            parameters: blockParameters,
-            conditional,
-            numInterruptions,
-            numComponentsInSequence,
-            numComponentsInStudySequence,
-            isLibraryImport: isBlockLibraryImport,
-            importedLibraryName: blockImportedLibraryName,
-            skipSummaries,
-          } = (block ?? {}) as Partial<BlockStepItem>;
-          const isLibraryImport = isComponent ? isComponentLibraryImport : isBlockLibraryImport;
-          const importedLibraryName = isComponent ? componentImportedLibraryName : blockImportedLibraryName;
-          const betweenSubjectsEntries = !isComponent && blockParameters
-            ? Object.entries(blockParameters)
-            : [];
-          const betweenSubjectsLabel = betweenSubjectsEntries
-            .map(([factorName, factorLevel]) => `${factorName}=${formatFactorLevel(factorLevel)}`)
-            .join(', ');
-          const resolvedComponent = component
-            ? studyComponentToIndividualComponent(component, studyConfig)
-            : undefined;
-          const correctAnswer = componentAnswer?.correctAnswer ?? resolvedComponent?.correctAnswer;
-          const answerStatus = getComponentAnswerStatus(
-            componentAnswer,
-            correctAnswer,
-            resolvedComponent?.response,
-          );
-          const answerStatusIcon = answerStatus === 'correct'
-            ? <IconCheck size={16} style={{ marginRight: 4, flexShrink: 0 }} color="var(--mantine-color-green-text)" />
-            : answerStatus === 'incorrect'
-              ? <IconX size={16} style={{ marginRight: 4, flexShrink: 0 }} color="var(--mantine-color-red-text)" />
-              : answerStatus === 'unknown'
-                ? <UnknownAnswerIcon size={16} style={{ marginRight: 4, flexShrink: 0 }} />
-                : null;
-          const correctAnswerJSONText = correctAnswer?.length
-            ? JSON.stringify(correctAnswer, null, 2)
-            : undefined;
-          const responseJSONText = resolvedComponent && JSON.stringify(resolvedComponent.response, null, 2);
-          const parameters = componentAnswer && 'parameters' in componentAnswer
-            ? componentAnswer.parameters
-            : component && 'parameters' in component
-              ? component.parameters
+      <Box
+        ref={parentRef}
+        style={{
+          flex: 1, minHeight: 0, overflow: 'auto', position: 'relative',
+        }}
+      >
+        <Box style={{ height: `${virtualizer.getTotalSize()}px`, position: 'relative', width: '100%' }}>
+          {virtualizer.getVirtualItems().map((virtualRow) => {
+            const idx = virtualRow.index;
+            const item = renderedFlatTree[idx];
+            const {
+              label,
+              indentLevel,
+              isExcluded,
+              exclusionReason,
+              parentExclusionReason,
+            } = item;
+            const comp = item.type === 'component' ? item : undefined;
+            const block = item.type === 'block' ? item : undefined;
+            const isComponent = !!comp;
+            const isSkipped = exclusionReason === 'skipped';
+            const showExclusionBadge = isExcluded && exclusionReason && exclusionReason !== parentExclusionReason;
+            const {
+              href,
+              isInterruption,
+              component,
+              componentAnswer,
+              componentName,
+              isLibraryImport: isComponentLibraryImport,
+              importedLibraryName: componentImportedLibraryName,
+            } = (comp ?? {}) as Partial<ComponentStepItem>;
+            const {
+              order,
+              orderPath,
+              parameters: blockParameters,
+              conditional,
+              numInterruptions,
+              numComponentsInSequence,
+              numComponentsInStudySequence,
+              isLibraryImport: isBlockLibraryImport,
+              importedLibraryName: blockImportedLibraryName,
+              skipSummaries,
+            } = (block ?? {}) as Partial<BlockStepItem>;
+            const isLibraryImport = isComponent ? isComponentLibraryImport : isBlockLibraryImport;
+            const importedLibraryName = isComponent ? componentImportedLibraryName : blockImportedLibraryName;
+            const betweenSubjectsEntries = !isComponent && blockParameters
+              ? Object.entries(blockParameters)
+              : [];
+            const betweenSubjectsLabel = betweenSubjectsEntries
+              .map(([factorName, factorLevel]) => `${factorName}=${formatFactorLevel(factorLevel)}`)
+              .join(', ');
+            const resolvedComponent = component
+              ? studyComponentToIndividualComponent(component, studyConfig)
               : undefined;
-          const blockIsCollapsed = !isComponent && (
-            renderedFlatTree[idx + 1]?.indentLevel === undefined
+            const correctAnswer = componentAnswer?.correctAnswer ?? resolvedComponent?.correctAnswer;
+            const answerStatus = getComponentAnswerStatus(
+              componentAnswer,
+              correctAnswer,
+              resolvedComponent?.response,
+            );
+            const answerStatusIcon = answerStatus === 'correct'
+              ? <IconCheck size={16} style={{ marginRight: 4, flexShrink: 0 }} color="var(--mantine-color-green-text)" />
+              : answerStatus === 'incorrect'
+                ? <IconX size={16} style={{ marginRight: 4, flexShrink: 0 }} color="var(--mantine-color-red-text)" />
+                : answerStatus === 'unknown'
+                  ? <UnknownAnswerIcon size={16} style={{ marginRight: 4, flexShrink: 0 }} />
+                  : null;
+            const blockIsCollapsed = !isComponent && (
+              renderedFlatTree[idx + 1]?.indentLevel === undefined
             || renderedFlatTree[idx + 1]?.indentLevel <= indentLevel
-          );
-          return (
-            <Box
-              key={virtualRow.key}
-              style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                width: '100%',
-                height: ROW_HEIGHT,
-                transform: `translateY(${virtualRow.start}px)`,
-              }}
-            >
-              <HoverCard withinPortal position="left" withArrow arrowSize={10} shadow="md" offset={0} closeDelay={0}>
+            );
+            return (
+              <Box
+                key={virtualRow.key}
+                style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  width: '100%',
+                  height: ROW_HEIGHT,
+                  transform: `translateY(${virtualRow.start}px)`,
+                }}
+              >
                 <NavLink
                   h={ROW_HEIGHT}
                   pl={indentLevel * INDENT_SIZE + BASE_PADDING}
@@ -844,7 +1020,7 @@ export function StepsPanel({
                         navigate(`${href}${location.search}`);
                       }
                     } else if (!isComponent) {
-                      // Both included and excluded blocks can be collapsed/expanded
+                    // Both included and excluded blocks can be collapsed/expanded
                       if (blockIsCollapsed) {
                         expandBlock(idx, renderedFlatTree[idx]);
                       } else {
@@ -866,44 +1042,44 @@ export function StepsPanel({
                   label={(
                     <Flex align="center">
                       {isInterruption && (
-                        <Tooltip label="Interruption" position="right" withArrow>
-                          <IconBrain size={16} style={{ marginRight: 4, flexShrink: 0 }} color="var(--mantine-color-orange-text)" />
-                        </Tooltip>
+                      <Tooltip label="Interruption" position="right" withArrow>
+                        <IconBrain size={16} style={{ marginRight: 4, flexShrink: 0 }} color="var(--mantine-color-orange-text)" />
+                      </Tooltip>
                       )}
                       {isLibraryImport && (
-                        <Tooltip label={importedLibraryName ? `Imported from ${importedLibraryName}` : 'Package import'} position="right" withArrow>
-                          <IconPackageImport size={16} style={{ marginRight: 4, flexShrink: 0 }} color="var(--mantine-color-blue-text)" />
-                        </Tooltip>
+                      <Tooltip label={importedLibraryName ? `Imported from ${importedLibraryName}` : 'Package import'} position="right" withArrow>
+                        <IconPackageImport size={16} style={{ marginRight: 4, flexShrink: 0 }} color="var(--mantine-color-blue-text)" />
+                      </Tooltip>
                       )}
                       {!isComponent && conditional && (
-                        <Tooltip label={`Condition: ${label}`} position="right" withArrow>
-                          <IconBinaryTree size={16} style={{ marginRight: 4, flexShrink: 0 }} color="var(--mantine-color-green-text)" />
-                        </Tooltip>
+                      <Tooltip label={`Condition: ${label}`} position="right" withArrow>
+                        <IconBinaryTree size={16} style={{ marginRight: 4, flexShrink: 0 }} color="var(--mantine-color-green-text)" />
+                      </Tooltip>
                       )}
                       {!isComponent && skipSummaries && skipSummaries.length > 0 && (
-                        <Tooltip
-                          label={skipSummaries.join(' ')}
-                          multiline
-                          position="right"
-                          withArrow
-                        >
-                          <IconArrowForward size={16} style={{ marginRight: 4, flexShrink: 0 }} color="var(--mantine-color-violet-text)" />
-                        </Tooltip>
+                      <Tooltip
+                        label={skipSummaries.join(' ')}
+                        multiline
+                        position="right"
+                        withArrow
+                      >
+                        <IconArrowForward size={16} style={{ marginRight: 4, flexShrink: 0 }} color="var(--mantine-color-violet-text)" />
+                      </Tooltip>
                       )}
                       {betweenSubjectsEntries.length > 0 && (
-                        <Tooltip label={`Between Subjects: ${betweenSubjectsLabel}`} position="right" withArrow>
-                          <IconUserPlus size={16} style={{ marginRight: 4, flexShrink: 0 }} color="var(--mantine-color-teal-text)" />
-                        </Tooltip>
+                      <Tooltip label={`Between Subjects: ${betweenSubjectsLabel}`} position="right" withArrow>
+                        <IconUserPlus size={16} style={{ marginRight: 4, flexShrink: 0 }} color="var(--mantine-color-teal-text)" />
+                      </Tooltip>
                       )}
                       {(resolvedComponent?.responseOrder === 'random' || (!participantSequence && componentName && studyConfig.components[componentName]?.responseOrder === 'random')) && (
-                        <Tooltip label="Random responses" position="right" withArrow>
-                          <IconDice3 size={16} opacity={0.8} style={{ marginRight: 4, flexShrink: 0 }} />
-                        </Tooltip>
+                      <Tooltip label="Random responses" position="right" withArrow>
+                        <IconDice3 size={16} opacity={0.8} style={{ marginRight: 4, flexShrink: 0 }} />
+                      </Tooltip>
                       )}
                       {(componentName && componentHasRandomization.get(componentName)) && (
-                        <Tooltip label="Random options" position="right" withArrow>
-                          <IconDice5 size={16} opacity={0.8} style={{ marginRight: 4, flexShrink: 0 }} />
-                        </Tooltip>
+                      <Tooltip label="Random options" position="right" withArrow>
+                        <IconDice5 size={16} opacity={0.8} style={{ marginRight: 4, flexShrink: 0 }} />
+                      </Tooltip>
                       )}
                       {answerStatusIcon}
                       <Text
@@ -921,14 +1097,9 @@ export function StepsPanel({
                         {label}
                       </Text>
                       {isComponent && showExclusionBadge && (
-                        <Badge ml={5} color="gray" variant="light">
-                          {isSkipped ? 'Skipped' : 'Excluded'}
-                        </Badge>
-                      )}
-                      {isComponent && label !== 'end' && (
-                        <HoverCard.Target>
-                          <IconInfoCircle size={16} style={{ marginLeft: '5px', verticalAlign: 'middle' }} opacity={0.5} />
-                        </HoverCard.Target>
+                      <Badge ml={5} color="gray" variant="light">
+                        {isSkipped ? 'Skipped' : 'Excluded'}
+                      </Badge>
                       )}
                       {order === 'random' || order === 'latinSquare' ? (
                         <Tooltip label={order} position="right" withArrow>
@@ -962,126 +1133,142 @@ export function StepsPanel({
                         </Badge>
                       )}
                       {numInterruptions !== undefined && numInterruptions > 0 && (
-                        <Badge ml={5} color="orange" variant="light">
-                          {numInterruptions}
-                        </Badge>
+                      <Badge ml={5} color="orange" variant="light">
+                        {numInterruptions}
+                      </Badge>
                       )}
                     </Flex>
                   )}
                 />
-                {isComponent && (
-                  <HoverCard.Dropdown>
-                    <Box mah={700} maw={500} style={{ overflow: 'auto' }}>
-                      <Box>
-                        <Text fw={900} display="inline-block" mr={2}>
-                          Name:
-                        </Text>
-                        {' '}
-                        <Text fw={400} component="span">
-                          {label}
-                        </Text>
+              </Box>
+            );
+          })}
+        </Box>
+      </Box>
+      <Box
+        data-testid="component-inspector"
+        style={{
+          flex: `0 1 ${inspectorOpen ? '50%' : 'auto'}`, maxHeight: '50%', minHeight: 0, overflow: 'hidden', borderTop: '1px solid var(--mantine-color-default-border)',
+        }}
+      >
+        <Button
+          fullWidth
+          variant="subtle"
+          justify="space-between"
+          aria-label="Component details"
+          aria-expanded={inspectorOpen}
+          aria-controls={inspectorId}
+          onClick={() => {
+            setInspectorOpen((open) => !open);
+            if (inspectorOpen) clearResponseHighlight();
+          }}
+        >
+          <span>
+            Component details
+            <Tooltip
+              label="Component details allows you to inspect the details of the currently selected component, like responses, parameters and the resolved study configuration. You can expand or collapse this panel to view or hide these details."
+              multiline
+              w={240}
+              withinPortal
+              position="top"
+            >
+              <IconInfoCircle size={16} style={{ marginBottom: -3, marginLeft: 4 }} />
+            </Tooltip>
+          </span>
+          {inspectorOpen ? <IconChevronDown size={16} /> : <IconChevronUp size={16} />}
+        </Button>
+        <Collapse id={inspectorId} expanded={inspectorOpen} style={{ height: 'calc(100% - 36px)', overflow: 'auto' }}>
+          <Box p="xs" style={{ overflow: 'auto', userSelect: 'text' }}>
+            {selectedComponent ? (
+              <>
+                <InspectorSection
+                  title="Parameters"
+                  id={`${inspectorId}-parameters`}
+                  expanded={!collapsedSections.Parameters}
+                  onToggle={() => setCollapsedSections((previous) => ({ ...previous, Parameters: !previous.Parameters }))}
+                >
+                  <Code block>
+                    {JSON.stringify(
+                      selectedComponent.answer?.parameters ?? selectedComponent.config.parameters ?? {},
+                      null,
+                      2,
+                    )}
+                  </Code>
+                </InspectorSection>
+                <InspectorSection
+                  title="Responses"
+                  id={`${inspectorId}-responses`}
+                  expanded={!collapsedSections.Responses}
+                  onToggle={() => setCollapsedSections((previous) => ({ ...previous, Responses: !previous.Responses }))}
+                >
+                  {selectedComponent.config.response.length > 0
+                    ? selectedComponent.config.response.map((response) => (
+                      <Box
+                        key={response.id}
+                        mb={8}
+                        onMouseEnter={() => highlightResponse(response.id)}
+                        onMouseLeave={clearResponseHighlight}
+                      >
+                        <Code block>
+                          {stringifyObjectFields(response)}
+                        </Code>
                       </Box>
-                      {component && component.description && (
-                        <Box>
-                          <Text fw={900} display="inline-block" mr={2}>
-                            Description:
-                          </Text>
-                          {' '}
-                          <Text fw={400} component="span">
-                            {component.description}
-                          </Text>
-                        </Box>
-                      )}
-                      {parameters && (
-                        <Box>
-                          <Text fw={900} display="inline-block" mr={2}>
-                            Parameters:
-                          </Text>
-                          {' '}
-                          <Code block>{JSON.stringify(parameters, null, 2)}</Code>
-                        </Box>
-                      )}
-                      {componentAnswer && Object.keys(componentAnswer.answer).length > 0 && (
-                        <Box>
-                          <Text fw={900} display="inline-block" mr={2}>
-                            {answerStatusIcon}
-                            Participant Answer:
-                          </Text>
-                          {' '}
-                          <Code block>{JSON.stringify(componentAnswer.answer, null, 2)}</Code>
-                        </Box>
-                      )}
-                      {correctAnswerJSONText && (
-                        <Box>
-                          <Text fw={900} display="inline-block" mr={2}>
-                            Correct Answer:
-                          </Text>
-                          {' '}
-                          <Code block>
-                            <Text size="xs" lineClamp={correctAnswerClampMap[href!]}>{correctAnswerJSONText}</Text>
-                            {correctAnswerJSONText.split('\n').length > INITIAL_CLAMP && (
-                              <Flex justify="flex-end">
-                                {(correctAnswerClampMap[href!] === undefined || correctAnswerJSONText.split('\n').length > (correctAnswerClampMap[href!] || -1)) && (
-                                  <Button
-                                    variant="light"
-                                    size="xs"
-                                    onClick={() => {
-                                      setCorrectAnswerClampMap((prev) => ({
-                                        ...prev,
-                                        [href!]: prev[href!] === INITIAL_CLAMP ? undefined : INITIAL_CLAMP,
-                                      }));
-                                    }}
-                                  >
-                                    {correctAnswerClampMap[href!] !== undefined ? 'Show more' : 'Show less'}
-                                  </Button>
-                                )}
-                              </Flex>
-                            )}
-                          </Code>
-                        </Box>
-                      )}
-                      {component && responseJSONText && (
-                        <Box>
-                          <Text fw={900} display="inline-block" mr={2}>
-                            Response:
-                          </Text>
-                          {' '}
-                          <Code block>
-                            <Text size="xs" lineClamp={responseClampMap[href!]}>{JSON.stringify(component.response, null, 2)}</Text>
-                            {responseJSONText.split('\n').length > INITIAL_CLAMP && (
-                              <Flex justify="flex-end">
-                                {(responseClampMap[href!] === undefined || responseJSONText.split('\n').length > (responseClampMap[href!] || -1)) && (
-                                  <Button
-                                    variant="light"
-                                    size="xs"
-                                    onClick={() => {
-                                      setResponseClampMap((prev) => ({
-                                        ...prev,
-                                        [href!]: prev[href!] === INITIAL_CLAMP ? undefined : INITIAL_CLAMP,
-                                      }));
-                                    }}
-                                  >
-                                    {responseClampMap[href!] !== undefined ? 'Show more' : 'Show less'}
-                                  </Button>
-                                )}
-                              </Flex>
-                            )}
-                          </Code>
-                        </Box>
-                      )}
-                      {component && component.meta && (
-                        <Box>
-                          <Text fw="900" component="span">Task Meta: </Text>
-                          <Code block>{JSON.stringify(component.meta, null, 2)}</Code>
-                        </Box>
-                      )}
-                    </Box>
-                  </HoverCard.Dropdown>
+                    ))
+                    : <Text size="sm" c="dimmed">No responses configured.</Text>}
+                </InspectorSection>
+                <InspectorSection
+                  title="Correct Answer"
+                  id={`${inspectorId}-correct-answer`}
+                  expanded={!collapsedSections['Correct Answer']}
+                  onToggle={() => setCollapsedSections((previous) => ({ ...previous, 'Correct Answer': !previous['Correct Answer'] }))}
+                >
+                  {selectedCorrectAnswers.length > 0
+                    ? selectedCorrectAnswers.map((answer, index) => (
+                      <Box key={index} mb={8}>
+                        <Code block>{stringifyObjectFields(answer)}</Code>
+                      </Box>
+                    ))
+                    : <Text size="sm" c="dimmed">No correct answer configured.</Text>}
+                </InspectorSection>
+                {participantResponseAnswers.length > 0 && (
+                  <InspectorSection
+                    title="Participant Answer"
+                    id={`${inspectorId}-participant-answer`}
+                    expanded={!collapsedSections['Participant Answer']}
+                    onToggle={() => setCollapsedSections((previous) => ({ ...previous, 'Participant Answer': !previous['Participant Answer'] }))}
+                  >
+                    {participantResponseAnswers.map(([responseId, answer]) => (
+                      <Box key={responseId} mb={8}>
+                        <Text size="xs" fw={700}>{responseId}</Text>
+                        <Code block>{JSON.stringify(answer, null, 2)}</Code>
+                      </Box>
+                    ))}
+                  </InspectorSection>
                 )}
-              </HoverCard>
-            </Box>
-          );
-        })}
+                {selectedComponent.config.description && (
+                  <InspectorSection
+                    title="Description"
+                    id={`${inspectorId}-description`}
+                    expanded={!collapsedSections.Description}
+                    onToggle={() => setCollapsedSections((previous) => ({ ...previous, Description: !previous.Description }))}
+                  >
+                    <Text size="sm">{selectedComponent.config.description}</Text>
+                  </InspectorSection>
+                )}
+                {selectedComponent.config.meta && Object.keys(selectedComponent.config.meta).length > 0 && (
+                  <InspectorSection
+                    title="Task Meta"
+                    id={`${inspectorId}-task-meta`}
+                    expanded={!collapsedSections['Task Meta']}
+                    onToggle={() => setCollapsedSections((previous) => ({ ...previous, 'Task Meta': !previous['Task Meta'] }))}
+                  >
+                    <Code block>{JSON.stringify(selectedComponent.config.meta, null, 2)}</Code>
+                  </InspectorSection>
+                )}
+              </>
+            ) : <Text size="sm" c="dimmed">No component is selected.</Text>}
+          </Box>
+        </Collapse>
       </Box>
     </Box>
   );

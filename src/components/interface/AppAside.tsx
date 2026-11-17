@@ -212,11 +212,27 @@ export function AppAside() {
             </Tabs.List>
           </Box>
 
-          <Tabs.Panel value="participant" style={{ flex: 1, overflow: 'hidden' }}>
+          <Tabs.Panel
+            value="participant"
+            style={{
+              flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden',
+            }}
+          >
             <StepsPanel globalGraph={globalGraph} participantSequence={sequence} participantAnswers={answers} studyConfig={studyConfig} />
           </Tabs.Panel>
-          <Tabs.Panel value="allTrials" style={{ flex: 1, overflow: 'hidden' }}>
-            <StepsPanel participantAnswers={{}} studyConfig={studyConfig} />
+          <Tabs.Panel
+            value="allTrials"
+            style={{
+              flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden',
+            }}
+          >
+            <StepsPanel
+              globalGraph={globalGraph}
+              participantAnswers={{}}
+              activeParticipantSequence={sequence}
+              activeParticipantAnswers={answers}
+              studyConfig={studyConfig}
+            />
           </Tabs.Panel>
         </Tabs>
       </AppShell.Section>
