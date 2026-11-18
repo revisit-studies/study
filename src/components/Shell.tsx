@@ -7,7 +7,9 @@ import {
   useRef,
 } from 'react';
 import { Provider } from 'react-redux';
-import { RouteObject, useRoutes, useSearchParams } from 'react-router';
+import {
+  RouteObject, useHref, useRoutes, useSearchParams,
+} from 'react-router';
 import {
   Anchor, Center, Code, Loader, LoadingOverlay, Paper, Stack, Text, Title,
 } from '@mantine/core';
@@ -56,6 +58,7 @@ import {
 import { StartupErrorScreen } from './StartupErrorScreen';
 import { materializeParticipantConfig } from '../parser/libraryParser';
 import { useStudyColorMode } from './AppThemeProvider';
+import { getNewParticipant } from '../utils/nextParticipant';
 import {
   StartupInteractionProvider,
   useStudyStorageReady,
@@ -179,6 +182,35 @@ export function getInitialStartupAlert(
       ? message
       : (resumeParticipantId ? RESUME_STARTUP_ERROR : GENERIC_STARTUP_ERROR),
   };
+}
+
+/**
+ * Returns the stored config a participant session was created with. Cloud storage engines
+ * resolve a missing object to `{}`, so check its shape rather than trusting the cast.
+ */
+export function getStoredParticipantConfig(
+  configs: Record<string, unknown>,
+  configHash: string,
+): ParsedConfig<StudyConfig> {
+  const config = configs[configHash] as Partial<ParsedConfig<StudyConfig>> | null | undefined;
+  if (!config || typeof config !== 'object' || !config.components || !config.sequence) {
+    throw new Error(`The study configuration for this participant session (${configHash}) could not be loaded.`);
+  }
+  return config as ParsedConfig<StudyConfig>;
+}
+
+/** Whether the startup error screen should offer to discard the stored participant session. */
+export function canResetParticipantSession({
+  allowSessionReset,
+  isParticipantStartupError,
+  viewingParticipantId,
+}: {
+  allowSessionReset?: boolean;
+  isParticipantStartupError: boolean;
+  viewingParticipantId?: string | null;
+}) {
+  // An analyst viewing a specific participant must not have this browser's session discarded.
+  return !!allowSessionReset && isParticipantStartupError && !viewingParticipantId;
 }
 
 export function getShellUiState({
@@ -545,10 +577,10 @@ function StudyShell({ globalConfig }: { globalConfig: GlobalConfig }) {
         }
         let participantConfig = activeConfig;
         if (participantSession.participantConfigHash !== activeHash) {
-          participantConfig = (await storageEngine.getAllConfigsFromHash(
-            [participantSession.participantConfigHash],
-            canonicalStudyId,
-          ))[participantSession.participantConfigHash] as ParsedConfig<StudyConfig>;
+          participantConfig = getStoredParticipantConfig(
+            await storageEngine.getAllConfigsFromHash([participantSession.participantConfigHash], canonicalStudyId),
+            participantSession.participantConfigHash,
+          );
         }
 
         const resolvedCondition = resolveParticipantConditions({
@@ -754,6 +786,12 @@ function StudyShell({ globalConfig }: { globalConfig: GlobalConfig }) {
   ]);
 
   const routing = useRoutes(routes);
+  const studyHref = useHref(`/${routeStudyId}`);
+  const showSessionReset = canResetParticipantSession({
+    allowSessionReset: canonicalStudyId ? globalConfig.configs[canonicalStudyId]?.allowSessionReset : false,
+    isParticipantStartupError: !!startupError?.retryParticipantStartup,
+    viewingParticipantId: participantId || urlParticipantId,
+  });
   const participantState = store?.store.getState();
   const loadingColorMode = activeConfig?.uiConfig?.colorMode === 'userPreference'
     ? initialSystemColorMode : activeConfig?.uiConfig?.colorMode;
@@ -799,6 +837,7 @@ function StudyShell({ globalConfig }: { globalConfig: GlobalConfig }) {
             setStartupAttempt((attempt) => attempt + 1);
           }
           : undefined}
+        onResetSession={showSessionReset ? () => getNewParticipant(storageEngine, studyHref) : undefined}
       />
     );
   } else if (stageEntryError) {

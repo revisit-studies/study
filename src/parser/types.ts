@@ -68,6 +68,8 @@ export interface GlobalConfig {
       test?: boolean;
       /** The exact label of a configured tab. Unassigned studies appear in the default Studies tab. */
       tab?: string;
+      /** When true, the startup error screen offers a "Start a new session" button that discards this browser's stored participant session and starts a fresh one. Intended for demo studies, where losing an unfinished session is harmless. Defaults to false. */
+      allowSessionReset?: boolean;
     };
   };
   /** A required property that is used to generate the list of available studies in the UI. This list is displayed on the landing page when running the app. */

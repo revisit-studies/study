@@ -20,7 +20,7 @@ test('registers the feedback study in the global Demo Studies list', () => {
   const global = parseGlobalConfig(readConfig('global.json'));
   expect(global.configsList).toContain('demo-answer-feedback');
   expect(global.configs['demo-answer-feedback']).toEqual({
-    tab: 'Demo Studies', path: 'demo-answer-feedback/config.json',
+    tab: 'Demo Studies', path: 'demo-answer-feedback/config.json', allowSessionReset: true,
   });
 });
 

@@ -17,11 +17,14 @@ export function StartupErrorScreen({
   showDetails = import.meta.env.DEV,
   onReload = () => window.location.reload(),
   actionLabel = 'Reload',
+  onResetSession,
 }: {
   error: unknown;
   showDetails?: boolean;
   onReload?: () => void;
   actionLabel?: string;
+  /** When provided, offers to discard the stored participant session and start a new one. */
+  onResetSession?: () => void;
 }) {
   const headingRef = useRef<HTMLHeadingElement>(null);
 
@@ -62,6 +65,17 @@ export function StartupErrorScreen({
           <Button size="md" onClick={onReload}>
             {actionLabel}
           </Button>
+          {onResetSession && (
+            <>
+              <Text ta="center" size="sm" c="dimmed">
+                If this keeps happening, your saved progress in this study may be out of date.
+                Starting a new session discards it.
+              </Text>
+              <Button size="md" variant="default" onClick={onResetSession}>
+                Start a new session
+              </Button>
+            </>
+          )}
           {showDetails && (
             <Code block w="100%" style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>
               {getStartupErrorDetails(error)}

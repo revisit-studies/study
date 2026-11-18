@@ -62,4 +62,35 @@ describe('StartupErrorScreen', () => {
 
     expect(reloadSpy).toHaveBeenCalledOnce();
   });
+
+  test('offers no session reset by default', () => {
+    const { queryByRole } = render(
+      <MantineProvider>
+        <StartupErrorScreen error={new Error('failure')} showDetails={false} />
+      </MantineProvider>,
+    );
+
+    expect(queryByRole('button', { name: 'Start a new session' })).toBeNull();
+  });
+
+  test('offers a session reset when a handler is provided', async () => {
+    const user = userEvent.setup();
+    const resetSpy = vi.fn();
+    const reloadSpy = vi.fn();
+    const { getByRole } = render(
+      <MantineProvider>
+        <StartupErrorScreen
+          error={new Error('failure')}
+          showDetails={false}
+          onReload={reloadSpy}
+          onResetSession={resetSpy}
+        />
+      </MantineProvider>,
+    );
+
+    await user.click(getByRole('button', { name: 'Start a new session' }));
+
+    expect(resetSpy).toHaveBeenCalledOnce();
+    expect(reloadSpy).not.toHaveBeenCalled();
+  });
 });

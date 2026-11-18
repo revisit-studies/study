@@ -116,7 +116,8 @@
     },
     "demo-html": {
       "tab": "Demo Studies",
-      "path": "demo-html/config.json"
+      "path": "demo-html/config.json",
+      "allowSessionReset": true
     },
     "test-factors": {
       "path": "test-factors/config.json",
@@ -128,115 +129,143 @@
     },
     "demo-stroop-factors": {
       "tab": "Factor-demos",
-      "path": "demo-stroop-factors/config.json"
+      "path": "demo-stroop-factors/config.json",
+      "allowSessionReset": true
     },
     "demo-stroop-html-factors": {
       "tab": "Factor-demos",
-      "path": "demo-stroop-html-factors/config.json"
+      "path": "demo-stroop-html-factors/config.json",
+      "allowSessionReset": true
     },
     "demo-ffl-study": {
       "tab": "Factor-demos",
-      "path": "demo-ffl-study/config.json"
+      "path": "demo-ffl-study/config.json",
+      "allowSessionReset": true
     },
     "demo-dsf-study": {
       "tab": "Factor-demos",
-      "path": "demo-dsf-study/config.json"
+      "path": "demo-dsf-study/config.json",
+      "allowSessionReset": true
     },
     "demo-calvi-study": {
       "tab": "Factor-demos",
-      "path": "demo-calvi-study/config.json"
+      "path": "demo-calvi-study/config.json",
+      "allowSessionReset": true
     },
     "demo-screen-recording": {
       "tab": "Demo Studies",
-      "path": "demo-screen-recording/config.json"
+      "path": "demo-screen-recording/config.json",
+      "allowSessionReset": true
     },
     "demo-gamepad": {
       "tab": "Demo Studies",
-      "path": "demo-gamepad/config.json"
+      "path": "demo-gamepad/config.json",
+      "allowSessionReset": true
     },
     "demo-html-input": {
       "tab": "Demo Studies",
-      "path": "demo-html-input/config.json"
+      "path": "demo-html-input/config.json",
+      "allowSessionReset": true
     },
     "demo-templating": {
       "tab": "Demo Studies",
-      "path": "demo-templating/config.json"
+      "path": "demo-templating/config.json",
+      "allowSessionReset": true
     },
     "demo-form-elements": {
       "tab": "Demo Studies",
-      "path": "demo-form-elements/config.json"
+      "path": "demo-form-elements/config.json",
+      "allowSessionReset": true
     },
     "demo-dark-mode": {
       "tab": "Demo Studies",
-      "path": "demo-dark-mode/config.json"
+      "path": "demo-dark-mode/config.json",
+      "allowSessionReset": true
     },
     "demo-answer-feedback": {
       "tab": "Demo Studies",
-      "path": "demo-answer-feedback/config.json"
+      "path": "demo-answer-feedback/config.json",
+      "allowSessionReset": true
     },
     "demo-training": {
       "tab": "Demo Studies",
-      "path": "demo-training/config.json"
+      "path": "demo-training/config.json",
+      "allowSessionReset": true
     },
     "demo-upset": {
       "tab": "Demo Studies",
-      "path": "demo-upset/config.json"
+      "path": "demo-upset/config.json",
+      "allowSessionReset": true
     },
     "demo-video": {
       "tab": "Demo Studies",
-      "path": "demo-video/config.json"
+      "path": "demo-video/config.json",
+      "allowSessionReset": true
     },
     "demo-dynamic": {
       "tab": "Demo Studies",
-      "path": "demo-dynamic/config.json"
+      "path": "demo-dynamic/config.json",
+      "allowSessionReset": true
     },
     "demo-condition": {
       "tab": "Demo Studies",
-      "path": "demo-condition/config.json"
+      "path": "demo-condition/config.json",
+      "allowSessionReset": true
     },
     "demo-html-trrack": {
       "tab": "Demo Studies",
-      "path": "demo-html-trrack/config.json"
+      "path": "demo-html-trrack/config.json",
+      "allowSessionReset": true
     },
     "demo-svelte-trrack": {
       "tab": "Demo Studies",
-      "path": "demo-svelte-trrack/config.json"
+      "path": "demo-svelte-trrack/config.json",
+      "allowSessionReset": true
     },
     "demo-react-trrack": {
       "tab": "Demo Studies",
-      "path": "demo-react-trrack/config.json"
+      "path": "demo-react-trrack/config.json",
+      "allowSessionReset": true
     },
     "demo-codemirror": {
       "tab": "Demo Studies",
-      "path": "demo-codemirror/config.json"
+      "path": "demo-codemirror/config.json",
+      "allowSessionReset": true
     },
     "demo-image": {
       "tab": "Demo Studies",
-      "path": "demo-image/config.json"
+      "path": "demo-image/config.json",
+      "allowSessionReset": true
     },
     "demo-style": {
       "tab": "Demo Studies",
-      "path": "demo-style/config.json"
+      "path": "demo-style/config.json",
+      "allowSessionReset": true
     },
     "demo-vega": {
       "tab": "Demo Studies",
-      "path": "demo-vega/config.json"
+      "path": "demo-vega/config.json",
+      "allowSessionReset": true
     },
     "demo-yaml": {
       "tab": "Demo Studies",
-      "path": "demo-yaml/config.yaml"
+      "path": "demo-yaml/config.yaml",
+      "allowSessionReset": true
     },
     "demo-ranking-widget": {
       "tab": "Demo Studies",
-      "path": "demo-ranking-widget/config.json"
+      "path": "demo-ranking-widget/config.json",
+      "allowSessionReset": true
     },
     "demo-choropleth-map": {
       "tab": "Demo Studies",
-      "path": "demo-choropleth-map/config.json"
+      "path": "demo-choropleth-map/config.json",
+      "allowSessionReset": true
     },
     "incentives-corr": {
       "tab": "Factor-demos",
-      "path": "incentives-corr/config.json"
+      "path": "incentives-corr/config.json",
+      "allowSessionReset": true
     },
     "example-llm-chatbot": {
       "tab": "Example Studies",
