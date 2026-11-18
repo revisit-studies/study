@@ -9,7 +9,7 @@ import {
 } from 'vitest';
 import { useRoutes } from 'react-router';
 import {
-  getShellUiState, getStartupErrorMessage, Shell, StudyLoadingOverlay,
+  canResetParticipantSession, getShellUiState, getStartupErrorMessage, getStoredParticipantConfig, Shell, StudyLoadingOverlay,
 } from '../Shell';
 import type { ParsedConfig, StudyConfig } from '../../parser/types';
 import { generateSequenceArray } from '../../utils/handleRandomSequences';
@@ -21,6 +21,7 @@ import { parseStudyConfig } from '../../parser/parser';
 import { StageCapacityExceededError, StageOnlyDisabledConditionsHaveCapacityError } from '../../storage/engines/types';
 import { useStudyColorMode } from '../AppThemeProvider';
 import type { ParticipantMetadata } from '../../store/types';
+import { getNewParticipant } from '../../utils/nextParticipant';
 
 // ── mutable state ─────────────────────────────────────────────────────────────
 
@@ -99,13 +100,22 @@ vi.mock('../ErrorLoadingConfig', () => ({
 }));
 
 vi.mock('../StartupErrorScreen', () => ({
-  StartupErrorScreen: () => {
+  StartupErrorScreen: ({ onResetSession }: { onResetSession?: () => void }) => {
     useEffect(() => {
       // The real error screen focuses its heading in a passive effect.
       startupErrorWasBlocked = Boolean(document.querySelector('[role="alert"]')?.closest('[inert]'));
     }, []);
-    return <div role="alert">startup fallback</div>;
+    return (
+      <>
+        <div role="alert">startup fallback</div>
+        {onResetSession && <button type="button" onClick={onResetSession}>Start a new session</button>}
+      </>
+    );
   },
+}));
+
+vi.mock('../../utils/nextParticipant', () => ({
+  getNewParticipant: vi.fn(),
 }));
 
 vi.mock('../../ResourceNotFound', () => ({
@@ -126,6 +136,7 @@ vi.mock('../../utils/NavigateWithParams', () => ({
 
 vi.mock('react-router', () => ({
   useRoutes: vi.fn(() => <div data-testid="routing" />),
+  useHref: (to: string) => `/base${to}`,
   useSearchParams: () => [mockSearchParams, vi.fn()],
 }));
 
@@ -1009,6 +1020,97 @@ describe('Shell', () => {
       'Error initializing fallback study store:',
       expect.any(Error),
     );
+  });
+  describe('stale participant session config', () => {
+    function makeStaleSessionEngine() {
+      return {
+        ...makeStartupEngine(),
+        initializeParticipantSession: vi.fn().mockResolvedValue({
+          ...baseSession,
+          participantConfigHash: 'missingHash',
+        }),
+        // Cloud engines resolve a missing config object to {}.
+        getAllConfigsFromHash: vi.fn().mockResolvedValue({ missingHash: {} }),
+        // A connected, correctly configured engine, so the failure is not treated as a storage outage.
+        getEngine: vi.fn().mockReturnValue(import.meta.env.VITE_STORAGE_ENGINE),
+      };
+    }
+
+    test('shows a retryable startup error instead of crashing on a missing config', async () => {
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => { });
+      vi.mocked(getStudyConfig).mockResolvedValue(mockActiveConfig);
+      mockStorageEngine = makeStaleSessionEngine();
+
+      const { getByRole, queryByRole } = render(<Shell globalConfig={globalConfig} />);
+
+      await waitFor(() => expect(getByRole('alert').textContent).toBe('startup fallback'));
+      expect(consoleSpy).toHaveBeenCalledWith(
+        'Error initializing user store routing:',
+        expect.objectContaining({ message: expect.stringContaining('missingHash') }),
+      );
+      expect(queryByRole('button', { name: 'Start a new session' })).toBeNull();
+    });
+
+    test('offers a session reset for studies that allow it', async () => {
+      vi.spyOn(console, 'error').mockImplementation(() => { });
+      vi.mocked(getStudyConfig).mockResolvedValue(mockActiveConfig);
+      mockStorageEngine = makeStaleSessionEngine();
+      const resettableGlobalConfig = makeGlobalConfig({
+        configsList: ['test-study'],
+        configs: { 'test-study': { path: 'test-study.json', allowSessionReset: true } },
+      });
+
+      const { findByRole } = render(<Shell globalConfig={resettableGlobalConfig} />);
+
+      (await findByRole('button', { name: 'Start a new session' })).click();
+      expect(vi.mocked(getNewParticipant)).toHaveBeenCalledWith(mockStorageEngine, '/base/test-study');
+    });
+
+    test('does not offer a session reset while viewing a specific participant', async () => {
+      vi.spyOn(console, 'error').mockImplementation(() => { });
+      vi.mocked(getStudyConfig).mockResolvedValue(mockActiveConfig);
+      mockSearchParams = new URLSearchParams('participantId=p1');
+      mockStorageEngine = makeStaleSessionEngine();
+      const resettableGlobalConfig = makeGlobalConfig({
+        configsList: ['test-study'],
+        configs: { 'test-study': { path: 'test-study.json', allowSessionReset: true } },
+      });
+
+      const { getByRole, queryByRole } = render(<Shell globalConfig={resettableGlobalConfig} />);
+
+      await waitFor(() => expect(getByRole('alert').textContent).toBe('startup fallback'));
+      expect(queryByRole('button', { name: 'Start a new session' })).toBeNull();
+    });
+  });
+});
+
+describe('getStoredParticipantConfig', () => {
+  test('returns a stored config with components and a sequence', () => {
+    expect(getStoredParticipantConfig({ h: mockActiveConfig }, 'h')).toBe(mockActiveConfig);
+  });
+
+  test.each([
+    ['missing', {}],
+    ['null', { h: null }],
+    ['empty (cloud engine not-found result)', { h: {} }],
+    ['without components', { h: { ...mockActiveConfig, components: undefined } }],
+  ])('throws a descriptive error when the config is %s', (_label, configs) => {
+    expect(() => getStoredParticipantConfig(configs, 'h')).toThrow(/participant session \(h\) could not be loaded/);
+  });
+});
+
+describe('canResetParticipantSession', () => {
+  test('requires the study opt-in and a participant startup error', () => {
+    expect(canResetParticipantSession({ allowSessionReset: true, isParticipantStartupError: true })).toBe(true);
+    expect(canResetParticipantSession({ allowSessionReset: false, isParticipantStartupError: true })).toBe(false);
+    expect(canResetParticipantSession({ isParticipantStartupError: true })).toBe(false);
+    expect(canResetParticipantSession({ allowSessionReset: true, isParticipantStartupError: false })).toBe(false);
+  });
+
+  test('is never offered while viewing a specific participant', () => {
+    expect(canResetParticipantSession({
+      allowSessionReset: true, isParticipantStartupError: true, viewingParticipantId: 'p1',
+    })).toBe(false);
   });
 });
 

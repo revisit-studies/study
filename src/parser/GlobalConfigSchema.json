@@ -15,6 +15,10 @@
             "additionalProperties": false,
             "description": "The key is used to identify the study config file. This key is used in the configList property.",
             "properties": {
+              "allowSessionReset": {
+                "description": "When true, the startup error screen offers a \"Start a new session\" button that discards this browser's stored participant session and starts a fresh one. Intended for demo studies, where losing an unfinished session is harmless. Defaults to false.",
+                "type": "boolean"
+              },
               "path": {
                 "description": "The path to the study config file. This should be a relative path from the public folder.",
                 "type": "string"
