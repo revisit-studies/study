@@ -18,6 +18,7 @@
     "test": "playwright test",
     "unittest": "vitest",
     "unittest-coverage": "vitest run --coverage --coverage.reporter=text",
+    "create-study": "node scripts/create-study.mjs",
     "find-revisit-users": "bash scripts/find-revisit-users.sh",
     "postinstall": "husky && node scripts/patch-mantine-react-table.cjs"
   },
