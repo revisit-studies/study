@@ -1,5 +1,5 @@
 import {
-  Box, Flex, Image, Select, Title, Space, AppShell, Button, Text, ActionIcon, Tooltip,
+  Box, Flex, Image, Select, Title, Space, AppShell, Button, Text, ActionIcon, Tooltip, Menu, Switch,
 } from '@mantine/core';
 
 import {
@@ -11,6 +11,7 @@ import {
 } from '@tabler/icons-react';
 import { PREFIX } from '../../utils/Prefix';
 import { useAppColorMode } from '../../components/AppThemeProvider';
+import { useLandingPreferences } from '../../utils/landingPreferences';
 
 const STUDY_SCHEMA_VERSION_REGEX = /\/study\/(v\d+\.\d+\.\d+)\//;
 
@@ -42,6 +43,11 @@ export function AppHeader({
 
   const inAnalysis = matchPath('/analysis/*', location.pathname) !== null;
   const showThemeToggle = ['/', '/settings', '/login'].some((path) => matchPath(path, location.pathname)) || inAnalysis;
+  // The tutorial/test toggles only affect the landing page, so only offer them there.
+  const onLandingPage = matchPath('/', location.pathname) !== null;
+  const {
+    showTutorials, setShowTutorials, showTests, setShowTests,
+  } = useLandingPreferences();
 
   return (
     <AppShell.Header p="md">
@@ -88,7 +94,30 @@ export function AppHeader({
               </Tooltip>
             )}
             {revisitVersion && <Text c="dimmed" size="sm" mr="sm">{`reVISit ${revisitVersion}`}</Text>}
-            <IconSettings onClick={() => navigate('/settings')} style={{ cursor: 'pointer' }} />
+            <Menu position="bottom-end" shadow="md" withinPortal closeOnItemClick={false}>
+              <Menu.Target>
+                <ActionIcon aria-label="Settings menu" variant="subtle" color="gray" size="lg">
+                  <IconSettings />
+                </ActionIcon>
+              </Menu.Target>
+              <Menu.Dropdown>
+                {onLandingPage && (
+                  <>
+                    <Menu.Label>Landing page</Menu.Label>
+                    <Menu.Item onClick={() => setShowTutorials((value) => !value)}>
+                      <Switch label="Show tutorials" checked={showTutorials} readOnly size="xs" style={{ pointerEvents: 'none' }} />
+                    </Menu.Item>
+                    <Menu.Item onClick={() => setShowTests((value) => !value)}>
+                      <Switch label="Show tests" checked={showTests} readOnly size="xs" style={{ pointerEvents: 'none' }} />
+                    </Menu.Item>
+                    <Menu.Divider />
+                  </>
+                )}
+                <Menu.Item leftSection={<IconSettings size={14} />} onClick={() => navigate('/settings')}>
+                  Settings
+                </Menu.Item>
+              </Menu.Dropdown>
+            </Menu>
           </Flex>
         </Box>
       </Flex>

@@ -52,7 +52,7 @@ test('Test CodeMirror editor stimulus records individual keys, selections, edits
   await resetClientStudyState(page);
   await openStudyFromLanding(
     page,
-    'Snippets',
+    'Playground',
     'Code Editor with CodeMirror',
   );
 
@@ -157,7 +157,7 @@ test('Test CodeMirror editor replays the participant session', async ({
   await resetClientStudyState(page);
   await openStudyFromLanding(
     page,
-    'Snippets',
+    'Playground',
     'Code Editor with CodeMirror',
   );
   await nextClick(page);

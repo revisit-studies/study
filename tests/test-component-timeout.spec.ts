@@ -1,8 +1,9 @@
 import { test, expect } from '@playwright/test';
-import { nextClick, resetClientStudyState } from './utils';
+import { nextClick, resetClientStudyState, showOptionalLandingSections } from './utils';
 
 test('shows the timeout warning and auto-advances to the next component', async ({ page }) => {
   await resetClientStudyState(page);
+  await showOptionalLandingSections(page);
   await page.goto('/');
   await page
     .getByRole('region', { name: 'Tests', exact: true })

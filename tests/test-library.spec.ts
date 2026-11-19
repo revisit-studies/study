@@ -2,10 +2,12 @@ import { expect, test } from '@playwright/test';
 import {
   nextClick,
   resetClientStudyState,
+  showOptionalLandingSections,
 } from './utils';
 
 test('library components and sequences are imported correctly', async ({ page }) => {
   await resetClientStudyState(page);
+  await showOptionalLandingSections(page);
   await page.goto('/');
 
   await page.getByLabel('Tests').locator('.mantine-Card-root').filter({ hasText: 'Using library imports' })

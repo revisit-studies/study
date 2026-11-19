@@ -619,8 +619,8 @@ describe('ConfigSwitcher', () => {
       `/?tab=${encodeURIComponent(label)}&source=shared`,
     ));
     expect(tabHeadings(view)).toEqual([label, 'Studies']);
-    const heading = view.getByRole('heading', { level: 3, name: label });
-    await waitFor(() => expect(scrollIntoViewMock.mock.contexts).toContain(heading));
+    const section = view.getByRole('region', { name: label });
+    await waitFor(() => expect(scrollIntoViewMock.mock.contexts).toContain(section));
     expect(view.getByRole('navigation', { name: 'Study navigation' })).toBeDefined();
   });
 
@@ -922,6 +922,33 @@ describe('groupConfigNames', () => {
   });
 });
 
+describe('ConfigSwitcher optional sections', () => {
+  const config = makeGlobalConfig({
+    tabs: [{ label: 'Snippets' }, { label: 'Tutorials' }, { label: 'Tests' }],
+    configsList: ['snippet', 'tutorial', 'test'],
+    configs: {
+      snippet: { path: 'snippet.json', tab: 'Snippets' },
+      tutorial: { path: 'tutorial.json', tab: 'Tutorials' },
+      test: { path: 'test.json', tab: 'Tests' },
+    },
+  });
+  const configs = { snippet: parsedStudyConfig, tutorial: parsedStudyConfig, test: parsedStudyConfig };
+  const headings = (view: ReturnType<typeof render>) => view.getAllByRole('heading', { level: 3 }).map((element) => element.textContent);
+
+  afterEach(() => window.localStorage.clear());
+
+  test('hides the Tutorials and Tests sections by default', async () => {
+    const view = await act(async () => render(<ConfigSwitcher globalConfig={config} studyConfigs={configs} />));
+    expect(headings(view)).toEqual(['Snippets']);
+  });
+
+  test('shows each section the viewer has turned on', async () => {
+    window.localStorage.setItem('revisit-landing-show-tests', 'true');
+    const view = await act(async () => render(<ConfigSwitcher globalConfig={config} studyConfigs={configs} />));
+    expect(headings(view)).toEqual(['Snippets', 'Tests']);
+  });
+});
+
 describe('slugify', () => {
   test.each([
     ['Example Studies', 'example-studies'],
@@ -965,8 +992,9 @@ describe('ConfigSwitcher tab groups', () => {
       '/#demos--stimuli',
     ));
 
-    const tab = view.getByRole('heading', { level: 3, name: 'Demos' });
-    const group = view.getByRole('heading', { level: 4, name: 'Stimuli' });
+    // Anchors live on the sections, since a tab's heading is pinned while its section scrolls by.
+    const tab = view.getByRole('region', { name: 'Demos' });
+    const group = view.getByRole('region', { name: 'Stimuli' });
     expect(tab.id).toBe('demos');
     expect(group.id).toBe('demos--stimuli');
     await waitFor(() => expect(scrollIntoViewMock.mock.contexts).toContain(group));

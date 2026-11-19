@@ -83,11 +83,20 @@ export async function resetClientStudyState(page: Page) {
   });
 }
 
+/** Turns on the landing page's opt-in Tutorials and Tests sections (hidden by default) before the page loads. */
+export async function showOptionalLandingSections(page: Page) {
+  await page.addInitScript(() => {
+    window.localStorage.setItem('revisit-landing-show-tutorials', 'true');
+    window.localStorage.setItem('revisit-landing-show-tests', 'true');
+  });
+}
+
 export async function openStudyFromLanding(
   page: Page,
   sectionLabel: string,
   cardTitle: StudyTitleMatcher | StudyTitleMatcher[],
 ) {
+  await showOptionalLandingSections(page);
   await page.goto('/');
 
   const matchers = Array.isArray(cardTitle) ? cardTitle : [cardTitle];

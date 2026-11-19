@@ -55,6 +55,10 @@
       ]
     },
     {
+      "label": "Playground",
+      "description": "Experimental studies that try out novel ideas and cutting-edge study designs, such as game-controller input, instrumented code editors, and LLM-powered chat."
+    },
+    {
       "label": "Tutorials",
       "description": "These studies are designed to help you learn how to use the reVISit platform."
     },
@@ -247,8 +251,7 @@
       "path": "demo-screen-recording/config.json"
     },
     "demo-gamepad": {
-      "tab": "Snippets",
-      "group": "Recording and Input Devices",
+      "tab": "Playground",
       "path": "demo-gamepad/config.json"
     },
     "demo-html-input": {
@@ -317,8 +320,7 @@
       "path": "demo-react-trrack/config.json"
     },
     "demo-codemirror": {
-      "tab": "Snippets",
-      "group": "Responses and Feedback",
+      "tab": "Playground",
       "path": "demo-codemirror/config.json"
     },
     "demo-image": {
@@ -357,8 +359,7 @@
       "path": "incentives-corr/config.json"
     },
     "example-llm-chatbot": {
-      "tab": "Example Studies",
-      "group": "Interaction and Exploration",
+      "tab": "Playground",
       "path": "example-llm-chatbot/config.json"
     },
     "example-brush-interactions": {

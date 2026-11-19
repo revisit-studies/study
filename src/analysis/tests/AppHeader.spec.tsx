@@ -49,6 +49,14 @@ vi.mock('@mantine/core', () => {
       <button type="button" aria-label={label} onClick={onClick}>{children}</button>
     ),
     Tooltip: Div,
+    Menu: Object.assign(Div, {
+      Target: Div,
+      Dropdown: Div,
+      Label: Div,
+      Divider: () => <hr />,
+      Item: ({ children, onClick }: { children?: ReactNode; onClick?: () => void }) => <button type="button" role="menuitem" onClick={onClick}>{children}</button>,
+    }),
+    Switch: ({ label, checked }: { label?: ReactNode; checked?: boolean }) => <span data-checked={checked ? 'true' : 'false'}>{label}</span>,
   };
 });
 
@@ -115,5 +123,31 @@ describe('AppHeader', () => {
       <AppHeader studyIds={['my-study']} studyConfigs={{ 'my-study': {} }} />,
     );
     expect(html).toContain('ReVISit Analytics Platform');
+  });
+
+  test('offers the landing-page toggles on the landing page and saves them to localStorage', () => {
+    mockPathname = '/';
+    window.localStorage.clear();
+    const { getByRole } = render(<AppHeader studyIds={[]} />);
+
+    const tutorials = getByRole('menuitem', { name: 'Show tutorials' });
+    const tests = getByRole('menuitem', { name: 'Show tests' });
+    expect(tutorials.querySelector('[data-checked]')?.getAttribute('data-checked')).toBe('false');
+    expect(tests.querySelector('[data-checked]')?.getAttribute('data-checked')).toBe('false');
+
+    fireEvent.click(tests);
+    expect(window.localStorage.getItem('revisit-landing-show-tests')).toBe('true');
+    expect(tests.querySelector('[data-checked]')?.getAttribute('data-checked')).toBe('true');
+    expect(window.localStorage.getItem('revisit-landing-show-tutorials')).not.toBe('true');
+    expect(getByRole('menuitem', { name: 'Settings' })).toBeDefined();
+  });
+
+  test('offers only the Settings link away from the landing page', () => {
+    mockPathname = '/analysis/stats/my-study';
+    const { queryByRole, getByRole } = render(<AppHeader studyIds={[]} />);
+
+    expect(queryByRole('menuitem', { name: 'Show tutorials' })).toBeNull();
+    expect(queryByRole('menuitem', { name: 'Show tests' })).toBeNull();
+    expect(getByRole('menuitem', { name: 'Settings' })).toBeDefined();
   });
 });

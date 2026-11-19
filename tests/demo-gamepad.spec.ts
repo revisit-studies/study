@@ -179,7 +179,7 @@ test.describe('Gamepad stimulus with provenance and screen recording', () => {
   });
 
   test('plays a controller-driven trial and records hits and misses', async ({ page }) => {
-    await openStudyFromLanding(page, 'Snippets', 'Gamepad Input with Provenance');
+    await openStudyFromLanding(page, 'Playground', 'Gamepad Input with Provenance');
 
     await expect(page.getByText('Gamepad Input with Provenance').first()).toBeVisible({ timeout: 15000 });
     await nextClick(page);
@@ -224,7 +224,7 @@ test.describe('Gamepad stimulus with provenance and screen recording', () => {
   });
 
   test('can leave the trial without connecting a controller', async ({ page }) => {
-    await openStudyFromLanding(page, 'Snippets', 'Gamepad Input with Provenance');
+    await openStudyFromLanding(page, 'Playground', 'Gamepad Input with Provenance');
     await nextClick(page);
     await page.getByRole('button', { name: 'Start Recording' }).click();
     const continueButton = page.getByRole('button', { name: 'Continue', exact: true });
@@ -239,7 +239,7 @@ test.describe('Gamepad stimulus with provenance and screen recording', () => {
   });
 
   test('stores gamepad telemetry and button-colored provenance', async ({ page }) => {
-    await openStudyFromLanding(page, 'Snippets', 'Gamepad Input with Provenance');
+    await openStudyFromLanding(page, 'Playground', 'Gamepad Input with Provenance');
     await nextClick(page);
 
     await page.getByRole('button', { name: 'Start Recording' }).click();

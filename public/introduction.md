@@ -6,6 +6,7 @@ reVISit is an open-source platform for building and running user studies of inte
 
 - **Snippets** are small studies that each show off one feature, such as a stimulus type, a response type, or factors.
 - **Example Studies** are complete studies, many of them replications of published experiments.
+- **Playground** collects experimental studies that try out novel ideas, like game-controller input and LLM-powered chat.
 - **Tutorials** walk through building a study step by step.
 - **Libraries** show every reusable component and questionnaire that reVISit publishes.
 

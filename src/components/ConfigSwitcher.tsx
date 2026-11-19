@@ -30,6 +30,7 @@ import { getUnmetDeviceRestrictionLines, getUnmetDeviceRestrictionTooltip } from
 import { getStaticAssetByPath } from '../utils/getStaticAsset';
 import { AppHeader } from '../analysis/interface/AppHeader';
 import classes from './ConfigSwitcher.module.css';
+import { isTabVisible, useLandingPreferences } from '../utils/landingPreferences';
 
 const DEFAULT_TAB_LABEL = 'Studies';
 const STUDY_FULL_STATUS = 'Reached Participant Limit, Study Full';
@@ -542,6 +543,9 @@ export function groupConfigNames(groups: TabGroup[], configNames: string[], conf
 }
 
 const NAV_SCROLL_MARGIN = 86;
+const APP_HEADER_HEIGHT = 70;
+/** Height reserved for a tab's pinned heading, so group sections scroll into view below it. */
+const STICKY_TAB_HEADING_HEIGHT = 52;
 /** Readable, URL-safe anchor text, e.g. `Example Studies` -> `example-studies`. */
 export function slugify(text: string) {
   return text.normalize('NFKD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
@@ -566,8 +570,11 @@ function LandingNav({ navKey }: { navKey: string }) {
         // Indentation is applied per depth below, alongside the other hierarchy cues.
         depthOffset={0}
         scrollSpyOptions={{
+          // Track the sections rather than their headings: a tab's heading is pinned while you scroll its
+          // section, so its own position no longer says where you are.
           selector: '[data-landing-nav]',
           getDepth: (element) => Number(element.getAttribute('data-landing-nav')),
+          getValue: (element) => element.getAttribute('data-landing-label') ?? '',
           offset: 100,
         }}
         getControlProps={({ data, active }) => {
@@ -614,8 +621,17 @@ function GroupSections({
   modesByConfig: Record<string, LandingStudyModes | null>;
 }) {
   return sections.map(({ label, description, configNames }, index) => (
-    <Box component="section" key={label} aria-labelledby={groupHeadingId(tabLabel, label)} mt={index === 0 ? 'md' : 40}>
-      <Title order={4} id={groupHeadingId(tabLabel, label)} data-landing-nav="2" style={{ scrollMarginTop: NAV_SCROLL_MARGIN }}>
+    <Box
+      component="section"
+      key={label}
+      id={groupHeadingId(tabLabel, label)}
+      aria-labelledby={`${groupHeadingId(tabLabel, label)}-heading`}
+      data-landing-nav="2"
+      data-landing-label={label}
+      mt={index === 0 ? 'md' : 40}
+      style={{ scrollMarginTop: APP_HEADER_HEIGHT + STICKY_TAB_HEADING_HEIGHT + 16 }}
+    >
+      <Title order={4} id={`${groupHeadingId(tabLabel, label)}-heading`}>
         {label}
       </Title>
       {description && (
@@ -696,13 +712,14 @@ export function ConfigSwitcher({
   const isLoadingStudies = isLoadingVisibility || isLoadingStudyConfigs;
   const configsFiltered = useMemo(() => configsList.filter((configName) => studyVisibility[configName]), [configsList, studyVisibility]);
 
+  const { showTutorials, showTests } = useLandingPreferences();
   const tabs = useMemo(() => {
     const configuredTabs = globalConfig.tabs ?? [];
     const tabDefinitions = configuredTabs.some(({ label }) => label === DEFAULT_TAB_LABEL)
       ? configuredTabs
       : [...configuredTabs, { label: DEFAULT_TAB_LABEL }];
 
-    return tabDefinitions.map((definition) => ({
+    return tabDefinitions.filter(({ label }) => isTabVisible(label, { showTutorials, showTests })).map((definition) => ({
       ...definition,
       configNames: configsFiltered.filter((configName) => (
         (globalConfig.configs[configName].tab ?? DEFAULT_TAB_LABEL) === definition.label
@@ -715,7 +732,7 @@ export function ConfigSwitcher({
         ? groupConfigNames(definition.groups, definition.configNames, globalConfig.configs)
         : null,
     }));
-  }, [configsFiltered, globalConfig.configs, globalConfig.tabs]);
+  }, [configsFiltered, globalConfig.configs, globalConfig.tabs, showTests, showTutorials]);
 
   const [searchParams] = useSearchParams();
   const requestedTab = searchParams.get('tab');
@@ -756,10 +773,32 @@ export function ConfigSwitcher({
               {tabs.map(({
                 label, description, sections, configNames,
               }, index) => (
-                <Box component="section" key={label} aria-labelledby={tabHeadingId(label)} mt={index === 0 ? 0 : 72}>
-                  <Title order={3} id={tabHeadingId(label)} data-landing-nav="1" style={{ scrollMarginTop: NAV_SCROLL_MARGIN }}>
-                    {label}
-                  </Title>
+                <Box
+                  component="section"
+                  key={label}
+                  id={tabHeadingId(label)}
+                  aria-labelledby={`${tabHeadingId(label)}-heading`}
+                  data-landing-nav="1"
+                  data-landing-label={label}
+                  mt={index === 0 ? 0 : 72}
+                  style={{ scrollMarginTop: APP_HEADER_HEIGHT }}
+                >
+                  {/* The tab heading stays pinned while its section scrolls by, so its groups read as part of it. */}
+                  <Box
+                    pos="sticky"
+                    top={APP_HEADER_HEIGHT}
+                    py="xs"
+                    style={{
+                      zIndex: 3,
+                      minHeight: STICKY_TAB_HEADING_HEIGHT,
+                      backgroundColor: 'var(--mantine-color-body)',
+                      borderBottom: '1px solid var(--mantine-color-default-border)',
+                    }}
+                  >
+                    <Title order={3} id={`${tabHeadingId(label)}-heading`}>
+                      {label}
+                    </Title>
+                  </Box>
                   {description && (
                     <Box c="dimmed" mt={4}>
                       <ReactMarkdownWrapper text={description} />
