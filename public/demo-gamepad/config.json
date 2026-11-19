@@ -3,16 +3,10 @@
   "studyMetadata": {
     "title": "Gamepad Input with Provenance",
     "version": "pilot",
-    "authors": [
-      "The reVISit Team"
-    ],
+    "authors": ["The reVISit Team"],
     "date": "2026-09-16",
     "description": "A target-acquisition game driven by a game controller, capturing both semantic provenance and a screen recording so the trial can be replayed faithfully.",
-    "organizations": [
-      "University of Utah",
-      "WPI"
-    ],
-    "thumbnail": "demo-gamepad/assets/thumbnail.png"
+    "organizations": ["University of Utah", "WPI"]
   },
   "uiConfig": {
     "contactEmail": "contact@revisit.dev",
@@ -26,9 +20,7 @@
     "recordScreenFPS": 30,
     "captureGamepad": true
   },
-  "importedLibraries": [
-    "screen-recording"
-  ],
+  "importedLibraries": ["screen-recording"],
   "baseComponents": {
     "gamepadTrial": {
       "type": "react-component",
