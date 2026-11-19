@@ -44,7 +44,7 @@ async function withMvnvContext(page: Page, summary: string, wait: () => Promise<
 async function openMvnvStudy(page: Page) {
   await page.goto('/');
   await page.getByRole('tab', { name: 'Example Studies' }).click();
-  await page.getByLabel('Example Studies').locator('div').filter({ hasText: 'MVNV Study Replication' })
+  await page.getByLabel('Example Studies').locator('.mantine-Card-root').filter({ hasText: 'MVNV Study Replication' })
     .getByText('Go to Study')
     .click();
 

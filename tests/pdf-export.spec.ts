@@ -375,7 +375,7 @@ test('captures iframe content beyond reported document bounds', async ({ page },
   await resetClientStudyState(page);
   await page.getByRole('tab', { name: 'Example Studies' }).click();
   const exampleStudies = page.getByLabel('Example Studies');
-  const studyCard = exampleStudies.locator('div').filter({ hasText: 'MVNV Study Replication' }).first();
+  const studyCard = exampleStudies.locator('.mantine-Card-root').filter({ hasText: 'MVNV Study Replication' }).first();
   await studyCard.getByText('Go to Study').click();
   await page.getByRole('tab', { name: 'Browse Components' }).click();
   await page.getByLabel('Browse Components').getByText('task3', { exact: true }).click();
@@ -518,7 +518,7 @@ test('captures responsive SVG components in the PDF', async ({ page }, testInfo)
   await resetClientStudyState(page);
   await page.getByRole('tab', { name: 'Example Studies' }).click();
   const exampleStudies = page.getByLabel('Example Studies');
-  const studyCard = exampleStudies.locator('div').filter({ hasText: 'Interactive Selections in Scatterplots' }).first();
+  const studyCard = exampleStudies.locator('.mantine-Card-root').filter({ hasText: 'Interactive Selections in Scatterplots' }).first();
   await studyCard.getByText('Go to Study').click();
   await page.getByRole('tab', { name: 'Browse Components' }).click();
   await page.getByLabel('Browse Components').locator('a').filter({ hasText: 'rectangleBrush_q1' }).click();

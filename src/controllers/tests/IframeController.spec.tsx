@@ -25,8 +25,6 @@ vi.mock('../../store/hooks/useGlobalStore', () => ({
   },
 }));
 
-vi.mock('../../components/interface/RestorationWarning', () => ({ RestorationWarning: () => null }));
-
 const mockRetained = vi.hoisted(() => ({ graph: undefined as unknown }));
 vi.mock('../../store/hooks/useTrialProvenance', () => ({ useTrialProvenance: () => mockRetained.graph }));
 

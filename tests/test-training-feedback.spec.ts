@@ -95,7 +95,7 @@ async function goToClevelandTraining(page: Page) {
   await resetClientStudyState(page);
   await page.goto('/');
   await page.getByRole('tab', { name: 'Example Studies' }).click();
-  await page.getByLabel('Example Studies').locator('div').filter({ hasText: 'Dynamic React.js Stimuli: A Graphical Perception Experiment' })
+  await page.getByLabel('Example Studies').locator('.mantine-Card-root').filter({ hasText: 'Dynamic React.js Stimuli: A Graphical Perception Experiment' })
     .getByText('Go to Study')
     .click();
   await goToTraining(page);

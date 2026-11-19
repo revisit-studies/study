@@ -10,7 +10,7 @@ test('library components and sequences are imported correctly', async ({ page })
 
   await page.getByRole('tab', { name: 'Tests' }).click();
 
-  await page.getByLabel('Tests').locator('div').filter({ hasText: 'Using library imports' })
+  await page.getByLabel('Tests').locator('.mantine-Card-root').filter({ hasText: 'Using library imports' })
     .getByText('Go to Study')
     .click();
 

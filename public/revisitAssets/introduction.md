@@ -9,7 +9,7 @@ reVISit is an open-source platform for building and running user studies of inte
 - **Tutorials** walk through building a study step by step.
 - **Libraries** show every reusable component and questionnaire that reVISit publishes.
 
-Pick a study on the right and select **Go to Study** to take it as a participant, or **Preview** to step through it as a study designer.
+Pick a study on the right and select **Go to Study** to take it as a participant.
 
 ## Learn more
 

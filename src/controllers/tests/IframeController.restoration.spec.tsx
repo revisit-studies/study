@@ -19,8 +19,7 @@ import type { WebsiteComponent } from '../../parser/types';
 import type { Sequence, StoredProvenance } from '../../store/types';
 import { getPersistedAnswersFromAllLocations } from '../../utils/getAnswersFromAllLocations';
 
-const { getProvenance, preview } = vi.hoisted(() => ({ getProvenance: vi.fn(), preview: { enabled: false } }));
-vi.mock('../../store/hooks/useDesignerPreview', () => ({ useDesignerPreview: () => preview.enabled }));
+const { getProvenance } = vi.hoisted(() => ({ getProvenance: vi.fn() }));
 const storageEngine = { getProvenance };
 vi.mock('../../utils/getStaticAsset', () => ({ getStaticAssetByPath: vi.fn().mockResolvedValue('<html></html>') }));
 vi.mock('../../storage/storageEngineHooks', () => ({ useStorageEngine: () => ({ storageEngine }) }));
@@ -35,7 +34,6 @@ vi.mock('react-router', () => ({ useParams: () => ({}), useNavigate: () => vi.fn
 vi.mock('../../components/NextButton', () => ({ NextButton: () => null }));
 
 beforeEach(() => {
-  preview.enabled = false;
   vi.stubGlobal('matchMedia', vi.fn(() => ({ matches: false, addEventListener: vi.fn(), removeEventListener: vi.fn() })));
 });
 afterEach(() => {
@@ -191,23 +189,4 @@ test('delivers configured parameters to a handler registered after asynchronous 
     api.completeRegistration();
   });
   expect(receive).toHaveBeenCalledWith({ taskId: 'configured-task' });
-});
-
-test('warns in Preview when a website has saved reactive answers and reports unsupported restoration', async () => {
-  preview.enabled = true;
-  await restore({});
-  const iframe = document.querySelector('iframe')!;
-  fireEvent.load(iframe);
-  const messages = vi.spyOn(iframe.contentWindow!, 'postMessage');
-  const iframeId = new URL(iframe.src).searchParams.get('id');
-  const send = (type: string, message: unknown) => act(() => {
-    window.dispatchEvent(new MessageEvent('message', {
-      source: iframe.contentWindow,
-      data: { type: `@REVISIT_COMMS/${type}`, iframeId, message },
-    }));
-  });
-  send('WINDOW_READY', { protocolVersion: 1, documentId: 'document' });
-  const resume = messages.mock.calls.map(([data]) => data).find((data) => data.type === '@REVISIT_COMMS/RESUME');
-  send('RESTORATION_CAPABILITY', { protocolVersion: 1, requestId: resume.message.requestId, supported: false });
-  expect(screen.getByRole('alert').textContent).toContain('has not registered state restoration');
 });

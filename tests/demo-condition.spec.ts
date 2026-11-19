@@ -211,7 +211,7 @@ test.describe('Test study condition logic', () => {
     await page.goto('/');
 
     // Find the Conditional Blocks Demo card
-    const card = page.getByLabel('Demo Studies').locator('div').filter({ hasText: 'Conditional Blocks Demo' });
+    const card = page.getByLabel('Demo Studies').locator('.mantine-Card-root').filter({ hasText: 'Conditional Blocks Demo' });
     await expect(card.first()).toBeVisible({ timeout: 15000 });
 
     // Condition badges should be visible
@@ -223,5 +223,19 @@ test.describe('Test study condition logic', () => {
 
     const shapeBadge = card.getByText('shape', { exact: true }).first();
     await expect(shapeBadge).toBeVisible();
+  });
+
+  test('Go to Study opens a condition menu that launches the chosen condition', async ({ page }) => {
+    await page.goto('/');
+
+    const card = page.getByLabel('Demo Studies').locator('.mantine-Card-root').filter({ hasText: 'Conditional Blocks Demo' });
+    await card.getByRole('button', { name: 'Go to Study', exact: true }).click();
+
+    const menu = page.getByRole('menu');
+    await expect(menu.getByText('Choose a condition')).toBeVisible();
+    await expect(menu.getByRole('menuitem', { name: /^default/ })).toBeVisible();
+    await menu.getByRole('menuitem', { name: /^size/ }).click();
+
+    await expect(page).toHaveURL(/\/demo-condition\/.*\?condition=size|\/demo-condition\?condition=size/);
   });
 });

@@ -98,7 +98,7 @@ export async function openStudyFromLanding(
   await expect(section).toBeVisible();
 
   for (const matcher of matchers) {
-    const studyCard = section.locator('div').filter({ hasText: matcher }).first();
+    const studyCard = section.locator('.mantine-Card-root').filter({ hasText: matcher }).first();
     if (await studyCard.isVisible().catch(() => false)) {
       await studyCard.getByText('Go to Study').click();
       return;
