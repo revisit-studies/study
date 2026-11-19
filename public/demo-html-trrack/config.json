@@ -3,15 +3,10 @@
   "studyMetadata": {
     "title": "HTML with Trrack library",
     "version": "pilot",
-    "authors": [
-      "The reVISit Team"
-    ],
+    "authors": ["The reVISit Team"],
     "date": "2026-02-23",
-    "description": "An example study that implements Trrack library for provenance tracking in HTML stimuli.",
-    "organizations": [
-      "University of Utah",
-      "WPI"
-    ]
+    "description": "An example study that implements Trrack library for provenance tracking in HTML stimuli. Learn more about [provenance tracking](https://revisit.dev/docs/designing-studies/provenance-tracking/) and [HTML stimuli](https://revisit.dev/docs/designing-studies/html-stimulus/) in the docs.",
+    "organizations": ["University of Utah", "WPI"]
   },
   "uiConfig": {
     "contactEmail": "contact@revisit.dev",
@@ -50,9 +45,6 @@
   },
   "sequence": {
     "order": "fixed",
-    "components": [
-      "introduction",
-      "countDots"
-    ]
+    "components": ["introduction", "countDots"]
   }
 }

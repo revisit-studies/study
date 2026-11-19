@@ -9,7 +9,7 @@ import {
 
 test('Test Handlebars templating in instructions, path, help text, and response text', async ({ page }) => {
   await resetClientStudyState(page);
-  await openStudyFromLanding(page, 'Demo Studies', 'Templating Data with Handlebars');
+  await openStudyFromLanding(page, 'Snippets', 'Templating Data with Handlebars');
 
   await expect(page.getByText(/reVISit's Handlebars templating/i)).toBeVisible();
   await nextClick(page);

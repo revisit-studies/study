@@ -59,6 +59,47 @@ describe('Global config tabs', () => {
     expect(parseGlobalConfig(JSON.stringify(config))).toEqual(config);
   });
 
+  test('accepts a landing page introduction path', () => {
+    const config = { ...makeGlobalConfig(), introductionPath: 'revisitAssets/introduction.md' };
+
+    expect(parseGlobalConfig(JSON.stringify(config))).toEqual(config);
+  });
+
+  test('rejects a non-string landing page introduction path', () => {
+    expectConfigError({ ...makeGlobalConfig(), introductionPath: 5 }, '/introductionPath: must be string');
+  });
+
+  test('accepts groups within a tab and studies assigned to them', () => {
+    const config = {
+      ...makeGlobalConfig([{ label: 'Demos', groups: [{ label: 'Stimuli', description: 'Shown things.' }, { label: 'Responses' }] }], 'Demos'),
+      configs: { demo: { path: 'demo/config.json', tab: 'Demos', group: 'Stimuli' } },
+    };
+
+    expect(parseGlobalConfig(JSON.stringify(config))).toEqual(config);
+  });
+
+  test('rejects a study group that its tab does not define', () => {
+    const config = {
+      ...makeGlobalConfig([{ label: 'Demos', groups: [{ label: 'Stimuli' }] }, { label: 'Other tab', groups: [{ label: 'Responses' }] }], 'Demos'),
+      configs: { demo: { path: 'demo/config.json', tab: 'Demos', group: 'Responses' } },
+    };
+
+    expectConfigError(config, '/configs/demo/group: Config "demo" references undefined group "Responses" in tab "Demos"');
+  });
+
+  test('rejects groups on studies in the default tab when it defines none', () => {
+    const config = { ...makeGlobalConfig(), configs: { demo: { path: 'demo/config.json', group: 'Stimuli' } } };
+
+    expectConfigError(config, 'references undefined group "Stimuli" in tab "Studies"');
+  });
+
+  test.each([
+    [[{ label: ' ' }], '/tabs/0/groups/0/label: Group label must not be blank'],
+    [[{ label: 'Stimuli' }, { label: 'Stimuli' }], '/tabs/0/groups/1/label: Group label "Stimuli" is duplicated in tab "Demos"'],
+  ])('rejects invalid group labels %j', (groups, message) => {
+    expectConfigError(makeGlobalConfig([{ label: 'Demos', groups }]), message);
+  });
+
   test.each([undefined, []])('accepts unassigned studies when tabs are %j', (tabs) => {
     const config = makeGlobalConfig(tabs);
     expect(parseGlobalConfig(JSON.stringify(config))).toEqual(config);
@@ -2861,6 +2902,30 @@ describe('Parser Warnings', () => {
     );
 
     expect(contactEmailWarning).toBeUndefined();
+  });
+
+  test('warns when local storage is used outside local development', async () => {
+    vi.stubEnv('VITE_STORAGE_ENGINE', 'localStorage');
+    vi.stubGlobal('window', { location: { hostname: 'study.example.com' } });
+
+    const result = await parseStudyConfig(JSON.stringify(buildContactEmailStudyConfig('researcher@university.edu')));
+    const warning = result.warnings.find((item) => item.category === 'local-storage-deployment');
+
+    expect(warning?.instancePath).toBe('environment/VITE_STORAGE_ENGINE');
+    expect(warning?.message).toContain('local storage');
+    expect((warning?.params as { action?: string })?.action).toContain('VITE_STORAGE_ENGINE');
+  });
+
+  test.each([
+    ['localStorage', 'localhost'],
+    ['firebase', 'study.example.com'],
+  ])('does not warn about local storage for %s on %s', async (engine, hostname) => {
+    vi.stubEnv('VITE_STORAGE_ENGINE', engine);
+    vi.stubGlobal('window', { location: { hostname } });
+
+    const result = await parseStudyConfig(JSON.stringify(buildContactEmailStudyConfig('researcher@university.edu')));
+
+    expect(result.warnings.some((item) => item.category === 'local-storage-deployment')).toBe(false);
   });
 
   test('adds default-firebase-config warning for the default Firebase project on a custom host', async () => {

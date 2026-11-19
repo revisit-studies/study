@@ -7,7 +7,7 @@
       "The reVISit Team"
     ],
     "date": "2026-10-22",
-    "description": "Regression study for config-declared participant global stores.",
+    "description": "Regression study for config-declared participant global stores. Learn more about [global variables](https://revisit.dev/docs/designing-studies/global-variables/) in the docs.",
     "organizations": [
       "The reVISit Team"
     ]

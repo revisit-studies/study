@@ -7,11 +7,12 @@
       "The reVISit Team"
     ],
     "date": "2026-02-23",
-    "description": "Example study using the adaptive-vlat library.",
+    "description": "Example study using the adaptive-vlat library. See the [adaptive-vlat library docs](https://revisit.dev/docs/libraries/adaptive-vlat/) and how to use [plugin libraries](https://revisit.dev/docs/designing-studies/plugin-libraries/).",
     "organizations": [
       "University of Utah",
       "WPI"
-    ]
+    ],
+    "thumbnail": "library-adaptive-vlat/assets/thumbnail.png"
   },
   "uiConfig": {
     "contactEmail": "contact@revisit.dev",

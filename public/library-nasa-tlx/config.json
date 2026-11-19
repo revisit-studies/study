@@ -7,11 +7,12 @@
       "The reVISit Team"
     ],
     "date": "2026-02-23",
-    "description": "Example study using the nasa-tlx library.",
+    "description": "Example study using the nasa-tlx library. See the [nasa-tlx library docs](https://revisit.dev/docs/libraries/nasa-tlx/) and how to use [plugin libraries](https://revisit.dev/docs/designing-studies/plugin-libraries/).",
     "organizations": [
       "University of Utah",
       "WPI"
-    ]
+    ],
+    "thumbnail": "library-nasa-tlx/assets/thumbnail.png"
   },
   "uiConfig": {
     "contactEmail": "contact@revisit.dev",

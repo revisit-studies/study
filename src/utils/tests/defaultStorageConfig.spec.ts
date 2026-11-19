@@ -14,11 +14,32 @@ import {
   shouldSuppressDefaultDeploymentWarnings,
   shouldWarnForDefaultFirebaseConfig,
   shouldWarnForDefaultSupabaseConfig,
+  shouldWarnForLocalStorage,
 } from '../defaultStorageConfig';
 
 describe('defaultStorageConfig', () => {
   afterEach(() => {
     vi.unstubAllEnvs();
+  });
+
+  test.each([
+    ['localStorage', 'study.example.com', true],
+    ['localStorage', 'revisit.dev', true],
+    ['localStorage', 'localhost', false],
+    ['localStorage', '127.0.0.1', false],
+    ['firebase', 'study.example.com', false],
+  ])('warns about %s storage on %s: %s', (storageEngine, hostname, expected) => {
+    expect(shouldWarnForLocalStorage({ storageEngine, hostname })).toBe(expected);
+  });
+
+  test('reads the configured storage engine and current hostname by default', () => {
+    vi.stubEnv('VITE_STORAGE_ENGINE', 'localStorage');
+    vi.stubGlobal('window', { location: { hostname: 'study.example.com' } });
+    try {
+      expect(shouldWarnForLocalStorage()).toBe(true);
+    } finally {
+      vi.unstubAllGlobals();
+    }
   });
 
   test('detects the default Firebase project by projectId, authDomain, or storageBucket', () => {

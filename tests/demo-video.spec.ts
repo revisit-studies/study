@@ -13,7 +13,7 @@ const missingVideos = {
 
 test('forceCompletion video enables Next after video end', async ({ page }) => {
   await resetClientStudyState(page);
-  await openStudyFromLanding(page, 'Demo Studies', 'Video as a Stimulus');
+  await openStudyFromLanding(page, 'Snippets', 'Video as a Stimulus');
 
   await expect(page.getByText(/example study.*video stimulus/i)).toBeVisible();
   await nextClick(page);
@@ -50,7 +50,7 @@ for (const componentName of ['missingInternal', 'missingExternal'] as const) {
     }));
     await page.route('**/demo-video/assets/london.mp4', (route) => route.fulfill({ status: 404, body: 'Not found' }));
 
-    await openStudyFromLanding(page, 'Demo Studies', 'Video as a Stimulus');
+    await openStudyFromLanding(page, 'Snippets', 'Video as a Stimulus');
 
     const nextButton = page.getByRole('button', { name: 'Next', exact: true });
     const missingAsset = page.getByText(`${missingVideos[componentName].path} not found.`, { exact: true });

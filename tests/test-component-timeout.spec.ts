@@ -1,16 +1,15 @@
 import { test, expect } from '@playwright/test';
-import { nextClick, resetClientStudyState } from './utils';
+import { nextClick, resetClientStudyState, showOptionalLandingSections } from './utils';
 
 test('shows the timeout warning and auto-advances to the next component', async ({ page }) => {
   await resetClientStudyState(page);
+  await showOptionalLandingSections(page);
   await page.goto('/');
-  await page.getByRole('tab', { name: 'Tests' }).click();
   await page
-    .getByLabel('Tests')
-    .locator('div')
+    .getByRole('region', { name: 'Tests', exact: true })
+    .locator('.mantine-Card-root')
     .filter({ hasText: 'Component Timeout Auto-Advance Test' })
-    .getByText('Go to Study')
-    .first()
+    .getByRole('button', { name: 'Go to Study', exact: true })
     .click();
 
   await expect(page.getByText('Press next to begin the timeout auto-advance test.')).toBeVisible();

@@ -83,22 +83,29 @@ export async function resetClientStudyState(page: Page) {
   });
 }
 
+/** Turns on the landing page's opt-in Tutorials and Tests sections (hidden by default) before the page loads. */
+export async function showOptionalLandingSections(page: Page) {
+  await page.addInitScript(() => {
+    window.localStorage.setItem('revisit-landing-show-tutorials', 'true');
+    window.localStorage.setItem('revisit-landing-show-tests', 'true');
+  });
+}
+
 export async function openStudyFromLanding(
   page: Page,
   sectionLabel: string,
   cardTitle: StudyTitleMatcher | StudyTitleMatcher[],
 ) {
+  await showOptionalLandingSections(page);
   await page.goto('/');
 
   const matchers = Array.isArray(cardTitle) ? cardTitle : [cardTitle];
-  const section = page.getByLabel(sectionLabel);
-  if (!(await section.isVisible().catch(() => false))) {
-    await page.getByRole('tab', { name: sectionLabel, exact: true }).click();
-  }
+  // Each landing-page tab is a labeled section; all of them are on the page at once.
+  const section = page.getByRole('region', { name: sectionLabel, exact: true });
   await expect(section).toBeVisible();
 
   for (const matcher of matchers) {
-    const studyCard = section.locator('div').filter({ hasText: matcher }).first();
+    const studyCard = section.locator('.mantine-Card-root').filter({ hasText: matcher }).first();
     if (await studyCard.isVisible().catch(() => false)) {
       await studyCard.getByText('Go to Study').click();
       return;

@@ -3,15 +3,10 @@
   "studyMetadata": {
     "title": "Svelte with Trrack library",
     "version": "pilot",
-    "authors": [
-      "The reVISit Team"
-    ],
+    "authors": ["The reVISit Team"],
     "date": "2026-06-10",
-    "description": "An example study that implements Trrack provenance tracking in a Svelte website stimulus.",
-    "organizations": [
-      "University of Utah",
-      "WPI"
-    ]
+    "description": "An example study that implements Trrack provenance tracking in a Svelte website stimulus. Learn more about [provenance tracking](https://revisit.dev/docs/designing-studies/provenance-tracking/) in the docs.",
+    "organizations": ["University of Utah", "WPI"]
   },
   "uiConfig": {
     "contactEmail": "contact@revisit.dev",
@@ -50,9 +45,6 @@
   },
   "sequence": {
     "order": "fixed",
-    "components": [
-      "introduction",
-      "countDots"
-    ]
+    "components": ["introduction", "countDots"]
   }
 }

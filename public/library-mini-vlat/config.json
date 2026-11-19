@@ -7,11 +7,12 @@
       "The reVISit Team"
     ],
     "date": "2026-02-23",
-    "description": "Example study using the mini-vlat library.",
+    "description": "Example study using the mini-vlat library. See the [mini-vlat library docs](https://revisit.dev/docs/libraries/mini-vlat/) and how to use [plugin libraries](https://revisit.dev/docs/designing-studies/plugin-libraries/).",
     "organizations": [
       "University of Utah",
       "WPI"
-    ]
+    ],
+    "thumbnail": "library-mini-vlat/assets/thumbnail.png"
   },
   "uiConfig": {
     "contactEmail": "contact@revisit.dev",

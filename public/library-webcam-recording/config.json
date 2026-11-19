@@ -7,11 +7,12 @@
       "The reVISit Team"
     ],
     "date": "2026-08-24",
-    "description": "Example study using the webcam-recording library.",
+    "description": "Example study using the webcam-recording library. See the [webcam-recording library docs](https://revisit.dev/docs/libraries/webcam-recording/) and how to use [plugin libraries](https://revisit.dev/docs/designing-studies/plugin-libraries/).",
     "organizations": [
       "University of Utah",
       "WPI"
-    ]
+    ],
+    "thumbnail": "library-webcam-recording/assets/thumbnail.png"
   },
   "uiConfig": {
     "contactEmail": "contact@revisit.dev",

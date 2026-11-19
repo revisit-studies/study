@@ -150,51 +150,6 @@ for (const demo of demos) {
   });
 }
 
-test('restoration warnings require the explicit Preview entry', async ({ page }) => {
-  const config = {
-    ...reactConfig,
-    components: {
-      introduction: reactConfig.components.introduction,
-      legacy: {
-        type: 'react-component',
-        path: 'demo-dsf-study/assets/DataSerializationTask.tsx',
-        parameters: {
-          dataContext: 'config', format: 'JSON', taskType: 'authoring', taskId: 'legacy',
-        },
-        response: [],
-      },
-      review: {
-        type: 'questionnaire', instruction: 'Review your response', previousButton: true, response: [],
-      },
-    },
-    sequence: { order: 'fixed', components: ['introduction', 'legacy', 'review'] },
-  };
-  await page.route('**/demo-react-trrack/config.json', (route) => route.fulfill({ json: config }));
-  await resetClientStudyState(page);
-  await page.getByRole('tab', { name: 'Demo Studies', exact: true }).click();
-  await page.locator('a[href="/demo-react-trrack?preview=true"]').click();
-  await nextClick(page);
-  const warning = page.getByRole('alert').filter({ hasText: 'has not registered state restoration' });
-  await expect(warning).toHaveCount(0);
-  await page.getByRole('textbox', { name: 'JSON authoring editor' }).fill('{"saved":true}');
-  await page.getByRole('button', { name: 'Record task response', exact: true }).click();
-  await nextClick(page);
-  await page.getByRole('button', { name: 'Previous', exact: true }).click();
-  await expect(warning).toBeVisible();
-  const path = new URL(page.url()).pathname;
-
-  // A normal participant link stays quiet, even in the same Preview session.
-  await page.goto(path);
-  await expect(page.getByRole('textbox', { name: 'JSON authoring editor' })).toBeVisible();
-  await expect(warning).toHaveCount(0);
-
-  // Merely typing the Preview parameter does not establish a Preview session.
-  await page.evaluate(() => sessionStorage.removeItem('revisit-preview:demo-react-trrack'));
-  await page.goto(`${path}?preview=true`);
-  await expect(page.getByRole('textbox', { name: 'JSON authoring editor' })).toBeVisible();
-  await expect(warning).toHaveCount(0);
-});
-
 for (const demo of demos.filter((candidate) => candidate.kind === 'website')) {
   test(`${demo.id} restores legacy answers when the saved graph is absent`, async ({ page }) => {
     await page.route(`**/${demo.id}/config.json`, (route) => route.fulfill({

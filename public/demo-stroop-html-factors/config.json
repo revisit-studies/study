@@ -5,7 +5,7 @@
     "version": "pilot",
     "authors": ["The reVISit Team"],
     "date": "2026-08-20",
-    "description": "An HTML Stroop test that crosses five color words with two congruence levels to generate 10 trials.",
+    "description": "An HTML Stroop test that crosses five color words with two congruence levels to generate 10 trials. Learn more about [factors](https://revisit.dev/docs/designing-studies/factors/) and [HTML stimuli](https://revisit.dev/docs/designing-studies/html-stimulus/) in the docs.",
     "organizations": ["University of Utah", "WPI", "University of Toronto"]
   },
   "uiConfig": {

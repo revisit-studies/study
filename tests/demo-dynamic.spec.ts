@@ -31,7 +31,7 @@ test('Previous follows the assigned sequence after between-subject filtering', a
     await route.fulfill({ response, json: config });
   });
   await resetClientStudyState(page);
-  await openStudyFromLanding(page, 'Demo Studies', 'Dynamic Blocks');
+  await openStudyFromLanding(page, 'Snippets', 'Dynamic Blocks');
   await nextClick(page);
   await expect(page.getByText(/^Assigned trial [AB]$/)).toBeVisible();
   await nextClick(page);
@@ -57,7 +57,7 @@ test('Previous follows the assigned sequence after between-subject filtering', a
 test('Test dynamic block', async ({ page }) => {
   const trialLen = 10;
   await resetClientStudyState(page);
-  await openStudyFromLanding(page, 'Demo Studies', 'Dynamic Blocks');
+  await openStudyFromLanding(page, 'Snippets', 'Dynamic Blocks');
 
   // Check for introduction page
   const introText = page.getByText(/sample study.*dynamic blocks/i);
@@ -112,7 +112,7 @@ test('Test dynamic block', async ({ page }) => {
 
 test('nextOnEnter shows feedback once in the correct response location', async ({ page }) => {
   await resetClientStudyState(page);
-  await openStudyFromLanding(page, 'Demo Studies', 'Dynamic Blocks');
+  await openStudyFromLanding(page, 'Snippets', 'Dynamic Blocks');
 
   const introText = page.getByText(/sample study.*dynamic blocks/i);
   await expect(introText).toBeVisible({});

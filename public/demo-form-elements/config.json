@@ -7,11 +7,12 @@
       "The reVISit Team"
     ],
     "date": "2026-02-23",
-    "description": "A demo of form elements in reVISit.",
+    "description": "A demo of form elements in reVISit. Learn more about [forms and responses](https://revisit.dev/docs/designing-studies/forms/) in the docs.",
     "organizations": [
       "University of Utah",
       "WPI"
-    ]
+    ],
+    "thumbnail": "demo-form-elements/assets/thumbnail.png"
   },
   "uiConfig": {
     "colorMode": "userPreference",

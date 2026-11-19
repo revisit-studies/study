@@ -7,11 +7,12 @@
       "The reVISit Team"
     ],
     "date": "2026-02-23",
-    "description": "Example study using the graph-literacy-scale library.",
+    "description": "Example study using the graph-literacy-scale library. See the [graph-literacy-scale library docs](https://revisit.dev/docs/libraries/graph-literacy-scale/) and how to use [plugin libraries](https://revisit.dev/docs/designing-studies/plugin-libraries/).",
     "organizations": [
       "University of Utah",
       "WPI"
-    ]
+    ],
+    "thumbnail": "library-graph-literacy-scale/assets/thumbnail.png"
   },
   "uiConfig": {
     "contactEmail": "contact@revisit.dev",

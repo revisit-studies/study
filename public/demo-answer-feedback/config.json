@@ -7,11 +7,12 @@
       "The reVISit Team"
     ],
     "date": "2026-10-06",
-    "description": "Try correct and incorrect answers with numeric ranges, alternative answers, selection sets, custom feedback, and hints for each attempt.",
+    "description": "Try correct and incorrect answers with numeric ranges, alternative answers, selection sets, custom feedback, and hints for each attempt. Learn more about [correct answers and training](https://revisit.dev/docs/designing-studies/answers-trainings/) in the docs.",
     "organizations": [
       "University of Utah",
       "WPI"
-    ]
+    ],
+    "thumbnail": "demo-answer-feedback/assets/thumbnail.png"
   },
   "uiConfig": {
     "contactEmail": "contact@revisit.dev",

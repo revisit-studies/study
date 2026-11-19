@@ -1,5 +1,5 @@
 import {
-  ComponentType, Suspense, useCallback, useEffect, useMemo, useState,
+  ComponentType, Suspense, useCallback, useMemo, useState,
 } from 'react';
 import { useGlobalStore, useGlobalStoreUpdaterRegistration } from '../store/hooks/useGlobalStore';
 import { ParticipantData, ReactComponent } from '../parser/types';
@@ -14,7 +14,6 @@ import { ErrorBoundary } from './ErrorBoundary';
 import { useTrialProvenance } from '../store/hooks/useTrialProvenance';
 import { StudyStateContext } from '../store/hooks/useStudyState';
 import { RestorationError } from '../components/interface/RestorationError';
-import { RestorationWarning } from '../components/interface/RestorationWarning';
 import { responseValueKeys } from '../utils/responseVisibility';
 import { compileTemplate } from '../utils/handlebars';
 import { useTemplateAnswerContext } from '../store/hooks/useTemplateAnswerContext';
@@ -40,18 +39,12 @@ export function ReactComponentController({ currentConfig, provState, answers }: 
   const provenance = useTrialProvenance('stimulus');
   const retainedValues = useStoreSelector((state) => state.trialValidation[identifier]?.stimulus.values);
   const [restoredAnswers] = useState(() => ({ ...answers[identifier]?.answer, ...retainedValues }));
-  const [registrations, setRegistrations] = useState({ state: 0, stateless: 0, graph: 0 });
   const [restoreAttempt, setRestoreAttempt] = useState(0);
-  const [settled, setSettled] = useState(false);
+  // Registration is part of the study-state hook contract but no longer drives any UI.
   const stateContext = useMemo(() => ({
     answers: restoredAnswers,
-    register: (kind: 'state' | 'stateless' | 'graph') => {
-      setRegistrations((current) => ({ ...current, [kind]: current[kind] + 1 }));
-      return () => setRegistrations((current) => ({ ...current, [kind]: current[kind] - 1 }));
-    },
+    register: () => () => {},
   }), [restoredAnswers]);
-  const registerGraph = useCallback(() => stateContext.register('graph'), [stateContext]);
-  useEffect(() => { setSettled(true); }, []);
   const hostResponseKeys = new Set((currentConfig.response ?? [])
     .filter((response) => response.type !== 'reactive').flatMap(responseValueKeys));
   const hasSavedData = !!provenance || Object.keys(stateContext.answers).some((key) => !hostResponseKeys.has(key));
@@ -101,10 +94,6 @@ export function ReactComponentController({ currentConfig, provState, answers }: 
 
   return (
     <Suspense fallback={<div>Loading...</div>}>
-      <RestorationWarning
-        component={identifier}
-        visible={settled && hasSavedData && registrations.state === 0 && !(registrations.stateless > 0 && (!provenance || registrations.graph > 0))}
-      />
       {StimulusComponent
         ? (
           <ErrorBoundary
@@ -118,7 +107,6 @@ export function ReactComponentController({ currentConfig, provState, answers }: 
                 key={identifier}
                 onProvenanceChange={onProvenanceChange}
                 provenance={provenance}
-                onGraphReady={registerGraph}
               >
                 {(useTrrack) => (
                   <StimulusComponent

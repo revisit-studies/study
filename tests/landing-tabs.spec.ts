@@ -19,7 +19,7 @@ test('resumes the saved participant after launching a different study and return
   expect(participantId).toBeTruthy();
 
   await page.goto('/');
-  const cards = page.getByRole('tabpanel', { name: 'Studies', exact: true }).locator('.mantine-Card-root');
+  const cards = page.getByRole('region', { name: 'Studies', exact: true }).locator('.mantine-Card-root');
   await cards.filter({ hasText: 'A tutorial that you will build with us' }).getByRole('button', { name: 'Go to Study', exact: true }).click();
   await expect(page).toHaveURL(/\/tutorial\//);
   await expect(page.getByTestId('app-aside')).toBeVisible();
@@ -35,7 +35,7 @@ test('resumes the saved participant after launching a different study and return
   expect(Object.keys(assignments ?? {})).toEqual([participantId]);
 });
 
-test('uses configured tabs for grouping, keyboard navigation, and study buttons', async ({ page }) => {
+test('shows configured tabs as sections with side navigation and study buttons', async ({ page }) => {
   const customLabel = 'Demo Studies';
   const description = 'Browse the **selected studies** or read the [study guide](https://revisit.dev/docs/).';
   await page.route('**/global.json', (route) => route.fulfill({
@@ -55,38 +55,36 @@ test('uses configured tabs for grouping, keyboard navigation, and study buttons'
       },
     },
   }));
+  await page.setViewportSize({ width: 1400, height: 700 });
+  await page.goto('/?tab=Studies');
 
-  await page.goto('/?tab=Previous%20name');
+  // Every tab with visible studies is a section, in configured order; empty tabs are skipped.
+  await expect(page.getByRole('heading', { level: 3 })).toHaveText(['Images', customLabel, 'Studies']);
+  await expect(page.getByRole('region', { name: 'Images', exact: true })).toContainText('Images as Stimuli');
+  await expect(page.getByRole('region', { name: 'Studies', exact: true })).toContainText('Vega Stimuli Demo');
+  // A legacy tab link scrolls to that section.
+  await expect(page.getByRole('heading', { level: 3, name: 'Studies', exact: true })).toBeInViewport();
 
-  const firstTab = page.getByRole('tab', { name: 'Images', exact: true });
-  const customTab = page.getByRole('tab', { name: customLabel, exact: true });
-  await expect(page.getByRole('tab')).toHaveText(['Images', customLabel, 'Studies']);
-  await expect(firstTab).toHaveAttribute('aria-selected', 'true');
-  await expect(page.getByRole('tabpanel', { name: 'Images', exact: true })).toContainText('Images as Stimuli');
-
-  await firstTab.focus();
-  await firstTab.press('ArrowRight');
-  await expect(customTab).toBeFocused();
-  await expect(customTab).toHaveAttribute('aria-selected', 'true');
-  await expect(page).toHaveURL((url) => url.searchParams.get('tab') === customLabel);
-
+  const nav = page.getByRole('navigation', { name: 'Study navigation' });
+  await expect(nav.getByRole('link')).toHaveText(['Images', customLabel, 'Studies']);
+  await nav.getByRole('link', { name: 'Images', exact: true }).click();
+  await expect(page.getByRole('heading', { level: 3, name: 'Images', exact: true })).toBeInViewport();
+  // The section is recorded as an anchor, so a refresh returns to it.
+  await expect(page).toHaveURL(/#images$/);
+  await nav.getByRole('link', { name: 'Studies', exact: true }).click();
+  await expect(page).toHaveURL(/#studies$/);
   await page.reload();
-  const customPanel = page.getByRole('tabpanel', { name: customLabel, exact: true });
-  await expect(customPanel.locator('strong')).toHaveText('selected studies');
-  await expect(customPanel.getByRole('link', { name: 'study guide', exact: true })).toHaveAttribute('href', 'https://revisit.dev/docs/');
-  const studyButtons = customPanel.getByRole('button', { name: 'Go to Study', exact: true });
+  await expect(page.getByRole('heading', { level: 3, name: 'Studies', exact: true })).toBeInViewport();
+
+  const customSection = page.getByRole('region', { name: customLabel, exact: true });
+  await expect(customSection.locator('strong')).toHaveText('selected studies');
+  await expect(customSection.getByRole('link', { name: 'study guide', exact: true })).toHaveAttribute('href', 'https://revisit.dev/docs/');
+  const studyButtons = customSection.getByRole('button', { name: 'Go to Study', exact: true });
   await expect(studyButtons).toHaveCount(2);
   await studyButtons.nth(1).click();
   await expect(page).toHaveURL(/\/tutorial\//);
 
-  await page.goto('/?tab=Demo%20Studies');
-
-  await page.getByRole('tab', { name: 'Studies', exact: true }).click();
-  await expect(page.getByRole('tabpanel', { name: 'Studies', exact: true })).toContainText('Vega Stimuli Demo');
-
-  await page.goto('/?tab=Empty');
-  await expect(firstTab).toHaveAttribute('aria-selected', 'true');
-  await customTab.click();
+  await page.goto('/');
   await studyButtons.first().click();
   await expect(page).toHaveURL(/\/demo-html\//);
   await expect(page.getByText(/example study.*embed html elements/i)).toBeVisible();
@@ -106,9 +104,10 @@ test('groups existing configurations without tab settings under Studies', async 
 
   await page.goto('/?tab=Demos');
 
-  await expect(page.getByRole('tab')).toHaveText(['Studies']);
-  await expect(page.getByRole('tab', { name: 'Studies', exact: true })).toHaveAttribute('aria-selected', 'true');
-  const panel = page.getByRole('tabpanel', { name: 'Studies', exact: true });
-  await expect(panel.getByText('HTML as a Stimulus', { exact: true })).toBeVisible();
-  await expect(panel.getByText('A tutorial that you will build with us', { exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 3 })).toHaveText(['Studies']);
+  const section = page.getByRole('region', { name: 'Studies', exact: true });
+  await expect(section.getByText('HTML as a Stimulus', { exact: true })).toBeVisible();
+  await expect(section.getByText('A tutorial that you will build with us', { exact: true })).toBeVisible();
+  // One section needs no navigation.
+  await expect(page.getByRole('navigation', { name: 'Study navigation' })).toHaveCount(0);
 });

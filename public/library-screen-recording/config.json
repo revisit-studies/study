@@ -7,11 +7,12 @@
       "The reVISit Team"
     ],
     "date": "2026-02-23",
-    "description": "Example study using the screen-recording library with screen and webcam capture.",
+    "description": "Example study using the screen-recording library with screen and webcam capture. See the [screen-recording library docs](https://revisit.dev/docs/libraries/screen-recording/) and how to use [plugin libraries](https://revisit.dev/docs/designing-studies/plugin-libraries/).",
     "organizations": [
       "University of Utah",
       "WPI"
-    ]
+    ],
+    "thumbnail": "library-screen-recording/assets/thumbnail.png"
   },
   "uiConfig": {
     "contactEmail": "contact@revisit.dev",

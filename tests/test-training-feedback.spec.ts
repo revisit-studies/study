@@ -44,7 +44,7 @@ async function selectSimpleDropdownIncorrectly(page: Page) {
 
 test('allowFailedTraining=true enables Next after max failed attempts', async ({ page }) => {
   await resetClientStudyState(page);
-  await openStudyFromLanding(page, 'Demo Studies', 'How To Do Training Demo');
+  await openStudyFromLanding(page, 'Snippets', 'How To Do Training Demo');
 
   // Move from intro to first training component.
   await nextClick(page);
@@ -70,7 +70,7 @@ test('allowFailedTraining=true enables Next after max failed attempts', async ({
 
 test('Check Answer reveals unanswered validation without consuming training attempts', async ({ page }) => {
   await resetClientStudyState(page);
-  await openStudyFromLanding(page, 'Demo Studies', 'How To Do Training Demo');
+  await openStudyFromLanding(page, 'Snippets', 'How To Do Training Demo');
 
   // Move from intro to first training component.
   await nextClick(page);
@@ -94,8 +94,7 @@ test('Check Answer reveals unanswered validation without consuming training atte
 async function goToClevelandTraining(page: Page) {
   await resetClientStudyState(page);
   await page.goto('/');
-  await page.getByRole('tab', { name: 'Example Studies' }).click();
-  await page.getByLabel('Example Studies').locator('div').filter({ hasText: 'Dynamic React.js Stimuli: A Graphical Perception Experiment' })
+  await page.getByLabel('Example Studies').locator('.mantine-Card-root').filter({ hasText: 'Dynamic React.js Stimuli: A Graphical Perception Experiment' })
     .getByText('Go to Study')
     .click();
   await goToTraining(page);

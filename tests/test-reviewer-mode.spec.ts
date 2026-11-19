@@ -12,7 +12,7 @@ test('test', async ({ page }) => {
   });
 
   await resetClientStudyState(page);
-  await openStudyFromLanding(page, 'Demo Studies', 'HTML as a Stimulus');
+  await openStudyFromLanding(page, 'Snippets', 'HTML as a Stimulus');
 
   const browseComponentsTab = page.getByRole('tab', { name: 'Browse Components' });
   await expect(browseComponentsTab).toBeVisible();

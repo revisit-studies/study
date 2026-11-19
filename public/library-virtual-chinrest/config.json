@@ -8,8 +8,9 @@
       "Sheng Long"
     ],
     "date": "2026-02-23",
-    "description": "Example study using the virtual chinrest calibration library.",
-    "organizations": []
+    "description": "Example study using the virtual chinrest calibration library. See the [virtual-chinrest library docs](https://revisit.dev/docs/libraries/virtual-chinrest/) and how to use [plugin libraries](https://revisit.dev/docs/designing-studies/plugin-libraries/).",
+    "organizations": [],
+    "thumbnail": "library-virtual-chinrest/assets/thumbnail.png"
   },
   "uiConfig": {
     "contactEmail": "contact@revisit.dev",

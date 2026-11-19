@@ -7,11 +7,12 @@
       "The reVISit Team"
     ],
     "date": "2026-07-27",
-    "description": "A demo of Vega stimuli.",
+    "description": "A demo of Vega stimuli. Learn more about [Vega stimuli](https://revisit.dev/docs/designing-studies/vega-stimulus/) in the docs.",
     "organizations": [
       "University of Utah",
       "WPI"
-    ]
+    ],
+    "thumbnail": "demo-vega/assets/thumbnail.png"
   },
   "uiConfig": {
     "contactEmail": "contact@revisit.dev",

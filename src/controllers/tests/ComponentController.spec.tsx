@@ -51,8 +51,6 @@ let mockStoreActions = {
 
 vi.mock('../../components/interface/RestorationError', () => ({ RestorationError: () => <div>Restoration error</div> }));
 
-vi.mock('../../components/interface/RestorationWarning', () => ({ RestorationWarning: () => null }));
-
 // ── mocks ────────────────────────────────────────────────────────────────────
 
 // Stimulus discovery imports every editor; these host tests do not exercise the drawing engine.
@@ -522,14 +520,19 @@ describe('VideoController', () => {
   test('clears force-completion validation when a video fails to load', async () => {
     vi.mocked(getStaticAssetByPath).mockResolvedValueOnce('video-data');
     const { container } = render(<VideoController currentConfig={{ ...videoConfig, forceCompletion: true }} />);
-    await waitFor(() => expect(container.querySelector('video')).toBeTruthy());
-    expect(mockStoreActions.updateResponseBlockValidation).toHaveBeenLastCalledWith(expect.objectContaining({ status: false }));
+    // The validation effect runs after the video commits, so wait for both together.
+    await waitFor(() => {
+      expect(container.querySelector('video')).toBeTruthy();
+      expect(mockStoreActions.updateResponseBlockValidation).toHaveBeenLastCalledWith(expect.objectContaining({ status: false }));
+    });
 
     fireEvent.error(container.querySelector('video')!);
 
-    await waitFor(() => expect(container.textContent).toContain('ResourceNotFound'));
-    expect(mockStoreActions.setAssetStatus).toHaveBeenLastCalledWith({ identifier: 'trial1_0', status: 'missing' });
-    expect(mockStoreActions.updateResponseBlockValidation).toHaveBeenLastCalledWith(expect.objectContaining({ status: true, values: {} }));
+    await waitFor(() => {
+      expect(container.textContent).toContain('ResourceNotFound');
+      expect(mockStoreActions.setAssetStatus).toHaveBeenLastCalledWith({ identifier: 'trial1_0', status: 'missing' });
+      expect(mockStoreActions.updateResponseBlockValidation).toHaveBeenLastCalledWith(expect.objectContaining({ status: true, values: {} }));
+    });
   });
 
   test('clears force-completion validation when a video file is missing', async () => {

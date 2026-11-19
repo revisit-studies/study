@@ -7,11 +7,12 @@
       "The reVISit Team"
     ],
     "date": "2026-09-22",
-    "description": "A tour of every stimulus and response type in dark mode, including sidebar controls, charts, media, custom responses, and HTML theme overrides.",
+    "description": "A tour of every stimulus and response type in dark mode, including sidebar controls, charts, media, custom responses, and HTML theme overrides. Learn more about [styling](https://revisit.dev/docs/designing-studies/applying-style/) in the docs.",
     "organizations": [
       "University of Utah",
       "WPI"
-    ]
+    ],
+    "thumbnail": "demo-dark-mode/assets/thumbnail.png"
   },
   "uiConfig": {
     "colorMode": "dark",

@@ -9,7 +9,7 @@ import {
 
 test('the answer feedback demo grades responses and advances through each feedback type', async ({ page }) => {
   await resetClientStudyState(page);
-  await openStudyFromLanding(page, 'Demo Studies', 'Answer Validation and Feedback Demo');
+  await openStudyFromLanding(page, 'Snippets', 'Answer Validation and Feedback Demo');
   await nextClick(page);
 
   // Exact answers and lists: show incorrect feedback, then correct the responses.

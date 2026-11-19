@@ -8,7 +8,7 @@ import {
 
 test('Test website component with reactive response', async ({ page }) => {
   await resetClientStudyState(page);
-  await openStudyFromLanding(page, 'Demo Studies', 'Passing Data from reVISit to HTML and back');
+  await openStudyFromLanding(page, 'Snippets', 'Passing Data from reVISit to HTML and back');
 
   await expect(page.getByText(/example study.*embed html elements/i)).toBeVisible();
 

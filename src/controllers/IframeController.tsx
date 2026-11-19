@@ -20,7 +20,6 @@ import { PREFIX as BASE_PREFIX } from '../utils/Prefix';
 import { ResourceNotFound } from '../ResourceNotFound';
 import { RestorationError } from '../components/interface/RestorationError';
 import { useTrialProvenance } from '../store/hooks/useTrialProvenance';
-import { RestorationWarning } from '../components/interface/RestorationWarning';
 import { responseValueKeys } from '../utils/responseVisibility';
 
 const PREFIX = '@REVISIT_COMMS';
@@ -59,7 +58,6 @@ export function IframeController({ currentConfig, provState, answers }: { curren
   const [hasReplayStarted, setHasReplayStarted] = useState(false);
   const stimulusValidation = useStoreSelector((state) => state.trialValidation[identifier]?.stimulus);
   const [restoredAnswers] = useState(() => ({ ...answers[identifier]?.answer, ...stimulusValidation?.values }));
-  const hasSavedData = !!provenance || Object.keys(restoredAnswers).some((key) => !hostResponseKeys.has(key));
 
   useEffect(() => {
     if (replay && (replay.isPlaying || replay.seekTime !== initialReplayTime.current)) {
@@ -340,7 +338,6 @@ export function IframeController({ currentConfig, provState, answers }: { curren
 
   return (
     <>
-      <RestorationWarning component={identifier} website visible={hasSavedData && resumeStatus === 'unsupported'} />
       {resumeStatus === 'error' && (
         <RestorationError onRetry={() => {
           resumeStatusRef.current = 'pending';

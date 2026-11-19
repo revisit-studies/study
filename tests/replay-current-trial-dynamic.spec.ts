@@ -63,7 +63,7 @@ function getStudyRouteSegments(urlString: string) {
 
 test('preserves dynamic child route from the pathname', async ({ page }) => {
   await resetClientStudyState(page);
-  await openStudyFromLanding(page, 'Demo Studies', 'Dynamic Blocks');
+  await openStudyFromLanding(page, 'Snippets', 'Dynamic Blocks');
 
   await expect(page.getByText(/sample study.*dynamic blocks/i)).toBeVisible();
   await nextClick(page);
@@ -113,7 +113,7 @@ test('preserves dynamic child route from the pathname', async ({ page }) => {
 
 test('preserves non-dynamic routes when navigating directly', async ({ page }) => {
   await resetClientStudyState(page);
-  await openStudyFromLanding(page, 'Demo Studies', 'Dynamic Blocks');
+  await openStudyFromLanding(page, 'Snippets', 'Dynamic Blocks');
 
   await expect(page.getByText(/sample study.*dynamic blocks/i)).toBeVisible();
 

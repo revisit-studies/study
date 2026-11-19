@@ -76,7 +76,7 @@ async function readRecordedReplay(page: Page, studyId: string): Promise<Recorded
 for (const demo of demos) {
   test(`${demo.title} initializes its answer and enforces dot limits`, async ({ page }) => {
     await resetClientStudyState(page);
-    await openStudyFromLanding(page, 'Demo Studies', demo.title);
+    await openStudyFromLanding(page, 'Snippets', demo.title);
     await nextClick(page);
 
     const frame = page.frameLocator('#root iframe');
@@ -119,7 +119,7 @@ for (const demo of demos) {
 
   test(`${demo.title} replays Undo and Redo in recorded order`, async ({ page }) => {
     await resetClientStudyState(page);
-    await openStudyFromLanding(page, 'Demo Studies', demo.title);
+    await openStudyFromLanding(page, 'Snippets', demo.title);
     await nextClick(page);
 
     const participantFrame = page.frameLocator('#root iframe');

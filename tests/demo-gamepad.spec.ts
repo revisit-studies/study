@@ -179,7 +179,7 @@ test.describe('Gamepad stimulus with provenance and screen recording', () => {
   });
 
   test('plays a controller-driven trial and records hits and misses', async ({ page }) => {
-    await openStudyFromLanding(page, 'Demo Studies', 'Gamepad Input with Provenance');
+    await openStudyFromLanding(page, 'Playground', 'Gamepad Input with Provenance');
 
     await expect(page.getByText('Gamepad Input with Provenance').first()).toBeVisible({ timeout: 15000 });
     await nextClick(page);
@@ -224,7 +224,7 @@ test.describe('Gamepad stimulus with provenance and screen recording', () => {
   });
 
   test('can leave the trial without connecting a controller', async ({ page }) => {
-    await openStudyFromLanding(page, 'Demo Studies', 'Gamepad Input with Provenance');
+    await openStudyFromLanding(page, 'Playground', 'Gamepad Input with Provenance');
     await nextClick(page);
     await page.getByRole('button', { name: 'Start Recording' }).click();
     const continueButton = page.getByRole('button', { name: 'Continue', exact: true });
@@ -239,7 +239,7 @@ test.describe('Gamepad stimulus with provenance and screen recording', () => {
   });
 
   test('stores gamepad telemetry and button-colored provenance', async ({ page }) => {
-    await openStudyFromLanding(page, 'Demo Studies', 'Gamepad Input with Provenance');
+    await openStudyFromLanding(page, 'Playground', 'Gamepad Input with Provenance');
     await nextClick(page);
 
     await page.getByRole('button', { name: 'Start Recording' }).click();
@@ -293,7 +293,7 @@ test.describe('Gamepad stimulus with provenance and screen recording', () => {
   test('captures nothing for a study that has not opted in', async ({ page }) => {
     // demo-html sets no captureGamepad, so an attached controller must stay invisible
     // to it -- the polling loop should not even run.
-    await openStudyFromLanding(page, 'Demo Studies', 'HTML as a Stimulus');
+    await openStudyFromLanding(page, 'Snippets', 'HTML as a Stimulus');
     await nextClick(page);
 
     await expect(page.getByText('How many bars have a value greater than 1?')).toBeVisible({ timeout: 15000 });

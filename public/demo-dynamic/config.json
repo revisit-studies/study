@@ -7,11 +7,12 @@
       "The reVISit Team"
     ],
     "date": "2026-02-23",
-    "description": "A demo of how to use dynamic blocks.",
+    "description": "A demo of how to use dynamic blocks. Learn more about [dynamic blocks](https://revisit.dev/docs/designing-studies/sequences/dynamic-blocks/) in the docs.",
     "organizations": [
       "University of Utah",
       "WPI"
-    ]
+    ],
+    "thumbnail": "demo-dynamic/assets/thumbnail.png"
   },
   "uiConfig": {
     "contactEmail": "contact@revisit.dev",

@@ -51,12 +51,21 @@ export type GlobalStoreNumber = number | `{{globalVariables.${string}}}`;
 export interface GlobalConfig {
   /** A required json schema property. This should point to the GitHub link for the version of the schema you would like. See examples in the public folder for more information. */
   $schema: string;
+  /** An optional path to a Markdown file that explains what this set of studies is about. This should be a relative path from the public folder or an absolute URL. When provided, the document is shown on the left side of the landing page and the studies are shown as cards on the right. */
+  introductionPath?: string;
   /** Landing-page tabs in display order. Unassigned studies use the configured Studies tab, or a default Studies tab appended after configured tabs. If omitted or empty, all studies appear in Studies. */
   tabs?: {
     /** A unique, non-blank tab name. Study assignments and the tab URL parameter reference this exact label. */
     label: string;
     /** An optional Markdown description displayed above the studies in this tab. */
     description?: string;
+    /** Optional sections within this tab, in display order. When present, studies are shown under group headings with side navigation; studies without a group appear in a trailing "Other" group. */
+    groups?: {
+      /** A unique, non-blank group name within this tab. Study assignments reference this exact label. */
+      label: string;
+      /** An optional Markdown description displayed under the group heading. */
+      description?: string;
+    }[];
   }[];
   /** A required property that specifies the options for the configList property. */
   configs: {
@@ -68,6 +77,8 @@ export interface GlobalConfig {
       test?: boolean;
       /** The exact label of a configured tab. Unassigned studies appear in the default Studies tab. */
       tab?: string;
+      /** The exact label of a group defined on this study's tab. Ungrouped studies in a grouped tab appear in a trailing "Other" group. */
+      group?: string;
     };
   };
   /** A required property that is used to generate the list of available studies in the UI. This list is displayed on the landing page when running the app. */
@@ -108,6 +119,8 @@ export interface StudyMetadata {
   description: string;
   /** The organizations that are associated with your study. */
   organizations: string[];
+  /** An optional preview image of your study, shown at the top of its landing-page card. This should be a relative path from the public folder or an absolute URL. */
+  thumbnail?: string;
 }
 
 /**
@@ -2423,7 +2436,7 @@ export interface LibraryConfig {
   baseComponents?: BaseComponents;
 }
 
-export type ErrorWarningCategory = 'invalid-config' | 'invalid-library-config' | 'undefined-library' | 'undefined-base-component' | 'undefined-component' | 'sequence-validation' | 'skip-validation' | 'unused-component' | 'disabled-sidebar' | 'empty-sidebar' | 'default-contact-email' | 'default-firebase-config' | 'default-supabase-config';
+export type ErrorWarningCategory = 'invalid-config' | 'invalid-library-config' | 'undefined-library' | 'undefined-base-component' | 'undefined-component' | 'sequence-validation' | 'skip-validation' | 'unused-component' | 'disabled-sidebar' | 'empty-sidebar' | 'default-contact-email' | 'default-firebase-config' | 'default-supabase-config' | 'local-storage-deployment';
 
 /**
  * @ignore

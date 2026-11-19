@@ -14,7 +14,7 @@ test('Test website component with previous button', async ({ page }) => {
   });
 
   await resetClientStudyState(page);
-  await openStudyFromLanding(page, 'Demo Studies', 'HTML as a Stimulus');
+  await openStudyFromLanding(page, 'Snippets', 'HTML as a Stimulus');
 
   await expect(page.getByText(/example study.*embed html elements/i)).toBeVisible();
 

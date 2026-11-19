@@ -5,7 +5,6 @@ import {
 } from 'vitest';
 import { ReactComponentController } from '../ReactComponentController';
 import { makeStoredAnswer } from '../../tests/utils';
-import type { ReactComponent } from '../../parser/types';
 import type { StimulusParams } from '../../store/types';
 
 vi.mock('../../store/hooks/useGlobalStore', () => ({ useGlobalStore: () => ({ budget: 100 }), useGlobalStoreUpdaterRegistration: () => vi.fn() }));
@@ -13,7 +12,6 @@ vi.mock('../../public/demo-react-trrack/assets/DemoReactTrrack', () => ({
   default: ({ globalVariables }: { globalVariables?: StimulusParams<unknown>['globalVariables'] }) => <p>{`Budget: ${globalVariables?.budget}`}</p>,
 }));
 vi.mock('../../store/hooks/useTrialProvenance', () => ({ useTrialProvenance: () => undefined }));
-vi.mock('../../store/hooks/useDesignerPreview', () => ({ useDesignerPreview: () => true }));
 vi.mock('../../store/hooks/useIsAnalysis', () => ({ useIsAnalysis: () => false }));
 vi.mock('../../store/hooks/useStudyConfig', () => ({ useStudyConfig: () => ({ uiConfig: {} }) }));
 vi.mock('../../store/hooks/useTemplateAnswerContext', () => ({ useTemplateAnswerContext: () => ({}) }));
@@ -43,25 +41,4 @@ test('React content receives the globalVariables prop directly', async () => {
     </MantineProvider>,
   );
   expect(await screen.findByText('Budget: 100')).toBeDefined();
-});
-
-test.each(['reactive', 'shortText'] as const)('Preview distinguishes saved %s answers from host inputs', (type) => {
-  const config: ReactComponent = {
-    type: 'react-component',
-    path: 'demo-react-trrack/assets/DemoReactTrrack.tsx',
-    response: [{ id: 'answer', type, prompt: 'Answer' }],
-  };
-  render(
-    <MantineProvider>
-      <ReactComponentController
-        currentConfig={config}
-        answers={{ trial_0: makeStoredAnswer({ identifier: 'trial_0', answer: { answer: 'saved' } }) }}
-      />
-    </MantineProvider>,
-  );
-  if (type === 'reactive') {
-    expect(screen.getByRole('alert').textContent).toContain('has not registered state restoration');
-  } else {
-    expect(screen.queryByRole('alert')).toBeNull();
-  }
 });

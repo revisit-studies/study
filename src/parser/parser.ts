@@ -20,8 +20,11 @@ import {
   DEFAULT_FIREBASE_WARNING_MESSAGE,
   DEFAULT_SUPABASE_WARNING_ACTION,
   DEFAULT_SUPABASE_WARNING_MESSAGE,
+  LOCAL_STORAGE_WARNING_ACTION,
+  LOCAL_STORAGE_WARNING_MESSAGE,
   getCurrentHostname,
   shouldSuppressDefaultDeploymentWarnings,
+  shouldWarnForLocalStorage,
   shouldWarnForDefaultFirebaseConfig,
   shouldWarnForDefaultSupabaseConfig,
 } from '../utils/defaultStorageConfig';
@@ -66,20 +69,41 @@ function verifyGlobalConfig(data: GlobalConfig) {
   });
 
   const labels = new Set<string>();
-  data.tabs?.forEach(({ label }, index) => {
+  const groupsByTab = new Map<string, Set<string>>();
+  data.tabs?.forEach(({ label, groups }, index) => {
     if (!label.trim()) {
       errors.push({ message: 'Tab label must not be blank', instancePath: `/tabs/${index}/label` });
     } else if (labels.has(label)) {
       errors.push({ message: `Tab label "${label}" is duplicated; tab labels must be unique`, instancePath: `/tabs/${index}/label` });
     }
     labels.add(label);
+
+    const groupLabels = new Set<string>();
+    groups?.forEach((group, groupIndex) => {
+      if (!group.label.trim()) {
+        errors.push({ message: 'Group label must not be blank', instancePath: `/tabs/${index}/groups/${groupIndex}/label` });
+      } else if (groupLabels.has(group.label)) {
+        errors.push({ message: `Group label "${group.label}" is duplicated in tab "${label}"; group labels must be unique within a tab`, instancePath: `/tabs/${index}/groups/${groupIndex}/label` });
+      }
+      groupLabels.add(group.label);
+    });
+    groupsByTab.set(label, groupLabels);
   });
 
   Object.entries(data.configs).forEach(([configName, config]) => {
+    const configPath = `/configs/${configName.replace(/~/g, '~0').replace(/\//g, '~1')}`;
     if (config.tab !== undefined && !labels.has(config.tab)) {
       errors.push({
         message: `Config "${configName}" references undefined tab "${config.tab}"; use a label from tabs or omit tab`,
-        instancePath: `/configs/${configName.replace(/~/g, '~0').replace(/\//g, '~1')}/tab`,
+        instancePath: `${configPath}/tab`,
+      });
+    }
+    // Studies without a tab land in the default Studies tab, which may itself define groups.
+    const tabLabel = config.tab ?? 'Studies';
+    if (config.group !== undefined && !groupsByTab.get(tabLabel)?.has(config.group)) {
+      errors.push({
+        message: `Config "${configName}" references undefined group "${config.group}" in tab "${tabLabel}"; use a label from that tab's groups or omit group`,
+        instancePath: `${configPath}/group`,
       });
     }
   });
@@ -567,6 +591,14 @@ function verifyStudyConfig(studyConfig: StudyConfig, importedLibrariesData: Reco
       instancePath: 'environment/VITE_FIREBASE_CONFIG',
       params: { action: DEFAULT_FIREBASE_WARNING_ACTION },
       category: 'default-firebase-config',
+    });
+  }
+  if (shouldWarnForLocalStorage({ hostname })) {
+    warnings.push({
+      message: LOCAL_STORAGE_WARNING_MESSAGE,
+      instancePath: 'environment/VITE_STORAGE_ENGINE',
+      params: { action: LOCAL_STORAGE_WARNING_ACTION },
+      category: 'local-storage-deployment',
     });
   }
   if (shouldWarnForDefaultSupabaseConfig({ hostname })) {

@@ -43,14 +43,13 @@ test('keeps landing visibility and data sharing independent while allowing direc
   await expect(showStudySwitch).toBeChecked();
   await expect(sharingSwitch).toBeChecked();
 
-  const landingCard = page.getByRole('tabpanel', { name: 'Demo Studies', exact: true }).locator('.mantine-Card-root');
+  const landingCard = page.getByRole('region', { name: 'Snippets', exact: true }).locator('.mantine-Card-root');
   const statusIcons = landingCard.locator('.tabler-icon-database, .tabler-icon-schema, .tabler-icon-schema-off, .tabler-icon-graph, .tabler-icon-graph-off');
   const expectPrivateLandingCard = async () => {
     await expect(landingCard.getByText('HTML as a Stimulus', { exact: true })).toBeVisible();
     await expect(landingCard.getByRole('button', { name: 'Go to Study', exact: true })).toBeVisible();
-    await expect(landingCard.getByText(/^Study Status:/)).toBeVisible();
-    await expect(landingCard.getByText(/^Activity:/)).toBeVisible();
-    await expect(landingCard.getByRole('button', { name: 'Analyze & Manage Study', exact: true })).toHaveCount(0);
+    await expect(landingCard.getByText(/^(Collecting Data|Ready to Collect Data|Data Collection Disabled)$/)).toBeVisible();
+    await expect(landingCard.getByRole('button', { name: 'Analyze & Manage', exact: true })).toHaveCount(0);
     await expect(landingCard.locator('.mantine-Badge-root')).toHaveCount(0);
     await expect(statusIcons).toHaveCount(3);
   };
@@ -101,8 +100,8 @@ test('keeps landing visibility and data sharing independent while allowing direc
   await page.reload();
   await expect(sharingSwitch).toBeChecked();
   await page.goto('/');
-  await expect(landingCard.getByText(/^Study Status:/)).toBeVisible();
-  await expect(landingCard.getByRole('button', { name: 'Analyze & Manage Study', exact: true })).toBeVisible();
+  await expect(landingCard.getByText(/^(Collecting Data|Ready to Collect Data|Data Collection Disabled)$/)).toBeVisible();
+  await expect(landingCard.getByRole('button', { name: 'Analyze & Manage', exact: true })).toBeVisible();
   await expect(landingCard.locator('.mantine-Badge-root')).toHaveCount(3);
   await expect(statusIcons).toHaveCount(3);
   await landingCard.getByRole('button', { name: 'Go to Study', exact: true }).click();

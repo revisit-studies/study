@@ -5,8 +5,9 @@
     "version": "1.0.0",
     "authors": ["The reVISit Team"],
     "date": "2026-10-15",
-    "description": "Example study using the drawing library to capture and replay sketches.",
-    "organizations": ["University of Utah", "WPI"]
+    "description": "Example study using the drawing library to capture and replay sketches. See the [drawing library docs](https://revisit.dev/docs/libraries/drawing/) and how to use [plugin libraries](https://revisit.dev/docs/designing-studies/plugin-libraries/).",
+    "organizations": ["University of Utah", "WPI"],
+    "thumbnail": "library-drawing/assets/thumbnail.png"
   },
   "uiConfig": {
     "contactEmail": "contact@revisit.dev",

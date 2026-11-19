@@ -5338,6 +5338,10 @@
           },
           "type": "array"
         },
+        "thumbnail": {
+          "description": "An optional preview image of your study, shown at the top of its landing-page card. This should be a relative path from the public folder or an absolute URL.",
+          "type": "string"
+        },
         "title": {
           "description": "The title of your study, shown on the landing page.",
           "type": "string"
