@@ -847,7 +847,8 @@ export function ConfigSwitcher({
     </AppShell.Main>
   ) : (
     <AppShell.Main>
-      <Container size={1440} px={0}>
+      {/* With neither an introduction nor navigation beside it, a narrower column keeps the cards centered. */}
+      <Container size={navEntries.length > 1 ? 1440 : 960} px={0}>
         {studies}
       </Container>
     </AppShell.Main>
