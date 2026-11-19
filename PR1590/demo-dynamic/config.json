@@ -1,0 +1,65 @@
+{
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v3.0.0/src/parser/StudyConfigSchema.json",
+  "studyMetadata": {
+    "title": "Dynamic Blocks",
+    "version": "pilot",
+    "authors": [
+      "The reVISit Team"
+    ],
+    "date": "2026-02-23",
+    "description": "A demo of how to use dynamic blocks. Learn more about [dynamic blocks](https://revisit.dev/docs/designing-studies/sequences/dynamic-blocks/) in the docs.",
+    "organizations": [
+      "University of Utah",
+      "WPI"
+    ],
+    "thumbnail": "demo-dynamic/assets/thumbnail.png"
+  },
+  "uiConfig": {
+    "contactEmail": "contact@revisit.dev",
+    "helpTextPath": "demo-dynamic/assets/introduction.md",
+    "logoPath": "revisitAssets/revisitLogoSquare.svg",
+    "withProgressBar": true,
+    "autoDownloadStudy": false,
+    "withSidebar": false,
+    "nextOnEnter": true
+  },
+  "components": {
+    "introduction": {
+      "type": "markdown",
+      "path": "demo-dynamic/assets/introduction.md",
+      "response": []
+    },
+    "HSLColorCodes": {
+      "type": "react-component",
+      "path": "demo-dynamic/assets/HSL.tsx",
+      "response": [
+        {
+          "id": "buttonResponse",
+          "type": "buttons",
+          "prompt": "Choose the square with the higher saturation.",
+          "location": "belowStimulus",
+          "options": [
+            "Left",
+            "Same",
+            "Right"
+          ]
+        }
+      ],
+      "correctAnswer": [],
+      "provideFeedback": true,
+      "allowFailedTraining": true,
+      "trainingAttempts": 2
+    }
+  },
+  "sequence": {
+    "order": "fixed",
+    "components": [
+      "introduction",
+      {
+        "id": "dynamicBlock",
+        "order": "dynamic",
+        "functionPath": "demo-dynamic/assets/dynamic.tsx"
+      }
+    ]
+  }
+}

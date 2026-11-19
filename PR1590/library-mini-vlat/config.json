@@ -1,0 +1,40 @@
+{
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v3.0.0/src/parser/StudyConfigSchema.json",
+  "studyMetadata": {
+    "title": "Mini-VLAT: A Short and Effective Measure of Visualization Literacy",
+    "version": "1.0.0",
+    "authors": [
+      "The reVISit Team"
+    ],
+    "date": "2026-02-23",
+    "description": "Example study using the mini-vlat library. See the [mini-vlat library docs](https://revisit.dev/docs/libraries/mini-vlat/) and how to use [plugin libraries](https://revisit.dev/docs/designing-studies/plugin-libraries/).",
+    "organizations": [
+      "University of Utah",
+      "WPI"
+    ],
+    "thumbnail": "library-mini-vlat/assets/thumbnail.png"
+  },
+  "uiConfig": {
+    "contactEmail": "contact@revisit.dev",
+    "logoPath": "revisitAssets/revisitLogoSquare.svg",
+    "withProgressBar": true,
+    "withSidebar": true
+  },
+  "importedLibraries": [
+    "mini-vlat"
+  ],
+  "components": {
+    "introduction": {
+      "type": "markdown",
+      "path": "library-mini-vlat/assets/mini-vlat.md",
+      "response": []
+    }
+  },
+  "sequence": {
+    "order": "fixed",
+    "components": [
+      "introduction",
+      "$mini-vlat.sequences.full"
+    ]
+  }
+}

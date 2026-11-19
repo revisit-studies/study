@@ -1,0 +1,1 @@
+function e(e){if(!e)return{step:null,funcIndex:null};let[t,n]=e.split(`_`),r=Number.parseInt(t,10),i=n===void 0?null:Number.parseInt(n,10);return{step:Number.isFinite(r)?r:null,funcIndex:i!==null&&Number.isFinite(i)?i:null}}export{e as t};

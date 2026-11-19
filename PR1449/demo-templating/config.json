@@ -1,0 +1,102 @@
+{
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.4.3/src/parser/StudyConfigSchema.json",
+  "studyMetadata": {
+    "title": "Templating Data with Handlebars",
+    "version": "pilot",
+    "authors": ["The reVISit Team"],
+    "date": "2026-08-20",
+    "description": "A demo of using Handlebars {{variable}} templating (and the lookupAnswersRel/lookupAnswers helpers for referencing other trials' answers) in instructions, paths, markdown/help-text content, response text, and templated website HTML files, and correctAnswer values, showcased through a two-question capital-cities quiz.",
+    "organizations": ["University of Utah", "WPI"]
+  },
+  "uiConfig": {
+    "contactEmail": "contact@revisit.dev",
+    "helpTextPath": "demo-templating/assets/introduction.md",
+    "logoPath": "revisitAssets/revisitLogoSquare.svg",
+    "withProgressBar": true,
+    "autoDownloadStudy": false,
+    "withSidebar": true,
+    "windowEventDebounceTime": 200
+  },
+  "components": {
+    "introduction": {
+      "type": "markdown",
+      "path": "demo-templating/assets/introduction.md",
+      "response": []
+    },
+    "markdown-template-quiz": {
+      "type": "markdown",
+      "instruction": "Which city is the capital of {{country}}?{{#if (lookupAnswersRel -1 'capital-answer')}} (Last time, you answered \"{{lookupAnswersRel -1 'capital-answer'}}\".){{/if}}",
+      "path": "demo-templating/assets/{{hintFile}}.md",
+      "description": "Capital quiz trial for France.",
+      "helpTextPath": "demo-templating/assets/quiz-help.md",
+      "parameters": {
+        "country": "France",
+        "continent": "Europe",
+        "hintFile": "hint-europe",
+        "funFact": "the Eiffel Tower",
+        "flag": "🇫🇷"
+      },
+      "response": [
+        {
+          "id": "capital-answer",
+          "prompt": "Choose the capital of {{country}}:",
+          "secondaryText": "{{country}} is a country in {{continent}}",
+          "infoText": "This trial's parameters: country={{country}}, continent={{continent}}.{{#if (lookupAnswersRel -1 'capital-answer')}} Previous answer: {{lookupAnswersRel -1 'capital-answer'}}.{{/if}}",
+          "location": "belowStimulus",
+          "type": "radio",
+          "horizontal": true,
+          "options": ["Lyon", "Paris", "Marseille"]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "capital-answer",
+          "answer": "Paris"
+        }
+      ]
+    },
+    "html-template-quiz": {
+      "type": "website",
+      "instruction": "Which city is the capital of {{country}}?{{#if (lookupAnswersRel -1 'capital-answer')}} (Last time, you answered \"{{lookupAnswersRel -1 'capital-answer'}}\".){{/if}}",
+      "path": "demo-templating/assets/capital-picker.html",
+      "templated": true,
+      "description": "Templated HTML stimulus: the parameters are substituted into the file itself.",
+      "parameters": {
+        "country": "Canada",
+        "continent": "Americas",
+        "funFact": "maple syrup",
+        "cityOptions": "Toronto,Ottawa,Vancouver",
+        "flag": "🇨🇦"
+      },
+      "response": [
+        {
+          "id": "capital-answer",
+          "prompt": "Your selection:",
+          "location": "belowStimulus",
+          "type": "reactive"
+        }
+      ],
+      "helpTextPath": "demo-templating/assets/quiz-help.md",
+      "correctAnswer": [
+        {
+          "id": "capital-answer",
+          "answer": "Ottawa"
+        }
+      ]
+    },
+    "summary": {
+      "type": "markdown",
+      "path": "demo-templating/assets/summary.md",
+      "response": []
+    }
+  },
+  "sequence": {
+    "order": "fixed",
+    "components": [
+      "introduction",
+      "markdown-template-quiz",
+      "html-template-quiz",
+      "summary"
+    ]
+  }
+}

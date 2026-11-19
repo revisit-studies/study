@@ -1,0 +1,40 @@
+{
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v3.0.0/src/parser/StudyConfigSchema.json",
+  "studyMetadata": {
+    "title": "A-VLAT: Adaptive Visualization Literacy Assessment Test",
+    "version": "1.0.0",
+    "authors": [
+      "The reVISit Team"
+    ],
+    "date": "2026-02-23",
+    "description": "Example study using the adaptive-vlat library. See the [adaptive-vlat library docs](https://revisit.dev/docs/libraries/adaptive-vlat/) and how to use [plugin libraries](https://revisit.dev/docs/designing-studies/plugin-libraries/).",
+    "organizations": [
+      "University of Utah",
+      "WPI"
+    ],
+    "thumbnail": "library-adaptive-vlat/assets/thumbnail.png"
+  },
+  "uiConfig": {
+    "contactEmail": "contact@revisit.dev",
+    "logoPath": "revisitAssets/revisitLogoSquare.svg",
+    "withProgressBar": true,
+    "withSidebar": false
+  },
+  "importedLibraries": [
+    "adaptive-vlat"
+  ],
+  "components": {
+    "introduction": {
+      "type": "markdown",
+      "path": "library-adaptive-vlat/assets/adaptive-vlat.md",
+      "response": []
+    }
+  },
+  "sequence": {
+    "order": "fixed",
+    "components": [
+      "introduction",
+      "$adaptive-vlat.sequences.adaptive-vlat"
+    ]
+  }
+}

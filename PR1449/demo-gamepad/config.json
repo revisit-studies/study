@@ -1,0 +1,100 @@
+{
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.4.3/src/parser/StudyConfigSchema.json",
+  "studyMetadata": {
+    "title": "Gamepad Input with Provenance",
+    "version": "pilot",
+    "authors": [
+      "The reVISit Team"
+    ],
+    "date": "2026-09-16",
+    "description": "A target-acquisition game driven by a game controller, capturing both semantic provenance and a screen recording so the trial can be replayed faithfully.",
+    "organizations": [
+      "University of Utah",
+      "WPI"
+    ]
+  },
+  "uiConfig": {
+    "contactEmail": "contact@revisit.dev",
+    "helpTextPath": "demo-gamepad/assets/introduction.md",
+    "logoPath": "revisitAssets/revisitLogoSquare.svg",
+    "withProgressBar": true,
+    "autoDownloadStudy": false,
+    "withSidebar": true,
+    "windowEventDebounceTime": 100,
+    "recordScreen": true,
+    "recordScreenFPS": 30,
+    "captureGamepad": true
+  },
+  "importedLibraries": [
+    "screen-recording"
+  ],
+  "baseComponents": {
+    "gamepadTrial": {
+      "type": "react-component",
+      "path": "demo-gamepad/assets/GamepadTargetGame.tsx",
+      "nextButtonLocation": "sidebar",
+      "recordScreen": true,
+      "instruction": "Move the crosshair with the left stick (or the d-pad) and press the face button that matches the target's color and letter.",
+      "response": [
+        {
+          "id": "hits",
+          "prompt": "Targets hit",
+          "location": "sidebar",
+          "type": "reactive"
+        },
+        {
+          "id": "misses",
+          "prompt": "Misses",
+          "location": "sidebar",
+          "type": "reactive"
+        },
+        {
+          "id": "meanReactionTime",
+          "prompt": "Mean time to hit (ms)",
+          "location": "sidebar",
+          "type": "reactive"
+        },
+        {
+          "id": "completed",
+          "prompt": "Completed all targets",
+          "location": "sidebar",
+          "type": "reactive"
+        }
+      ]
+    }
+  },
+  "components": {
+    "introduction": {
+      "type": "markdown",
+      "path": "demo-gamepad/assets/introduction.md",
+      "response": []
+    },
+    "gamepad-large-targets": {
+      "baseComponent": "gamepadTrial",
+      "description": "Large, slow targets to get used to the controller.",
+      "parameters": {
+        "targetCount": 6,
+        "targetRadius": 44,
+        "reticleSpeed": 360
+      }
+    },
+    "gamepad-small-targets": {
+      "baseComponent": "gamepadTrial",
+      "description": "Smaller, faster targets, so pointing accuracy matters more.",
+      "parameters": {
+        "targetCount": 8,
+        "targetRadius": 26,
+        "reticleSpeed": 520
+      }
+    }
+  },
+  "sequence": {
+    "order": "fixed",
+    "components": [
+      "introduction",
+      "$screen-recording.components.screenRecordingPermission",
+      "gamepad-large-targets",
+      "gamepad-small-targets"
+    ]
+  }
+}
