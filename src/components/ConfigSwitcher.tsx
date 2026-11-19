@@ -1,8 +1,8 @@
 import {
-  Anchor, AppShell, Badge, Box, Button, Card, Container, CopyButton, Divider, Flex, Image, MultiSelect, Skeleton, rem, Tabs, Text, Tooltip,
+  Anchor, AppShell, Badge, Box, Button, Card, Container, CopyButton, Flex, Grid, Image, Menu, Popover, SimpleGrid, Skeleton, Tabs, Text, Tooltip,
 } from '@mantine/core';
 import {
-  IconBan, IconBrandFirebase, IconBrandSupabase, IconCamera, IconChartHistogram, IconCheck, IconCopy, IconDatabase, IconDeviceDesktop, IconExternalLink, IconGraph, IconGraphOff, IconListCheck, IconMicrophone, IconSchema, IconSchemaOff,
+  IconAlertTriangle, IconBan, IconBrandFirebase, IconBrandSupabase, IconCamera, IconCheck, IconCopy, IconDatabase, IconDeviceDesktop, IconGraph, IconGraphOff, IconMicrophone, IconSchema, IconSchemaOff,
 } from '@tabler/icons-react';
 import { useEffect, useMemo, useState } from 'react';
 import { Timestamp } from 'firebase/firestore';
@@ -18,13 +18,90 @@ import { ParticipantStatusBadges } from '../analysis/interface/ParticipantStatus
 import { ParticipantStatusCounts } from '../storage/participantStatus';
 import { useStorageEngine } from '../storage/storageEngineHooks';
 import { StudyModes } from '../storage/engines/types';
-import { startDesignerPreview } from '../store/hooks/useDesignerPreview';
 import { getSequenceConditions } from '../utils/handleConditionLogic';
 import { useStudyRecordings } from '../utils/useStudyRecordings';
 import { useDeviceRules } from '../utils/useDeviceRules';
 import { getUnmetDeviceRestrictionLines, getUnmetDeviceRestrictionTooltip } from './interface/DeviceRestrictionString';
+import { getStaticAssetByPath } from '../utils/getStaticAsset';
+import { AppHeader } from '../analysis/interface/AppHeader';
 
 const DEFAULT_TAB_LABEL = 'Studies';
+
+// Breakpoints are container queries, so the number of card columns follows the
+// width of the study column rather than the window.
+const STUDY_GRID_COLS = { base: 1, '600px': 2, '1000px': 3 };
+
+/** Loads the optional landing-page introduction Markdown referenced by the global config. */
+function useIntroduction(introductionPath: string | undefined) {
+  const [introduction, setIntroduction] = useState<{ path: string; text: string | null } | null>(null);
+
+  useEffect(() => {
+    if (!introductionPath) return undefined;
+    let isCancelled = false;
+    const url = /^https?:\/\//.test(introductionPath) ? introductionPath : `${PREFIX}${introductionPath}`;
+    getStaticAssetByPath(url).then((text) => {
+      if (isCancelled) return;
+      if (text === undefined) console.error(`Landing page introduction not found at ${introductionPath}`);
+      setIntroduction({ path: introductionPath, text: text ?? null });
+    }).catch((error) => {
+      console.error('Failed to load landing page introduction:', error);
+      if (!isCancelled) setIntroduction({ path: introductionPath, text: null });
+    });
+    return () => { isCancelled = true; };
+  }, [introductionPath]);
+
+  if (!introductionPath) return { enabled: false, loading: false, text: null };
+  // Ignore results that belong to a previous path while the new one loads.
+  const current = introduction?.path === introductionPath ? introduction : null;
+  return { enabled: true, loading: current === null, text: current?.text ?? null };
+}
+
+function StudyCardSkeletons() {
+  return (
+    <SimpleGrid type="container" cols={STUDY_GRID_COLS} spacing="sm" verticalSpacing="sm">
+      {[55, 45, 50].map((titleWidth) => (
+        <Card key={titleWidth} shadow="sm" radius="md" padding="sm" withBorder>
+          <Skeleton height={20} width={`${titleWidth}%`} mb="sm" />
+          <Skeleton height={12} mb="xs" />
+          <Skeleton height={12} mb="xs" />
+          <Skeleton height={12} width="85%" mb="md" />
+          <Flex justify="flex-end" gap="xs">
+            <Skeleton height={28} width={80} radius="md" />
+            <Skeleton height={28} width={100} radius="md" />
+          </Flex>
+        </Card>
+      ))}
+    </SimpleGrid>
+  );
+}
+
+/** A clickable badge summarizing config issues that opens the full list in a popover. */
+function CardIssueBadge({ issues, type }: { issues: ParsedConfig<StudyConfig>['warnings']; type: 'error' | 'warning' }) {
+  const noun = type === 'error' ? 'error' : 'warning';
+  const label = `${issues.length} ${noun}${issues.length === 1 ? '' : 's'}`;
+
+  return (
+    <Popover width={420} position="bottom-end" withArrow shadow="md" withinPortal>
+      <Popover.Target>
+        <Badge
+          component="button"
+          type="button"
+          color={type === 'error' ? 'red' : 'yellow'}
+          variant="filled"
+          size="sm"
+          aria-label={`Show ${label}`}
+          leftSection={<IconAlertTriangle size={12} />}
+          style={{ cursor: 'pointer', flexShrink: 0 }}
+        >
+          {label}
+        </Badge>
+      </Popover.Target>
+      <Popover.Dropdown p="xs" mah={400} style={{ overflowY: 'auto' }}>
+        <ErrorLoadingConfig issues={issues} type={type} collapsible={false} />
+      </Popover.Dropdown>
+    </Popover>
+  );
+}
 
 function ValidStudyCard({
   configName,
@@ -107,7 +184,6 @@ function ValidStudyCard({
   }), [config.studyRules, isBrowserAllowed, isDeviceAllowed, isDisplayAllowed, isInputAllowed]);
 
   const conditions = useMemo(() => getSequenceConditions(config.sequence), [config.sequence]);
-  const [selectedConditions, setSelectedConditions] = useState<string[]>(['default']);
   const [conditionParticipantCounts, setConditionParticipantCounts] = useState<Record<string, number>>({});
 
   // Load participant counts into dropdown for each condition
@@ -136,59 +212,41 @@ function ValidStudyCard({
     }))
   ), [conditions, conditionParticipantCounts, canViewAnalytics]);
 
-  const selectedStudyConditions = useMemo(
-    () => selectedConditions.filter((condition) => condition !== 'default'),
-    [selectedConditions],
-  );
+  // Reload to keep each study launch isolated from the previous storage session.
+  const goToStudy = (condition?: string) => {
+    window.location.assign(condition && condition !== 'default'
+      ? `${PREFIX}${url}?condition=${encodeURIComponent(condition)}`
+      : `${PREFIX}${url}`);
+  };
 
-  const studyUrl = useMemo(
-    () => (selectedStudyConditions.length > 0
-      ? `${PREFIX}${url}?condition=${selectedStudyConditions.join(',')}`
-      : `${PREFIX}${url}`),
-    [selectedStudyConditions, url],
-  );
+  const { thumbnail } = config.studyMetadata;
+  const thumbnailSrc = thumbnail && (/^https?:\/\//.test(thumbnail) ? thumbnail : `${PREFIX}${thumbnail}`);
 
   return (
-    <Card key={configName} shadow="sm" radius="md" my="sm" withBorder>
-      <Flex direction="row" justify="space-between">
-        <Text fw="bold">
-          {config.studyMetadata.title}
-        </Text>
-      </Flex>
-      <Text c="dimmed">
-        <Text span fw={500}>Authors: </Text>
-        {config.studyMetadata.authors.join(', ')}
-      </Text>
-      <Text c="dimmed">{config.studyMetadata.description}</Text>
-      <Text c="dimmed" ta="right" style={{ paddingRight: 5 }}>
-        <Anchor
-          target="_blank"
-          onClick={(e) => e.stopPropagation()}
-          href={`${import.meta.env.VITE_REPO_URL}${url}`}
-        >
-          View source:
-          {' '}
-          {url}
-          <IconExternalLink style={{
-            width: rem(18), height: rem(18), marginLeft: rem(2), marginBottom: rem(-3),
-          }}
-          />
-        </Anchor>
-      </Text>
-
-      {canViewAnalytics && config.warnings.length > 0 && (
-      <ErrorLoadingConfig issues={config.warnings} type="warning" />
-      )}
-
-      <Divider my="md" />
-
-      <Flex direction="row" gap="sm">
-        <Text fw="bold" size="sm" opacity={0.7}>
-          Study Status:
-          {' '}
-          {currentMode}
-        </Text>
-        {canViewAnalytics && studyStatusAndTiming && (
+    <Card key={configName} shadow="sm" radius="md" padding="sm" h="100%" withBorder>
+      {/* Every card gets the same light gray header; a thumbnail, when present, is centered inside it. */}
+      <Card.Section h={140} pos="relative" style={{ backgroundColor: 'light-dark(var(--mantine-color-gray-2), var(--mantine-color-dark-7))' }}>
+        {thumbnailSrc && (
+          <Image src={thumbnailSrc} alt={`Preview of ${config.studyMetadata.title}`} h="100%" w="100%" fit="contain" />
+        )}
+        {canViewAnalytics && config.warnings.length > 0 && (
+          <Box pos="absolute" top={8} right={8}>
+            <CardIssueBadge issues={config.warnings} type="warning" />
+          </Box>
+        )}
+      </Card.Section>
+      <Card.Section
+        px="sm"
+        py={6}
+        // Neutral on purpose: status is conveyed by text so it doesn't compete with the colored icons.
+        style={{
+          borderTop: '1px solid var(--mantine-color-default-border)',
+          backgroundColor: 'light-dark(var(--mantine-color-gray-1), var(--mantine-color-dark-5))',
+        }}
+      >
+        <Flex gap="xs" wrap="wrap" align="center" justify="space-between">
+          <Text size="xs" fw={600} c="dimmed">{currentMode}</Text>
+          {canViewAnalytics && studyStatusAndTiming && (
           <ParticipantStatusBadges
             completed={studyStatusAndTiming.completed}
             inProgress={studyStatusAndTiming.inProgress}
@@ -203,22 +261,28 @@ function ValidStudyCard({
               || studyStatusAndTiming.completedLate > 0
             }
           />
-        )}
-        <Flex ml="auto" gap="sm" opacity={0.7}>
+          )}
+        </Flex>
+      </Card.Section>
+      <Flex justify="space-between" align="flex-start" gap="xs" mt="sm">
+        <Text fw="bold" lineClamp={2} title={config.studyMetadata.title}>
+          {config.studyMetadata.title}
+        </Text>
+        <Flex gap={6} opacity={0.7} pt={4} style={{ flexShrink: 0 }}>
           {hasAudioRecording && (
-          <Tooltip label="Audio recording enabled" withinPortal position="bottom">
-            <IconMicrophone size={16} color="var(--mantine-color-orange-text)" />
-          </Tooltip>
+            <Tooltip label="Audio recording enabled" withinPortal position="bottom">
+              <IconMicrophone size={16} color="var(--mantine-color-orange-text)" />
+            </Tooltip>
           )}
           {hasScreenRecording && (
-          <Tooltip label="Screen recording enabled" withinPortal position="bottom">
-            <IconDeviceDesktop size={16} color="var(--mantine-color-orange-text)" />
-          </Tooltip>
+            <Tooltip label="Screen recording enabled" withinPortal position="bottom">
+              <IconDeviceDesktop size={16} color="var(--mantine-color-orange-text)" />
+            </Tooltip>
           )}
           {hasWebcamRecording && (
-          <Tooltip label="Webcam recording enabled" withinPortal position="bottom">
-            <IconCamera size={16} color="orange" />
-          </Tooltip>
+            <Tooltip label="Webcam recording enabled" withinPortal position="bottom">
+              <IconCamera size={16} color="orange" />
+            </Tooltip>
           )}
           {modes?.developmentModeEnabled
             ? <Tooltip label="Development mode enabled" withinPortal position="bottom"><IconSchema size={16} color="var(--mantine-color-green-text)" /></Tooltip>
@@ -234,104 +298,105 @@ function ValidStudyCard({
                 ? <Tooltip label="Supabase enabled" withinPortal position="bottom"><IconBrandSupabase size={16} color="var(--mantine-color-green-text)" /></Tooltip>
                 : <Tooltip label="Unknown storage engine enabled" withinPortal position="bottom"><IconDatabase size={16} color="var(--mantine-color-red-text)" /></Tooltip>}
           {unmetRestrictions.length > 0 && (
-          <Tooltip label={restrictionsTooltip} multiline style={{ whiteSpace: 'pre-line' }} withinPortal position="bottom">
-            <IconBan size={16} color="var(--mantine-color-red-text)" />
-          </Tooltip>
+            <Tooltip label={restrictionsTooltip} multiline style={{ whiteSpace: 'pre-line' }} withinPortal position="bottom">
+              <IconBan size={16} color="var(--mantine-color-red-text)" />
+            </Tooltip>
           )}
         </Flex>
       </Flex>
-
-      {minTime && maxTime
-              && (
-                <Text c="dimmed" mt={4}>
-                  Activity:
-                  {' '}
-                  {minTime}
-                  {' '}
-                  –
-                  {' '}
-                  {maxTime}
-                </Text>
-              )}
-
-      {conditions.length > 0 && (
-      <Flex direction="row" align="center" gap="xs" mt="sm" wrap="wrap">
-        {conditions.map((condition) => {
-          const conditionUrl = new URL(`${PREFIX}${url}`, window.location.origin);
-          conditionUrl.searchParams.set('condition', condition);
-          const conditionUrlString = conditionUrl.toString();
-
-          return (
-            <CopyButton key={condition} value={conditionUrlString}>
-              {({ copied, copy }) => (
-                <Tooltip label={copied ? 'Copied!' : 'Copy URL'}>
-                  <Badge
-                    size="sm"
-                    variant="light"
-                    rightSection={
-                              copied ? <IconCheck size={12} /> : <IconCopy size={12} />
-                            }
-                    onClick={copy}
-                    style={{ cursor: 'pointer' }}
-                  >
-                    {condition}
-                  </Badge>
-                </Tooltip>
-              )}
-            </CopyButton>
-          );
-        })}
-      </Flex>
+      <Text c="dimmed" size="xs" lineClamp={1}>
+        <Text span fw={500} size="xs">Authors: </Text>
+        {config.studyMetadata.authors.join(', ')}
+      </Text>
+      <Text c="dimmed" size="sm" mt={4} mb={minTime && maxTime ? 0 : 'xs'} lineClamp={3} title={config.studyMetadata.description}>{config.studyMetadata.description}</Text>
+      {minTime && maxTime && (
+        <Text c="dimmed" size="xs" mt={2} mb="xs">
+          <Text span fw={500} size="xs">Activity: </Text>
+          {minTime === maxTime ? minTime : `${minTime} – ${maxTime}`}
+        </Text>
       )}
 
-      {/* Reload to keep each study launch isolated from the previous storage session. */}
-      <Flex direction="row" align="end" gap="sm" mt="md" wrap="wrap">
-        {conditions.length > 0 && (
-        <MultiSelect
-          value={selectedConditions}
-          data={conditionOptions}
-          w={260}
-          onChange={(value) => {
-            if (value.length === 0) {
-              setSelectedConditions(['default']);
-              return;
-            }
+      {/* Push the conditions and actions to the bottom so cards in a row align. */}
+      <Box mt="auto" />
 
-            if (value.includes('default') && value.length > 1) {
-              setSelectedConditions(value.filter((condition) => condition !== 'default'));
-              return;
-            }
-
-            setSelectedConditions(value);
-          }}
-        />
-        )}
-        <Flex gap="sm" ml="auto" wrap="wrap" justify="flex-end" style={{ width: 'max-content', maxWidth: '100%' }}>
-          {canViewAnalytics && (
+      <Flex gap={6} wrap="nowrap" mt="sm">
+        {canViewAnalytics && (
           <Button
-            leftSection={<IconChartHistogram />}
+            size="xs"
+            px={8}
+            flex={1}
             variant="default"
             onClick={() => window.location.assign(`${PREFIX}analysis/stats/${url}`)}
           >
-            Analyze & Manage Study
+            Analyze & Manage
           </Button>
-          )}
-          <Button
-            variant="default"
-            component="a"
-            href={`${studyUrl}${studyUrl.includes('?') ? '&' : '?'}preview=true`}
-            onClick={() => startDesignerPreview(url)}
-          >
-            Preview
-          </Button>
-          <Button
-            leftSection={<IconListCheck />}
-            onClick={() => window.location.assign(studyUrl)}
-          >
+        )}
+        {conditions.length > 0 ? (
+          <Menu position="bottom" withinPortal shadow="md">
+            <Menu.Target>
+              <Button size="xs" px={8} flex={1}>
+                Go to Study
+              </Button>
+            </Menu.Target>
+            <Menu.Dropdown>
+              <Menu.Label>Choose a condition</Menu.Label>
+              {conditionOptions.map(({ value, label }) => (
+                <Menu.Item key={value} onClick={() => goToStudy(value)}>
+                  {label}
+                </Menu.Item>
+              ))}
+            </Menu.Dropdown>
+          </Menu>
+        ) : (
+          <Button size="xs" px={8} flex={1} onClick={() => goToStudy()}>
             Go to Study
           </Button>
+        )}
+        <Button
+          size="xs"
+          px={8}
+          flex={1}
+          variant="default"
+          component="a"
+          target="_blank"
+          href={`${import.meta.env.VITE_REPO_URL}${url}`}
+        >
+          View Source
+        </Button>
+      </Flex>
+
+      {conditions.length > 0 && (
+      <Flex direction="column" gap="xs" mt="sm">
+        <Flex direction="row" align="center" gap={6} wrap="wrap">
+          <Text size="xs" fw={500} c="dimmed">Condition links (click to copy):</Text>
+          {conditions.map((condition) => {
+            const conditionUrl = new URL(`${PREFIX}${url}`, window.location.origin);
+            conditionUrl.searchParams.set('condition', condition);
+            const conditionUrlString = conditionUrl.toString();
+
+            return (
+              <CopyButton key={condition} value={conditionUrlString}>
+                {({ copied, copy }) => (
+                  <Tooltip label={copied ? 'Copied!' : 'Copy URL'}>
+                    <Badge
+                      size="xs"
+                      variant="light"
+                      rightSection={
+                                copied ? <IconCheck size={12} /> : <IconCopy size={12} />
+                              }
+                      onClick={copy}
+                      style={{ cursor: 'pointer' }}
+                    >
+                      {condition}
+                    </Badge>
+                  </Tooltip>
+                )}
+              </CopyButton>
+            );
+          })}
         </Flex>
       </Flex>
+      )}
     </Card>
   );
 }
@@ -351,12 +416,12 @@ function StudyCard({
 
   if (config.errors.length > 0) {
     return (
-      <Card key={configName} shadow="sm" radius="md" my="sm" withBorder>
-        <Text size="md" fw="bold">{configName}</Text>
+      <Card key={configName} shadow="sm" radius="md" padding="sm" h="100%" withBorder>
+        <Flex justify="space-between" align="flex-start" gap="xs">
+          <Text size="md" fw="bold">{configName}</Text>
+          {canViewAnalytics && config.warnings.length > 0 && <CardIssueBadge issues={config.warnings} type="warning" />}
+        </Flex>
         {canViewAnalytics && <ErrorLoadingConfig issues={config.errors} type="error" />}
-        {canViewAnalytics && config.warnings.length > 0 && (
-          <ErrorLoadingConfig issues={config.warnings} type="warning" />
-        )}
       </Card>
     );
   }
@@ -373,14 +438,18 @@ function StudyCards({
   studyConfigs: Record<string, ParsedConfig<StudyConfig> | null>;
   modesByConfig: Record<string, StudyModes | null>;
 }) {
-  return configNames.map((configName) => {
-    const config = studyConfigs[configName];
-    if (!config) {
-      return null;
-    }
-    const url = sanitizeStringForUrl(configName);
-    return <StudyCard key={configName} configName={configName} config={config} url={url} modes={modesByConfig[configName] ?? null} />;
-  });
+  return (
+    <SimpleGrid type="container" cols={STUDY_GRID_COLS} spacing="sm" verticalSpacing="sm" mt="sm">
+      {configNames.map((configName) => {
+        const config = studyConfigs[configName];
+        if (!config) {
+          return null;
+        }
+        const url = sanitizeStringForUrl(configName);
+        return <StudyCard key={configName} configName={configName} config={config} url={url} modes={modesByConfig[configName] ?? null} />;
+      })}
+    </SimpleGrid>
+  );
 }
 
 export function ConfigSwitcher({
@@ -473,111 +542,129 @@ export function ConfigSwitcher({
   const requestedTab = searchParams.get('tab');
   const tab = tabs.find(({ label }) => label === requestedTab) ?? tabs[0];
 
-  return (
+  const introduction = useIntroduction(globalConfig.introductionPath);
+
+  const studies = (
+    <>
+      {isLoadingStudies && (
+        <>
+          <Text c="dimmed" ta="center" mt="sm" mb="md">Loading studies...</Text>
+          <StudyCardSkeletons />
+        </>
+      )}
+
+      {!isLoadingStudies && (
+        <>
+          {modeLoadErrors.length > 0 && (
+            <Text c="red" role="alert" mb="md">
+              Unable to load study visibility for:
+              {' '}
+              {modeLoadErrors.join(', ')}
+              . Check the storage connection and try again.
+            </Text>
+          )}
+          {tabs.map(({
+            label, value, description, configNames,
+          }) => (
+            <Tabs.Panel key={label} value={value}>
+              {description && (
+                <Box c="dimmed">
+                  <ReactMarkdownWrapper text={description} />
+                </Box>
+              )}
+              <StudyCards configNames={configNames} studyConfigs={studyConfigs} modesByConfig={modesByConfig} />
+            </Tabs.Panel>
+          ))}
+
+          {configsFiltered.length === 0 && modeLoadErrors.length === 0 && (
+            <Text c="dimmed" ta="center" mt="xl">
+              No studies found. Studies can be added in your
+              {' '}
+              <Text span ff="monospace">global.json</Text>
+              .
+              <br />
+              Please refer to the
+              {' '}
+              <Anchor href="https://revisit.dev/docs/getting-started/your-first-study/" target="_blank">
+                getting started guide
+              </Anchor>
+              {' '}
+              for more details.
+            </Text>
+          )}
+        </>
+      )}
+    </>
+  );
+
+  // The tab list lives in the app header while its panels live in the page, so a
+  // single Tabs root wraps both to share the selected tab.
+  const header = (
+    <AppHeader
+      studyIds={configsList}
+      studyConfigs={studyConfigs}
+      navigation={!isLoadingStudies && tabs.length > 0 && (
+        <Tabs.List style={{ flexWrap: 'nowrap' }}>
+          {tabs.map(({ label, value }) => <Tabs.Tab key={label} value={value} style={{ whiteSpace: 'nowrap' }}>{label}</Tabs.Tab>)}
+        </Tabs.List>
+      )}
+    />
+  );
+
+  const main = introduction.enabled ? (
     <AppShell.Main>
-      <Container size="sm" px={0}>
-        <Image
-          maw={150}
-          mx="auto"
-          mb="xl"
-          radius="md"
-          src={`${PREFIX}revisitAssets/revisitLogoSquare.svg`}
-          alt="reVISit"
-        />
-        {isLoadingStudies && (
-          <>
-            <Text c="dimmed" ta="center" mt="sm" mb="md">Loading studies...</Text>
-            <Card shadow="sm" radius="md" my="sm" withBorder p="lg">
-              <Skeleton height={28} width="55%" mb="md" />
-              <Skeleton height={16} mb="sm" />
-              <Skeleton height={16} mb="sm" />
-              <Skeleton height={16} width="90%" mb="xl" />
-              <Flex justify="space-between" align="center">
-                <Skeleton height={36} width={190} radius="md" />
-                <Skeleton height={36} width={140} radius="md" />
-              </Flex>
-            </Card>
-            <Card shadow="sm" radius="md" my="sm" withBorder p="lg">
-              <Skeleton height={28} width="45%" mb="md" />
-              <Skeleton height={16} mb="sm" />
-              <Skeleton height={16} mb="sm" />
-              <Skeleton height={16} width="85%" mb="xl" />
-              <Flex justify="space-between" align="center">
-                <Skeleton height={36} width={190} radius="md" />
-                <Skeleton height={36} width={140} radius="md" />
-              </Flex>
-            </Card>
-            <Card shadow="sm" radius="md" my="sm" withBorder p="lg">
-              <Skeleton height={28} width="50%" mb="md" />
-              <Skeleton height={16} mb="sm" />
-              <Skeleton height={16} mb="sm" />
-              <Skeleton height={16} width="88%" mb="xl" />
-              <Flex justify="space-between" align="center">
-                <Skeleton height={36} width={190} radius="md" />
-                <Skeleton height={36} width={140} radius="md" />
-              </Flex>
-            </Card>
-          </>
-        )}
-
-        {!isLoadingStudies && (
-          <>
-            {modeLoadErrors.length > 0 && (
-              <Text c="red" role="alert" mb="md">
-                Unable to load study visibility for:
-                {' '}
-                {modeLoadErrors.join(', ')}
-                . Check the storage connection and try again.
-              </Text>
-            )}
-            {tabs.length > 0 && (
-              <Tabs
-                variant="outline"
-                value={tab?.value ?? null}
-                onChange={(value) => {
-                  if (value === null) return;
-                  const nextParams = new URLSearchParams(searchParams);
-                  nextParams.set('tab', decodeURIComponent(value));
-                  setSearchParams(nextParams);
-                }}
-              >
-                <Tabs.List>
-                  {tabs.map(({ label, value }) => <Tabs.Tab key={label} value={value}>{label}</Tabs.Tab>)}
-                </Tabs.List>
-                {tabs.map(({
-                  label, value, description, configNames,
-                }) => (
-                  <Tabs.Panel key={label} value={value}>
-                    {description && (
-                      <Box c="dimmed" mt="sm">
-                        <ReactMarkdownWrapper text={description} />
-                      </Box>
-                    )}
-                    <StudyCards configNames={configNames} studyConfigs={studyConfigs} modesByConfig={modesByConfig} />
-                  </Tabs.Panel>
-                ))}
-              </Tabs>
-            )}
-
-            {configsFiltered.length === 0 && modeLoadErrors.length === 0 && (
-              <Text c="dimmed" ta="center" mt="xl">
-                No studies found. Studies can be added in your
-                {' '}
-                <Text span ff="monospace">global.json</Text>
-                .
-                <br />
-                Please refer to the
-                {' '}
-                <Anchor href="https://revisit.dev/docs/getting-started/your-first-study/" target="_blank">
-                  getting started guide
-                </Anchor>
-                {' '}
-                for more details.
-              </Text>
-            )}
-          </>
-        )}
+      <Container size="xl" px={0}>
+        <Grid gap="xl">
+          <Grid.Col span={{ base: 12, sm: 5, lg: 4 }}>
+            <Box component="section" aria-label="Introduction" pos={{ sm: 'sticky' }} top={{ sm: 86 }}>
+              {introduction.loading && (
+                <>
+                  <Skeleton height={28} width="60%" mb="md" />
+                  <Skeleton height={14} mb="xs" />
+                  <Skeleton height={14} mb="xs" />
+                  <Skeleton height={14} width="80%" />
+                </>
+              )}
+              {!introduction.loading && introduction.text !== null && (
+                <ReactMarkdownWrapper text={introduction.text} />
+              )}
+              {!introduction.loading && introduction.text === null && (
+                <Text c="dimmed" role="alert">
+                  Unable to load the introduction from
+                  {' '}
+                  <Text span ff="monospace">{globalConfig.introductionPath}</Text>
+                  .
+                </Text>
+              )}
+            </Box>
+          </Grid.Col>
+          <Grid.Col span={{ base: 12, sm: 7, lg: 8 }}>
+            {studies}
+          </Grid.Col>
+        </Grid>
       </Container>
     </AppShell.Main>
+  ) : (
+    <AppShell.Main>
+      <Container size="lg" px={0}>
+        {studies}
+      </Container>
+    </AppShell.Main>
+  );
+
+  return (
+    <Tabs
+      variant="pills"
+      value={tab?.value ?? null}
+      onChange={(value) => {
+        if (value === null) return;
+        const nextParams = new URLSearchParams(searchParams);
+        nextParams.set('tab', decodeURIComponent(value));
+        setSearchParams(nextParams);
+      }}
+    >
+      {header}
+      {main}
+    </Tabs>
   );
 }

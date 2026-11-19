@@ -59,6 +59,16 @@ describe('Global config tabs', () => {
     expect(parseGlobalConfig(JSON.stringify(config))).toEqual(config);
   });
 
+  test('accepts a landing page introduction path', () => {
+    const config = { ...makeGlobalConfig(), introductionPath: 'revisitAssets/introduction.md' };
+
+    expect(parseGlobalConfig(JSON.stringify(config))).toEqual(config);
+  });
+
+  test('rejects a non-string landing page introduction path', () => {
+    expectConfigError({ ...makeGlobalConfig(), introductionPath: 5 }, '/introductionPath: must be string');
+  });
+
   test.each([undefined, []])('accepts unassigned studies when tabs are %j', (tabs) => {
     const config = makeGlobalConfig(tabs);
     expect(parseGlobalConfig(JSON.stringify(config))).toEqual(config);

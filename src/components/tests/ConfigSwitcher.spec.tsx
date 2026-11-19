@@ -83,6 +83,12 @@ vi.mock('../../utils/sanitizeStringForUrl', () => ({
 
 vi.mock('../../utils/Prefix', () => ({ get PREFIX() { return prefixMock.value; } }));
 
+const getStaticAssetByPathMock = vi.hoisted(() => vi.fn<(path: string) => Promise<string | undefined>>());
+
+vi.mock('../../utils/getStaticAsset', () => ({
+  getStaticAssetByPath: getStaticAssetByPathMock,
+}));
+
 vi.mock('../ErrorLoadingConfig', () => ({
   ErrorLoadingConfig: () => <div data-testid="error-loading-config" />,
 }));
@@ -763,5 +769,85 @@ describe('ConfigSwitcher', () => {
     expect(container.textContent).not.toContain('No studies found.');
     expect(mockEngine.getModes).toHaveBeenCalledTimes(2);
     consoleSpy.mockRestore();
+  });
+});
+
+describe('ConfigSwitcher introduction', () => {
+  const introductionConfig = makeGlobalConfig({
+    introductionPath: 'intro/about.md',
+    configsList: ['test-study'],
+    configs: { 'test-study': { path: 'test-study/config.json' } },
+  });
+
+  test('does not fetch an introduction or render the introduction column when none is configured', async () => {
+    const view = await act(async () => render(<ConfigSwitcher globalConfig={globalConfig} studyConfigs={studyConfigs} />));
+
+    expect(getStaticAssetByPathMock).not.toHaveBeenCalled();
+    expect(view.queryByRole('region', { name: 'Introduction' })).toBeNull();
+    expect(view.getByRole('button', { name: 'Go to Study' })).toBeDefined();
+  });
+
+  test('renders the configured Markdown beside the study cards', async () => {
+    prefixMock.value = '/study/';
+    getStaticAssetByPathMock.mockResolvedValue('# About these studies\n\nThey test **charts**.');
+    const view = await act(async () => render(
+      <ConfigSwitcher globalConfig={introductionConfig} studyConfigs={studyConfigs} />,
+      '/study/',
+      '/study/',
+    ));
+
+    const intro = view.getByRole('region', { name: 'Introduction' });
+    await waitFor(() => expect(within(intro).getByRole('heading', { name: 'About these studies' })).toBeDefined());
+    expect(within(intro).getByText('charts').tagName).toBe('STRONG');
+    expect(getStaticAssetByPathMock).toHaveBeenCalledExactlyOnceWith('/study/intro/about.md');
+    expect(view.getByRole('button', { name: 'Go to Study' })).toBeDefined();
+  });
+
+  test('fetches absolute introduction URLs without the base path', async () => {
+    getStaticAssetByPathMock.mockResolvedValue('Remote intro');
+    const remoteConfig = { ...introductionConfig, introductionPath: 'https://example.com/intro.md' };
+    const view = await act(async () => render(<ConfigSwitcher globalConfig={remoteConfig} studyConfigs={studyConfigs} />));
+
+    await waitFor(() => expect(view.getByText('Remote intro')).toBeDefined());
+    expect(getStaticAssetByPathMock).toHaveBeenCalledExactlyOnceWith('https://example.com/intro.md');
+  });
+
+  test('reports a missing introduction while still showing the studies', async () => {
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    getStaticAssetByPathMock.mockResolvedValue(undefined);
+    const view = await act(async () => render(<ConfigSwitcher globalConfig={introductionConfig} studyConfigs={studyConfigs} />));
+
+    const intro = view.getByRole('region', { name: 'Introduction' });
+    await waitFor(() => expect(within(intro).getByRole('alert').textContent).toContain('Unable to load the introduction from intro/about.md'));
+    expect(consoleSpy).toHaveBeenCalledWith('Landing page introduction not found at intro/about.md');
+    expect(view.getByRole('button', { name: 'Go to Study' })).toBeDefined();
+    consoleSpy.mockRestore();
+  });
+
+  test('reports a failed introduction request', async () => {
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const error = new Error('offline');
+    getStaticAssetByPathMock.mockRejectedValue(error);
+    const view = await act(async () => render(<ConfigSwitcher globalConfig={introductionConfig} studyConfigs={studyConfigs} />));
+
+    await waitFor(() => expect(view.getByRole('alert').textContent).toContain('Unable to load the introduction'));
+    expect(consoleSpy).toHaveBeenCalledWith('Failed to load landing page introduction:', error);
+    consoleSpy.mockRestore();
+  });
+
+  test('ignores a stale introduction after the configured path changes', async () => {
+    let resolveFirst: (text: string) => void = () => {};
+    getStaticAssetByPathMock
+      .mockImplementationOnce(() => new Promise((resolve) => { resolveFirst = resolve; }))
+      .mockResolvedValueOnce('Second intro');
+    const view = await act(async () => render(<ConfigSwitcher globalConfig={introductionConfig} studyConfigs={studyConfigs} />));
+
+    const nextConfig = { ...introductionConfig, introductionPath: 'intro/second.md' };
+    await act(async () => view.rerender(<ConfigSwitcher globalConfig={nextConfig} studyConfigs={studyConfigs} />));
+    await waitFor(() => expect(view.getByText('Second intro')).toBeDefined());
+
+    await act(async () => resolveFirst('First intro'));
+    expect(view.queryByText('First intro')).toBeNull();
+    expect(view.getByText('Second intro')).toBeDefined();
   });
 });

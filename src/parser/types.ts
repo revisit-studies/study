@@ -51,6 +51,8 @@ export type GlobalStoreNumber = number | `{{globalVariables.${string}}}`;
 export interface GlobalConfig {
   /** A required json schema property. This should point to the GitHub link for the version of the schema you would like. See examples in the public folder for more information. */
   $schema: string;
+  /** An optional path to a Markdown file that explains what this set of studies is about. This should be a relative path from the public folder or an absolute URL. When provided, the document is shown on the left side of the landing page and the studies are shown as cards on the right. */
+  introductionPath?: string;
   /** Landing-page tabs in display order. Unassigned studies use the configured Studies tab, or a default Studies tab appended after configured tabs. If omitted or empty, all studies appear in Studies. */
   tabs?: {
     /** A unique, non-blank tab name. Study assignments and the tab URL parameter reference this exact label. */
@@ -108,6 +110,8 @@ export interface StudyMetadata {
   description: string;
   /** The organizations that are associated with your study. */
   organizations: string[];
+  /** An optional preview image of your study, shown at the top of its landing-page card. This should be a relative path from the public folder or an absolute URL. */
+  thumbnail?: string;
 }
 
 /**

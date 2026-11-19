@@ -11,7 +11,8 @@
     "organizations": [
       "University of Utah",
       "WPI"
-    ]
+    ],
+    "thumbnail": "demo-image/assets/uncertainty-1.png"
   },
   "uiConfig": {
     "contactEmail": "contact@revisit.dev",

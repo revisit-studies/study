@@ -1,6 +1,7 @@
 import {
-  Flex, Image, Select, Title, Space, Grid, AppShell, Button, Text, ActionIcon, Tooltip,
+  Box, Flex, Image, Select, Title, Space, AppShell, Button, Text, ActionIcon, Tooltip,
 } from '@mantine/core';
+import { ReactNode } from 'react';
 
 import {
   matchPath, useLocation, useNavigate, useParams,
@@ -19,8 +20,11 @@ export function AppHeader({
   selectedStudyId,
   studyHref,
   studyConfigs,
+  navigation,
 }: {
   studyIds: string[];
+  /** Optional page navigation (e.g. landing-page tabs) rendered between the title and the controls. */
+  navigation?: ReactNode;
   selectedStudyId?: string;
   studyHref?: string;
   studyConfigs?: Record<string, { $schema?: unknown } | null>;
@@ -45,8 +49,8 @@ export function AppHeader({
 
   return (
     <AppShell.Header p="md">
-      <Grid align="center">
-        <Grid.Col span={6}>
+      <Flex align="center" gap="md" h="100%">
+        <Box style={{ flexShrink: 0 }}>
           <Flex align="center" onClick={() => navigate('/')} style={{ cursor: 'pointer' }}>
             <Image w={40} src={`${PREFIX}revisitAssets/revisitLogoSquare.svg`} alt="Revisit Logo" />
             <Space w="md" />
@@ -54,9 +58,13 @@ export function AppHeader({
               {inAnalysis ? 'ReVISit Analytics Platform' : 'ReVISit Studies'}
             </Title>
           </Flex>
-        </Grid.Col>
+        </Box>
 
-        <Grid.Col span={6}>
+        <Box style={{ flex: 1, minWidth: 0, overflowX: 'auto' }}>
+          {navigation}
+        </Box>
+
+        <Box style={{ flexShrink: 0 }}>
           <Flex
             align="center"
             justify="flex-end"
@@ -88,8 +96,8 @@ export function AppHeader({
             {revisitVersion && <Text c="dimmed" size="sm" mr="sm">{`reVISit ${revisitVersion}`}</Text>}
             <IconSettings onClick={() => navigate('/settings')} style={{ cursor: 'pointer' }} />
           </Flex>
-        </Grid.Col>
-      </Grid>
+        </Box>
+      </Flex>
     </AppShell.Header>
   );
 }

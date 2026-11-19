@@ -11,7 +11,8 @@
     "organizations": [
       "University of Utah",
       "WPI"
-    ]
+    ],
+    "thumbnail": "demo-form-elements/assets/thumbnail.png"
   },
   "uiConfig": {
     "colorMode": "userPreference",

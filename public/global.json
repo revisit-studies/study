@@ -1,5 +1,6 @@
 {
   "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v3.0.0/src/parser/GlobalConfigSchema.json",
+  "introductionPath": "revisitAssets/introduction.md",
   "tabs": [
     {
       "label": "Demo Studies",
@@ -119,10 +120,12 @@
       "path": "demo-html/config.json"
     },
     "test-factors": {
+      "tab": "Factor-demos",
       "path": "test-factors/config.json",
       "test": true
     },
     "test-markdown-factors": {
+      "tab": "Factor-demos",
       "path": "test-markdown-factors/config.json",
       "test": true
     },

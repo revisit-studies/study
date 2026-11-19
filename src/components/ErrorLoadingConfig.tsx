@@ -9,9 +9,12 @@ import { ReactMarkdownWrapper } from './ReactMarkdownWrapper';
 export function ErrorLoadingConfig({
   issues,
   type,
+  collapsible = true,
 }: {
   issues: ParsedConfig<StudyConfig>['errors'];
   type: 'error' | 'warning';
+  /** When false, every issue is listed with no expand/collapse toggle or outer border (e.g. inside a popover). */
+  collapsible?: boolean;
 }) {
   const categoryOrder: ErrorWarningCategory[] = [
     // error
@@ -214,16 +217,23 @@ export function ErrorLoadingConfig({
   const issueLabel = type === 'error' ? 'Error' : 'Warning';
   const count = issues.length;
   // Open by default if errors, closed by default if warnings
-  const [isOpen, setIsOpen] = useState(type === 'error');
+  const [isOpenState, setIsOpen] = useState(type === 'error');
+  const isOpen = !collapsible || isOpenState;
+
+  const titleRow = (
+    <Group gap="xs">
+      <IconAlertTriangle size={16} color={`var(--mantine-color-${badgeColor}-text)`} />
+      <Text size="md" fw="bold" c={badgeColor}>{title}</Text>
+    </Group>
+  );
 
   return (
-    <Paper withBorder p="md" mt="xs">
+    <Paper withBorder={collapsible} p={collapsible ? 'md' : 0} mt={collapsible ? 'xs' : 0} bg={collapsible ? undefined : 'transparent'}>
+      {!collapsible && titleRow}
+      {collapsible && (
       <UnstyledButton onClick={() => setIsOpen((open) => !open)} style={{ width: '100%' }}>
         <Group justify="space-between">
-          <Group gap="xs">
-            <IconAlertTriangle size={16} color={`var(--mantine-color-${badgeColor}-text)`} />
-            <Text size="md" fw="bold" c={badgeColor}>{title}</Text>
-          </Group>
+          {titleRow}
           <Group gap="xs">
             {!isOpen && (
               <Badge size="sm" color={badgeColor} variant="light">
@@ -237,6 +247,7 @@ export function ErrorLoadingConfig({
           </Group>
         </Group>
       </UnstyledButton>
+      )}
       <Text size="sm" c="dimmed">
         {headerText}
       </Text>

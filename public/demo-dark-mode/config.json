@@ -11,7 +11,8 @@
     "organizations": [
       "University of Utah",
       "WPI"
-    ]
+    ],
+    "thumbnail": "demo-dark-mode/assets/thumbnail.png"
   },
   "uiConfig": {
     "colorMode": "dark",
