@@ -219,95 +219,70 @@ function ValidStudyCard({
       : `${PREFIX}${url}`);
   };
 
+  const showWarnings = canViewAnalytics && config.warnings.length > 0;
   const { thumbnail } = config.studyMetadata;
   const thumbnailSrc = thumbnail && (/^https?:\/\//.test(thumbnail) ? thumbnail : `${PREFIX}${thumbnail}`);
 
   return (
     <Card key={configName} shadow="sm" radius="md" padding="sm" h="100%" withBorder>
-      {/* Every card gets the same light gray header; a thumbnail, when present, is centered inside it. */}
-      <Card.Section h={140} pos="relative" style={{ backgroundColor: 'light-dark(var(--mantine-color-gray-2), var(--mantine-color-dark-7))' }}>
-        {thumbnailSrc && (
+      {/* The gray header only exists for studies with a thumbnail, which is centered inside it. */}
+      {thumbnailSrc && (
+        <Card.Section h={140} pos="relative" style={{ backgroundColor: 'light-dark(var(--mantine-color-gray-2), var(--mantine-color-dark-7))' }}>
           <Image src={thumbnailSrc} alt={`Preview of ${config.studyMetadata.title}`} h="100%" w="100%" fit="contain" />
-        )}
-        {canViewAnalytics && config.warnings.length > 0 && (
-          <Box pos="absolute" top={8} right={8}>
-            <CardIssueBadge issues={config.warnings} type="warning" />
-          </Box>
-        )}
-      </Card.Section>
-      <Card.Section
-        px="sm"
-        py={6}
-        // Neutral on purpose: status is conveyed by text so it doesn't compete with the colored icons.
-        style={{
-          borderTop: '1px solid var(--mantine-color-default-border)',
-          backgroundColor: 'light-dark(var(--mantine-color-gray-1), var(--mantine-color-dark-5))',
-        }}
-      >
-        <Flex gap="xs" wrap="wrap" align="center" justify="space-between">
-          <Text size="xs" fw={600} c="dimmed">{currentMode}</Text>
-          {canViewAnalytics && studyStatusAndTiming && (
-          <ParticipantStatusBadges
-            completed={studyStatusAndTiming.completed}
-            inProgress={studyStatusAndTiming.inProgress}
-            rejected={studyStatusAndTiming.rejected}
-            timedOut={studyStatusAndTiming.timedOut}
-            completedLate={studyStatusAndTiming.completedLate}
-            // Turning auto-timeout off does not clear earlier timeouts, and those
-            // participants are not counted in any other badge.
-            showTimeoutStatuses={
-              modes?.autoTimeoutMinutes !== undefined
-              || studyStatusAndTiming.timedOut > 0
-              || studyStatusAndTiming.completedLate > 0
-            }
-          />
+          {showWarnings && (
+            <Box pos="absolute" top={8} right={8}>
+              <CardIssueBadge issues={config.warnings} type="warning" />
+            </Box>
           )}
-        </Flex>
-      </Card.Section>
-      <Flex justify="space-between" align="flex-start" gap="xs" mt="sm">
+        </Card.Section>
+      )}
+      <Flex justify="space-between" align="flex-start" gap="xs" mt={thumbnailSrc ? 'sm' : 0}>
         <Text fw="bold" lineClamp={2} title={config.studyMetadata.title}>
           {config.studyMetadata.title}
         </Text>
-        <Flex gap={6} opacity={0.7} pt={4} style={{ flexShrink: 0 }}>
-          {hasAudioRecording && (
+        <Flex gap={6} pt={4} align="center" style={{ flexShrink: 0 }}>
+          {showWarnings && !thumbnailSrc && <CardIssueBadge issues={config.warnings} type="warning" />}
+          <Flex gap={6} opacity={0.7}>
+            {hasAudioRecording && (
             <Tooltip label="Audio recording enabled" withinPortal position="bottom">
               <IconMicrophone size={16} color="var(--mantine-color-orange-text)" />
             </Tooltip>
-          )}
-          {hasScreenRecording && (
+            )}
+            {hasScreenRecording && (
             <Tooltip label="Screen recording enabled" withinPortal position="bottom">
               <IconDeviceDesktop size={16} color="var(--mantine-color-orange-text)" />
             </Tooltip>
-          )}
-          {hasWebcamRecording && (
+            )}
+            {hasWebcamRecording && (
             <Tooltip label="Webcam recording enabled" withinPortal position="bottom">
               <IconCamera size={16} color="orange" />
             </Tooltip>
-          )}
-          {modes?.developmentModeEnabled
-            ? <Tooltip label="Development mode enabled" withinPortal position="bottom"><IconSchema size={16} color="var(--mantine-color-green-text)" /></Tooltip>
-            : <Tooltip label="Development mode disabled" withinPortal position="bottom"><IconSchemaOff size={16} color="var(--mantine-color-red-text)" /></Tooltip>}
-          {modes?.dataSharingEnabled
-            ? <Tooltip label="Data sharing enabled" withinPortal position="bottom"><IconGraph size={16} color="var(--mantine-color-green-text)" /></Tooltip>
-            : <Tooltip label="Data sharing disabled" withinPortal position="bottom"><IconGraphOff size={16} color="var(--mantine-color-red-text)" /></Tooltip>}
-          {storageEngine?.getEngine() === 'localStorage'
-            ? <Tooltip label="Local storage enabled" withinPortal position="bottom"><IconDatabase size={16} color="var(--mantine-color-green-text)" /></Tooltip>
-            : storageEngine?.getEngine() === 'firebase'
-              ? <Tooltip label="Firebase enabled" withinPortal position="bottom"><IconBrandFirebase size={16} color="var(--mantine-color-green-text)" /></Tooltip>
-              : storageEngine?.getEngine() === 'supabase'
-                ? <Tooltip label="Supabase enabled" withinPortal position="bottom"><IconBrandSupabase size={16} color="var(--mantine-color-green-text)" /></Tooltip>
-                : <Tooltip label="Unknown storage engine enabled" withinPortal position="bottom"><IconDatabase size={16} color="var(--mantine-color-red-text)" /></Tooltip>}
-          {unmetRestrictions.length > 0 && (
+            )}
+            {modes?.developmentModeEnabled
+              ? <Tooltip label="Development mode enabled" withinPortal position="bottom"><IconSchema size={16} color="var(--mantine-color-green-text)" /></Tooltip>
+              : <Tooltip label="Development mode disabled" withinPortal position="bottom"><IconSchemaOff size={16} color="var(--mantine-color-red-text)" /></Tooltip>}
+            {modes?.dataSharingEnabled
+              ? <Tooltip label="Data sharing enabled" withinPortal position="bottom"><IconGraph size={16} color="var(--mantine-color-green-text)" /></Tooltip>
+              : <Tooltip label="Data sharing disabled" withinPortal position="bottom"><IconGraphOff size={16} color="var(--mantine-color-red-text)" /></Tooltip>}
+            {storageEngine?.getEngine() === 'localStorage'
+              ? <Tooltip label="Local storage enabled" withinPortal position="bottom"><IconDatabase size={16} color="var(--mantine-color-green-text)" /></Tooltip>
+              : storageEngine?.getEngine() === 'firebase'
+                ? <Tooltip label="Firebase enabled" withinPortal position="bottom"><IconBrandFirebase size={16} color="var(--mantine-color-green-text)" /></Tooltip>
+                : storageEngine?.getEngine() === 'supabase'
+                  ? <Tooltip label="Supabase enabled" withinPortal position="bottom"><IconBrandSupabase size={16} color="var(--mantine-color-green-text)" /></Tooltip>
+                  : <Tooltip label="Unknown storage engine enabled" withinPortal position="bottom"><IconDatabase size={16} color="var(--mantine-color-red-text)" /></Tooltip>}
+            {unmetRestrictions.length > 0 && (
             <Tooltip label={restrictionsTooltip} multiline style={{ whiteSpace: 'pre-line' }} withinPortal position="bottom">
               <IconBan size={16} color="var(--mantine-color-red-text)" />
             </Tooltip>
-          )}
+            )}
+          </Flex>
         </Flex>
       </Flex>
-      <Text c="dimmed" size="xs" lineClamp={1}>
+      {/* <Text c="dimmed" size="xs" lineClamp={1}>
         <Text span fw={500} size="xs">Authors: </Text>
         {config.studyMetadata.authors.join(', ')}
-      </Text>
+      </Text> */}
       <Text c="dimmed" size="sm" mt={4} mb={minTime && maxTime ? 0 : 'xs'} lineClamp={3} title={config.studyMetadata.description}>{config.studyMetadata.description}</Text>
       {minTime && maxTime && (
         <Text c="dimmed" size="xs" mt={2} mb="xs">
@@ -397,6 +372,36 @@ function ValidStudyCard({
         </Flex>
       </Flex>
       )}
+      <Card.Section
+        mt="sm"
+        px="sm"
+        py={6}
+        // Neutral on purpose: status is conveyed by text so it doesn't compete with the colored icons.
+        style={{
+          borderTop: '1px solid var(--mantine-color-default-border)',
+          backgroundColor: 'light-dark(var(--mantine-color-gray-1), var(--mantine-color-dark-5))',
+        }}
+      >
+        <Flex gap="xs" wrap="wrap" align="center" justify="space-between">
+          <Text size="xs" fw={600} c="dimmed">{currentMode}</Text>
+          {canViewAnalytics && studyStatusAndTiming && (
+          <ParticipantStatusBadges
+            completed={studyStatusAndTiming.completed}
+            inProgress={studyStatusAndTiming.inProgress}
+            rejected={studyStatusAndTiming.rejected}
+            timedOut={studyStatusAndTiming.timedOut}
+            completedLate={studyStatusAndTiming.completedLate}
+            // Turning auto-timeout off does not clear earlier timeouts, and those
+            // participants are not counted in any other badge.
+            showTimeoutStatuses={
+              modes?.autoTimeoutMinutes !== undefined
+              || studyStatusAndTiming.timedOut > 0
+              || studyStatusAndTiming.completedLate > 0
+            }
+          />
+          )}
+        </Flex>
+      </Card.Section>
     </Card>
   );
 }
@@ -419,9 +424,20 @@ function StudyCard({
       <Card key={configName} shadow="sm" radius="md" padding="sm" h="100%" withBorder>
         <Flex justify="space-between" align="flex-start" gap="xs">
           <Text size="md" fw="bold">{configName}</Text>
-          {canViewAnalytics && config.warnings.length > 0 && <CardIssueBadge issues={config.warnings} type="warning" />}
+          {canViewAnalytics && (
+            <Flex gap={6} wrap="wrap" justify="flex-end">
+              <CardIssueBadge issues={config.errors} type="error" />
+              {config.warnings.length > 0 && <CardIssueBadge issues={config.warnings} type="warning" />}
+            </Flex>
+          )}
         </Flex>
-        {canViewAnalytics && <ErrorLoadingConfig issues={config.errors} type="error" />}
+        <Text size="sm" mt="xs" c="red" fw={500}>
+          This study can&apos;t be used right now.
+        </Text>
+        <Text size="sm" c="dimmed">
+          Its config has errors that stop it from loading, so it can&apos;t be started or analyzed until they are fixed.
+          {canViewAnalytics ? ' Select the error badge for details.' : ''}
+        </Text>
       </Card>
     );
   }

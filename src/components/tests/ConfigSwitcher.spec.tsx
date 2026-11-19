@@ -479,11 +479,17 @@ describe('ConfigSwitcher', () => {
         warnings: [],
       } as unknown as ParsedConfig<StudyConfig>,
     };
-    const { container } = await act(async () => render(
+    const view = await act(async () => render(
       <ConfigSwitcher globalConfig={globalConfig} studyConfigs={studyConfigsWithErrors} />,
     ));
+    const { container } = view;
     expect(container.textContent).toContain('test-study');
-    expect(container.querySelector('[data-testid="error-loading-config"]')).not.toBeNull();
+    expect(container.textContent).toContain("This study can't be used right now.");
+    expect(container.textContent).toContain('Select the error badge for details.');
+    // Errors are summarized by a badge, with details only in its popover.
+    expect(view.queryByTestId('error-loading-config')).toBeNull();
+    fireEvent.click(view.getByRole('button', { name: 'Show 1 error' }));
+    expect(await view.findByTestId('error-loading-config')).toBeDefined();
     expect(vi.mocked(getSequenceConditions)).not.toHaveBeenCalled();
     expect(useStudyRecordingsMock).not.toHaveBeenCalled();
   });
