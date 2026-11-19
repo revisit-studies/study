@@ -36,6 +36,7 @@ vi.mock('@mantine/core', () => {
     Header: ({ children }: { children?: ReactNode }) => <header>{children}</header>,
   });
   return {
+    Box: Div,
     AppShell: AppShellWithHeader,
     Grid: GridWithCol,
     Flex: ({ children, onClick }: { children?: ReactNode; onClick?: () => void }) => <div onClick={onClick}>{children}</div>,
@@ -114,5 +115,14 @@ describe('AppHeader', () => {
       <AppHeader studyIds={['my-study']} studyConfigs={{ 'my-study': {} }} />,
     );
     expect(html).toContain('ReVISit Analytics Platform');
+  });
+
+  test('renders page navigation between the title and the controls', () => {
+    mockPathname = '/';
+    const html = renderToStaticMarkup(<AppHeader studyIds={[]} navigation={<nav>Landing tabs</nav>} />);
+
+    expect(html).toContain('<nav>Landing tabs</nav>');
+    expect(html.indexOf('ReVISit Studies')).toBeLessThan(html.indexOf('Landing tabs'));
+    expect(html.indexOf('Landing tabs')).toBeLessThan(html.indexOf('<svg'));
   });
 });

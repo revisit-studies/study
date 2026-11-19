@@ -29,13 +29,10 @@ vi.mock('@mantine/core', async () => ({
     ({ children }: { children: ReactNode }) => <div>{children}</div>,
     { Main: ({ children }: { children: ReactNode }) => <main>{children}</main> },
   ),
-  Badge: ({ children }: { children: ReactNode }) => <span>{children}</span>,
-  Button: ({
-    children, onClick, href, component,
-  }: { children: ReactNode; onClick?: () => void; href?: string; component?: string }) => (
-    component === 'a' ? <a href={href}>{children}</a> : <button type="button" onClick={onClick}>{children}</button>
+  Card: Object.assign(
+    ({ children }: { children: ReactNode }) => <div>{children}</div>,
+    { Section: ({ children }: { children?: ReactNode }) => <div>{children}</div> },
   ),
-  Card: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   Container: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   CopyButton: ({ children }: { children: (props: { copied: boolean; copy: () => void }) => ReactNode }) => (
     <div>{children({ copied: false, copy: vi.fn() })}</div>
@@ -43,9 +40,6 @@ vi.mock('@mantine/core', async () => ({
   Divider: () => <hr />,
   Flex: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   Image: ({ src, alt }: { src?: string; alt?: string }) => <img src={src} alt={alt} />,
-  MultiSelect: ({ data, onChange }: { data: { value: string; label: string }[]; onChange: (value: string[]) => void }) => (
-    <select aria-label="Conditions" onChange={(event) => onChange([event.target.value])}>{data.map(({ value, label }) => <option key={value} value={value}>{label}</option>)}</select>
-  ),
   Skeleton: ({ children }: { children?: ReactNode }) => <div>{children}</div>,
   rem: (v: number) => `${v}px`,
   Text: ({ children, span, role }: { children: ReactNode; span?: boolean; role?: AriaRole }) => (
@@ -55,6 +49,7 @@ vi.mock('@mantine/core', async () => ({
 }));
 
 vi.mock('@tabler/icons-react', () => ({
+  IconAlertTriangle: () => null,
   IconBan: () => null,
   IconBrandFirebase: () => null,
   IconBrandSupabase: () => null,
@@ -87,6 +82,11 @@ const getStaticAssetByPathMock = vi.hoisted(() => vi.fn<(path: string) => Promis
 
 vi.mock('../../utils/getStaticAsset', () => ({
   getStaticAssetByPath: getStaticAssetByPathMock,
+}));
+
+// The header needs the app theme provider; render only the navigation it receives.
+vi.mock('../../analysis/interface/AppHeader', () => ({
+  AppHeader: ({ navigation }: { navigation?: ReactNode }) => <header>{navigation}</header>,
 }));
 
 vi.mock('../ErrorLoadingConfig', () => ({
@@ -217,9 +217,9 @@ afterEach(() => {
 describe('ConfigSwitcher', () => {
   test.each([
     { label: 'Go to Study', path: '/test-study', prefix: '/' },
-    { label: 'Analyze & Manage Study', path: '/analysis/stats/test-study', prefix: '/' },
+    { label: 'Analyze & Manage', path: '/analysis/stats/test-study', prefix: '/' },
     { label: 'Go to Study', path: '/study/test-study', prefix: '/study/' },
-    { label: 'Analyze & Manage Study', path: '/study/analysis/stats/test-study', prefix: '/study/' },
+    { label: 'Analyze & Manage', path: '/study/analysis/stats/test-study', prefix: '/study/' },
   ])('loads a fresh page for $label under $prefix', async ({ label, path, prefix }) => {
     prefixMock.value = prefix;
     const view = await act(async () => render(
@@ -233,7 +233,7 @@ describe('ConfigSwitcher', () => {
     expect(assignLocation).toHaveBeenCalledExactlyOnceWith(path);
   });
 
-  test('preserves the selected condition when loading a study under a base path', async () => {
+  test('launches the condition chosen from the Go to Study menu under a base path', async () => {
     prefixMock.value = '/study/';
     vi.mocked(getSequenceConditions).mockReturnValue(['condA']);
     const view = await act(async () => render(
@@ -242,8 +242,8 @@ describe('ConfigSwitcher', () => {
       '/study/',
     ));
 
-    fireEvent.change(view.getByLabelText('Conditions'), { target: { value: 'condA' } });
     fireEvent.click(view.getByRole('button', { name: 'Go to Study' }));
+    fireEvent.click(await view.findByRole('menuitem', { name: /^condA/ }));
 
     expect(assignLocation).toHaveBeenCalledExactlyOnceWith('/study/test-study?condition=condA');
   });
@@ -273,15 +273,16 @@ describe('ConfigSwitcher', () => {
 
     expect(view.getByText('Test Study')).toBeDefined();
     expect(view.getByRole('button', { name: 'Go to Study' })).toBeDefined();
-    expect(view.queryByRole('button', { name: 'Analyze & Manage Study' })).toBeNull();
+    expect(view.queryByRole('button', { name: 'Analyze & Manage' })).toBeNull();
     expect(view.queryByTestId('status-badges')).toBeNull();
     expect(view.queryByTestId('error-loading-config')).toBeNull();
-    expect(view.getByText(/Study Status:/).textContent).toContain('Collecting Data');
+    expect(view.getByText('Collecting Data')).toBeDefined();
     expect(view.getByTitle(/Development mode/)).toBeDefined();
     expect(view.getByTitle(/Data sharing/)).toBeDefined();
     expect(view.getByTitle(/storage|Firebase|Supabase/)).toBeDefined();
     expect(view.getByText(/Activity:/)).toBeDefined();
-    expect(view.getByRole('option', { name: 'condA' })).toBeDefined();
+    fireEvent.click(view.getByRole('button', { name: 'Go to Study' }));
+    expect(await view.findByRole('menuitem', { name: 'condA' })).toBeDefined();
     expect(view.container.textContent).not.toContain('participants');
     expect(engine.getParticipantsStatusCounts).toHaveBeenCalledWith('test-study');
     expect(engine.getConditionData).not.toHaveBeenCalled();
@@ -307,7 +308,7 @@ describe('ConfigSwitcher', () => {
       <ConfigSwitcher globalConfig={globalConfig} studyConfigs={studyConfigs} />,
     ));
 
-    expect(view.getByText(/Study Status:/).textContent).toContain('Collecting Data');
+    expect(view.getByText('Collecting Data')).toBeDefined();
   });
 
   test.each([false, true])('hides a study from public visitors independently of data sharing (%s)', async (dataSharingEnabled) => {
@@ -369,16 +370,19 @@ describe('ConfigSwitcher', () => {
 
     const view = await act(async () => render(<ConfigSwitcher globalConfig={globalConfig} studyConfigs={configs} />));
 
-    expect(view.getByRole('button', { name: 'Analyze & Manage Study' })).toBeDefined();
+    expect(view.getByRole('button', { name: 'Analyze & Manage' })).toBeDefined();
     expect(view.getByTestId('status-badges')).toBeDefined();
     expect(view.getByTestId('status-badges').getAttribute('data-show-timeout-statuses')).toBe('true');
-    expect(view.getByTestId('error-loading-config')).toBeDefined();
-    expect(view.getByText(/Study Status:/)).toBeDefined();
+    expect(view.queryByTestId('error-loading-config')).toBeNull();
+    fireEvent.click(view.getByRole('button', { name: 'Show 1 warning' }));
+    expect(await view.findByTestId('error-loading-config')).toBeDefined();
+    expect(view.getByText(/^(Collecting Data|Ready to Collect Data|Data Collection Disabled)$/)).toBeDefined();
     expect(view.getByTitle(/Development mode/)).toBeDefined();
     expect(view.getByTitle(/Data sharing/)).toBeDefined();
     expect(view.getByTitle('Firebase enabled')).toBeDefined();
     expect(view.getByText(/Activity:/)).toBeDefined();
-    expect(view.getByRole('option', { name: 'condA (2 participants)' })).toBeDefined();
+    fireEvent.click(view.getByRole('button', { name: 'Go to Study' }));
+    expect(await view.findByRole('menuitem', { name: 'condA (2 participants)' })).toBeDefined();
     expect(engine.getParticipantsStatusCounts).toHaveBeenCalledWith('test-study');
     expect(engine.getConditionData).toHaveBeenCalledWith('test-study');
   });
@@ -412,10 +416,11 @@ describe('ConfigSwitcher', () => {
 
     expect(view.queryByTestId('status-badges')).toBeNull();
     expect(view.getByText(/Activity:/)).toBeDefined();
-    expect(view.queryByRole('button', { name: 'Analyze & Manage Study' })).toBeNull();
-    expect(view.getByText(/Study Status:/)).toBeDefined();
+    expect(view.queryByRole('button', { name: 'Analyze & Manage' })).toBeNull();
+    expect(view.getByText(/^(Collecting Data|Ready to Collect Data|Data Collection Disabled)$/)).toBeDefined();
     expect(view.getByTitle(/Development mode/)).toBeDefined();
-    expect(view.getByRole('option', { name: 'condA' })).toBeDefined();
+    fireEvent.click(view.getByRole('button', { name: 'Go to Study' }));
+    expect(await view.findByRole('menuitem', { name: 'condA' })).toBeDefined();
     expect(engine.getParticipantsStatusCounts).toHaveBeenCalledWith('test-study');
     expect(engine.getConditionData).toHaveBeenCalledTimes(1);
   });
@@ -702,7 +707,7 @@ describe('ConfigSwitcher', () => {
     expect(mockEngine.getModes).not.toHaveBeenCalled();
     expect(container.textContent).toContain(parsedStudyConfig.studyMetadata.title);
     expect(container.querySelector('a[href="/analysis/stats/test-study"]')).toBeNull();
-    expect(container.textContent).not.toContain('Analyze & Manage Study');
+    expect(container.textContent).not.toContain('Analyze & Manage');
     expect(container.querySelector('[data-testid="status-badges"]')).toBeNull();
   });
 
@@ -769,6 +774,56 @@ describe('ConfigSwitcher', () => {
     expect(container.textContent).not.toContain('No studies found.');
     expect(mockEngine.getModes).toHaveBeenCalledTimes(2);
     consoleSpy.mockRestore();
+  });
+});
+
+describe('ConfigSwitcher study cards', () => {
+  test('shows a thumbnail under the base path and keeps the header when there is none', async () => {
+    prefixMock.value = '/study/';
+    const withThumbnail = {
+      'test-study': {
+        ...parsedStudyConfig,
+        studyMetadata: { ...parsedStudyConfig.studyMetadata, thumbnail: 'test-study/assets/thumbnail.png' },
+      },
+    };
+    const view = await act(async () => render(<ConfigSwitcher globalConfig={globalConfig} studyConfigs={withThumbnail} />, '/study/', '/study/'));
+
+    expect(view.getByAltText('Preview of Test Study').getAttribute('src')).toBe('/study/test-study/assets/thumbnail.png');
+
+    cleanup();
+    const plain = await act(async () => render(<ConfigSwitcher globalConfig={globalConfig} studyConfigs={studyConfigs} />));
+    expect(plain.queryByAltText(/^Preview of/)).toBeNull();
+  });
+
+  test('uses absolute thumbnail URLs as-is', async () => {
+    const remote = {
+      'test-study': {
+        ...parsedStudyConfig,
+        studyMetadata: { ...parsedStudyConfig.studyMetadata, thumbnail: 'https://example.com/thumb.png' },
+      },
+    };
+    const view = await act(async () => render(<ConfigSwitcher globalConfig={globalConfig} studyConfigs={remote} />));
+
+    expect(view.getByAltText('Preview of Test Study').getAttribute('src')).toBe('https://example.com/thumb.png');
+  });
+
+  test('launches the default condition without a condition parameter', async () => {
+    vi.mocked(getSequenceConditions).mockReturnValue(['condA']);
+    const view = await act(async () => render(<ConfigSwitcher globalConfig={globalConfig} studyConfigs={studyConfigs} />));
+
+    fireEvent.click(view.getByRole('button', { name: 'Go to Study' }));
+    expect(await view.findByText('Choose a condition')).toBeDefined();
+    fireEvent.click(await view.findByRole('menuitem', { name: /^default/ }));
+
+    expect(assignLocation).toHaveBeenCalledExactlyOnceWith('/test-study');
+  });
+
+  test('links View Source to the study folder in a new tab', async () => {
+    const view = await act(async () => render(<ConfigSwitcher globalConfig={globalConfig} studyConfigs={studyConfigs} />));
+
+    const link = view.getByRole('link', { name: 'View Source' });
+    expect(link.getAttribute('href')).toBe(`${import.meta.env.VITE_REPO_URL}test-study`);
+    expect(link.getAttribute('target')).toBe('_blank');
   });
 });
 
