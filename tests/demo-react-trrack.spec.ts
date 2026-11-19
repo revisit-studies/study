@@ -14,7 +14,7 @@ test('Test React Stroop component with reactive response', async ({ page }) => {
   ] as const;
 
   await resetClientStudyState(page);
-  await openStudyFromLanding(page, 'Demo Studies', 'React Stimulus with Trrack library');
+  await openStudyFromLanding(page, 'Snippets', 'React Stimulus with Trrack library');
 
   await expect(page.getByText(/Stroop color test/i)).toBeVisible();
   await nextClick(page);

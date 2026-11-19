@@ -15,6 +15,10 @@
             "additionalProperties": false,
             "description": "The key is used to identify the study config file. This key is used in the configList property.",
             "properties": {
+              "group": {
+                "description": "The exact label of a group defined on this study's tab. Ungrouped studies in a grouped tab appear in a trailing \"Other\" group.",
+                "type": "string"
+              },
               "path": {
                 "description": "The path to the study config file. This should be a relative path from the public folder.",
                 "type": "string"
@@ -55,6 +59,27 @@
               "description": {
                 "description": "An optional Markdown description displayed above the studies in this tab.",
                 "type": "string"
+              },
+              "groups": {
+                "description": "Optional sections within this tab, in display order. When present, studies are shown under group headings with side navigation; studies without a group appear in a trailing \"Other\" group.",
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "description": {
+                      "description": "An optional Markdown description displayed under the group heading.",
+                      "type": "string"
+                    },
+                    "label": {
+                      "description": "A unique, non-blank group name within this tab. Study assignments reference this exact label.",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "label"
+                  ],
+                  "type": "object"
+                },
+                "type": "array"
               },
               "label": {
                 "description": "A unique, non-blank tab name. Study assignments and the tab URL parameter reference this exact label.",

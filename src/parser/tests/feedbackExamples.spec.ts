@@ -16,11 +16,11 @@ beforeAll(async () => {
   feedbackStudy = feedback;
 });
 
-test('registers the feedback study in the global Demo Studies list', () => {
+test('registers the feedback study in the global Snippets list', () => {
   const global = parseGlobalConfig(readConfig('global.json'));
   expect(global.configsList).toContain('demo-answer-feedback');
   expect(global.configs['demo-answer-feedback']).toEqual({
-    tab: 'Demo Studies', path: 'demo-answer-feedback/config.json',
+    tab: 'Snippets', group: 'Responses and Feedback', path: 'demo-answer-feedback/config.json',
   });
 });
 

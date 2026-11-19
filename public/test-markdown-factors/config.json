@@ -5,7 +5,7 @@
     "version": "pilot",
     "authors": ["The reVISit Team"],
     "date": "2026-08-21",
-    "description": "A minimal demo of rendering factor values in a Markdown stimulus with Handlebars templates.",
+    "description": "A minimal demo of rendering factor values in a Markdown stimulus with Handlebars templates. Learn more about [factors](https://revisit.dev/docs/designing-studies/factors/) and [templating](https://revisit.dev/docs/designing-studies/templating/) in the docs.",
     "organizations": ["University of Utah", "WPI", "University of Toronto"]
   },
   "uiConfig": {

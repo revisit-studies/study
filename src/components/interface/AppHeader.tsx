@@ -46,8 +46,10 @@ import { useDeviceRules } from '../../utils/useDeviceRules';
 import {
   DEFAULT_FIREBASE_WARNING_MESSAGE,
   DEFAULT_SUPABASE_WARNING_MESSAGE,
+  LOCAL_STORAGE_WARNING_MESSAGE,
   shouldWarnForDefaultFirebaseConfig,
   shouldWarnForDefaultSupabaseConfig,
+  shouldWarnForLocalStorage,
 } from '../../utils/defaultStorageConfig';
 import { useIsAnalysis } from '../../store/hooks/useIsAnalysis';
 import { PdfExportMenuItem } from './PdfExportMenuItem';
@@ -135,6 +137,8 @@ export function AppHeader({
     && (!isBrowserAllowed || !isDeviceAllowed || !isInputAllowed || !isDisplayAllowed);
   const showDefaultFirebaseWarning = shouldWarnForDefaultFirebaseConfig();
   const showDefaultSupabaseWarning = shouldWarnForDefaultSupabaseConfig();
+  // Use the engine actually in use, since a study can switch to local storage at runtime.
+  const showLocalStorageWarning = shouldWarnForLocalStorage({ storageEngine: storageEngine?.getEngine() });
   const isScreenRecordingPermission = currentComponent === '$screen-recording.components.screenRecordingPermission';
   const showAudioStatus = currentComponentHasAudioRecording
     || isAudioRecording
@@ -295,6 +299,11 @@ export function AppHeader({
             {showDefaultFirebaseWarning && (
               <Tooltip multiline withArrow arrowSize={6} w={360} label={DEFAULT_FIREBASE_WARNING_MESSAGE}>
                 <Badge size="lg" color="orange" autoContrast>Default Firebase</Badge>
+              </Tooltip>
+            )}
+            {showLocalStorageWarning && (
+              <Tooltip multiline withArrow arrowSize={6} w={360} label={LOCAL_STORAGE_WARNING_MESSAGE}>
+                <Badge size="lg" color="orange" autoContrast>Local Storage</Badge>
               </Tooltip>
             )}
             {showDefaultSupabaseWarning && (

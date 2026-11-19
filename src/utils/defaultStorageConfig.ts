@@ -10,6 +10,9 @@ export const DEFAULT_FIREBASE_WARNING_ACTION = 'Set VITE_FIREBASE_CONFIG to a Fi
 export const DEFAULT_SUPABASE_WARNING_MESSAGE = 'This study is connected to ReVISit\'s default Supabase project. Participant data may not be saved to a backend controlled by the study designer.';
 export const DEFAULT_SUPABASE_WARNING_ACTION = 'Set VITE_SUPABASE_URL to a Supabase project controlled by the study designer or choose another storage engine';
 
+export const LOCAL_STORAGE_WARNING_MESSAGE = 'This study stores participant data in each participant\'s own browser (local storage), so the study designer cannot collect it. Local storage is only meant for development on localhost.';
+export const LOCAL_STORAGE_WARNING_ACTION = 'Set VITE_STORAGE_ENGINE to firebase or supabase before deploying the study';
+
 const REVISIT_DOMAINS = ['revisit.dev', 'vdl.sci.utah.edu'];
 const REVISIT_DEV_DOMAIN = 'revisit.dev';
 const LOCAL_DEVELOPMENT_HOSTNAMES = new Set(['localhost', '127.0.0.1', '0.0.0.0', '::1', '[::1]']);
@@ -61,6 +64,17 @@ export function isDefaultRevisitFirebaseConfig(firebaseConfig: unknown) {
   return projectId === DEFAULT_FIREBASE_PROJECT_ID
     || authDomain === DEFAULT_FIREBASE_AUTH_DOMAIN
     || storageBucket === DEFAULT_FIREBASE_STORAGE_BUCKET;
+}
+
+/** Local storage keeps data in the participant's browser, which is only appropriate during local development. */
+export function shouldWarnForLocalStorage({
+  storageEngine = import.meta.env.VITE_STORAGE_ENGINE,
+  hostname = getCurrentHostname(),
+}: {
+  storageEngine?: string;
+  hostname?: string;
+} = {}) {
+  return storageEngine === 'localStorage' && !isLocalDevelopmentHostname(hostname);
 }
 
 export function shouldWarnForDefaultFirebaseConfig({

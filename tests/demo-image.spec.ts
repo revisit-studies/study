@@ -8,7 +8,7 @@ import {
 
 test('Test image component', async ({ page }) => {
   await resetClientStudyState(page);
-  await openStudyFromLanding(page, 'Demo Studies', [
+  await openStudyFromLanding(page, 'Snippets', [
     'Images as Stimuli: Decision-Making with Uncertainty Visualizations',
     'Simple Images as Stimuli: Decision-Making with Uncertainty Visualizations',
   ]);

@@ -7,7 +7,7 @@
       "The reVISit Team"
     ],
     "date": "2026-02-23",
-    "description": "An example study that implements provenance tracking with Trrack on a choropleth map.",
+    "description": "An example study that implements provenance tracking with Trrack on a choropleth map. Learn more about [provenance tracking](https://revisit.dev/docs/designing-studies/provenance-tracking/) in the docs.",
     "organizations": [
       "University of Utah",
       "WPI"

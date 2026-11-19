@@ -2,7 +2,7 @@
   "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v3.0.0/src/parser/StudyConfigSchema.json",
   "studyMetadata": {
     "title": "Using Step Logic",
-    "description": "This is a test of the step logic feature.",
+    "description": "This is a test of the step logic feature. Learn more about [study sequences](https://revisit.dev/docs/designing-studies/sequences/study-sequences/) in the docs.",
     "version": "1.0.0",
     "authors": [
       "The reVISit Team"

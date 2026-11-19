@@ -1,18 +1,58 @@
 {
   "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v3.0.0/src/parser/GlobalConfigSchema.json",
-  "introductionPath": "revisitAssets/introduction.md",
+  "introductionPath": "introduction.md",
   "tabs": [
     {
-      "label": "Demo Studies",
-      "description": "These studies show off individual features of the reVISit platform."
-    },
-    {
-      "label": "Factor-demos",
-      "description": "These studies demonstrate the factors configuration language and its participant-level scheduling behavior."
+      "label": "Snippets",
+      "description": "Small, focused studies that each show off one feature of the reVISit platform.",
+      "groups": [
+        {
+          "label": "Stimuli",
+          "description": "Ways to show participants something: HTML, images, video, Vega specs, and React components."
+        },
+        {
+          "label": "Data and Templating",
+          "description": "Passing data into stimuli and filling content from templates."
+        },
+        {
+          "label": "Responses and Feedback",
+          "description": "Collecting answers, validating them, and training participants."
+        },
+        {
+          "label": "Provenance Tracking",
+          "description": "Recording interaction histories with Trrack so sessions can be replayed."
+        },
+        {
+          "label": "Study Flow",
+          "description": "Changing what participants see with dynamic and conditional blocks."
+        },
+        {
+          "label": "Recording and Input Devices",
+          "description": "Capturing screen recordings and input from devices like gamepads."
+        },
+        {
+          "label": "Appearance",
+          "description": "Theming and styling studies."
+        },
+        {
+          "label": "Factors",
+          "description": "Studies built with the factors configuration language, including its participant-level scheduling."
+        }
+      ]
     },
     {
       "label": "Example Studies",
-      "description": "These are full studies that demonstrate the capabilities of the reVISit platform."
+      "description": "These are full studies that demonstrate the capabilities of the reVISit platform.",
+      "groups": [
+        {
+          "label": "Perception and Literacy",
+          "description": "Graphical perception experiments and literacy assessments."
+        },
+        {
+          "label": "Interaction and Exploration",
+          "description": "Studies of interactive selection, network exploration, and chat-based analysis."
+        }
+      ]
     },
     {
       "label": "Tutorials",
@@ -20,11 +60,55 @@
     },
     {
       "label": "Tests",
-      "description": "These studies exist for testing purposes."
+      "description": "These studies exist for testing purposes.",
+      "groups": [
+        {
+          "label": "Study Flow and Logic",
+          "description": "Sequencing, randomization, skip and step logic, and timeouts."
+        },
+        {
+          "label": "Responses and Validation",
+          "description": "Response types, validation, scoring, and keyboard input."
+        },
+        {
+          "label": "Global Store",
+          "description": "Sharing state across trials with the global store."
+        },
+        {
+          "label": "Platform and Configuration",
+          "description": "Device rules, libraries, audio, and config parsing."
+        }
+      ]
     },
     {
       "label": "Libraries",
-      "description": "Here you can see an example of every library that we publish."
+      "description": "Here you can see an example of every library that we publish.",
+      "groups": [
+        {
+          "label": "Visualization Literacy and Numeracy",
+          "description": "Assessments of how well participants read charts and reason with numbers."
+        },
+        {
+          "label": "Visualization Aesthetics and Readability",
+          "description": "Ratings of how attractive and readable a visualization is."
+        },
+        {
+          "label": "Usability and User Experience",
+          "description": "Standard questionnaires about a system's usability and experience."
+        },
+        {
+          "label": "Workload and Affect",
+          "description": "Measures of mental effort, workload, and emotional response."
+        },
+        {
+          "label": "Participant Screening and Calibration",
+          "description": "Background questions and checks to run before a study."
+        },
+        {
+          "label": "Recording and Input",
+          "description": "Capturing screens, webcams, and drawings."
+        }
+      ]
     }
   ],
   "configsList": [
@@ -116,340 +200,415 @@
       "path": "tutorial/replication-config.json"
     },
     "demo-html": {
-      "tab": "Demo Studies",
+      "tab": "Snippets",
+      "group": "Stimuli",
       "path": "demo-html/config.json"
     },
     "test-factors": {
-      "tab": "Factor-demos",
+      "tab": "Snippets",
+      "group": "Factors",
       "path": "test-factors/config.json",
       "test": true
     },
     "test-markdown-factors": {
-      "tab": "Factor-demos",
+      "tab": "Snippets",
+      "group": "Factors",
       "path": "test-markdown-factors/config.json",
       "test": true
     },
     "demo-stroop-factors": {
-      "tab": "Factor-demos",
+      "tab": "Snippets",
+      "group": "Factors",
       "path": "demo-stroop-factors/config.json"
     },
     "demo-stroop-html-factors": {
-      "tab": "Factor-demos",
+      "tab": "Snippets",
+      "group": "Factors",
       "path": "demo-stroop-html-factors/config.json"
     },
     "demo-ffl-study": {
-      "tab": "Factor-demos",
+      "tab": "Snippets",
+      "group": "Factors",
       "path": "demo-ffl-study/config.json"
     },
     "demo-dsf-study": {
-      "tab": "Factor-demos",
+      "tab": "Snippets",
+      "group": "Factors",
       "path": "demo-dsf-study/config.json"
     },
     "demo-calvi-study": {
-      "tab": "Factor-demos",
+      "tab": "Snippets",
+      "group": "Factors",
       "path": "demo-calvi-study/config.json"
     },
     "demo-screen-recording": {
-      "tab": "Demo Studies",
+      "tab": "Snippets",
+      "group": "Recording and Input Devices",
       "path": "demo-screen-recording/config.json"
     },
     "demo-gamepad": {
-      "tab": "Demo Studies",
+      "tab": "Snippets",
+      "group": "Recording and Input Devices",
       "path": "demo-gamepad/config.json"
     },
     "demo-html-input": {
-      "tab": "Demo Studies",
+      "tab": "Snippets",
+      "group": "Data and Templating",
       "path": "demo-html-input/config.json"
     },
     "demo-templating": {
-      "tab": "Demo Studies",
+      "tab": "Snippets",
+      "group": "Data and Templating",
       "path": "demo-templating/config.json"
     },
     "demo-form-elements": {
-      "tab": "Demo Studies",
+      "tab": "Snippets",
+      "group": "Responses and Feedback",
       "path": "demo-form-elements/config.json"
     },
     "demo-dark-mode": {
-      "tab": "Demo Studies",
+      "tab": "Snippets",
+      "group": "Appearance",
       "path": "demo-dark-mode/config.json"
     },
     "demo-answer-feedback": {
-      "tab": "Demo Studies",
+      "tab": "Snippets",
+      "group": "Responses and Feedback",
       "path": "demo-answer-feedback/config.json"
     },
     "demo-training": {
-      "tab": "Demo Studies",
+      "tab": "Snippets",
+      "group": "Responses and Feedback",
       "path": "demo-training/config.json"
     },
     "demo-upset": {
-      "tab": "Demo Studies",
+      "tab": "Snippets",
+      "group": "Stimuli",
       "path": "demo-upset/config.json"
     },
     "demo-video": {
-      "tab": "Demo Studies",
+      "tab": "Snippets",
+      "group": "Stimuli",
       "path": "demo-video/config.json"
     },
     "demo-dynamic": {
-      "tab": "Demo Studies",
+      "tab": "Snippets",
+      "group": "Study Flow",
       "path": "demo-dynamic/config.json"
     },
     "demo-condition": {
-      "tab": "Demo Studies",
+      "tab": "Snippets",
+      "group": "Study Flow",
       "path": "demo-condition/config.json"
     },
     "demo-html-trrack": {
-      "tab": "Demo Studies",
+      "tab": "Snippets",
+      "group": "Provenance Tracking",
       "path": "demo-html-trrack/config.json"
     },
     "demo-svelte-trrack": {
-      "tab": "Demo Studies",
+      "tab": "Snippets",
+      "group": "Provenance Tracking",
       "path": "demo-svelte-trrack/config.json"
     },
     "demo-react-trrack": {
-      "tab": "Demo Studies",
+      "tab": "Snippets",
+      "group": "Provenance Tracking",
       "path": "demo-react-trrack/config.json"
     },
     "demo-codemirror": {
-      "tab": "Demo Studies",
+      "tab": "Snippets",
+      "group": "Responses and Feedback",
       "path": "demo-codemirror/config.json"
     },
     "demo-image": {
-      "tab": "Demo Studies",
+      "tab": "Snippets",
+      "group": "Stimuli",
       "path": "demo-image/config.json"
     },
     "demo-style": {
-      "tab": "Demo Studies",
+      "tab": "Snippets",
+      "group": "Appearance",
       "path": "demo-style/config.json"
     },
     "demo-vega": {
-      "tab": "Demo Studies",
+      "tab": "Snippets",
+      "group": "Stimuli",
       "path": "demo-vega/config.json"
     },
     "demo-yaml": {
-      "tab": "Demo Studies",
+      "tab": "Snippets",
+      "group": "Data and Templating",
       "path": "demo-yaml/config.yaml"
     },
     "demo-ranking-widget": {
-      "tab": "Demo Studies",
+      "tab": "Snippets",
+      "group": "Responses and Feedback",
       "path": "demo-ranking-widget/config.json"
     },
     "demo-choropleth-map": {
-      "tab": "Demo Studies",
+      "tab": "Snippets",
+      "group": "Provenance Tracking",
       "path": "demo-choropleth-map/config.json"
     },
     "incentives-corr": {
-      "tab": "Factor-demos",
+      "tab": "Snippets",
+      "group": "Factors",
       "path": "incentives-corr/config.json"
     },
     "example-llm-chatbot": {
       "tab": "Example Studies",
+      "group": "Interaction and Exploration",
       "path": "example-llm-chatbot/config.json"
     },
     "example-brush-interactions": {
       "tab": "Example Studies",
+      "group": "Interaction and Exploration",
       "path": "example-brush-interactions/config.json"
     },
     "example-cleveland": {
       "tab": "Example Studies",
+      "group": "Perception and Literacy",
       "path": "example-cleveland/config.json"
     },
     "example-mvnv": {
       "tab": "Example Studies",
+      "group": "Interaction and Exploration",
       "path": "example-mvnv/config.json"
     },
     "library-adaptive-vlat": {
       "tab": "Libraries",
+      "group": "Visualization Literacy and Numeracy",
       "path": "library-adaptive-vlat/config.json",
       "test": true
     },
     "library-beauvis": {
       "tab": "Libraries",
+      "group": "Visualization Aesthetics and Readability",
       "path": "library-beauvis/config.json",
       "test": true
     },
     "library-berlin-num": {
       "tab": "Libraries",
+      "group": "Visualization Literacy and Numeracy",
       "path": "library-berlin-num/config.json",
       "test": true
     },
     "library-calvi": {
       "tab": "Libraries",
+      "group": "Visualization Literacy and Numeracy",
       "path": "library-calvi/config.json",
       "test": true
     },
     "library-color-blindness": {
       "tab": "Libraries",
+      "group": "Participant Screening and Calibration",
       "path": "library-color-blindness/config.json",
       "test": true
     },
     "library-demographics": {
       "tab": "Libraries",
+      "group": "Participant Screening and Calibration",
       "path": "library-demographics/config.json",
       "test": true
     },
     "library-graph-literacy-scale": {
       "tab": "Libraries",
+      "group": "Visualization Literacy and Numeracy",
       "path": "library-graph-literacy-scale/config.json",
       "test": true
     },
     "library-mic-check": {
       "tab": "Libraries",
+      "group": "Participant Screening and Calibration",
       "path": "library-mic-check/config.json",
       "test": true
     },
     "library-mini-vlat": {
       "tab": "Libraries",
+      "group": "Visualization Literacy and Numeracy",
       "path": "library-mini-vlat/config.json",
       "test": true
     },
     "library-nasa-tlx": {
       "tab": "Libraries",
+      "group": "Workload and Affect",
       "path": "library-nasa-tlx/config.json",
       "test": true
     },
     "library-previs": {
       "tab": "Libraries",
+      "group": "Visualization Aesthetics and Readability",
       "path": "library-previs/config.json",
       "test": true
     },
     "library-quis": {
       "tab": "Libraries",
+      "group": "Usability and User Experience",
       "path": "library-quis/config.json",
       "test": true
     },
     "library-sam": {
       "tab": "Libraries",
+      "group": "Workload and Affect",
       "path": "library-sam/config.json",
       "test": true
     },
     "library-screen-recording": {
       "tab": "Libraries",
+      "group": "Recording and Input",
       "path": "library-screen-recording/config.json",
       "test": true
     },
     "library-webcam-recording": {
       "tab": "Libraries",
+      "group": "Recording and Input",
       "path": "library-webcam-recording/config.json",
       "test": true
     },
     "library-smeq": {
       "tab": "Libraries",
+      "group": "Workload and Affect",
       "path": "library-smeq/config.json",
       "test": true
     },
     "library-drawing": {
       "tab": "Libraries",
+      "group": "Recording and Input",
       "path": "library-drawing/config.json",
       "test": true
     },
     "library-sus": {
       "tab": "Libraries",
+      "group": "Usability and User Experience",
       "path": "library-sus/config.json",
       "test": true
     },
     "library-ueq": {
       "tab": "Libraries",
+      "group": "Usability and User Experience",
       "path": "library-ueq/config.json",
       "test": true
     },
     "library-ueq-s": {
       "tab": "Libraries",
+      "group": "Usability and User Experience",
       "path": "library-ueq-s/config.json",
       "test": true
     },
     "library-vlat": {
       "tab": "Libraries",
+      "group": "Visualization Literacy and Numeracy",
       "path": "library-vlat/config.json",
       "test": true
     },
     "test-keymapping": {
       "tab": "Tests",
+      "group": "Responses and Validation",
       "path": "test-keymapping/config.json",
       "test": true
     },
     "test-response-functions": {
       "tab": "Tests",
+      "group": "Responses and Validation",
       "path": "test-response-functions/config.json",
       "test": true
     },
     "test-max-study2": {
       "tab": "Tests",
+      "group": "Study Flow and Logic",
       "path": "test-max-study2/config.json",
       "test": true
     },
     "test-audio": {
       "tab": "Tests",
+      "group": "Platform and Configuration",
       "path": "test-audio/config.json",
       "test": true
     },
     "test-device-restriction": {
       "tab": "Tests",
+      "group": "Platform and Configuration",
       "path": "test-device-restriction/config.json"
     },
     "test-library": {
       "tab": "Tests",
+      "group": "Platform and Configuration",
       "path": "test-library/config.json",
       "test": true
     },
     "test-likert-matrix": {
       "tab": "Tests",
+      "group": "Responses and Validation",
       "path": "test-likert-matrix/config.json"
     },
     "test-parser-errors": {
       "tab": "Tests",
+      "group": "Platform and Configuration",
       "path": "test-parser-errors/config.json",
       "test": true
     },
     "test-randomization": {
       "tab": "Tests",
+      "group": "Study Flow and Logic",
       "path": "test-randomization/config.json",
       "test": true
     },
     "test-component-timeout": {
       "tab": "Tests",
+      "group": "Study Flow and Logic",
       "path": "test-component-timeout/config.json",
       "test": true
     },
     "test-skip-logic": {
       "tab": "Tests",
+      "group": "Study Flow and Logic",
       "path": "test-skip-logic/config.json",
       "test": true
     },
     "test-step-logic": {
       "tab": "Tests",
+      "group": "Study Flow and Logic",
       "path": "test-step-logic/config.json",
       "test": true
     },
     "library-umux": {
       "tab": "Libraries",
+      "group": "Usability and User Experience",
       "path": "library-umux/config.json",
       "test": true
     },
     "library-umux-lite": {
       "tab": "Libraries",
+      "group": "Usability and User Experience",
       "path": "library-umux-lite/config.json",
       "test": true
     },
     "library-virtual-chinrest": {
       "tab": "Libraries",
+      "group": "Participant Screening and Calibration",
       "path": "library-virtual-chinrest/config.json",
       "test": true
     },
     "example-VLAT-adaptive": {
       "tab": "Example Studies",
+      "group": "Perception and Literacy",
       "path": "example-VLAT-adaptive/config.json",
       "test": true
     },
     "test-global-store": {
       "tab": "Tests",
+      "group": "Global Store",
       "path": "test-global-store/config.json"
     },
     "test-global-store-operations": {
       "tab": "Tests",
+      "group": "Global Store",
       "path": "test-global-store-operations/config.json"
     },
     "test-global-store-failures": {
       "tab": "Tests",
+      "group": "Global Store",
       "path": "test-global-store-failures/config.json"
     }
   }

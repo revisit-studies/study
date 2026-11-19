@@ -5,7 +5,7 @@
     "version": "pilot",
     "authors": ["The reVISit Team"],
     "date": "2026-02-23",
-    "description": "A simple demo of integrating an LLM-based chatbot into a study.",
+    "description": "A simple demo of integrating an LLM-based chatbot into a study. Learn more about [React stimuli](https://revisit.dev/docs/designing-studies/react-stimulus/) in the docs.",
     "organizations": ["University of Utah", "WPI"],
     "thumbnail": "example-llm-chatbot/assets/thumbnail.png"
   },

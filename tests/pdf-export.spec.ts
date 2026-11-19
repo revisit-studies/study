@@ -24,7 +24,7 @@ function extractJpegImages(pdf: Uint8Array) {
 
 test('exports the current study component as a PDF download', async ({ page }, testInfo) => {
   await resetClientStudyState(page);
-  await openStudyFromLanding(page, 'Demo Studies', [
+  await openStudyFromLanding(page, 'Snippets', [
     'Images as Stimuli: Decision-Making with Uncertainty Visualizations',
     'Simple Images as Stimuli: Decision-Making with Uncertainty Visualizations',
   ]);
@@ -117,7 +117,7 @@ test('exports the current study component as a PDF download', async ({ page }, t
 test('fits wide development layouts inside the PDF capture', async ({ page }, testInfo) => {
   await page.setViewportSize({ width: 2400, height: 1200 });
   await resetClientStudyState(page);
-  await openStudyFromLanding(page, 'Demo Studies', 'HTML as a Stimulus');
+  await openStudyFromLanding(page, 'Snippets', 'HTML as a Stimulus');
   await expect(page.getByText(/embed HTML elements into the study page/i)).toBeVisible();
   await page.getByRole('main').evaluate((main) => {
     const marker = document.createElement('div');
@@ -186,7 +186,7 @@ test('fits wide development layouts inside the PDF capture', async ({ page }, te
 
 test('captures source canvas pixels in the PDF', async ({ page }, testInfo) => {
   await resetClientStudyState(page);
-  await openStudyFromLanding(page, 'Demo Studies', 'HTML as a Stimulus');
+  await openStudyFromLanding(page, 'Snippets', 'HTML as a Stimulus');
   await expect(page.getByText(/embed HTML elements into the study page/i)).toBeVisible();
   await page.getByRole('main').evaluate((main) => {
     const canvas = document.createElement('canvas');
@@ -251,7 +251,7 @@ test('captures source canvas pixels in the PDF', async ({ page }, testInfo) => {
 
 test('preserves selected and scrolled state in the PDF', async ({ page }, testInfo) => {
   await resetClientStudyState(page);
-  await openStudyFromLanding(page, 'Demo Studies', 'HTML as a Stimulus');
+  await openStudyFromLanding(page, 'Snippets', 'HTML as a Stimulus');
   await expect(page.getByText(/embed HTML elements into the study page/i)).toBeVisible();
   await page.getByRole('main').evaluate((main) => {
     const style = document.createElement('style');
@@ -324,7 +324,7 @@ test('preserves selected and scrolled state in the PDF', async ({ page }, testIn
 
 test('captures same-origin iframe contents in the PDF', async ({ page }, testInfo) => {
   await resetClientStudyState(page);
-  await openStudyFromLanding(page, 'Demo Studies', 'HTML as a Stimulus');
+  await openStudyFromLanding(page, 'Snippets', 'HTML as a Stimulus');
   await nextClick(page);
   await expect(page.getByText('How many bars have a value greater than 1?')).toBeVisible();
   await expect(page.frameLocator('iframe').locator('svg rect')).toHaveCount(7);
@@ -373,7 +373,6 @@ test('captures same-origin iframe contents in the PDF', async ({ page }, testInf
 test('captures iframe content beyond reported document bounds', async ({ page }, testInfo) => {
   await page.setViewportSize({ width: 1440, height: 1000 });
   await resetClientStudyState(page);
-  await page.getByRole('tab', { name: 'Example Studies' }).click();
   const exampleStudies = page.getByLabel('Example Studies');
   const studyCard = exampleStudies.locator('.mantine-Card-root').filter({ hasText: 'MVNV Study Replication' }).first();
   await studyCard.getByText('Go to Study').click();
@@ -446,7 +445,7 @@ test('captures iframe content beyond reported document bounds', async ({ page },
 
 test('captures the current frame of same-origin video components', async ({ page }, testInfo) => {
   await resetClientStudyState(page);
-  await openStudyFromLanding(page, 'Demo Studies', 'Video as a Stimulus');
+  await openStudyFromLanding(page, 'Snippets', 'Video as a Stimulus');
   await page.getByRole('tab', { name: 'Browse Components' }).click();
   await page.getByLabel('Browse Components').getByText('internal', { exact: true }).click();
   const video = page.locator('video');
@@ -516,7 +515,6 @@ test('captures the current frame of same-origin video components', async ({ page
 test('captures responsive SVG components in the PDF', async ({ page }, testInfo) => {
   await page.setViewportSize({ width: 1440, height: 1000 });
   await resetClientStudyState(page);
-  await page.getByRole('tab', { name: 'Example Studies' }).click();
   const exampleStudies = page.getByLabel('Example Studies');
   const studyCard = exampleStudies.locator('.mantine-Card-root').filter({ hasText: 'Interactive Selections in Scatterplots' }).first();
   await studyCard.getByText('Go to Study').click();
@@ -567,7 +565,7 @@ test('captures responsive SVG components in the PDF', async ({ page }, testInfo)
 
 test('uses portrait for long components and fits them on a single PDF page', async ({ page }, testInfo) => {
   await resetClientStudyState(page);
-  await openStudyFromLanding(page, 'Demo Studies', 'Form Elements Demo');
+  await openStudyFromLanding(page, 'Snippets', 'Form Elements Demo');
   await nextClick(page);
   await expect(page.locator('.main input[data-path="q-numerical"]')).toBeVisible();
 
@@ -587,7 +585,7 @@ test('uses portrait for long components and fits them on a single PDF page', asy
 
 test('reports external website components as unsupported instead of downloading an incomplete PDF', async ({ page }) => {
   await resetClientStudyState(page);
-  await openStudyFromLanding(page, 'Demo Studies', 'HTML as a Stimulus');
+  await openStudyFromLanding(page, 'Snippets', 'HTML as a Stimulus');
   await nextClick(page);
   await expect(page.getByText('How many bars have a value greater than 1?')).toBeVisible();
   await page.locator('input[data-path="html-response"]').fill('2');
@@ -606,7 +604,7 @@ test('reports external website components as unsupported instead of downloading 
 
 test('reports inaccessible sandboxed iframe content as unsupported', async ({ page }) => {
   await resetClientStudyState(page);
-  await openStudyFromLanding(page, 'Demo Studies', 'HTML as a Stimulus');
+  await openStudyFromLanding(page, 'Snippets', 'HTML as a Stimulus');
   await expect(page.getByText(/embed HTML elements into the study page/i)).toBeVisible();
   await page.getByRole('main').evaluate((main) => {
     const iframe = document.createElement('iframe');

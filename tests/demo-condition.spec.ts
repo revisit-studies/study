@@ -211,7 +211,7 @@ test.describe('Test study condition logic', () => {
     await page.goto('/');
 
     // Find the Conditional Blocks Demo card
-    const card = page.getByLabel('Demo Studies').locator('.mantine-Card-root').filter({ hasText: 'Conditional Blocks Demo' });
+    const card = page.getByLabel('Snippets').locator('.mantine-Card-root').filter({ hasText: 'Conditional Blocks Demo' });
     await expect(card.first()).toBeVisible({ timeout: 15000 });
 
     // Condition badges should be visible
@@ -228,7 +228,7 @@ test.describe('Test study condition logic', () => {
   test('Go to Study opens a condition menu that launches the chosen condition', async ({ page }) => {
     await page.goto('/');
 
-    const card = page.getByLabel('Demo Studies').locator('.mantine-Card-root').filter({ hasText: 'Conditional Blocks Demo' });
+    const card = page.getByLabel('Snippets').locator('.mantine-Card-root').filter({ hasText: 'Conditional Blocks Demo' });
     await card.getByRole('button', { name: 'Go to Study', exact: true }).click();
 
     const menu = page.getByRole('menu');

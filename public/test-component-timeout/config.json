@@ -7,7 +7,7 @@
       "The reVISit Team"
     ],
     "date": "2026-05-14",
-    "description": "A test study for component-level auto-advance timeouts.",
+    "description": "A test study for component-level auto-advance timeouts. Learn more about [study sequences](https://revisit.dev/docs/designing-studies/sequences/study-sequences/) in the docs.",
     "organizations": [
       "The reVISit Team"
     ]

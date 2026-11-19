@@ -7,7 +7,7 @@
       "The reVISit Team"
     ],
     "date": "2026-02-23",
-    "description": "Example study using the demographics library.",
+    "description": "Example study using the demographics library. See the [demographics library docs](https://revisit.dev/docs/libraries/demographics/) and how to use [plugin libraries](https://revisit.dev/docs/designing-studies/plugin-libraries/).",
     "organizations": [
       "University of Utah",
       "WPI"

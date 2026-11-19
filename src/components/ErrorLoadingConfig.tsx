@@ -31,6 +31,7 @@ export function ErrorLoadingConfig({
     'default-contact-email',
     'default-firebase-config',
     'default-supabase-config',
+    'local-storage-deployment',
   ];
 
   // Format category labels by capitalizing each word and replacing hyphens with spaces

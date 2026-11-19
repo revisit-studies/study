@@ -1,0 +1,7 @@
+/* Separate the introduction column from the studies only when they sit side by side (Mantine `sm` and up). */
+@media (min-width: 48em) {
+  .introduction {
+    border-right: 1px solid var(--mantine-color-default-border);
+    padding-right: var(--mantine-spacing-lg);
+  }
+}

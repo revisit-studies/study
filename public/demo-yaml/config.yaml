@@ -5,7 +5,7 @@ studyMetadata:
   authors:
     - "The reVISit Team"
   date: "2026-02-23"
-  description: "A copy of the demo-html study, but using a YAML config file instead of JSON."
+  description: "A copy of the demo-html study, but using a YAML config file instead of JSON. Learn more about [HTML stimuli](https://revisit.dev/docs/designing-studies/html-stimulus/) in the docs."
   organizations:
     - "University of Utah"
     - "WPI"

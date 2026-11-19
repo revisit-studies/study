@@ -5,7 +5,7 @@
     "version": "pilot",
     "authors": ["The reVISit Team"],
     "date": "2026-02-23",
-    "description": "A replication of the adaptive VLAT questionnaire by Cui et al.",
+    "description": "A replication of the adaptive VLAT questionnaire by Cui et al. See the [adaptive-vlat library docs](https://revisit.dev/docs/libraries/adaptive-vlat/) and how to use [plugin libraries](https://revisit.dev/docs/designing-studies/plugin-libraries/).",
     "organizations": ["University of Utah", "WPI"],
     "thumbnail": "example-VLAT-adaptive/assets/thumbnail.png"
   },

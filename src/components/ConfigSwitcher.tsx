@@ -1,12 +1,14 @@
 import {
-  Anchor, AppShell, Badge, Box, Button, Card, Container, CopyButton, Flex, Grid, Image, Menu, Popover, SimpleGrid, Skeleton, Tabs, Text, Tooltip,
+  Anchor, AppShell, Badge, Box, Button, Card, Container, CopyButton, Flex, Grid, Image, Menu, Popover, SimpleGrid, Skeleton, TableOfContents, Text, Title, Tooltip,
 } from '@mantine/core';
 import {
-  IconAlertTriangle, IconBan, IconBrandFirebase, IconBrandSupabase, IconCamera, IconCheck, IconCopy, IconDatabase, IconDeviceDesktop, IconGraph, IconGraphOff, IconMicrophone, IconSchema, IconSchemaOff,
+  IconAlertTriangle, IconBan, IconBrandFirebase, IconBrandGithub, IconBrandSupabase, IconCamera, IconCheck, IconCopy, IconDatabase, IconDeviceDesktop, IconGraph, IconGraphOff, IconMicrophone, IconSchema, IconSchemaOff,
 } from '@tabler/icons-react';
-import { useEffect, useMemo, useState } from 'react';
+import {
+  MouseEvent as ReactMouseEvent, useEffect, useMemo, useState,
+} from 'react';
 import { Timestamp } from 'firebase/firestore';
-import { useSearchParams } from 'react-router';
+import { useLocation, useSearchParams } from 'react-router';
 import {
   GlobalConfig, ParsedConfig, StudyConfig,
 } from '../parser/types';
@@ -17,19 +19,27 @@ import { ReactMarkdownWrapper } from './ReactMarkdownWrapper';
 import { ParticipantStatusBadges } from '../analysis/interface/ParticipantStatusBadges';
 import { ParticipantStatusCounts } from '../storage/participantStatus';
 import { useStorageEngine } from '../storage/storageEngineHooks';
-import { StudyModes } from '../storage/engines/types';
+import {
+  getConfigConditionKeys, isStageParticipantLimitEnabled, StageData, StudyModes,
+} from '../storage/engines/types';
+import { ParticipantLimitSummary, summarizeParticipantLimits } from '../utils/participantLimits';
 import { getSequenceConditions } from '../utils/handleConditionLogic';
 import { useStudyRecordings } from '../utils/useStudyRecordings';
 import { useDeviceRules } from '../utils/useDeviceRules';
 import { getUnmetDeviceRestrictionLines, getUnmetDeviceRestrictionTooltip } from './interface/DeviceRestrictionString';
 import { getStaticAssetByPath } from '../utils/getStaticAsset';
 import { AppHeader } from '../analysis/interface/AppHeader';
+import classes from './ConfigSwitcher.module.css';
 
 const DEFAULT_TAB_LABEL = 'Studies';
+const STUDY_FULL_STATUS = 'Reached Participant Limit, Study Full';
+
+/** Access modes as read for the landing page, including the study's stage data when it has any. */
+type LandingStudyModes = StudyModes & { stage?: StageData };
 
 // Breakpoints are container queries, so the number of card columns follows the
 // width of the study column rather than the window.
-const STUDY_GRID_COLS = { base: 1, '600px': 2, '1000px': 3 };
+const STUDY_GRID_COLS = { base: 1, '640px': 2, '1200px': 3 };
 
 /** Loads the optional landing-page introduction Markdown referenced by the global config. */
 function useIntroduction(introductionPath: string | undefined) {
@@ -113,7 +123,7 @@ function ValidStudyCard({
   configName: string;
   config: ParsedConfig<StudyConfig>;
   url: string;
-  modes: StudyModes | null;
+  modes: LandingStudyModes | null;
   canViewAnalytics: boolean;
 }) {
   const { storageEngine } = useStorageEngine();
@@ -131,27 +141,34 @@ function ValidStudyCard({
     return () => { isCancelled = true; };
   }, [configName, storageEngine]);
 
-  const { minTime, maxTime } = useMemo(() => {
-    if (!studyStatusAndTiming) return { minTime: null, maxTime: null };
-    if (!studyStatusAndTiming.minTime || !studyStatusAndTiming.maxTime) return { minTime: null, maxTime: null };
-
-    const min = typeof studyStatusAndTiming.minTime === 'number' ? new Date(studyStatusAndTiming.minTime) : studyStatusAndTiming.minTime.toDate();
-    const max = typeof studyStatusAndTiming.maxTime === 'number' ? new Date(studyStatusAndTiming.maxTime) : studyStatusAndTiming.maxTime.toDate();
-
-    return {
-      minTime: min.toLocaleDateString('en-US', {
-        weekday: 'short', year: 'numeric', month: 'long', day: 'numeric',
-      }),
-      maxTime: max.toLocaleDateString('en-US', {
-        weekday: 'short', year: 'numeric', month: 'long', day: 'numeric',
-      }),
-    };
-  }, [studyStatusAndTiming]);
+  // Participant limits belong to the current stage; only read assignments when one is enforced.
+  // `currentStage` is a name-and-color snapshot, so resolve the full stage from `allStages` the way admission does.
+  const stageData = modes?.stage;
+  const currentStage = useMemo(() => (stageData
+    ? stageData.allStages.find((stage) => stage.stageName === stageData.currentStage.stageName) ?? stageData.currentStage
+    : undefined), [stageData]);
+  const limitEnabled = !!currentStage && isStageParticipantLimitEnabled(currentStage);
+  const [participantLimits, setParticipantLimits] = useState<ParticipantLimitSummary | null>(null);
+  useEffect(() => {
+    if (!storageEngine || !limitEnabled) {
+      setParticipantLimits(null);
+      return undefined;
+    }
+    let isCancelled = false;
+    const conditionKeys = config.betweenSubjects?.length ? getConfigConditionKeys(config) : [];
+    storageEngine.getAllSequenceAssignments(configName).then((assignments) => {
+      if (!isCancelled) setParticipantLimits(summarizeParticipantLimits(currentStage, assignments, conditionKeys));
+    }).catch((error) => {
+      console.error('Failed to load participant limits:', error);
+    });
+    return () => { isCancelled = true; };
+  }, [config, configName, currentStage, limitEnabled, storageEngine]);
 
   const currentMode = useMemo(() => {
     if (!modes) return 'Unknown';
 
     if (modes.dataCollectionEnabled) {
+      if (participantLimits?.full) return STUDY_FULL_STATUS;
       if (studyStatusAndTiming && (
         studyStatusAndTiming.inProgress > 0
         || studyStatusAndTiming.completed > 0
@@ -162,7 +179,7 @@ function ValidStudyCard({
       return 'Ready to Collect Data';
     }
     return 'Data Collection Disabled';
-  }, [modes, studyStatusAndTiming]);
+  }, [modes, participantLimits, studyStatusAndTiming]);
   const { hasAudioRecording, hasScreenRecording, hasWebcamRecording } = useStudyRecordings(config);
   const {
     isBrowserAllowed,
@@ -220,6 +237,20 @@ function ValidStudyCard({
   };
 
   const showWarnings = canViewAnalytics && config.warnings.length > 0;
+  const isFull = currentMode === STUDY_FULL_STATUS;
+  // Card-level alerts shown in the top-right corner.
+  const alertBadges = (isFull || showWarnings) && (
+    <Flex gap={6} wrap="wrap" justify="flex-end">
+      {isFull && (
+        <Tooltip label="This study reached its participant limit, so no new participants can join." withinPortal multiline w={240}>
+          <Badge color="orange" variant="filled" size="sm" leftSection={<IconAlertTriangle size={12} />}>
+            Study full
+          </Badge>
+        </Tooltip>
+      )}
+      {showWarnings && <CardIssueBadge issues={config.warnings} type="warning" />}
+    </Flex>
+  );
   const { thumbnail } = config.studyMetadata;
   const thumbnailSrc = thumbnail && (/^https?:\/\//.test(thumbnail) ? thumbnail : `${PREFIX}${thumbnail}`);
 
@@ -229,9 +260,9 @@ function ValidStudyCard({
       {thumbnailSrc && (
         <Card.Section h={140} pos="relative" style={{ backgroundColor: 'light-dark(var(--mantine-color-gray-2), var(--mantine-color-dark-7))' }}>
           <Image src={thumbnailSrc} alt={`Preview of ${config.studyMetadata.title}`} h="100%" w="100%" fit="contain" />
-          {showWarnings && (
+          {alertBadges && (
             <Box pos="absolute" top={8} right={8}>
-              <CardIssueBadge issues={config.warnings} type="warning" />
+              {alertBadges}
             </Box>
           )}
         </Card.Section>
@@ -239,9 +270,22 @@ function ValidStudyCard({
       <Flex justify="space-between" align="flex-start" gap="xs" mt={thumbnailSrc ? 'sm' : 0}>
         <Text fw="bold" lineClamp={2} title={config.studyMetadata.title}>
           {config.studyMetadata.title}
+          <Tooltip label="View source on GitHub" withinPortal>
+            <Anchor
+              href={`${import.meta.env.VITE_REPO_URL}${url}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="View source on GitHub"
+              c="dimmed"
+              ml={6}
+              style={{ verticalAlign: 'middle', display: 'inline-flex' }}
+            >
+              <IconBrandGithub size={16} />
+            </Anchor>
+          </Tooltip>
         </Text>
         <Flex gap={6} pt={4} align="center" style={{ flexShrink: 0 }}>
-          {showWarnings && !thumbnailSrc && <CardIssueBadge issues={config.warnings} type="warning" />}
+          {!thumbnailSrc && alertBadges}
           <Flex gap={6} opacity={0.7}>
             {hasAudioRecording && (
             <Tooltip label="Audio recording enabled" withinPortal position="bottom">
@@ -283,16 +327,63 @@ function ValidStudyCard({
         <Text span fw={500} size="xs">Authors: </Text>
         {config.studyMetadata.authors.join(', ')}
       </Text> */}
-      <Text c="dimmed" size="sm" mt={4} mb={minTime && maxTime ? 0 : 'xs'} lineClamp={3} title={config.studyMetadata.description}>{config.studyMetadata.description}</Text>
-      {minTime && maxTime && (
-        <Text c="dimmed" size="xs" mt={2} mb="xs">
-          <Text span fw={500} size="xs">Activity: </Text>
-          {minTime === maxTime ? minTime : `${minTime} – ${maxTime}`}
-        </Text>
+      <Text size="sm" component="div" mt={4} mb="xs">
+        <ReactMarkdownWrapper text={config.studyMetadata.description} inline linkTarget="_blank" />
+      </Text>
+
+      {participantLimits && (
+        <Box mb="xs">
+          <Text size="xs" fw={500}>
+            {`Participant limit: ${participantLimits.maxParticipants}`}
+            {canViewAnalytics && (
+              <Text span size="xs" c="dimmed">{` · ${participantLimits.enrolled} enrolled (${participantLimits.completed} completed)`}</Text>
+            )}
+          </Text>
+          {participantLimits.conditions.map((condition) => (
+            <Text key={condition.key} size="xs" c="dimmed">
+              {`Condition ${condition.label}: `}
+              {condition.enabled ? `limit ${condition.target}` : 'disabled'}
+              {canViewAnalytics && condition.enabled ? ` · ${condition.enrolled} enrolled (${condition.completed} completed)` : ''}
+            </Text>
+          ))}
+        </Box>
       )}
 
       {/* Push the conditions and actions to the bottom so cards in a row align. */}
       <Box mt="auto" />
+
+      {conditions.length > 0 && (
+      <Flex direction="column" gap={4} mt="sm">
+        <Text size="xs" fw={500} c="dimmed">Condition links (click to copy):</Text>
+        <Flex direction="row" align="center" gap={6} wrap="wrap">
+          {conditions.map((condition) => {
+            const conditionUrl = new URL(`${PREFIX}${url}`, window.location.origin);
+            conditionUrl.searchParams.set('condition', condition);
+            const conditionUrlString = conditionUrl.toString();
+
+            return (
+              <CopyButton key={condition} value={conditionUrlString}>
+                {({ copied, copy }) => (
+                  <Tooltip label={copied ? 'Copied!' : 'Copy URL'}>
+                    <Badge
+                      size="xs"
+                      variant="light"
+                      rightSection={
+                                copied ? <IconCheck size={12} /> : <IconCopy size={12} />
+                              }
+                      onClick={copy}
+                      style={{ cursor: 'pointer' }}
+                    >
+                      {condition}
+                    </Badge>
+                  </Tooltip>
+                )}
+              </CopyButton>
+            );
+          })}
+        </Flex>
+      </Flex>
+      )}
 
       <Flex gap={6} wrap="nowrap" mt="sm">
         {canViewAnalytics && (
@@ -327,51 +418,7 @@ function ValidStudyCard({
             Go to Study
           </Button>
         )}
-        <Button
-          size="xs"
-          px={8}
-          flex={1}
-          variant="default"
-          component="a"
-          target="_blank"
-          href={`${import.meta.env.VITE_REPO_URL}${url}`}
-        >
-          View Source
-        </Button>
       </Flex>
-
-      {conditions.length > 0 && (
-      <Flex direction="column" gap="xs" mt="sm">
-        <Flex direction="row" align="center" gap={6} wrap="wrap">
-          <Text size="xs" fw={500} c="dimmed">Condition links (click to copy):</Text>
-          {conditions.map((condition) => {
-            const conditionUrl = new URL(`${PREFIX}${url}`, window.location.origin);
-            conditionUrl.searchParams.set('condition', condition);
-            const conditionUrlString = conditionUrl.toString();
-
-            return (
-              <CopyButton key={condition} value={conditionUrlString}>
-                {({ copied, copy }) => (
-                  <Tooltip label={copied ? 'Copied!' : 'Copy URL'}>
-                    <Badge
-                      size="xs"
-                      variant="light"
-                      rightSection={
-                                copied ? <IconCheck size={12} /> : <IconCopy size={12} />
-                              }
-                      onClick={copy}
-                      style={{ cursor: 'pointer' }}
-                    >
-                      {condition}
-                    </Badge>
-                  </Tooltip>
-                )}
-              </CopyButton>
-            );
-          })}
-        </Flex>
-      </Flex>
-      )}
       <Card.Section
         mt="sm"
         px="sm"
@@ -383,7 +430,14 @@ function ValidStudyCard({
         }}
       >
         <Flex gap="xs" wrap="wrap" align="center" justify="space-between">
-          <Text size="xs" fw={600} c="dimmed">{currentMode}</Text>
+          {isFull ? (
+            <Flex align="center" gap={4}>
+              <IconAlertTriangle size={12} color="var(--mantine-color-orange-text)" />
+              <Text size="xs" fw={600} c="orange">{currentMode}</Text>
+            </Flex>
+          ) : (
+            <Text size="xs" fw={600} c="dimmed">{currentMode}</Text>
+          )}
           {canViewAnalytics && studyStatusAndTiming && (
           <ParticipantStatusBadges
             completed={studyStatusAndTiming.completed}
@@ -415,7 +469,7 @@ function StudyCard({
   configName: string;
   config: ParsedConfig<StudyConfig>;
   url: string;
-  modes: StudyModes | null;
+  modes: LandingStudyModes | null;
 }) {
   const canViewAnalytics = !!modes?.dataSharingEnabled;
 
@@ -452,7 +506,7 @@ function StudyCards({
 }: {
   configNames: string[];
   studyConfigs: Record<string, ParsedConfig<StudyConfig> | null>;
-  modesByConfig: Record<string, StudyModes | null>;
+  modesByConfig: Record<string, LandingStudyModes | null>;
 }) {
   return (
     <SimpleGrid type="container" cols={STUDY_GRID_COLS} spacing="sm" verticalSpacing="sm" mt="sm">
@@ -468,6 +522,112 @@ function StudyCards({
   );
 }
 
+export const OTHER_GROUP_LABEL = 'Other';
+
+type TabGroup = NonNullable<NonNullable<GlobalConfig['tabs']>[number]['groups']>[number];
+
+/**
+ * Splits a tab's studies into its configured groups (in group order, keeping configsList order within a group).
+ * Ungrouped studies collect in a trailing "Other" group, and empty groups are dropped.
+ */
+export function groupConfigNames(groups: TabGroup[], configNames: string[], configs: GlobalConfig['configs']) {
+  const known = new Set(groups.map(({ label }) => label));
+  const sections = groups.map((group) => ({
+    ...group,
+    configNames: configNames.filter((configName) => configs[configName].group === group.label),
+  }));
+  const ungrouped = configNames.filter((configName) => !known.has(configs[configName].group ?? ''));
+  return [...sections, { label: OTHER_GROUP_LABEL, configNames: ungrouped }]
+    .filter((section) => section.configNames.length > 0);
+}
+
+const NAV_SCROLL_MARGIN = 86;
+/** Readable, URL-safe anchor text, e.g. `Example Studies` -> `example-studies`. */
+export function slugify(text: string) {
+  return text.normalize('NFKD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '') || 'section';
+}
+/** Anchor ids double as the URL hash, so navigating persists across refreshes and shared links. */
+export const tabHeadingId = (label: string) => slugify(label);
+const groupHeadingId = (tabLabel: string, label: string) => `${slugify(tabLabel)}--${slugify(label)}`;
+
+/** One linear list of every tab and, indented beneath it, its groups. Tracks and scrolls to their headings. */
+function LandingNav({ navKey }: { navKey: string }) {
+  return (
+    <Box component="nav" aria-label="Study navigation">
+      <Text size="xs" fw={700} c="dimmed" tt="uppercase" mb="xs">Contents</Text>
+      <TableOfContents
+        // Re-read the headings whenever the set of tabs or groups changes.
+        key={navKey}
+        variant="light"
+        size="sm"
+        radius="sm"
+        // Indentation is applied per depth below, alongside the other hierarchy cues.
+        depthOffset={0}
+        scrollSpyOptions={{
+          selector: '[data-landing-nav]',
+          getDepth: (element) => Number(element.getAttribute('data-landing-nav')),
+          offset: 100,
+        }}
+        getControlProps={({ data, active }) => {
+          const isTab = data.depth === 1;
+          // Mantine types controls as buttons; rendering them as links gives each entry a real, shareable anchor.
+          const linkProps = { component: 'a', href: `#${data.id}` } as Record<string, string>;
+          return {
+            ...linkProps,
+            onClick: (event: ReactMouseEvent) => {
+              // Keep modified clicks (new tab/window) native; otherwise scroll smoothly and record the anchor.
+              if (event.metaKey || event.ctrlKey || event.shiftKey || event.button !== 0) return;
+              event.preventDefault();
+              data.getNode().scrollIntoView({ behavior: 'smooth', block: 'start' });
+              window.history.replaceState(window.history.state, '', `#${data.id}`);
+            },
+            children: data.value,
+            'data-nav-depth': data.depth,
+            style: isTab
+              ? { fontWeight: 700, marginTop: 'var(--mantine-spacing-sm)' }
+              : {
+                // Groups hang off their tab: smaller, indented, and joined by a guide line.
+                fontSize: 'var(--mantine-font-size-xs)',
+                marginLeft: 'var(--mantine-spacing-sm)',
+                borderRadius: 0,
+                borderLeft: `2px solid ${active ? 'var(--mantine-primary-color-filled)' : 'var(--mantine-color-default-border)'}`,
+                color: active ? undefined : 'var(--mantine-color-dimmed)',
+              },
+          };
+        }}
+      />
+    </Box>
+  );
+}
+
+function GroupSections({
+  tabLabel,
+  sections,
+  studyConfigs,
+  modesByConfig,
+}: {
+  tabLabel: string;
+  sections: ReturnType<typeof groupConfigNames>;
+  studyConfigs: Record<string, ParsedConfig<StudyConfig> | null>;
+  modesByConfig: Record<string, LandingStudyModes | null>;
+}) {
+  return sections.map(({ label, description, configNames }, index) => (
+    <Box component="section" key={label} aria-labelledby={groupHeadingId(tabLabel, label)} mt={index === 0 ? 'md' : 40}>
+      <Title order={4} id={groupHeadingId(tabLabel, label)} data-landing-nav="2" style={{ scrollMarginTop: NAV_SCROLL_MARGIN }}>
+        {label}
+      </Title>
+      {description && (
+        <Box c="dimmed" mt={4}>
+          <ReactMarkdownWrapper text={description} />
+        </Box>
+      )}
+      <StudyCards configNames={configNames} studyConfigs={studyConfigs} modesByConfig={modesByConfig} />
+    </Box>
+  ));
+}
+
 export function ConfigSwitcher({
   globalConfig,
   studyConfigs,
@@ -479,7 +639,7 @@ export function ConfigSwitcher({
   const { configsList } = globalConfig;
 
   const [studyVisibility, setStudyVisibility] = useState<Record<string, boolean>>({});
-  const [modesByConfig, setModesByConfig] = useState<Record<string, StudyModes | null>>({});
+  const [modesByConfig, setModesByConfig] = useState<Record<string, LandingStudyModes | null>>({});
   const [modeLoadErrors, setModeLoadErrors] = useState<string[]>([]);
   const [isLoadingVisibility, setIsLoadingVisibility] = useState(true);
 
@@ -494,7 +654,7 @@ export function ConfigSwitcher({
 
       setIsLoadingVisibility(true);
       const visibility: Record<string, boolean> = {};
-      const modesMap: Record<string, StudyModes | null> = {};
+      const modesMap: Record<string, LandingStudyModes | null> = {};
       const failedConfigNames: string[] = [];
       await Promise.all(
         configsList.map(async (configName) => {
@@ -551,12 +711,24 @@ export function ConfigSwitcher({
       ...definition,
       // Mantine derives ARIA IDs from tab values, which must not contain whitespace.
       value: encodeURIComponent(definition.label),
+      sections: definition.groups?.length
+        ? groupConfigNames(definition.groups, definition.configNames, globalConfig.configs)
+        : null,
     }));
   }, [configsFiltered, globalConfig.configs, globalConfig.tabs]);
 
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
   const requestedTab = searchParams.get('tab');
-  const tab = tabs.find(({ label }) => label === requestedTab) ?? tabs[0];
+  // Restore the section in the URL hash once studies render; links that used to select a tab
+  // (`?tab=`) scroll to that tab's section instead.
+  const { hash } = useLocation();
+  useEffect(() => {
+    if (isLoadingStudies) return;
+    const anchor = hash ? decodeURIComponent(hash.slice(1)) : requestedTab && tabHeadingId(requestedTab);
+    if (anchor) document.getElementById(anchor)?.scrollIntoView({ block: 'start' });
+  }, [hash, isLoadingStudies, requestedTab]);
+
+  const navEntries = tabs.flatMap(({ label, sections }) => [label, ...(sections ?? []).map((section) => `${label}/${section.label}`)]);
 
   const introduction = useIntroduction(globalConfig.introductionPath);
 
@@ -579,18 +751,34 @@ export function ConfigSwitcher({
               . Check the storage connection and try again.
             </Text>
           )}
-          {tabs.map(({
-            label, value, description, configNames,
-          }) => (
-            <Tabs.Panel key={label} value={value}>
-              {description && (
-                <Box c="dimmed">
-                  <ReactMarkdownWrapper text={description} />
+          <Flex gap="lg" align="flex-start">
+            <Box style={{ flex: 1, minWidth: 0 }}>
+              {tabs.map(({
+                label, description, sections, configNames,
+              }, index) => (
+                <Box component="section" key={label} aria-labelledby={tabHeadingId(label)} mt={index === 0 ? 0 : 72}>
+                  <Title order={3} id={tabHeadingId(label)} data-landing-nav="1" style={{ scrollMarginTop: NAV_SCROLL_MARGIN }}>
+                    {label}
+                  </Title>
+                  {description && (
+                    <Box c="dimmed" mt={4}>
+                      <ReactMarkdownWrapper text={description} />
+                    </Box>
+                  )}
+                  {sections ? (
+                    <GroupSections tabLabel={label} sections={sections} studyConfigs={studyConfigs} modesByConfig={modesByConfig} />
+                  ) : (
+                    <StudyCards configNames={configNames} studyConfigs={studyConfigs} modesByConfig={modesByConfig} />
+                  )}
                 </Box>
-              )}
-              <StudyCards configNames={configNames} studyConfigs={studyConfigs} modesByConfig={modesByConfig} />
-            </Tabs.Panel>
-          ))}
+              ))}
+            </Box>
+            {navEntries.length > 1 && (
+              <Box w={190} visibleFrom="md" pos="sticky" top={NAV_SCROLL_MARGIN} mah="calc(100vh - 102px)" style={{ flexShrink: 0, overflowY: 'auto' }}>
+                <LandingNav navKey={navEntries.join('|')} />
+              </Box>
+            )}
+          </Flex>
 
           {configsFiltered.length === 0 && modeLoadErrors.length === 0 && (
             <Text c="dimmed" ta="center" mt="xl">
@@ -613,26 +801,23 @@ export function ConfigSwitcher({
     </>
   );
 
-  // The tab list lives in the app header while its panels live in the page, so a
-  // single Tabs root wraps both to share the selected tab.
-  const header = (
-    <AppHeader
-      studyIds={configsList}
-      studyConfigs={studyConfigs}
-      navigation={!isLoadingStudies && tabs.length > 0 && (
-        <Tabs.List style={{ flexWrap: 'nowrap' }}>
-          {tabs.map(({ label, value }) => <Tabs.Tab key={label} value={value} style={{ whiteSpace: 'nowrap' }}>{label}</Tabs.Tab>)}
-        </Tabs.List>
-      )}
-    />
-  );
+  const header = <AppHeader studyIds={configsList} studyConfigs={studyConfigs} />;
 
   const main = introduction.enabled ? (
     <AppShell.Main>
-      <Container size="xl" px={0}>
+      <Container size={1680} px={0}>
         <Grid gap="xl">
-          <Grid.Col span={{ base: 12, sm: 5, lg: 4 }}>
-            <Box component="section" aria-label="Introduction" pos={{ sm: 'sticky' }} top={{ sm: 86 }}>
+          <Grid.Col span={{ base: 12, sm: 4, lg: 3 }}>
+            <Box
+              component="section"
+              aria-label="Introduction"
+              className={classes.introduction}
+              pos={{ sm: 'sticky' }}
+              top={{ sm: 86 }}
+              // Scroll within the column when the introduction is long.
+              mah={{ sm: 'calc(100vh - 102px)' }}
+              style={{ overflowY: 'auto' }}
+            >
               {introduction.loading && (
                 <>
                   <Skeleton height={28} width="60%" mb="md" />
@@ -654,7 +839,7 @@ export function ConfigSwitcher({
               )}
             </Box>
           </Grid.Col>
-          <Grid.Col span={{ base: 12, sm: 7, lg: 8 }}>
+          <Grid.Col span={{ base: 12, sm: 8, lg: 9 }}>
             {studies}
           </Grid.Col>
         </Grid>
@@ -662,25 +847,16 @@ export function ConfigSwitcher({
     </AppShell.Main>
   ) : (
     <AppShell.Main>
-      <Container size="lg" px={0}>
+      <Container size={1440} px={0}>
         {studies}
       </Container>
     </AppShell.Main>
   );
 
   return (
-    <Tabs
-      variant="pills"
-      value={tab?.value ?? null}
-      onChange={(value) => {
-        if (value === null) return;
-        const nextParams = new URLSearchParams(searchParams);
-        nextParams.set('tab', decodeURIComponent(value));
-        setSearchParams(nextParams);
-      }}
-    >
+    <>
       {header}
       {main}
-    </Tabs>
+    </>
   );
 }

@@ -4,12 +4,14 @@ reVISit is an open-source platform for building and running user studies of inte
 
 ## What you will find here
 
-- **Demo Studies** show off individual features, such as different stimulus and response types.
+- **Snippets** are small studies that each show off one feature, such as a stimulus type, a response type, or factors.
 - **Example Studies** are complete studies, many of them replications of published experiments.
 - **Tutorials** walk through building a study step by step.
 - **Libraries** show every reusable component and questionnaire that reVISit publishes.
 
 Pick a study on the right and select **Go to Study** to take it as a participant.
+
+**You can click around and work with any study!** This is a playground! Don't worry about screwing anything up.
 
 ## Learn more
 

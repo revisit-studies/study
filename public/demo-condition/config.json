@@ -7,7 +7,7 @@
       "The reVISit Team"
     ],
     "date": "2026-02-23",
-    "description": "A demo of using conditional blocks in the study sequence.",
+    "description": "A demo of using conditional blocks in the study sequence. Learn more about [URL conditions](https://revisit.dev/docs/designing-studies/sequences/url-conditions/) in the docs.",
     "organizations": [
       "University of Utah",
       "WPI"

@@ -7,7 +7,7 @@
       "The reVISit Team"
     ],
     "date": "2026-02-23",
-    "description": "Example study using the color-blindness library.",
+    "description": "Example study using the color-blindness library. See the [color-blindness library docs](https://revisit.dev/docs/libraries/color-blindness/) and how to use [plugin libraries](https://revisit.dev/docs/designing-studies/plugin-libraries/).",
     "organizations": [
       "University of Utah",
       "WPI"

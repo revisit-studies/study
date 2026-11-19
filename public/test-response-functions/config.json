@@ -5,7 +5,7 @@
     "version": "pilot",
     "authors": ["The reVISit Team"],
     "date": "2026-10-14",
-    "description": "A test study for custom validation and scoring functions on built-in and custom responses.",
+    "description": "A test study for custom validation and scoring functions on built-in and custom responses. Learn more about [correct answers and training](https://revisit.dev/docs/designing-studies/answers-trainings/) in the docs.",
     "organizations": ["University of Utah"]
   },
   "uiConfig": {

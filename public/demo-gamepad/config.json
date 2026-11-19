@@ -5,7 +5,7 @@
     "version": "pilot",
     "authors": ["The reVISit Team"],
     "date": "2026-09-16",
-    "description": "A target-acquisition game driven by a game controller, capturing both semantic provenance and a screen recording so the trial can be replayed faithfully.",
+    "description": "A target-acquisition game driven by a game controller, capturing both semantic provenance and a screen recording so the trial can be replayed faithfully. Learn more about [input devices](https://revisit.dev/docs/designing-studies/input-devices/) and [screen recording](https://revisit.dev/docs/designing-studies/record-screen/) in the docs.",
     "organizations": ["University of Utah", "WPI"]
   },
   "uiConfig": {

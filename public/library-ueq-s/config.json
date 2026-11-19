@@ -7,7 +7,7 @@
       "The reVISit Team"
     ],
     "date": "2026-06-04",
-    "description": "Example study using the ueq-s library.",
+    "description": "Example study using the ueq-s library. See the [ueq-s library docs](https://revisit.dev/docs/libraries/ueq-s/) and how to use [plugin libraries](https://revisit.dev/docs/designing-studies/plugin-libraries/).",
     "organizations": [
       "University of Utah",
       "WPI"

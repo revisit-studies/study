@@ -59,6 +59,13 @@ export interface GlobalConfig {
     label: string;
     /** An optional Markdown description displayed above the studies in this tab. */
     description?: string;
+    /** Optional sections within this tab, in display order. When present, studies are shown under group headings with side navigation; studies without a group appear in a trailing "Other" group. */
+    groups?: {
+      /** A unique, non-blank group name within this tab. Study assignments reference this exact label. */
+      label: string;
+      /** An optional Markdown description displayed under the group heading. */
+      description?: string;
+    }[];
   }[];
   /** A required property that specifies the options for the configList property. */
   configs: {
@@ -70,6 +77,8 @@ export interface GlobalConfig {
       test?: boolean;
       /** The exact label of a configured tab. Unassigned studies appear in the default Studies tab. */
       tab?: string;
+      /** The exact label of a group defined on this study's tab. Ungrouped studies in a grouped tab appear in a trailing "Other" group. */
+      group?: string;
     };
   };
   /** A required property that is used to generate the list of available studies in the UI. This list is displayed on the landing page when running the app. */
@@ -2427,7 +2436,7 @@ export interface LibraryConfig {
   baseComponents?: BaseComponents;
 }
 
-export type ErrorWarningCategory = 'invalid-config' | 'invalid-library-config' | 'undefined-library' | 'undefined-base-component' | 'undefined-component' | 'sequence-validation' | 'skip-validation' | 'unused-component' | 'disabled-sidebar' | 'empty-sidebar' | 'default-contact-email' | 'default-firebase-config' | 'default-supabase-config';
+export type ErrorWarningCategory = 'invalid-config' | 'invalid-library-config' | 'undefined-library' | 'undefined-base-component' | 'undefined-component' | 'sequence-validation' | 'skip-validation' | 'unused-component' | 'disabled-sidebar' | 'empty-sidebar' | 'default-contact-email' | 'default-firebase-config' | 'default-supabase-config' | 'local-storage-deployment';
 
 /**
  * @ignore

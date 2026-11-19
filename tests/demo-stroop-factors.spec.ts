@@ -12,7 +12,7 @@ const HTML_COLORS = MARKDOWN_COLORS;
 
 test('completes all 25 Markdown Stroop pairs with one assigned font size', async ({ page }) => {
   await resetClientStudyState(page);
-  await openStudyFromLanding(page, 'Factor-demos', 'Stroop Test with Factors');
+  await openStudyFromLanding(page, 'Snippets', 'Stroop Test with Factors');
   await expect(page.getByRole('heading', { name: 'Stroop Test with Factors', level: 1, exact: true })).toBeVisible();
   await nextClick(page);
 
@@ -56,7 +56,7 @@ test('completes all 25 Markdown Stroop pairs with one assigned font size', async
 
 test('completes all 10 HTML Stroop conditions using number shortcuts', async ({ page }) => {
   await resetClientStudyState(page);
-  await openStudyFromLanding(page, 'Factor-demos', 'Stroop Test in HTML with Factors');
+  await openStudyFromLanding(page, 'Snippets', 'Stroop Test in HTML with Factors');
   await nextClick(page);
 
   const stimulus = page.frameLocator('#root iframe').locator('#stimuli');

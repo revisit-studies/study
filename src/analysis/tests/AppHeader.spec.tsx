@@ -116,13 +116,4 @@ describe('AppHeader', () => {
     );
     expect(html).toContain('ReVISit Analytics Platform');
   });
-
-  test('renders page navigation between the title and the controls', () => {
-    mockPathname = '/';
-    const html = renderToStaticMarkup(<AppHeader studyIds={[]} navigation={<nav>Landing tabs</nav>} />);
-
-    expect(html).toContain('<nav>Landing tabs</nav>');
-    expect(html.indexOf('ReVISit Studies')).toBeLessThan(html.indexOf('Landing tabs'));
-    expect(html.indexOf('Landing tabs')).toBeLessThan(html.indexOf('<svg'));
-  });
 });

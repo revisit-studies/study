@@ -7,7 +7,7 @@
       "The reVISit Team"
     ],
     "date": "2026-09-03",
-    "description": "A demo study in which participants debug short JavaScript functions in an instrumented CodeMirror 6 editor.",
+    "description": "A demo study in which participants debug short JavaScript functions in an instrumented CodeMirror 6 editor. Learn more about [React stimuli](https://revisit.dev/docs/designing-studies/react-stimulus/) in the docs.",
     "organizations": [
       "University of Utah",
       "WPI"

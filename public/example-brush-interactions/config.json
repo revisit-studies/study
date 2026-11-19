@@ -5,7 +5,7 @@
     "version": "pilot",
     "authors": ["The reVISit Team"],
     "date": "2026-02-23",
-    "description": "A study comparing different selection mechanisms on scatterplots.",
+    "description": "A study comparing different selection mechanisms on scatterplots. Learn more about [React stimuli](https://revisit.dev/docs/designing-studies/react-stimulus/) in the docs.",
     "organizations": ["University of Utah", "WPI"],
     "thumbnail": "example-brush-interactions/assets/thumbnail.png"
   },

@@ -5,7 +5,7 @@
     "version": "pilot",
     "authors": ["The reVISit Team"],
     "date": "2026-08-20",
-    "description": "A demo of using Handlebars {{variable}} templating (and the lookupAnswersRel/lookupAnswers helpers for referencing other trials' answers) in instructions, paths, markdown/help-text content, response text, and templated website HTML files, and correctAnswer values, showcased through a two-question capital-cities quiz. Includes global variables read and updated from Markdown, React, and HTML content.",
+    "description": "A demo of using Handlebars {{variable}} templating (and the lookupAnswersRel/lookupAnswers helpers for referencing other trials' answers) in instructions, paths, markdown/help-text content, response text, and templated website HTML files, and correctAnswer values, showcased through a two-question capital-cities quiz. Includes global variables read and updated from Markdown, React, and HTML content. Learn more about [templating](https://revisit.dev/docs/designing-studies/templating/) and [global variables](https://revisit.dev/docs/designing-studies/global-variables/) in the docs.",
     "organizations": ["University of Utah", "WPI"],
     "thumbnail": "demo-templating/assets/thumbnail.png"
   },

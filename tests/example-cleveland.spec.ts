@@ -5,8 +5,6 @@ import { advanceStudyStep as nextClick, waitForStudyEndMessage } from './utils';
 test('Test example cleveland', async ({ page }) => {
   await page.goto('/');
 
-  await page.getByRole('tab', { name: 'Example Studies' }).click();
-
   // Click on cleveland
   await page.getByLabel('Example Studies').locator('.mantine-Card-root').filter({ hasText: 'Dynamic React.js Stimuli: A Graphical Perception Experiment' })
     .getByText('Go to Study')

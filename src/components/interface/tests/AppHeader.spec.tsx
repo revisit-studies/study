@@ -409,6 +409,22 @@ describe('AppHeader', () => {
     expect(html).toContain('Default Firebase');
   });
 
+  test('shows a local storage warning badge outside local development', () => {
+    vi.stubGlobal('window', { location: { hostname: 'study.example.com' } });
+
+    const html = renderToStaticMarkup(<AppHeader developmentModeEnabled={false} dataCollectionEnabled />);
+
+    expect(html).toContain('Local Storage');
+  });
+
+  test('does not show the local storage warning badge on localhost', () => {
+    vi.stubGlobal('window', { location: { hostname: 'localhost' } });
+
+    const html = renderToStaticMarkup(<AppHeader developmentModeEnabled={false} dataCollectionEnabled />);
+
+    expect(html).not.toContain('Local Storage');
+  });
+
   test('shows default Supabase warning badge on direct study pages', () => {
     vi.stubEnv('VITE_STORAGE_ENGINE', 'supabase');
     vi.stubEnv('VITE_SUPABASE_URL', 'https://supabase.revisit.dev');

@@ -5,7 +5,7 @@
     "version": "pilot",
     "authors": ["The reVISit Team"],
     "date": "2026-02-23",
-    "description": "A demo of ranking widgets, based on the study design by Kuhlman et al., 2019 (doi:10.1145/3290605.3300742).",
+    "description": "A demo of ranking widgets, based on the study design by Kuhlman et al., 2019 (doi:10.1145/3290605.3300742). Learn more about [forms and responses](https://revisit.dev/docs/designing-studies/forms/) in the docs.",
     "organizations": ["University of Utah", "WPI"]
   },
   "uiConfig": {

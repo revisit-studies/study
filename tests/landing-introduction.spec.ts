@@ -27,7 +27,7 @@ test('shows the configured introduction on the left and compact study cards on t
   await expect(introduction.getByText('chart reading')).toBeVisible();
   await expect(introduction.getByRole('link', { name: 'guide' })).toHaveAttribute('href', 'https://revisit.dev/docs/');
 
-  const cards = page.getByRole('tabpanel', { name: 'Studies', exact: true }).locator('.mantine-Card-root');
+  const cards = page.getByRole('region', { name: 'Studies', exact: true }).locator('.mantine-Card-root');
   await expect(cards).toHaveCount(2);
   const htmlCard = cards.filter({ hasText: 'HTML as a Stimulus' });
   const tutorialCard = cards.filter({ hasText: 'A tutorial that you will build with us' });
@@ -57,7 +57,7 @@ test('keeps the studies-only layout when no introduction is configured', async (
 
   await page.goto('/');
 
-  const cards = page.getByRole('tabpanel', { name: 'Studies', exact: true }).locator('.mantine-Card-root');
+  const cards = page.getByRole('region', { name: 'Studies', exact: true }).locator('.mantine-Card-root');
   await expect(cards.filter({ hasText: 'HTML as a Stimulus' }).getByRole('button', { name: 'Go to Study', exact: true })).toBeVisible();
   await expect(page.getByRole('region', { name: 'Introduction' })).toHaveCount(0);
 });

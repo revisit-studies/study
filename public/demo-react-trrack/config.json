@@ -7,7 +7,7 @@
       "The reVISit Team"
     ],
     "date": "2026-02-23",
-    "description": "A demo of the Stroop test using a React stimulus with provenance tracking.",
+    "description": "A demo of the Stroop test using a React stimulus with provenance tracking. Learn more about [React stimuli](https://revisit.dev/docs/designing-studies/react-stimulus/) and [provenance tracking](https://revisit.dev/docs/designing-studies/provenance-tracking/) in the docs.",
     "organizations": [
       "University of Utah",
       "WPI"

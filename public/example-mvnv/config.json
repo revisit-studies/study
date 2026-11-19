@@ -5,7 +5,7 @@
     "version": "pilot",
     "authors": ["The reVISit Team"],
     "date": "2026-02-23",
-    "description": "A replication of adjacency matrix tasks in a multivariate network visualization (MVNV) study by Nobre et al., CHI 2020 (doi:10.1145/3313831.3376381). This is meant to demonstrate complex studies, but is not necessarily suitable as a learn-by-example study.",
+    "description": "A replication of adjacency matrix tasks in a multivariate network visualization (MVNV) study by Nobre et al., CHI 2020 (doi:10.1145/3313831.3376381). This is meant to demonstrate complex studies, but is not necessarily suitable as a learn-by-example study. Learn more about [HTML stimuli](https://revisit.dev/docs/designing-studies/html-stimulus/) and [provenance tracking](https://revisit.dev/docs/designing-studies/provenance-tracking/) in the docs.",
     "organizations": ["University of Utah", "WPI"],
     "thumbnail": "example-mvnv/assets/NLTasks.png"
   },

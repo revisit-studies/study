@@ -1,7 +1,6 @@
 import {
   Box, Flex, Image, Select, Title, Space, AppShell, Button, Text, ActionIcon, Tooltip,
 } from '@mantine/core';
-import { ReactNode } from 'react';
 
 import {
   matchPath, useLocation, useNavigate, useParams,
@@ -20,11 +19,8 @@ export function AppHeader({
   selectedStudyId,
   studyHref,
   studyConfigs,
-  navigation,
 }: {
   studyIds: string[];
-  /** Optional page navigation (e.g. landing-page tabs) rendered between the title and the controls. */
-  navigation?: ReactNode;
   selectedStudyId?: string;
   studyHref?: string;
   studyConfigs?: Record<string, { $schema?: unknown } | null>;
@@ -60,9 +56,7 @@ export function AppHeader({
           </Flex>
         </Box>
 
-        <Box style={{ flex: 1, minWidth: 0, overflowX: 'auto' }}>
-          {navigation}
-        </Box>
+        <Box style={{ flex: 1, minWidth: 0 }} />
 
         <Box style={{ flexShrink: 0 }}>
           <Flex

@@ -91,10 +91,8 @@ export async function openStudyFromLanding(
   await page.goto('/');
 
   const matchers = Array.isArray(cardTitle) ? cardTitle : [cardTitle];
-  const section = page.getByLabel(sectionLabel);
-  if (!(await section.isVisible().catch(() => false))) {
-    await page.getByRole('tab', { name: sectionLabel, exact: true }).click();
-  }
+  // Each landing-page tab is a labeled section; all of them are on the page at once.
+  const section = page.getByRole('region', { name: sectionLabel, exact: true });
   await expect(section).toBeVisible();
 
   for (const matcher of matchers) {

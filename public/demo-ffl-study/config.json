@@ -5,7 +5,7 @@
     "version": "pilot",
     "authors": ["The reVISit Team"],
     "date": "2026-08-20",
-    "description": "A factors-based reconstruction of the controlled FFL-versus-LaTeX authoring study in Section 6 of Wu et al. (UIST 2023).",
+    "description": "A factors-based reconstruction of the controlled FFL-versus-LaTeX authoring study in Section 6 of Wu et al. (UIST 2023). Learn more about [factors](https://revisit.dev/docs/designing-studies/factors/) in the docs.",
     "organizations": ["University of Utah"]
   },
   "uiConfig": {

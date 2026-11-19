@@ -5,7 +5,7 @@
     "version": "pilot",
     "authors": ["The reVISit Team"],
     "date": "2026-06-10",
-    "description": "An example study that implements Trrack provenance tracking in a Svelte website stimulus.",
+    "description": "An example study that implements Trrack provenance tracking in a Svelte website stimulus. Learn more about [provenance tracking](https://revisit.dev/docs/designing-studies/provenance-tracking/) in the docs.",
     "organizations": ["University of Utah", "WPI"]
   },
   "uiConfig": {

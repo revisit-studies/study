@@ -34,7 +34,7 @@ function findFirstTextWithParent(
   return null;
 }
 
-const markdownComponents = (inline?: boolean): Partial<Components> => ({
+const markdownComponents = (inline?: boolean, linkTarget?: string): Partial<Components> => ({
   p({ node: _, ...props }) { return inline ? <Text {...props} component="span" size="sm" /> : <Text {...props} pb={8} fw="inherit" ref={undefined} />; },
   h1({ node: _, ...props }) { return <Title {...props} order={1} pb={inline ? undefined : 12} />; },
   h2({ node: _, ...props }) { return <Title {...props} order={2} pb={inline ? undefined : 12} />; },
@@ -48,7 +48,7 @@ const markdownComponents = (inline?: boolean): Partial<Components> => ({
       /^(https:\/\/github\.com\/revisit-studies\/study\/(?:blob|tree)\/)(?:main|dev)(\/.*)$/,
       `$1${branch}$2`,
     );
-    return <Anchor {...props} href={sourceHref || href} ref={undefined} />;
+    return <Anchor {...props} href={sourceHref || href} target={linkTarget} rel={linkTarget === '_blank' ? 'noopener noreferrer' : undefined} ref={undefined} />;
   },
   code({ node: _, ...props }) { return <Code {...props} />; },
   ul({ node: _, ref: _ref, ...props }) { return <List withPadding {...props} pb={inline ? undefined : 8} />; },
@@ -66,8 +66,10 @@ const markdownComponents = (inline?: boolean): Partial<Components> => ({
   }) { return <Image {...props} h={height} w={width} src={src?.startsWith('http') ? src : `${PREFIX}${src}`} />; },
 });
 
-export function ReactMarkdownWrapper({ text, required, inline }: { text: string; required?: boolean; inline?: boolean }) {
-  const componentsToUse = markdownComponents(inline);
+export function ReactMarkdownWrapper({
+  text, required, inline, linkTarget,
+}: { text: string; required?: boolean; inline?: boolean; /** Target for rendered links, e.g. `_blank` to open them in a new tab. */ linkTarget?: string }) {
+  const componentsToUse = markdownComponents(inline, linkTarget);
   const rehypeAsterisk = useCallback(() => (tree: Root) => {
     if (!required || !tree) return;
 

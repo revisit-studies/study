@@ -25,7 +25,7 @@ test('correlation trials accept intentional choices and persist matching respons
   const pageErrors: string[] = [];
   page.on('pageerror', (error) => pageErrors.push(error.message));
   await resetClientStudyState(page);
-  await openStudyFromLanding(page, 'Factor-demos', 'Correlation Judgements using Visualization');
+  await openStudyFromLanding(page, 'Snippets', 'Correlation Judgements using Visualization');
   await expect(page.getByTestId('study-interface')).toHaveAttribute('aria-busy', 'false', { timeout: 30000 });
   await advanceStudyStep(page);
   await page.getByRole('radio', { name: 'Yes', exact: true }).check();

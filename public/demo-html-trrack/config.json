@@ -5,7 +5,7 @@
     "version": "pilot",
     "authors": ["The reVISit Team"],
     "date": "2026-02-23",
-    "description": "An example study that implements Trrack library for provenance tracking in HTML stimuli.",
+    "description": "An example study that implements Trrack library for provenance tracking in HTML stimuli. Learn more about [provenance tracking](https://revisit.dev/docs/designing-studies/provenance-tracking/) and [HTML stimuli](https://revisit.dev/docs/designing-studies/html-stimulus/) in the docs.",
     "organizations": ["University of Utah", "WPI"]
   },
   "uiConfig": {
