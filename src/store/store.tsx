@@ -262,8 +262,16 @@ export async function studyStoreCreator(
             // Retain old nodes while initializing the next visit from its replacement context.
           }
         });
-        Object.entries(state.funcSequence).forEach(([name, components]) => {
-          state.funcSequence[name] = components.filter((component, index) => Object.keys(payload.answers).some((id) => id.startsWith(`${name}_`) && id.endsWith(`_${component}_${index}`)));
+        Object.entries(state.funcSequence).forEach(([name, _components]) => {
+          const activeComponents: string[] = [];
+          Object.entries(payload.answers).forEach(([id, answer]) => {
+            if (answer.recordingArchived || !id.startsWith(`${name}_`)) return;
+            const index = Number(answer.trialOrder.split('_')[1]);
+            if (Number.isInteger(index) && index >= 0 && id.endsWith(`_${answer.componentName}_${index}`)) {
+              activeComponents[index] = answer.componentName;
+            }
+          });
+          state.funcSequence[name] = activeComponents;
         });
       },
       setAssetStatus(state, { payload }: PayloadAction<{ identifier: string; status: AssetStatus }>) {
@@ -282,16 +290,28 @@ export async function studyStoreCreator(
           state.funcSequence[payload.funcName] = [];
         }
 
-        if (state.funcSequence[payload.funcName].length > payload.funcIndex) {
+        if (state.funcSequence[payload.funcName][payload.funcIndex] === payload.component) {
           return;
         }
 
         const componentConfig = studyComponentToIndividualComponent(state.config.components[payload.component] || { response: [] }, config);
 
         const identifier = `${payload.funcName}_${payload.index}_${payload.component}_${payload.funcIndex}`;
+        const previousAnswer = state.answers[identifier];
+        const archivedRecording = previousAnswer?.recordingArchived ? {
+          assetIdentifier: previousAnswer.assetIdentifier,
+          recordingSegments: previousAnswer.recordingSegments,
+          recordingSegmentRanges: previousAnswer.recordingSegmentRanges,
+          recordingSegmentTimes: previousAnswer.recordingSegmentTimes,
+          recordingChunkKeys: previousAnswer.recordingChunkKeys,
+          recordingEndTime: previousAnswer.recordingEndTime,
+          recordingStartTime: previousAnswer.recordingStartTime,
+          windowEvents: previousAnswer.windowEvents,
+        } : {};
 
-        state.funcSequence[payload.funcName].push(payload.component);
+        state.funcSequence[payload.funcName][payload.funcIndex] = payload.component;
         state.answers[identifier] = {
+          ...archivedRecording,
           answer: {},
           identifier,
           incorrectAnswers: {},
@@ -299,7 +319,7 @@ export async function studyStoreCreator(
           trialOrder: `${payload.index}_${payload.funcIndex}`,
           startTime: 0,
           endTime: -1,
-          windowEvents: [],
+          windowEvents: archivedRecording.windowEvents ?? [],
           timedOut: false,
           helpButtonClickedCount: 0,
 
@@ -531,7 +551,36 @@ export async function studyStoreCreator(
         state.checkAnswer[identifier] = checkAnswer;
       },
       saveTrialAnswer(state, { payload }: PayloadAction<{ identifier: string } & StoredAnswer>) {
-        state.answers[payload.identifier] = { ...payload };
+        const previous = state.answers[payload.identifier];
+        const recordingSegments = Array.from(new Set([
+          ...(previous?.recordingSegments ?? []),
+          ...(previous?.assetIdentifier ? [previous.assetIdentifier] : []),
+          ...(payload.recordingSegments ?? []),
+          ...(payload.assetIdentifier ? [payload.assetIdentifier] : []),
+        ]));
+        const recordingChunkKeys = { ...(previous?.recordingChunkKeys ?? {}) };
+        Object.entries(payload.recordingChunkKeys ?? {}).forEach(([identifier, keys]) => {
+          recordingChunkKeys[identifier] = Array.from(new Set([...(recordingChunkKeys[identifier] ?? []), ...keys]));
+        });
+        const rangesByAsset = new Map((previous?.recordingSegmentRanges ?? []).map((range) => [range.assetIdentifier, range]));
+        (payload.recordingSegmentRanges ?? []).forEach((range) => rangesByAsset.set(range.assetIdentifier, range));
+        state.answers[payload.identifier] = {
+          ...payload,
+          ...(recordingSegments.length > 0 ? { recordingSegments } : {}),
+          ...(Object.keys(recordingChunkKeys).length > 0 ? { recordingChunkKeys } : {}),
+          ...(rangesByAsset.size > 0 ? {
+            recordingSegmentRanges: Array.from(rangesByAsset.values()),
+          } : {}),
+          ...(previous?.recordingSegmentTimes || payload.recordingSegmentTimes ? {
+            recordingSegmentTimes: { ...previous?.recordingSegmentTimes, ...payload.recordingSegmentTimes },
+          } : {}),
+          ...(previous?.recordingEndTime || payload.recordingEndTime ? {
+            recordingEndTime: Math.max(previous?.recordingEndTime ?? 0, payload.recordingEndTime ?? 0),
+          } : {}),
+          ...(previous?.recordingStartTime || payload.recordingStartTime ? {
+            recordingStartTime: Math.min(previous?.recordingStartTime ?? Infinity, payload.recordingStartTime ?? Infinity),
+          } : {}),
+        };
       },
       incrementHelpCounter(
         state,
@@ -569,7 +618,18 @@ export async function studyStoreCreator(
         const matchesDeletedIteration = (key: string) => key.startsWith(`${funcName}_${currentStep}_`) && key.endsWith(`_${funcIndex}`);
         Object.keys(state.answers).forEach((key) => {
           if (matchesDeletedIteration(key)) {
-            delete state.answers[key];
+            const answer = state.answers[key];
+            const segments = answer.recordingSegments ?? (answer.assetIdentifier ? [answer.assetIdentifier] : []);
+            if (segments.length > 0 || Object.keys(answer.recordingChunkKeys ?? {}).length > 0) {
+              state.answers[key] = {
+                ...answer,
+                answer: {},
+                endTime: -1,
+                recordingArchived: true,
+              };
+            } else {
+              delete state.answers[key];
+            }
           }
         });
         Object.keys(state.checkAnswer).forEach((key) => {

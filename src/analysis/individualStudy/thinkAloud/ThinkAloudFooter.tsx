@@ -137,12 +137,13 @@ export function ThinkAloudFooter({
     ...Object.keys(taskAnswer?.recordingChunkKeys ?? {}),
     ...(assetIdentifier ? [assetIdentifier] : []),
   ]));
-  const currentScreenRecordingChunks = taskAnswer?.recordingChunkKeys?.[assetIdentifier];
   const requestedRecordingSegment = searchParams.get('recordingSegment');
   const replayRecordingSegment = requestedRecordingSegment && taskRecordingSegments.includes(requestedRecordingSegment)
     ? requestedRecordingSegment
     : null;
-  const assetKey = `${participantId}\u0000${assetIdentifier}`;
+  const downloadRecordingIdentifier = replayRecordingSegment ?? assetIdentifier;
+  const downloadScreenRecordingChunks = taskAnswer?.recordingChunkKeys?.[downloadRecordingIdentifier];
+  const assetKey = `${participantId}\u0000${downloadRecordingIdentifier}`;
   const [audio, setAudio] = useState<{ key: string; url: string | null }>({ key: '', url: null });
   const [screenRecording, setScreenRecording] = useState<{ key: string; url: string | null }>({ key: '', url: null });
   const [webcamRecording, setWebcamRecording] = useState<{ key: string; url: string | null }>({ key: '', url: null });
@@ -180,7 +181,7 @@ export function ThinkAloudFooter({
       }
 
       try {
-        const url = await storageEngine.getAudioUrl(assetIdentifier, participantId);
+        const url = await storageEngine.getAudioUrl(downloadRecordingIdentifier, participantId);
         setLoadedAsset(setAudio, url);
       } catch {
         if (!cancelled) {
@@ -189,7 +190,7 @@ export function ThinkAloudFooter({
       }
 
       try {
-        const url = await storageEngine.getScreenRecording(assetIdentifier, participantId);
+        const url = await storageEngine.getScreenRecording(downloadRecordingIdentifier, participantId);
         setLoadedAsset(setScreenRecording, url);
       } catch {
         if (!cancelled) {
@@ -198,7 +199,7 @@ export function ThinkAloudFooter({
       }
 
       try {
-        const url = await storageEngine.getWebcamRecording(assetIdentifier, participantId);
+        const url = await storageEngine.getWebcamRecording(downloadRecordingIdentifier, participantId);
         setLoadedAsset(setWebcamRecording, url);
       } catch {
         if (!cancelled) {
@@ -213,7 +214,7 @@ export function ThinkAloudFooter({
       cancelled = true;
       loadedUrls.forEach(releaseUrl);
     };
-  }, [assetKey, assetIdentifier, currentTrial, participantId, storageEngine]);
+  }, [assetKey, assetIdentifier, downloadRecordingIdentifier, currentTrial, participantId, storageEngine]);
 
   const handleDownloadAudio = useCallback(async () => {
     if (!storageEngine || !participantId || !currentTrial) {
@@ -223,10 +224,10 @@ export function ThinkAloudFooter({
     await handleTaskAudio({
       storageEngine,
       participantId,
-      identifier: assetIdentifier,
+      identifier: downloadRecordingIdentifier,
       audioUrl,
     });
-  }, [assetIdentifier, storageEngine, participantId, currentTrial, audioUrl]);
+  }, [downloadRecordingIdentifier, storageEngine, participantId, currentTrial, audioUrl]);
 
   const handleDownloadRecordings = useCallback(async () => {
     if (!storageEngine || !participantId || !currentTrial) {
@@ -236,14 +237,14 @@ export function ThinkAloudFooter({
     await handleTaskRecordings({
       storageEngine,
       participantId,
-      identifier: assetIdentifier,
-      includeScreen: !!screenRecordingUrl || (currentScreenRecordingChunks?.length ?? 0) > 0,
+      identifier: downloadRecordingIdentifier,
+      includeScreen: !!screenRecordingUrl || (downloadScreenRecordingChunks?.length ?? 0) > 0,
       includeWebcam: !!webcamRecordingUrl,
       screenRecordingUrl,
       webcamRecordingUrl,
-      recordingChunkIdentifiers: currentScreenRecordingChunks,
+      recordingChunkIdentifiers: downloadScreenRecordingChunks,
     });
-  }, [assetIdentifier, storageEngine, participantId, currentTrial, screenRecordingUrl, webcamRecordingUrl, currentScreenRecordingChunks]);
+  }, [downloadRecordingIdentifier, downloadScreenRecordingChunks, storageEngine, participantId, currentTrial, screenRecordingUrl, webcamRecordingUrl]);
 
   const [transcriptLines, setTranscriptLines] = useState<TranscriptLinesWithTimes[] | null>(null);
 
@@ -266,18 +267,19 @@ export function ThinkAloudFooter({
   }, [currentTrial, participant]);
 
   const xScale = useMemo(() => {
-    if (!participant || !participant.answers[currentTrial]) {
+    const answer = participant?.answers[currentTrial];
+    if (!answer) {
       return null;
     }
 
-    const allStartTimes = Object.values(participant.answers || {}).map((answer) => [answer.startTime, answer.endTime]).flat();
+    const segmentRange = answer.recordingSegmentRanges?.find((range) => range.assetIdentifier === downloadRecordingIdentifier);
+    const segmentTimes = answer.recordingSegmentTimes?.[downloadRecordingIdentifier];
+    const startTime = segmentRange?.startTime ?? segmentTimes?.startTime ?? answer.recordingStartTime ?? answer.startTime;
+    const endTime = segmentRange?.endTime ?? segmentTimes?.endTime ?? answer.recordingEndTime ?? answer.endTime;
+    if (!Number.isFinite(startTime) || !Number.isFinite(endTime) || endTime <= startTime) return null;
 
-    const extent = d3.extent(allStartTimes) as [number, number];
-
-    const scale = d3.scaleLinear([margin.left, width + margin.left + margin.right]).domain(currentTrial ? [participant.answers[currentTrial].startTime, participant.answers[currentTrial].endTime] : extent).clamp(true);
-
-    return scale;
-  }, [participant, currentTrial, width]);
+    return d3.scaleLinear([margin.left, width + margin.left + margin.right]).domain([startTime, endTime]).clamp(true);
+  }, [participant, currentTrial, downloadRecordingIdentifier, width]);
 
   useEffect(() => {
     const lines: TranscriptLinesWithTimes[] = [];
@@ -697,7 +699,7 @@ export function ThinkAloudFooter({
                 </ActionIcon>
               </Tooltip>
             )}
-            {(screenRecordingUrl || webcamRecordingUrl || (currentScreenRecordingChunks?.length ?? 0) > 0) && (
+            {(screenRecordingUrl || webcamRecordingUrl || (downloadScreenRecordingChunks?.length ?? 0) > 0) && (
               <Tooltip label="Download recordings">
                 <ActionIcon aria-label="Download recordings" variant="light" size={30} onClick={handleDownloadRecordings}>
                   <IconDeviceDesktopDown />

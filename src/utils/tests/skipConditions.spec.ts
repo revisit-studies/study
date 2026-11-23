@@ -45,3 +45,22 @@ test('an explicitly empty dynamic rule list does not restore template grading du
   });
   expect(conditionIsTriggered(skipOnIncorrect, answers, makeConfig())).toBe(false);
 });
+
+test('archived dynamic answers are ignored by skip evaluation', () => {
+  const answers = getStoredAnswersForSkipEvaluation({
+    missing_0_0: makeStoredAnswer({
+      identifier: 'missing_0_0', componentName: 'missing', trialOrder: '0_0', recordingArchived: true,
+    }),
+  });
+  expect(answers).toEqual({});
+  expect(conditionIsTriggered(
+    {
+      ...skipOnIncorrect,
+      check: 'block',
+      condition: 'numCorrect',
+      value: 1,
+    },
+    answers,
+    makeConfig(),
+  )).toBe(false);
+});

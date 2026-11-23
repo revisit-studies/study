@@ -1,14 +1,17 @@
 import { ReactNode } from 'react';
-import { useParams } from 'react-router';
+import { useLocation, useParams } from 'react-router';
 import { useStartupInteractionBlocked } from '../components/StartupContext';
 import { ResourceNotFound } from '../ResourceNotFound';
 import { useStudyConfig } from '../store/hooks/useStudyConfig';
 import { useFlatSequence, useStoreSelector } from '../store/store';
 import { parseStepIndex } from '../utils/encryptDecryptIndex';
 import { findFuncBlock } from '../utils/getSequenceFlatMap';
+import { parseTrialOrder } from '../utils/parseTrialOrder';
 
 export function StudyRouteGuard({ children }: { children: ReactNode }) {
   const { index, funcIndex } = useParams();
+  const location = useLocation();
+  const isAnalysis = new URLSearchParams(location.search).has('participantId');
   const startupInteractionBlocked = useStartupInteractionBlocked();
   const studyConfig = useStudyConfig();
   const flatSequence = useFlatSequence();
@@ -41,12 +44,19 @@ export function StudyRouteGuard({ children }: { children: ReactNode }) {
       isValid = iteration !== null
         && Boolean(findFuncBlock(flatSequence[step], studyConfig.sequence));
       if (isValid && iteration !== null) {
+        const analysisAnswerId = new URLSearchParams(location.search).get('analysisAnswerId');
+        const selectedAnswer = analysisAnswerId ? answers[analysisAnswerId] : undefined;
+        const selectedOrder = selectedAnswer ? parseTrialOrder(selectedAnswer.trialOrder) : null;
+        if (isAnalysis && selectedAnswer?.recordingArchived && selectedOrder?.step === step && selectedOrder.funcIndex === iteration) {
+          return children;
+        }
         // Use answer records because funcSequence starts empty after a page reload.
         const existingIterations = new Set<number>();
         Object.entries(answers).forEach(([identifier, answer]) => {
           const ordinal = Number(identifier.slice(identifier.lastIndexOf('_') + 1));
           // Count only records for this block and step with a known component.
           if (Number.isSafeInteger(ordinal) && ordinal >= 0
+            && !answer.recordingArchived
             && Object.hasOwn(studyConfig.components, answer.componentName)
             && identifier === `${flatSequence[step]}_${step}_${answer.componentName}_${ordinal}`) {
             existingIterations.add(ordinal);

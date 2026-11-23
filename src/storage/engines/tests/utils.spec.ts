@@ -65,6 +65,16 @@ describe('calculateProgressData', () => {
     expect(total).toBe(2);
   });
 
+  test('excludes archived dynamic recordings from the progress total', () => {
+    const answers: ParticipantData['answers'] = {
+      funcBlock_0_intro_0: { ...makeAnswer('intro'), recordingArchived: true },
+      funcBlock_0_trial1_1: makeAnswer('trial1'),
+    };
+    const { total, answered } = calculateProgressData(answers, ['funcBlock'], makeConfig([]), 0, undefined);
+    expect(total).toBe(1);
+    expect(answered).toEqual(['trial1']);
+  });
+
   test('isDynamic is false when funcIndex is undefined', () => {
     const { isDynamic } = calculateProgressData({}, [], makeConfig([]), 0, undefined);
     expect(isDynamic).toBe(false);

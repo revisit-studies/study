@@ -8,7 +8,7 @@ import type { StoredAnswer } from '../store/types';
 import { getScreenRecordingSegment } from './recordingAssets';
 
 type DownloadAnswer = Pick<StoredAnswer, 'endTime' | 'startTime' | 'componentName' | 'trialOrder'>
-  & Partial<Pick<StoredAnswer, 'identifier' | 'assetIdentifier' | 'recordingChunkKeys'>>;
+  & Partial<Pick<StoredAnswer, 'identifier' | 'assetIdentifier' | 'recordingSegments' | 'recordingChunkKeys'>>;
 
 export async function handleTaskAudio({
   storageEngine,
@@ -229,7 +229,7 @@ async function downloadParticipantsAudio({
 
 async function getParticipantRecordingEntries(storageEngine: StorageEngine, participant: { participantId: string; answers: Record<string, DownloadAnswer> }) {
   const entries = Object.entries(participant.answers).map(([storedIdentifier, answer]) => ({ storedIdentifier, answer }));
-  if (entries.some(({ answer }) => answer.assetIdentifier)) {
+  if (entries.some(({ answer }) => answer.assetIdentifier || answer.recordingSegments?.length)) {
     const graph = (await storageEngine.getProvenance(GLOBAL_STORE_TASK, participant.participantId))?.globalStore;
     if (graph) {
       getGlobalStoreHistory(graph).forEach(({ submission }) => {
@@ -237,7 +237,34 @@ async function getParticipantRecordingEntries(storageEngine: StorageEngine, part
       });
     }
   }
-  const byAsset = new Map(entries.filter(({ answer }) => answer.endTime > 0).map((entry) => [entry.answer.assetIdentifier || entry.answer.identifier || entry.storedIdentifier, entry]));
+  const byAsset = new Map<string, { storedIdentifier: string; answer: DownloadAnswer; assetIdentifier: string }>();
+  entries.forEach(({ storedIdentifier, answer }) => {
+    const segments = Array.from(new Set([
+      ...(answer.recordingSegments ?? []),
+      ...(answer.assetIdentifier ? [answer.assetIdentifier] : []),
+    ]));
+    if (answer.endTime <= 0 && segments.length === 0) return;
+    (segments.length > 0 ? segments : [answer.identifier || storedIdentifier]).forEach((assetIdentifier) => {
+      if (!assetIdentifier) return;
+      const existing = byAsset.get(assetIdentifier);
+      byAsset.set(assetIdentifier, {
+        storedIdentifier,
+        answer: existing ? {
+          ...answer,
+          ...existing.answer,
+          recordingChunkKeys: {
+            ...answer.recordingChunkKeys,
+            ...existing.answer.recordingChunkKeys,
+            [assetIdentifier]: Array.from(new Set([
+              ...(answer.recordingChunkKeys?.[assetIdentifier] ?? []),
+              ...(existing.answer.recordingChunkKeys?.[assetIdentifier] ?? []),
+            ])),
+          },
+        } : answer,
+        assetIdentifier,
+      });
+    });
+  });
   return [...byAsset.values()].sort((a, b) => a.answer.startTime - b.answer.startTime);
 }
 
@@ -257,8 +284,7 @@ export async function downloadParticipantsAudioZip({
 
   const audioPromises = participants.map(async (participant) => {
     const entries = await getParticipantRecordingEntries(storageEngine, participant);
-    return Promise.all(entries.map(async ({ storedIdentifier, answer }) => {
-      const identifier = answer.assetIdentifier || answer.identifier || storedIdentifier;
+    return Promise.all(entries.map(async ({ assetIdentifier: identifier }) => {
       await downloadParticipantsAudio({
         storageEngine, participantId: participant.participantId, identifier, namePrefix, zip,
       });
@@ -338,8 +364,7 @@ export async function downloadParticipantsRecordingsZip({
 
   const recordingPromises = participants.map(async (participant) => {
     const entries = await getParticipantRecordingEntries(storageEngine, participant);
-    return Promise.all(entries.map(async ({ storedIdentifier, answer }) => {
-      const identifier = answer.assetIdentifier || answer.identifier || storedIdentifier;
+    return Promise.all(entries.map(async ({ answer, assetIdentifier: identifier }) => {
       await downloadParticipantsRecordings({
         storageEngine,
         participantId: participant.participantId,

@@ -247,7 +247,12 @@ export function ComponentController() {
 
   const templateData = useMemo(
     () => ({
-      globalVariables: globalStore, answers, flatSequence, currentStep, currentComponent, funcIndex: funcIndex ? decryptIndex(funcIndex) : undefined,
+      globalVariables: globalStore,
+      answers: Object.fromEntries(Object.entries(answers).filter(([, answer]) => !answer.recordingArchived)),
+      flatSequence,
+      currentStep,
+      currentComponent,
+      funcIndex: funcIndex ? decryptIndex(funcIndex) : undefined,
     }),
     [globalStore, answers, flatSequence, currentStep, currentComponent, funcIndex],
   );

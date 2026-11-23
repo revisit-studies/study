@@ -559,8 +559,19 @@ export function StepRenderer() {
     const pointerOver = (event: PointerEvent) => {
       if (!event.relatedTarget) push([Date.now(), 'studyactivity', 'pointer-entered']);
     };
-    const focus = () => push([Date.now(), 'studyactivity', 'focus-regained']);
-    const blur = () => push([Date.now(), 'studyactivity', 'focus-lost']);
+    let pageLostFocus = false;
+    const focus = () => {
+      if (pageLostFocus && document.hasFocus()) {
+        pageLostFocus = false;
+        push([Date.now(), 'studyactivity', 'focus-regained']);
+      }
+    };
+    const blur = () => {
+      if (!document.hasFocus()) {
+        pageLostFocus = true;
+        push([Date.now(), 'studyactivity', 'focus-lost']);
+      }
+    };
     const visibility = () => push([Date.now(), 'studyactivity', document.visibilityState === 'hidden' ? 'hidden' : 'visible']);
     window.addEventListener('pointerout', pointerOut);
     window.addEventListener('pointerover', pointerOver);

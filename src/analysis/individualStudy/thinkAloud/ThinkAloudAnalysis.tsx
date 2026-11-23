@@ -168,7 +168,11 @@ function ThinkAloudTranscript({
   const onTimeUpdate = useEvent((playTime: number) => {
     if (rawTranscript && currentShownTranscription !== null && participant && playTime > 0) {
       let tempCurrentShownTranscription = currentShownTranscription;
-      const startTime = (currentTrial ? participant.answers[currentTrial].startTime : participant.answers.audioTest.startTime);
+      const answer = currentTrial ? participant.answers[currentTrial] : participant.answers.audioTest;
+      const startTime = answer.recordingSegmentRanges?.find((range) => range.assetIdentifier === assetIdentifier)?.startTime
+        ?? answer.recordingSegmentTimes?.[assetIdentifier]?.startTime
+        ?? answer.recordingStartTime
+        ?? answer.startTime;
 
       const timeInSeconds = Math.abs(playTime - startTime) / 1000;
 
@@ -252,7 +256,16 @@ export function ThinkAloudAnalysis(props: ThinkAloudAnalysisProps) {
   const currentTrial = trialId || '';
   const { value: loadedParticipant } = useAsync(getParticipantData, [participantId, props.storageEngine]);
   const participant = loadedParticipant?.participantId === participantId ? loadedParticipant : null;
-  const assetIdentifier = participant?.answers[currentTrial]?.assetIdentifier ?? currentTrial;
+  const answer = participant?.answers[currentTrial];
+  const primaryAssetIdentifier = answer?.assetIdentifier ?? currentTrial;
+  const recordingSegments = new Set([
+    ...(answer?.recordingSegments ?? []),
+    ...(answer?.recordingSegmentRanges?.map((range) => range.assetIdentifier) ?? []),
+    ...Object.keys(answer?.recordingChunkKeys ?? {}),
+    primaryAssetIdentifier,
+  ]);
+  const requestedSegment = searchParams.get('recordingSegment');
+  const assetIdentifier = requestedSegment && recordingSegments.has(requestedSegment) ? requestedSegment : primaryAssetIdentifier;
   // A recording owns its transcript state and pending reads; never mix visits during a switch.
   return <ThinkAloudTranscript key={`${participantId}:${assetIdentifier}`} {...props} participant={participant} assetIdentifier={assetIdentifier} />;
 }

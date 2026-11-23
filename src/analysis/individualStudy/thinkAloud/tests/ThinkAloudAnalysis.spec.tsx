@@ -31,9 +31,10 @@ const mockThinkAloudFooter = vi.fn(({ onTimeUpdate, setHasAudio }: { onTimeUpdat
   </div>
 ));
 
-const mockTextEditor = vi.fn(({ onClickLine, transcriptList }: { onClickLine?: (n: number) => void; transcriptList?: EditedText[] }) => (
+const mockTextEditor = vi.fn(({ onClickLine, transcriptList, currentShownTranscription }: { onClickLine?: (n: number) => void; transcriptList?: EditedText[]; currentShownTranscription?: number }) => (
   <div data-testid="text-editor">
     <div data-testid="transcript-count">{transcriptList?.length ?? 0}</div>
+    <div data-testid="transcript-current">{currentShownTranscription}</div>
     <button type="button" data-testid="btn-click-line" onClick={() => onClickLine?.(0)}>clickLine</button>
   </div>
 ));
@@ -473,6 +474,41 @@ describe('ThinkAloudAnalysis (DOM)', () => {
     await waitFor(() => expect(storage.getEditedTranscript).toHaveBeenCalledWith('p1', 'test@test.com', 'trial_0__global_2'));
     await waitFor(() => expect(storage.saveEditedTranscript).toHaveBeenCalledWith('p1', 'test@test.com', 'trial_0__global_2', [expect.objectContaining({ text: 'new recording', transcriptMappingEnd: 0 })]));
     expect(storage.saveEditedTranscript).not.toHaveBeenCalledWith('p1', 'test@test.com', 'trial_0', expect.anything());
+  });
+
+  test('selected earlier recording loads and saves its own transcript', async () => {
+    vi.mocked(useAsync).mockImplementation(realUseAsync);
+    vi.mocked(useSearchParams).mockReturnValue([new URLSearchParams('participantId=p1&recordingSegment=trial_0__screen_visit'), mockSetSearchParams] as ReturnType<typeof useSearchParams>);
+    const participant = structuredClone(mockParticipantFull);
+    participant.answers.trial_0.assetIdentifier = 'trial_0__latest';
+    participant.answers.trial_0.recordingSegments = ['trial_0__screen_visit', 'trial_0__latest'];
+    participant.answers.trial_0.recordingSegmentRanges = [
+      { assetIdentifier: 'trial_0__screen_visit', startTime: 3000, endTime: 5000 },
+      { assetIdentifier: 'trial_0__latest', startTime: 1000, endTime: 3000 },
+    ];
+    const storage = {
+      ...makeStorageEngine(),
+      getParticipantData: vi.fn().mockResolvedValue(participant),
+      getTranscription: vi.fn().mockResolvedValue({
+        results: [
+          { resultEndTime: '2s', alternatives: [{ transcript: 'earlier recording' }] },
+          { resultEndTime: '5s', alternatives: [{ transcript: 'later line' }] },
+        ],
+      }),
+      getEditedTranscript: vi.fn().mockResolvedValue([]),
+      saveEditedTranscript: vi.fn(),
+    } as unknown as FirebaseStorageEngine;
+    const view = await act(async () => render(<ThinkAloudAnalysis visibleParticipants={[participant]} storageEngine={storage} />));
+
+    await waitFor(() => expect(storage.getTranscription).toHaveBeenCalledWith('trial_0__screen_visit', 'p1'));
+    await waitFor(() => expect(storage.getEditedTranscript).toHaveBeenCalledWith('p1', 'test@test.com', 'trial_0__screen_visit'));
+    await waitFor(() => expect(storage.saveEditedTranscript).toHaveBeenCalledWith('p1', 'test@test.com', 'trial_0__screen_visit', expect.arrayContaining([
+      expect.objectContaining({ text: 'earlier recording' }),
+      expect.objectContaining({ text: 'later line' }),
+    ])));
+    fireEvent.click(view.getByTestId('btn-set-has-audio'));
+    fireEvent.click(view.getByTestId('btn-time-update'));
+    expect(view.getByTestId('transcript-current').textContent).toBe('0');
   });
 
   test('renders without crashing', async () => {

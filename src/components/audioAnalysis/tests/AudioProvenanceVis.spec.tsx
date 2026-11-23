@@ -504,6 +504,29 @@ describe('AudioProvenanceVis', () => {
     expect(markerPositions[0]).not.toBe(markerPositions[1]);
   });
 
+  test('carries the latest display status into the selected segment timeline', async () => {
+    const { getAllByTestId, getByRole } = await act(async () => render(
+      <AudioProvenanceVis
+        {...defaultProps}
+        answers={{
+          trial_0: makeStoredAnswer({
+            assetIdentifier: 'segment-a',
+            recordingSegments: ['segment-a'],
+            recordingSegmentRanges: [{ assetIdentifier: 'segment-a', startTime: 5000, endTime: 7000 }],
+            windowEvents: [
+              [4500, 'displaystatus', 'multiple'],
+              [6000, 'displaystatus', 'single'],
+            ],
+          }),
+        }}
+      />,
+    ));
+    const activityList = getByRole('list', { name: 'Task activity events' });
+    expect(activityList.textContent).toContain('0: Display status: multiple');
+    expect(activityList.textContent).toContain('1000: Display status: single');
+    expect(getAllByTestId('task-activity-playback-marker')).toHaveLength(2);
+  });
+
   test('keeps late activity markers inside the SVG when WaveSurfer reports a narrower width', async () => {
     mockAudioState.isAnalysis = true;
     mockAudioState.storageEngine = {

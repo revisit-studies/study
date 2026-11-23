@@ -21,6 +21,7 @@
   "components": {
     "introduction": {
       "type": "markdown",
+      "recordScreen": false,
       "path": "demo-entire-screen-recording/assets/introduction.md",
       "response": []
     },

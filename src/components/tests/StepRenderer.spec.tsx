@@ -604,6 +604,48 @@ describe('StepRenderer', () => {
     view.unmount();
   });
 
+  test('does not record focus loss while the study document remains focused', async () => {
+    gamepadMocks.requireEntireScreen = true;
+    gamepadMocks.captureActive = true;
+    gamepadMocks.screenRecordingActive = false;
+    gamepadMocks.componentRecordScreen = false;
+    gamepadMocks.componentRecordAudio = true;
+    mockCurrentComponent = 'task';
+    vi.spyOn(document, 'hasFocus').mockReturnValue(true);
+
+    const view = await act(async () => render(<StepRenderer />));
+    window.dispatchEvent(new Event('blur'));
+    window.dispatchEvent(new Event('focus'));
+
+    expect(gamepadMocks.events?.current).not.toContainEqual([expect.any(Number), 'studyactivity', 'focus-lost']);
+    expect(gamepadMocks.events?.current).not.toContainEqual([expect.any(Number), 'studyactivity', 'focus-regained']);
+    view.unmount();
+  });
+
+  test('records focus regained only after a page-level focus loss', async () => {
+    gamepadMocks.requireEntireScreen = true;
+    gamepadMocks.captureActive = true;
+    gamepadMocks.screenRecordingActive = false;
+    gamepadMocks.componentRecordScreen = false;
+    gamepadMocks.componentRecordAudio = true;
+    mockCurrentComponent = 'task';
+    let hasFocus = true;
+    vi.spyOn(document, 'hasFocus').mockImplementation(() => hasFocus);
+
+    const view = await act(async () => render(<StepRenderer />));
+    window.dispatchEvent(new Event('blur'));
+    window.dispatchEvent(new Event('focus'));
+    expect(gamepadMocks.events?.current).not.toContainEqual([expect.any(Number), 'studyactivity', 'focus-regained']);
+
+    hasFocus = false;
+    window.dispatchEvent(new Event('blur'));
+    hasFocus = true;
+    window.dispatchEvent(new Event('focus'));
+    expect(gamepadMocks.events?.current).toContainEqual([expect.any(Number), 'studyactivity', 'focus-lost']);
+    expect(gamepadMocks.events?.current).toContainEqual([expect.any(Number), 'studyactivity', 'focus-regained']);
+    view.unmount();
+  });
+
   test('drains a chunk manifest save before participant finalization', async () => {
     gamepadMocks.requireEntireScreen = true;
     gamepadMocks.captureActive = true;

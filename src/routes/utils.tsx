@@ -91,6 +91,7 @@ export function useCurrentComponent(): string {
 
     const answerMatchesIteration = ([key, answer]: [string, typeof _answers[string]]) => key.startsWith(`${funcName}_${currentStep}_`)
       && key.endsWith(`_${index}`)
+      && !answer.recordingArchived
       && typeof answer.componentName === 'string'
       && answer.componentName.length > 0
       && Boolean(getComponent(answer.componentName, studyConfig));
@@ -157,7 +158,10 @@ export function useCurrentComponent(): string {
           : undefined;
         const context = studyConfig.globalVariables !== undefined
           ? getGlobalStoreContextBeforeTrial(globalGraph, studyConfig.globalVariables, currentStep, decryptedFuncIndex)
-          : { store: globalVariables, answers: _answers };
+          : {
+            store: globalVariables,
+            answers: Object.fromEntries(Object.entries(_answers).filter(([, answer]) => !answer.recordingArchived)),
+          };
         const { component: currCompName, parameters: _params, correctAnswer } = nextFunc({
           store: Object.freeze({ ...context.store }),
           answers: context.answers,

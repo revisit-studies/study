@@ -475,6 +475,13 @@ describe('getTableData', () => {
       participantTags: ['pilot', 'review'],
       stage: 'COMPLETE',
     });
+    participant.answers.archivedDynamic = {
+      ...participant.answers.testComponent_0,
+      identifier: 'adaptive_0_testComponent_0',
+      trialOrder: '0_0',
+      endTime: -1,
+      recordingArchived: true,
+    };
     const storageEngine = makeStorageEngine({
       'hash-1': configSimple,
     });

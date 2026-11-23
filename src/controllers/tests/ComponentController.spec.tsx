@@ -563,12 +563,53 @@ describe('VideoController', () => {
 
 // ── ComponentController ───────────────────────────────────────────────────────
 
+const makeStableState = (overrides: Partial<StoreState> = {}): StoreState => ({
+  answers: {},
+  analysisCanPlayScreenRecording: false,
+  analysisProvState: {
+    sidebar: { form: {} }, aboveStimulus: { form: {} }, belowStimulus: { form: {} }, stimulus: null,
+  },
+  trialValidation: {
+    trial1_0: {
+      stimulus: { valid: true, values: {} },
+    },
+  },
+  stimulusSubmitAttempted: {
+    trial1_0: false,
+  },
+  sequence: {
+    order: 'fixed', orderPath: '', components: [], skip: [],
+  },
+  modes: { dataCollectionEnabled: true, developmentModeEnabled: false, dataSharingEnabled: false },
+  participantId: 'pid-1',
+  ...overrides,
+} as Partial<StoreState> as StoreState);
+
 describe('ComponentController', () => {
   test('instruction templates receive the globalVariables namespace', () => {
+    const stableState = makeStableState({
+      answers: {
+        active_0: makeStoredAnswer({
+          identifier: 'active_0',
+          componentName: 'trial1',
+          trialOrder: '0',
+        }),
+        archived_0_0: makeStoredAnswer({
+          identifier: 'archived_0_0',
+          componentName: 'trial1',
+          trialOrder: '0_0',
+          recordingArchived: true,
+        }),
+      },
+    });
+    vi.mocked(useStoreSelector).mockImplementation((selector) => selector(stableState));
     const compile = vi.spyOn(templateHelpers, 'compileTemplate');
     renderToStaticMarkup(<ComponentController />);
     expect(compile).toHaveBeenCalledWith(expect.any(String), expect.any(Object), expect.objectContaining({
-      data: expect.objectContaining({ globalVariables: {} }),
+      data: expect.objectContaining({
+        globalVariables: {},
+        answers: { active_0: stableState.answers.active_0 },
+      }),
     }));
     compile.mockRestore();
   });
@@ -629,28 +670,6 @@ describe('ComponentController', () => {
 });
 
 // ── ComponentController ────────────────────────────────────
-
-const makeStableState = (overrides: Partial<StoreState> = {}): StoreState => ({
-  answers: {},
-  analysisCanPlayScreenRecording: false,
-  analysisProvState: {
-    sidebar: { form: {} }, aboveStimulus: { form: {} }, belowStimulus: { form: {} }, stimulus: null,
-  },
-  trialValidation: {
-    trial1_0: {
-      stimulus: { valid: true, values: {} },
-    },
-  },
-  stimulusSubmitAttempted: {
-    trial1_0: false,
-  },
-  sequence: {
-    order: 'fixed', orderPath: '', components: [], skip: [],
-  },
-  modes: { dataCollectionEnabled: true, developmentModeEnabled: false, dataSharingEnabled: false },
-  participantId: 'pid-1',
-  ...overrides,
-} as Partial<StoreState> as StoreState);
 
 describe('ComponentController — effect coverage (render-based)', () => {
   beforeEach(() => {

@@ -139,7 +139,8 @@ function participantDataToRows(
   globalGraph?: GlobalStoreGraph,
 ): [TidyRow[], string[]] {
   const globalHistory = globalGraph ? getGlobalStoreHistory(globalGraph).filter((entry) => entry.active) : [];
-  const percentComplete = ((Object.entries(participant.answers).filter(([_, entry]) => entry.endTime !== -1).length / (Object.entries(participant.answers).length)) * 100).toFixed(2);
+  const activeAnswers = Object.entries(participant.answers).filter(([, answer]) => !answer.recordingArchived);
+  const percentComplete = ((activeAnswers.filter(([, entry]) => entry.endTime !== -1).length / activeAnswers.length) * 100).toFixed(2);
   const newHeaders = new Set<string>();
   const participantConditions = parseConditionParam(participant.conditions ?? participant.searchParams?.condition);
   const conditionValue = participantConditions.length > 0 ? participantConditions.join(',') : 'default';

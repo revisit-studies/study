@@ -27,6 +27,7 @@ export function getDynamicAnswerEntriesForBlock(
   return Object.entries(participantAnswers)
     .map(([identifier, answer]) => ({ identifier, answer, order: parseTrialOrder(answer.trialOrder) }))
     .filter(({ identifier, answer, order }) => identifier.startsWith(`${node.id}_${index}_`)
+      && !answer.recordingArchived
       && order.step === index && order.funcIndex !== null
       && typeof answer.componentName === 'string'
       && answer.componentName.length > 0)

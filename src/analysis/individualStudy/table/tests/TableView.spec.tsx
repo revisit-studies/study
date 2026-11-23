@@ -128,6 +128,36 @@ beforeEach(() => {
 // ── TableView ─────────────────────────────────────────────────────────────────
 
 describe('TableView', () => {
+  test('progress excludes unfinished recording checkpoints and archived answers', () => {
+    const participant = makeParticipant({
+      answers: {
+        completed: makeStoredAnswer({
+          identifier: 'completed',
+          componentName: 'trial1',
+          startTime: 10,
+          endTime: 20,
+        }),
+        checkpoint: makeStoredAnswer({
+          identifier: 'checkpoint',
+          componentName: 'trial1',
+          startTime: 30,
+          endTime: -1,
+        }),
+        archived: makeStoredAnswer({
+          identifier: 'archived',
+          componentName: 'trial1',
+          startTime: 40,
+          endTime: -1,
+          recordingArchived: true,
+        }),
+      },
+    });
+    renderToStaticMarkup(<TableView {...defaultProps} visibleParticipants={[participant]} />);
+    const statusColumn = capturedTableOptions!.columns.find((column) => column.header === 'Status')!;
+
+    expect(statusColumn.accessorFn!(participant)).toMatchObject({ percent: 1 / 3 });
+  });
+
   test('uses saved scores in the correctness column', () => {
     const studyConfig = createMockStudyConfig({
       components: {

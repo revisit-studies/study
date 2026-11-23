@@ -112,4 +112,38 @@ describe('StudyRouteGuard', () => {
     expect(renderStudy).not.toHaveBeenCalled();
     expect(renderPath(`${encryptIndex(1)}/${encryptIndex(0)}`)).toContain('Study content');
   });
+
+  test('allows an analysis route to select an archived dynamic answer', () => {
+    const identifier = 'adaptive_1_intro_4';
+    answers = {
+      [identifier]: makeStoredAnswer({
+        identifier, componentName: 'intro', trialOrder: '1_4', recordingArchived: true,
+      }),
+    };
+    const path = `${encryptIndex(1)}/${encryptIndex(4)}?participantId=p1&analysisAnswerId=${identifier}`;
+    expect(renderPath(path)).toContain('Study content');
+    expect(renderStudy).toHaveBeenCalledOnce();
+  });
+
+  test('does not allow participant URLs to use the archived-answer analysis exception', () => {
+    const identifier = 'adaptive_1_intro_4';
+    answers = {
+      [identifier]: makeStoredAnswer({
+        identifier, componentName: 'intro', trialOrder: '1_4', recordingArchived: true,
+      }),
+    };
+    const path = `${encryptIndex(1)}/${encryptIndex(4)}?analysisAnswerId=${identifier}`;
+    expect(renderPath(path)).toContain('404');
+    expect(renderStudy).not.toHaveBeenCalled();
+  });
+
+  test('keeps archived dynamic iterations outside participant route bounds', () => {
+    const identifier = 'adaptive_1_intro_4';
+    answers = {
+      [identifier]: makeStoredAnswer({
+        identifier, componentName: 'intro', trialOrder: '1_4', recordingArchived: true,
+      }),
+    };
+    expect(renderPath(`${encryptIndex(1)}/${encryptIndex(4)}`)).toContain('404');
+  });
 });

@@ -561,10 +561,22 @@ export function AudioProvenanceVis({
 
     return scale;
   }, [selectedSegmentDuration, startTime, width]);
-  const activityEvents = useMemo(() => (answers[taskName]?.windowEvents ?? []).flatMap((event) => {
-    const label = getRecordingEventLabel(event);
-    return label && event[0] >= startTime && event[0] <= selectedSegmentEndTime ? [{ event, label }] : [];
-  }), [answers, selectedSegmentEndTime, startTime, taskName]);
+  const activityEvents = useMemo(() => {
+    const events = answers[taskName]?.windowEvents ?? [];
+    const previousDisplayStatus = events.reduce<typeof events[number] | undefined>((latest, event) => (
+      event[1] === 'displaystatus' && event[0] < startTime && (!latest || event[0] > latest[0]) ? event : latest
+    ), undefined);
+    const carriedStatus = previousDisplayStatus
+      ? [{ event: [startTime, previousDisplayStatus[1], previousDisplayStatus[2]] as NonNullable<typeof previousDisplayStatus>, label: getRecordingEventLabel(previousDisplayStatus)! }]
+      : [];
+    return [
+      ...carriedStatus,
+      ...events.flatMap((event) => {
+        const label = getRecordingEventLabel(event);
+        return label && event[0] >= startTime && event[0] <= selectedSegmentEndTime ? [{ event, label }] : [];
+      }),
+    ];
+  }, [answers, selectedSegmentEndTime, startTime, taskName]);
 
   return (
     <Group wrap="nowrap" gap={0} mx={0}>

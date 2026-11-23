@@ -64,7 +64,7 @@ export function getSkipConditionCorrectAnswers(
 
 export function getStoredAnswersForSkipEvaluation(answers: Record<string, StoredAnswer>) {
   return Object.entries(answers).reduce<Record<string, SkipEvaluationAnswer>>((acc, [key, responseObj]) => {
-    if (!responseObj.timedOut) {
+    if (!responseObj.timedOut && !responseObj.recordingArchived) {
       acc[key] = {
         answer: responseObj.answer,
         timedOut: false,

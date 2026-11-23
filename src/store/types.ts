@@ -110,6 +110,8 @@ export interface StoredAnswer {
   assetIdentifier?: string;
   /** All distinct recording asset keys captured for this task across interrupted/reloaded visits. */
   recordingSegments?: string[];
+  /** Retained media observations from a discarded dynamic iteration. */
+  recordingArchived?: boolean;
   /** Epoch time range captured for each retained recording segment. */
   recordingSegmentRanges?: Array<{
     assetIdentifier: string;
