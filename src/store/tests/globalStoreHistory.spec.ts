@@ -47,3 +47,85 @@ test('replay reconstructs either recorded path from provenance, including invali
   expect(history.filter((entry) => entry.active).map((entry) => entry.after.budget)).toEqual([90, 75]);
   expect(history.find((entry) => entry.nodeId === b.nodeId)).toMatchObject({ active: false, before: { budget: 70 }, after: { budget: 50 } });
 });
+
+test('historical replay merges late chunk keys only for segments retained by that submission', () => {
+  const retainedSegment = 'A__global_0';
+  const currentOnlySegment = 'A__global_2';
+  const originalA = {
+    ...answer('A', '0', 30),
+    assetIdentifier: retainedSegment,
+    recordingSegments: [retainedSegment],
+    recordingChunkKeys: { [retainedSegment]: ['chunk-0'] },
+  };
+  const a = createGlobalStoreSubmission(undefined, definitions, originalA, { budget: 70 }, [], {});
+  const b = createGlobalStoreSubmission(a.graph, definitions, answer('B', '1', 20), { budget: 50 }, [], {});
+  const currentA = {
+    ...answer('A', '0', 10),
+    assetIdentifier: currentOnlySegment,
+    recordingSegments: [retainedSegment, currentOnlySegment],
+    recordingChunkKeys: {
+      [retainedSegment]: ['chunk-0', 'chunk-1'],
+      [currentOnlySegment]: ['new-visit-chunk'],
+    },
+  };
+
+  const historical = projectHistoricalGlobalStore(b.graph, a.nodeId, { A: currentA, B: answer('B', '1', 20) });
+
+  expect(historical.answers.A.answer).toEqual({ cost: 30 });
+  expect(historical.answers.A.assetIdentifier).toBe(retainedSegment);
+  expect(historical.answers.A.recordingChunkKeys).toEqual({ [retainedSegment]: ['chunk-0', 'chunk-1'] });
+});
+
+test('historical replay clears later-task recording metadata outside the selected path', () => {
+  const aAnswer = {
+    ...answer('A', '0', 30),
+    assetIdentifier: 'A__segment',
+    recordingSegments: ['A__segment'],
+    recordingSegmentRanges: [{ assetIdentifier: 'A__segment', startTime: 1, endTime: 20 }],
+    recordingSegmentTimes: { A__segment: { startTime: 1, endTime: 20 } },
+    recordingChunkKeys: { A__segment: ['a-chunk'] },
+    recordingEndTime: 20,
+    recordingStartTime: 1,
+  };
+  const bAnswer = {
+    ...answer('B', '1', 20),
+    assetIdentifier: 'B__segment',
+    recordingSegments: ['B__segment'],
+    recordingSegmentRanges: [{ assetIdentifier: 'B__segment', startTime: 21, endTime: 40 }],
+    recordingSegmentTimes: { B__segment: { startTime: 21, endTime: 40 } },
+    recordingChunkKeys: { B__segment: ['b-chunk'] },
+    recordingEndTime: 40,
+    recordingStartTime: 21,
+  };
+  const cAnswer = {
+    ...answer('C', '2', 10),
+    assetIdentifier: 'C__segment',
+    recordingSegments: ['C__segment'],
+    recordingSegmentRanges: [{ assetIdentifier: 'C__segment', startTime: 41, endTime: 60 }],
+    recordingSegmentTimes: { C__segment: { startTime: 41, endTime: 60 } },
+    recordingChunkKeys: { C__segment: ['c-chunk'] },
+    recordingEndTime: 60,
+    recordingStartTime: 41,
+  };
+  const a = createGlobalStoreSubmission(undefined, definitions, aAnswer, { budget: 70 }, [], {});
+  const b = createGlobalStoreSubmission(a.graph, definitions, bAnswer, { budget: 50 }, [], {});
+  const c = createGlobalStoreSubmission(b.graph, definitions, cAnswer, { budget: 40 }, [], {});
+  const laterCurrentAnswers = { A: aAnswer, B: bAnswer, C: cAnswer };
+
+  const historicalA = projectHistoricalGlobalStore(c.graph, a.nodeId, laterCurrentAnswers).answers;
+  expect(historicalA.A).toMatchObject({ answer: { cost: 30 }, recordingChunkKeys: { A__segment: ['a-chunk'] } });
+  ['B', 'C'].forEach((identifier) => {
+    expect(historicalA[identifier]).toMatchObject({ answer: {}, startTime: 0, endTime: -1 });
+    expect(historicalA[identifier]).not.toHaveProperty('assetIdentifier');
+    expect(historicalA[identifier]).not.toHaveProperty('recordingSegments');
+    expect(historicalA[identifier]).not.toHaveProperty('recordingSegmentRanges');
+    expect(historicalA[identifier]).not.toHaveProperty('recordingSegmentTimes');
+    expect(historicalA[identifier]).not.toHaveProperty('recordingChunkKeys');
+    expect(historicalA[identifier]).not.toHaveProperty('recordingEndTime');
+    expect(historicalA[identifier]).not.toHaveProperty('recordingStartTime');
+  });
+
+  const historicalB = projectHistoricalGlobalStore(c.graph, b.nodeId, laterCurrentAnswers).answers;
+  expect(historicalB.B).toMatchObject({ answer: { cost: 20 }, recordingChunkKeys: { B__segment: ['b-chunk'] } });
+  expect(historicalB.C).not.toHaveProperty('recordingSegments');
+});

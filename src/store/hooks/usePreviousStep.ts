@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router';
 import { getActiveGlobalStoreSubmissions } from '../globalStoreProvenance';
 import { useCurrentStep, useStudyId } from '../../routes/utils';
@@ -8,11 +8,13 @@ import { parseTrialOrder } from '../../utils/parseTrialOrder';
 import { useStudyConfig } from './useStudyConfig';
 import { getSequenceFlatMap, findFuncBlock } from '../../utils/getSequenceFlatMap';
 import { useStoreDispatch, useStoreActions, useStoreSelector } from '../store';
+import { useOptionalWindowEvents } from './useWindowEvents';
 
 export function usePreviousStep() {
   const graph = useStoreSelector((state) => state.globalStoreGraph);
   const completed = useStoreSelector((state) => state.completed);
   const submitting = useStoreSelector((state) => state.globalStoreSubmitting);
+  const answers = useStoreSelector((state) => state.answers);
   const currentStep = useCurrentStep();
   const { funcIndex } = useParams();
   const studyId = useStudyId();
@@ -21,15 +23,16 @@ export function usePreviousStep() {
   const studyConfig = useStudyConfig();
   const storeDispatch = useStoreDispatch();
   const { deleteDynamicBlockAnswers } = useStoreActions();
-  const answers = useStoreSelector((state) => state.answers);
   const sequence = useStoreSelector((state) => state.sequence);
+  const windowEvents = useOptionalWindowEvents();
+  const previousNavigationInFlight = useRef(false);
 
   // Status of the previous button. If true, the previous button should be disabled
   const isPreviousDisabled = typeof currentStep !== 'number' || isAnalysis || completed || !!submitting || (currentStep <= 0 && (!funcIndex || decryptIndex(funcIndex) <= 0));
 
   const buildSearch = useCallback(() => window.location.search, []);
 
-  const goToPreviousStep = useCallback(() => {
+  const navigatePreviousStep = useCallback(() => {
     if (typeof currentStep !== 'number' || completed || submitting) {
       return;
     }
@@ -83,7 +86,26 @@ export function usePreviousStep() {
         return;
       }
     }
-  }, [graph, completed, submitting, answers, buildSearch, currentStep, deleteDynamicBlockAnswers, funcIndex, isAnalysis, navigate, sequence, storeDispatch, studyConfig, studyId]);
+  }, [answers, graph, completed, submitting, buildSearch, currentStep, deleteDynamicBlockAnswers, funcIndex, isAnalysis, navigate, sequence, storeDispatch, studyConfig.globalVariables, studyId]);
+
+  const goToPreviousStep = useCallback(async () => {
+    if (typeof currentStep !== 'number' || completed || submitting || previousNavigationInFlight.current) return;
+    if (windowEvents?.visitFinalizing) return;
+    previousNavigationInFlight.current = true;
+    try {
+      if (!windowEvents?.finalizeVisit) {
+        navigatePreviousStep();
+        return;
+      }
+
+      const saved = await windowEvents.finalizeVisit();
+      if (saved) navigatePreviousStep();
+    } catch (error) {
+      console.error('Failed to finalize screen recording before going to the previous task', error);
+    } finally {
+      previousNavigationInFlight.current = false;
+    }
+  }, [completed, currentStep, navigatePreviousStep, submitting, windowEvents]);
 
   return {
     isPreviousDisabled,

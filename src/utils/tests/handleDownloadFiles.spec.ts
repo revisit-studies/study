@@ -20,7 +20,7 @@ beforeEach(() => {
   URL.createObjectURL = vi.fn(() => mockUrl);
   URL.revokeObjectURL = vi.fn();
   clickSpy = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => { });
-  vi.stubGlobal('fetch', vi.fn(async () => ({ blob: async () => new Blob(['data'], { type: 'application/octet-stream' }) })));
+  vi.stubGlobal('fetch', vi.fn(async () => ({ ok: true, blob: async () => new Blob(['data'], { type: 'application/octet-stream' }) })));
 });
 
 afterEach(() => {
@@ -91,6 +91,26 @@ describe('handleTaskRecordings', () => {
     expect(clickSpy).toHaveBeenCalled();
   });
 
+  test('uses the provided recording URL when chunk identifiers are available', async () => {
+    const storageEngine = makeStorageEngine({
+      getScreenRecording: vi.fn(async () => { throw new Error('storage unavailable'); }),
+    });
+    await handleTaskRecordings({
+      storageEngine,
+      participantId: 'p1',
+      identifier: 'segment-latest',
+      includeScreen: true,
+      includeWebcam: false,
+      screenRecordingUrl: 'blob:loaded-segment',
+      recordingChunkIdentifiers: ['segment-latest__chunk_0'],
+    });
+
+    expect(storageEngine.getScreenRecording).not.toHaveBeenCalled();
+    expect(global.fetch).toHaveBeenCalledWith('blob:loaded-segment');
+    expect(URL.revokeObjectURL).not.toHaveBeenCalledWith('blob:loaded-segment');
+    expect(clickSpy).toHaveBeenCalledOnce();
+  });
+
   test('calls storageEngine.getScreenRecording when no URL is provided', async () => {
     const storageEngine = makeStorageEngine({
       getScreenRecording: vi.fn(async () => 'https://example.com/rec.webm'),
@@ -124,6 +144,105 @@ describe('handleTaskRecordings', () => {
       webcamRecordingUrl: 'https://example.com/webcam.webm',
     });
     expect(clickSpy).toHaveBeenCalledTimes(2);
+  });
+
+  test('releases reconstructed screen URLs after an individual download while preserving borrowed URLs', async () => {
+    const createObjectUrl = vi.mocked(URL.createObjectURL);
+    const revokeObjectUrl = vi.mocked(URL.revokeObjectURL);
+    createObjectUrl.mockReset()
+      .mockReturnValueOnce('blob:reconstructed-screen')
+      .mockReturnValueOnce('blob:download-file');
+    const storageEngine = makeStorageEngine({
+      getScreenRecording: vi.fn(async (identifier: string) => (
+        identifier === 'segment' ? null : 'https://assets.test/chunk'
+      )),
+    });
+
+    await handleTaskRecordings({
+      storageEngine,
+      participantId: 'p1',
+      identifier: 'segment',
+      includeScreen: true,
+      includeWebcam: false,
+      recordingChunkIdentifiers: ['segment__chunk_0'],
+    });
+
+    expect(revokeObjectUrl).toHaveBeenCalledWith('blob:reconstructed-screen');
+    expect(revokeObjectUrl).toHaveBeenCalledWith('blob:download-file');
+
+    createObjectUrl.mockReset().mockReturnValue('blob:borrowed-download');
+    revokeObjectUrl.mockClear();
+    await handleTaskRecordings({
+      storageEngine: makeStorageEngine(),
+      participantId: 'p1',
+      identifier: 'segment',
+      includeScreen: true,
+      includeWebcam: false,
+      screenRecordingUrl: 'blob:borrowed-recording',
+    });
+    expect(revokeObjectUrl).not.toHaveBeenCalledWith('blob:borrowed-recording');
+  });
+
+  test('releases storage-fetched screen and webcam URLs but preserves caller-provided blob URLs', async () => {
+    const revokeObjectUrl = vi.mocked(URL.revokeObjectURL);
+    vi.mocked(URL.createObjectURL).mockReset().mockReturnValue('blob:download-file');
+    const storageEngine = makeStorageEngine({
+      getScreenRecording: vi.fn(async () => 'blob:storage-screen'),
+      getWebcamRecording: vi.fn(async () => 'blob:storage-webcam'),
+    });
+
+    await handleTaskRecordings({
+      storageEngine,
+      participantId: 'p1',
+      identifier: 'task',
+      includeScreen: true,
+      includeWebcam: true,
+    });
+
+    expect(revokeObjectUrl).toHaveBeenCalledWith('blob:storage-screen');
+    expect(revokeObjectUrl).toHaveBeenCalledWith('blob:storage-webcam');
+
+    revokeObjectUrl.mockClear();
+    await handleTaskRecordings({
+      storageEngine,
+      participantId: 'p1',
+      identifier: 'task',
+      includeScreen: true,
+      includeWebcam: true,
+      screenRecordingUrl: 'blob:caller-screen',
+      webcamRecordingUrl: 'blob:caller-webcam',
+    });
+    expect(revokeObjectUrl).not.toHaveBeenCalledWith('blob:caller-screen');
+    expect(revokeObjectUrl).not.toHaveBeenCalledWith('blob:caller-webcam');
+  });
+
+  test('downloads the current screen recording and reconstructs it from chunks', async () => {
+    const storageEngine = makeStorageEngine({
+      getScreenRecording: vi.fn(async (identifier: string) => (identifier.startsWith('chunk-') ? 'https://example.com/chunk.webm' : null)),
+    });
+    const zipFile = vi.spyOn(JSZip.prototype, 'file');
+    const participants = [{
+      participantId: 'p1',
+      answers: {
+        trial_0: {
+          endTime: 1000,
+          startTime: 100,
+          componentName: 'trial',
+          trialOrder: '0',
+          assetIdentifier: 'segment-latest',
+          recordingChunkKeys: { 'segment-latest': ['chunk-latest-0'] },
+        },
+      },
+    }];
+
+    await downloadParticipantsRecordingsZip({
+      storageEngine, participants, studyId: 'study', includeScreen: true, includeWebcam: false,
+    });
+
+    expect(storageEngine.getScreenRecording).toHaveBeenCalledWith('segment-latest', 'p1');
+    expect(storageEngine.getScreenRecording).toHaveBeenCalledWith('chunk-latest-0', 'p1');
+    expect(zipFile).toHaveBeenCalledWith('study_p1_segment-latest.webm', expect.any(Blob));
+    zipFile.mockRestore();
   });
 });
 
@@ -286,6 +405,63 @@ describe('downloadParticipantsRecordingsZip', () => {
     expect((storageEngine.getScreenRecording as ReturnType<typeof vi.fn>)).toHaveBeenCalled();
     expect(URL.createObjectURL).toHaveBeenCalledWith(expect.any(Blob));
     expect(clickSpy).toHaveBeenCalledOnce();
+  });
+
+  test('releases reconstructed screen URLs after adding them to a recording zip', async () => {
+    vi.mocked(URL.createObjectURL).mockReset()
+      .mockReturnValueOnce('blob:reconstructed-screen')
+      .mockReturnValueOnce('blob:recordings-zip');
+    const storageEngine = makeStorageEngine({
+      getScreenRecording: vi.fn(async (identifier: string) => (
+        identifier === 'segment' ? null : 'https://assets.test/chunk'
+      )),
+    });
+    const participants = [{
+      participantId: 'p1',
+      answers: {
+        task: {
+          endTime: 1000,
+          startTime: 0,
+          componentName: 'task',
+          trialOrder: '0',
+          identifier: 'segment',
+          recordingChunkKeys: { segment: ['segment__chunk_0'] },
+        },
+      },
+    }];
+
+    await downloadParticipantsRecordingsZip({
+      storageEngine, participants, studyId: 'study', includeScreen: true, includeWebcam: false,
+    });
+
+    expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:reconstructed-screen');
+  });
+
+  test('releases storage-fetched screen and webcam URLs after adding them to a zip', async () => {
+    vi.mocked(URL.createObjectURL).mockReset().mockReturnValue('blob:recordings-zip');
+    const storageEngine = makeStorageEngine({
+      getScreenRecording: vi.fn(async () => 'blob:storage-screen'),
+      getWebcamRecording: vi.fn(async () => 'blob:storage-webcam'),
+    });
+    const participants = [{
+      participantId: 'p1',
+      answers: {
+        task: {
+          endTime: 1000,
+          startTime: 0,
+          componentName: 'task',
+          trialOrder: '0',
+          identifier: 'task',
+        },
+      },
+    }];
+
+    await downloadParticipantsRecordingsZip({
+      storageEngine, participants, studyId: 'study', includeScreen: true, includeWebcam: true,
+    });
+
+    expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:storage-screen');
+    expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:storage-webcam');
   });
 
   test('keeps the legacy screen-only archive and member names', async () => {

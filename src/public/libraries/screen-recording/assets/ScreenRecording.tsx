@@ -6,13 +6,16 @@ import { useRecordingContext } from '../../../../store/hooks/useRecording';
 import { StimulusParams } from '../../../../store/types';
 import { RecordingAudioWaveform } from '../../../../components/interface/RecordingAudioWaveform';
 import { useStoreSelector } from '../../../../store/store';
+import { getDisplayStatus } from '../../../../utils/recordingEvents';
 
 function ScreenRecordingPermission({ setAnswer }: StimulusParams<undefined>) {
   const {
     studyHasAudioRecording,
     studyHasWebcamRecording,
     recordVideoRef,
+    attachScreenPreview,
     webcamVideoRef,
+    attachWebcamPreview,
     startScreenCapture: startCapture,
     stopScreenCapture: stopCapture,
     isScreenCapturing: screenCapturing,
@@ -44,17 +47,14 @@ function ScreenRecordingPermission({ setAnswer }: StimulusParams<undefined>) {
   );
 
   useEffect(() => {
+    attachScreenPreview();
+    attachWebcamPreview();
+  }, [attachScreenPreview, attachWebcamPreview, screenCapturing, webcamCapturing]);
+
+  useEffect(() => {
     if (!requireEntireScreen) return;
-    const detectDisplays = async () => {
-      try {
-        const details = await (window as Window & { getScreenDetails?: () => Promise<{ screens: Screen[] }> }).getScreenDetails?.();
-        if (details) setMultipleDisplays(details.screens.length > 1);
-      } catch {
-        setMultipleDisplays(null);
-      }
-    };
-    void detectDisplays();
-  }, [requireEntireScreen, screenCapturing]);
+    setMultipleDisplays(getDisplayStatus() === 'multiple' ? true : null);
+  }, [requireEntireScreen]);
 
   useEffect(() => {
     if (!dataCollectionEnabled) {
@@ -152,7 +152,13 @@ function ScreenRecordingPermission({ setAnswer }: StimulusParams<undefined>) {
           {screenRecordingError && <p style={{ color: 'red' }}>{screenRecordingError}</p>}
           {screenCaptureVerificationError && <p role="alert" style={{ color: 'red' }}>{screenCaptureVerificationError}</p>}
           {audioRecordingError && <p style={{ color: 'red' }}>{audioRecordingError}</p>}
-          <p><i>Please make sure you are recording the correct tab or window. Otherwise, stop and re-share the correct one.</i></p>
+          <p>
+            <i>
+              {requireEntireScreen
+                ? 'Please make sure you are recording the correct monitor. Otherwise, stop and re-share the correct one.'
+                : 'Please make sure you are recording the correct tab or window. Otherwise, stop and re-share the correct one.'}
+            </i>
+          </p>
         </li>
         <li>
           <strong>Confirm your preview streams</strong>

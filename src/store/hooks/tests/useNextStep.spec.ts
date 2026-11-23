@@ -93,6 +93,8 @@ vi.mock('../useStoredAnswer', () => ({
   useStoredAnswer: () => mockStoredAnswer,
 }));
 
+vi.mock('../useTrialAssetIdentifier', () => ({ useTrialAssetSegments: () => ['trial1_screen_visit'] }));
+
 vi.mock('../useWindowEvents', () => ({
   useWindowEvents: () => ({ current: [] }),
 }));
@@ -1000,6 +1002,53 @@ describe('useNextStep', () => {
     const { result } = renderHook(() => useNextStep());
     await act(async () => { await result.current.goToNextStep(); });
     expect(mockNavigate).toHaveBeenCalledWith('/test-study/2');
+  });
+
+  test('goToNextStep evaluates incorrect dynamic answers using their stored trial order', async () => {
+    const identifier = 'adaptive_1_trial1_0';
+    mockCurrentStep = 1;
+    mockIdentifier = identifier;
+    mockFuncIndex = '0';
+    mockFlatSequence = ['intro', 'adaptive', 'followup', 'skip-target', 'end'];
+    mockStudyConfig = createStudyConfig();
+    mockStudyConfig.components.trial1 = {
+      ...mockStudyConfig.components.trial1,
+      correctAnswer: [{ id: 'q1', answer: 'Blue' }],
+    };
+    mockStoredAnswer = {
+      ...defaultStoredAnswer,
+      identifier,
+      componentName: 'trial1',
+      trialOrder: '1_0',
+      correctAnswer: [{ id: 'q1', answer: 'Blue' }],
+    };
+    mockTrialValidation = {
+      [identifier]: {
+        stimulus: { valid: true, values: {} },
+        aboveStimulus: { valid: true, values: {} },
+        belowStimulus: { valid: true, values: { q1: 'Red' } },
+        sidebar: { valid: true, values: {} },
+        provenanceGraph: {
+          aboveStimulus: undefined, belowStimulus: undefined, stimulus: undefined, sidebar: undefined,
+        },
+      },
+    };
+    vi.mocked(findBlockForStep).mockReturnValue([{
+      currentBlock: {
+        id: 'adaptive',
+        orderPath: 'root.adaptive',
+        order: 'fixed',
+        components: ['trial1'],
+        skip: [{ name: 'trial1', check: 'responses', to: 'skip-target' }],
+      },
+      firstIndex: 1,
+      lastIndex: 1,
+    }]);
+
+    const { result } = renderHook(() => useNextStep());
+    await act(async () => { await result.current.goToNextStep(); });
+
+    expect(mockNavigate).toHaveBeenCalledWith('/test-study/3');
   });
 });
 

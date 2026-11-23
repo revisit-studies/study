@@ -36,6 +36,18 @@ describe('useNavigateToTrial', () => {
     expect(parsed.searchParams.get('participantId')).toBe('pid-xyz');
   });
 
+  test('includes the selected answer identity for dynamic replay tasks', () => {
+    const openSpy = vi.spyOn(window, 'open').mockImplementation(() => null);
+    const { result } = renderHook(() => useNavigateToTrial());
+
+    result.current('5_1', 'pid-xyz', 'study-b', undefined, 'dynamic_5_q2b_1');
+
+    const [url] = openSpy.mock.calls[0];
+    const parsed = new URL(url as string, 'http://localhost');
+    expect(parsed.searchParams.get('analysisAnswerId')).toBe('dynamic_5_q2b_1');
+    expect(parsed.searchParams.get('participantId')).toBe('pid-xyz');
+  });
+
   test('omits condition param when not provided', () => {
     const openSpy = vi.spyOn(window, 'open').mockImplementation(() => null);
     const { result } = renderHook(() => useNavigateToTrial());

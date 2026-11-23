@@ -10,6 +10,8 @@ import { ScreenRecordingReplay } from '../ScreenRecordingReplay';
 
 let mockIsAnalysis = false;
 let mockAssetIdentifier: string | undefined;
+let mockRecordingSegments: string[] = [];
+let mockRecordingChunkKeys: Record<string, string[]> = {};
 let mockStorageEngine: Record<string, ReturnType<typeof vi.fn>> | null = null;
 let mockSearchParams = new URLSearchParams();
 let mockUpdateReplayRef = vi.fn();
@@ -81,7 +83,13 @@ vi.mock('../../../routes/utils', () => ({
   useCurrentIdentifier: () => 'component1',
 }));
 
-vi.mock('../../../store/hooks/useStoredAnswer', () => ({ useStoredAnswer: () => ({ assetIdentifier: mockAssetIdentifier }) }));
+vi.mock('../../../store/hooks/useStoredAnswer', () => ({
+  useStoredAnswer: () => ({
+    assetIdentifier: mockAssetIdentifier,
+    recordingSegments: mockRecordingSegments,
+    recordingChunkKeys: mockRecordingChunkKeys,
+  }),
+}));
 
 vi.mock('../../../store/hooks/useIsAnalysis', () => ({
   useIsAnalysis: () => mockIsAnalysis,
@@ -104,6 +112,8 @@ describe('ScreenRecordingReplay', () => {
   beforeEach(() => {
     mockIsAnalysis = false;
     mockAssetIdentifier = undefined;
+    mockRecordingSegments = [];
+    mockRecordingChunkKeys = {};
     mockStorageEngine = null;
     mockSearchParams = new URLSearchParams();
     mockUpdateReplayRef = vi.fn();
@@ -316,4 +326,19 @@ test('historical replay loads the recordings referenced by that accepted submiss
   render(<ScreenRecordingReplay />);
   await waitFor(() => expect(mockStorageEngine!.getScreenRecording).toHaveBeenCalledWith('component1__global_7', 'p1'));
   expect(mockStorageEngine.getWebcamRecording).toHaveBeenCalledWith('component1__global_7', 'p1');
+});
+
+test('screen replay follows the selected recording segment', async () => {
+  mockIsAnalysis = true;
+  mockAssetIdentifier = 'segment-latest';
+  mockRecordingSegments = ['segment-earlier', 'segment-latest'];
+  mockSearchParams = new URLSearchParams('participantId=p1&recordingSegment=segment-earlier');
+  mockStorageEngine = {
+    getScreenRecording: vi.fn(async () => 'http://example.com/earlier.webm'),
+    getWebcamRecording: vi.fn(async () => 'http://example.com/earlier-webcam.webm'),
+  };
+  const { container } = render(<ScreenRecordingReplay />);
+  await waitFor(() => expect(mockStorageEngine!.getScreenRecording).toHaveBeenCalledWith('segment-earlier', 'p1'));
+  await waitFor(() => expect(mockStorageEngine!.getWebcamRecording).toHaveBeenCalledWith('segment-earlier', 'p1'));
+  await waitFor(() => expect(container.querySelectorAll('video')[1].src).toBe('http://example.com/earlier-webcam.webm'));
 });

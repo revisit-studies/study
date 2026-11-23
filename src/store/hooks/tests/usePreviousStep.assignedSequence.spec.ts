@@ -17,12 +17,15 @@ const context = vi.hoisted(() => ({
   params: {} as { funcIndex?: string },
   navigate: vi.fn(),
   dispatch: vi.fn(),
+  windowEvents: undefined as undefined | { finalizeVisit?: (beforeComplete?: () => Promise<void>) => Promise<boolean> },
   deleteDynamicBlockAnswers: vi.fn((payload) => ({ type: 'deleteDynamicBlockAnswers', payload })),
 }));
 
 vi.mock('react-router', () => ({
   useParams: () => context.params,
   useNavigate: () => context.navigate,
+}));
+vi.mock('react-redux', () => ({
 }));
 vi.mock('../../../routes/utils', () => ({
   useCurrentStep: () => context.step,
@@ -35,9 +38,11 @@ vi.mock('../../store', () => ({
   useStoreDispatch: () => context.dispatch,
   useStoreActions: () => ({ deleteDynamicBlockAnswers: context.deleteDynamicBlockAnswers }),
 }));
+vi.mock('../useWindowEvents', () => ({ useOptionalWindowEvents: () => context.windowEvents }));
 
 beforeEach(() => {
   vi.clearAllMocks();
+  context.windowEvents = undefined;
   context.step = 2;
   context.params = {};
 });
@@ -94,7 +99,7 @@ test.each([false, true])('Previous returns to the last dynamic iteration (filter
   const answersBefore = structuredClone(context.state.answers);
   const { result } = renderHook(() => usePreviousStep());
 
-  act(() => result.current.goToPreviousStep());
+  await act(async () => { await result.current.goToPreviousStep(); });
 
   expect(context.navigate).toHaveBeenCalledExactlyOnceWith(`/assigned-study/${encryptIndex(1)}/${encryptIndex(1)}`);
   expect(context.dispatch).not.toHaveBeenCalled();
@@ -107,7 +112,7 @@ test.each([false, true])('Previous within a dynamic block cleans up its assigned
   context.params = { funcIndex: encryptIndex(1) };
   const { result } = renderHook(() => usePreviousStep());
 
-  act(() => result.current.goToPreviousStep());
+  await act(async () => { await result.current.goToPreviousStep(); });
 
   expect(context.deleteDynamicBlockAnswers).toHaveBeenCalledExactlyOnceWith({
     currentStep: 1, funcIndex: 1, funcName: 'adaptive',
@@ -116,4 +121,40 @@ test.each([false, true])('Previous within a dynamic block cleans up its assigned
     type: 'deleteDynamicBlockAnswers', payload: { currentStep: 1, funcIndex: 1, funcName: 'adaptive' },
   });
   expect(context.navigate).toHaveBeenCalledExactlyOnceWith(`/assigned-study/${encryptIndex(1)}/${encryptIndex(0)}`);
+});
+
+test('Previous finalizes the recording before navigating away', async () => {
+  await prepareParticipant(false);
+  context.step = 1;
+  context.params = { funcIndex: encryptIndex(0) };
+  context.windowEvents = { finalizeVisit: vi.fn(async () => true) };
+  const { result } = renderHook(() => usePreviousStep());
+
+  await act(async () => { await result.current.goToPreviousStep(); });
+
+  expect(context.windowEvents?.finalizeVisit).toHaveBeenCalledOnce();
+  expect(context.dispatch).toHaveBeenCalledWith(expect.objectContaining({ type: 'deleteDynamicBlockAnswers' }));
+  expect(context.navigate).toHaveBeenCalledExactlyOnceWith(`/assigned-study/${encryptIndex(0)}`);
+});
+
+test('Previous keeps its invocation lock while recording finalization is pending', async () => {
+  await prepareParticipant(false);
+  context.step = 1;
+  context.params = { funcIndex: encryptIndex(0) };
+  let completeFinalization!: (saved: boolean) => void;
+  context.windowEvents = {
+    finalizeVisit: vi.fn(() => new Promise<boolean>((resolve) => { completeFinalization = resolve; })),
+  };
+  const { result } = renderHook(() => usePreviousStep());
+
+  let previousNavigation!: Promise<void>;
+  act(() => { previousNavigation = result.current.goToPreviousStep(); });
+  await act(async () => { await result.current.goToPreviousStep(); });
+
+  expect(context.windowEvents.finalizeVisit).toHaveBeenCalledOnce();
+  expect(context.navigate).not.toHaveBeenCalled();
+
+  await act(async () => { completeFinalization(true); await previousNavigation; });
+  expect(context.deleteDynamicBlockAnswers).toHaveBeenCalledOnce();
+  expect(context.navigate).toHaveBeenCalledOnce();
 });

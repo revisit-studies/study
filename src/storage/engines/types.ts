@@ -513,6 +513,10 @@ export abstract class StorageEngine {
 
   private participantRejectionListeners = new Set<() => void>();
 
+  private participantFinalizationBarriers = new Set<() => Promise<void>>();
+
+  private assetUploadSuccessListeners = new Set<(assetKey: string) => void>();
+
   private pendingAssetUploads = new Map<string, Promise<void>>();
 
   private pendingAssetOperations = new Set<Promise<unknown>>();
@@ -556,6 +560,30 @@ export abstract class StorageEngine {
     return () => {
       this.participantRejectionListeners.delete(callback);
     };
+  }
+
+  registerParticipantFinalizationBarrier(callback: () => Promise<void>) {
+    this.participantFinalizationBarriers.add(callback);
+    return () => {
+      this.participantFinalizationBarriers.delete(callback);
+    };
+  }
+
+  subscribeToAssetUploadSuccess(callback: (assetKey: string) => void) {
+    this.assetUploadSuccessListeners.add(callback);
+    return () => {
+      this.assetUploadSuccessListeners.delete(callback);
+    };
+  }
+
+  private notifyAssetUploadSuccess(assetKey: string) {
+    this.assetUploadSuccessListeners.forEach((listener) => {
+      try {
+        listener(assetKey);
+      } catch (error) {
+        console.error('Failed to update recording upload state', error);
+      }
+    });
   }
 
   /*
@@ -809,23 +837,23 @@ export abstract class StorageEngine {
     return await this.__throttleVerifyStudyDatabase();
   }
 
-  private getParticipantDataSnapshotStorageKey(participantId: string) {
-    if (!this.studyId) {
+  private getParticipantDataSnapshotStorageKey(participantId: string, studyId = this.studyId) {
+    if (!studyId) {
       throw new Error('Study ID is not set');
     }
 
-    return `${this.collectionPrefix}${this.studyId}/participants/${participantId}/localParticipantData`;
+    return `${this.collectionPrefix}${studyId}/participants/${participantId}/localParticipantData`;
   }
 
-  private async cacheParticipantDataSnapshot(snapshot: ParticipantData, participantId?: string, required = false) {
+  private async cacheParticipantDataSnapshot(snapshot: ParticipantData, participantId?: string, required = false, studyId = this.studyId) {
     const targetParticipantId = participantId || this.currentParticipantId;
-    if (!this.studyId || !targetParticipantId) {
+    if (!studyId || !targetParticipantId) {
       return;
     }
 
     try {
       await this.participantStore.setItem(
-        this.getParticipantDataSnapshotStorageKey(targetParticipantId),
+        this.getParticipantDataSnapshotStorageKey(targetParticipantId, studyId),
         cloneParticipantDataSnapshot(snapshot),
       );
     } catch (error) {
@@ -1103,6 +1131,11 @@ export abstract class StorageEngine {
     }
   }
 
+  async flushPendingAssetUploads() {
+    const error = await this.waitForPendingAssetUploads();
+    if (error) throw error;
+  }
+
   async retryFailedWrites() {
     if (this.participantData?.finalized) return;
     await this.connect();
@@ -1136,10 +1169,7 @@ export abstract class StorageEngine {
       ([assetKey, operation]) => this.trackAssetOperation(assetKey, operation),
     ));
 
-    const assetUploadError = await this.waitForPendingAssetUploads();
-    if (assetUploadError) {
-      throw assetUploadError;
-    }
+    await this.flushPendingAssetUploads();
   }
 
   private recordAssetUploadError(assetKey: string, error: unknown) {
@@ -1170,6 +1200,10 @@ export abstract class StorageEngine {
     this.failedAssetRetryOperations.delete(assetKey);
 
     const operationPromise = operation()
+      .then((result) => {
+        this.notifyAssetUploadSuccess(assetKey);
+        return result;
+      })
       .catch((error) => {
         const normalizedError = normalizeError(error);
         this.recordAssetUploadError(assetKey, normalizedError);
@@ -2318,8 +2352,8 @@ export abstract class StorageEngine {
   }
 
   // Save the answer into the local participant data and queue a debounced write to storage.
-  private localProvenanceKey(task: string, participantId: string) {
-    return `${this.collectionPrefix}${this.studyId}/participants/${participantId}/localProvenance/${task}`;
+  private localProvenanceKey(task: string, participantId: string, studyId = this.studyId) {
+    return `${this.collectionPrefix}${studyId}/participants/${participantId}/localProvenance/${task}`;
   }
 
   private queueGlobalStoreProvenance(participant: ParticipantData, graph: GlobalStoreGraph, tasks: string[]) {
@@ -2355,15 +2389,25 @@ export abstract class StorageEngine {
     revision: number,
     task: string,
     provenance: StoredProvenance,
+    canCommit?: () => boolean,
   ) {
     if (!this.participantData || !this.currentParticipantId) throw new Error('Participant not initialized');
     if (this.participantData.rejected || this.participantData.finalized) throw new Error('This participant session is closed.');
+    if (canCommit && !canCommit()) return false;
     const participantId = this.currentParticipantId;
     const { studyId } = this;
-    const modes = await this.getModes(studyId!);
+    if (!studyId) throw new Error('Study ID is not set');
+    const taskProvenanceKey = this.localProvenanceKey(task, participantId, studyId);
+    const revisionProvenanceKey = this.localProvenanceKey(`${GLOBAL_STORE_TASK}/${revision}`, participantId, studyId);
+    const modes = await this.getModes(studyId);
     return this.updateParticipantDataLocally(studyId, participantId, async (assertCurrentSession) => {
       const participantData = this.participantData!;
       if (participantData.rejected || participantData.finalized) throw new Error('This participant session is closed.');
+      const assertCanCommit = () => {
+        assertCurrentSession();
+        if (canCommit && !canCommit()) throw new Error('Screen sharing stopped before the task could be saved.');
+      };
+      assertCanCommit();
       const snapshot: ParticipantData = {
         ...participantData,
         answers: structuredClone(answers),
@@ -2371,8 +2415,8 @@ export abstract class StorageEngine {
         globalStoreHead: graph.current,
         globalStoreRevision: revision,
       };
-      const previousProvenance = normalizeStoredProvenance(await this.participantStore.getItem(this.localProvenanceKey(task, participantId)));
-      assertCurrentSession();
+      const previousProvenance = normalizeStoredProvenance(await this.participantStore.getItem(taskProvenanceKey));
+      assertCanCommit();
       let retainedProvenance = mergeStoredProvenance(previousProvenance, provenance);
       const sources = Object.values(getGlobalStoreNodeStates(graph)).flatMap(({ submission }) => (
         submission?.answer.identifier === task ? Object.entries(submission.sourceNodes) : []
@@ -2384,17 +2428,28 @@ export abstract class StorageEngine {
       // require a download (for example a direct caller resuming on a new device).
       if (!previousProvenance && !hasEverySource()) {
         retainedProvenance = mergeStoredProvenance(await this.getProvenance(task, participantId, true), provenance);
-        assertCurrentSession();
+        assertCanCommit();
       }
       if (!hasEverySource()) throw new Error('The accepted interaction state is missing.');
       // Assets may be ahead after a failed save. Only the accepted snapshot's head and
       // source-node references decide what is restored, so the previous revision is safe.
-      await this.participantStore.setItem(this.localProvenanceKey(task, participantId), structuredClone(retainedProvenance));
-      assertCurrentSession();
-      await this.participantStore.setItem(this.localProvenanceKey(`${GLOBAL_STORE_TASK}/${revision}`, participantId), { globalStore: structuredClone(graph) });
-      assertCurrentSession();
-      await this.cacheParticipantDataSnapshot(snapshot, participantId, true);
-      assertCurrentSession();
+      try {
+        await this.participantStore.setItem(taskProvenanceKey, structuredClone(retainedProvenance));
+        assertCanCommit();
+        await this.participantStore.setItem(revisionProvenanceKey, { globalStore: structuredClone(graph) });
+        assertCanCommit();
+        await this.cacheParticipantDataSnapshot(snapshot, participantId, true, studyId);
+        assertCanCommit();
+      } catch (error) {
+        await this.cacheParticipantDataSnapshot(participantData, participantId, true, studyId);
+        if (previousProvenance) {
+          await this.participantStore.setItem(taskProvenanceKey, previousProvenance);
+        } else {
+          await this.participantStore.removeItem(taskProvenanceKey);
+        }
+        await this.participantStore.removeItem(revisionProvenanceKey);
+        throw error;
+      }
       const previousRevision = participantData.globalStoreRevision;
       this.participantData = snapshot;
       if (previousRevision) {
@@ -2512,6 +2567,7 @@ export abstract class StorageEngine {
 
   async finalizeParticipant(): Promise<FinalizeParticipantResult> {
     const { studyId, currentParticipantId } = this;
+    await Promise.all([...this.participantFinalizationBarriers].map((barrier) => barrier()));
     // Keep finalization in the local update queue through the final flush and
     // completion marker, so accepted background writes cannot arrive afterward.
     return this.updateParticipantDataLocally(studyId, currentParticipantId, (assertCurrentSession) => this.finalizeParticipantSession(assertCurrentSession));

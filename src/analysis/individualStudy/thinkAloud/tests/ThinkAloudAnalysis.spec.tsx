@@ -94,14 +94,20 @@ const createMockNavigate = (): NavigateFunction => vi.fn() as unknown as Navigat
 
 vi.mock('@mantine/core', async () => ({
   isLightColor: (await vi.importActual<{ isLightColor: typeof isLightColor }>('@mantine/core')).isLightColor,
-  ActionIcon: ({ children, onClick }: { children: ReactNode; onClick?: () => void }) => <button type="button" onClick={onClick}>{children}</button>,
+  ActionIcon: ({ children, onClick, 'aria-label': ariaLabel }: { children: ReactNode; onClick?: () => void; 'aria-label'?: string }) => <button type="button" aria-label={ariaLabel} onClick={onClick}>{children}</button>,
   Alert: ({ children }: { children: ReactNode }) => <div role="alert">{children}</div>,
   AppShell: Object.assign(
     ({ children }: { children: ReactNode }) => <div>{children}</div>,
     { Footer: ({ children }: { children: ReactNode }) => <footer>{children}</footer> },
   ),
   Box: ({ children }: { children: ReactNode }) => <div>{children}</div>,
-  Button: ({ children, onClick }: { children: ReactNode; onClick?: () => void }) => <button type="button" onClick={onClick}>{children}</button>,
+  Button: ({
+    children, onClick, component, href, target,
+  }: {
+    children: ReactNode; onClick?: () => void; component?: string; href?: string; target?: string;
+  }) => (component === 'a'
+    ? <a href={href} target={target} onClick={onClick}>{children}</a>
+    : <button type="button" onClick={onClick}>{children}</button>),
   Center: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   CheckIcon: () => <span>check</span>,
   ColorPicker: ({ value }: { value?: string }) => <div data-colorpicker={value} />,
@@ -632,6 +638,36 @@ describe('ThinkAloudFooter', () => {
     const { getAllByRole } = await act(async () => render(<RealThinkAloudFooter {...footerDefaultProps} isReplay />));
     const speedBtn = getAllByRole('button').find((b) => b.textContent === '1x');
     expect(speedBtn).toBeDefined();
+  });
+
+  test('includes the selected recording segment in the Replay link', async () => {
+    const participant = makeParticipant({
+      participantId: 'p1',
+      answers: {
+        trial_0: makeStoredAnswer({
+          identifier: 'trial_0',
+          componentName: 'Component 1',
+          trialOrder: '0_null',
+          assetIdentifier: 'segment-latest',
+          recordingSegments: ['segment-earlier', 'segment-latest'],
+        }),
+      },
+    });
+    vi.mocked(useSearchParams).mockReturnValue([
+      new URLSearchParams('participantId=p1&recordingSegment=segment-earlier'),
+      mockSetSearchParams,
+    ] as ReturnType<typeof useSearchParams>);
+    vi.mocked(useAsync).mockImplementation((fn) => ({
+      value: fn.name === 'getParticipantData' ? participant : null,
+      status: 'success',
+      execute: vi.fn(),
+      error: null,
+    }));
+
+    const { getByRole } = await act(async () => render(<RealThinkAloudFooter {...footerDefaultProps} />));
+    const replayLink = getByRole('link', { name: 'Replay' });
+
+    expect(new URL((replayLink as HTMLAnchorElement).href).searchParams.get('recordingSegment')).toBe('segment-earlier');
   });
 
   test('fetchAssetsUrl effect runs when storageEngine provided', async () => {

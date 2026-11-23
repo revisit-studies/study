@@ -12,12 +12,13 @@ import { compileTemplate } from '../../utils/handlebars';
 import { useTemplateAnswerContext } from '../../store/hooks/useTemplateAnswerContext';
 
 export function AppNavBar({
-  width, top, bottom, sidebarOpen,
+  width, top, bottom, sidebarOpen, inert,
 }: {
   width: number,
   top: number,
   bottom: number,
   sidebarOpen: boolean,
+  inert?: boolean,
 }) {
   // Get the config for the current step
   const globalStore = useGlobalStore();
@@ -66,6 +67,7 @@ export function AppNavBar({
       }}
       w={width}
       miw={width}
+      inert={inert}
     >
       {instructionInSideBar && instruction !== '' && (
         <Box

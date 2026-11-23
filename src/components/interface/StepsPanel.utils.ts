@@ -17,19 +17,21 @@ export function formatFactorLevel(value: unknown): string {
   return String(value);
 }
 
-export function getDynamicComponentsForBlock(
+export function getDynamicAnswerEntriesForBlock(
   node: Sequence,
   participantAnswers: ParticipantData['answers'],
   index: number,
 ) {
-  if (node.order !== 'dynamic') {
-    return [];
-  }
+  if (node.order !== 'dynamic') return [];
 
   return Object.entries(participantAnswers)
-    .filter(([key]) => key.startsWith(`${node.id}_${index}_`))
-    .map(([_, value]) => value.componentName)
-    .filter((componentName): componentName is string => typeof componentName === 'string' && componentName.length > 0);
+    .map(([identifier, answer]) => ({ identifier, answer, order: parseTrialOrder(answer.trialOrder) }))
+    .filter(({ identifier, answer, order }) => identifier.startsWith(`${node.id}_${index}_`)
+      && order.step === index && order.funcIndex !== null
+      && typeof answer.componentName === 'string'
+      && answer.componentName.length > 0)
+    .sort((a, b) => (a.order.funcIndex ?? -1) - (b.order.funcIndex ?? -1) || a.identifier.localeCompare(b.identifier))
+    .map(({ identifier, answer, order }) => ({ identifier, answer, funcIndex: order.funcIndex! }));
 }
 
 function formatReference(reference: string) {

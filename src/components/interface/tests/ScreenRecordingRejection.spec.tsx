@@ -31,4 +31,10 @@ describe('ScreenRecordingRejection', () => {
     const html = renderToStaticMarkup(<ScreenRecordingRejection />);
     expect(html).toContain('close this page');
   });
+
+  test('asks the participant to keep the page open while saving', () => {
+    const html = renderToStaticMarkup(<ScreenRecordingRejection saving />);
+    expect(html).toContain('keep this page open');
+    expect(html).not.toContain('close this page');
+  });
 });

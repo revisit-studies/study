@@ -17,6 +17,7 @@ import {
 import { useCurrentIdentifier } from '../../routes/utils';
 import { useIsAnalysis } from '../../store/hooks/useIsAnalysis';
 import { ReplayLayout, useReplayContext } from '../../store/hooks/useReplay';
+import { getScreenRecordingSegmentUrl } from '../../utils/recordingAssets';
 
 type ScreenRecordingReplayProps = {
   webcamOnly?: boolean;
@@ -184,7 +185,12 @@ export function ScreenRecordingReplay({ webcamOnly = false }: ScreenRecordingRep
   const isAnalysis = useIsAnalysis();
 
   const identifier = useCurrentIdentifier();
-  const assetIdentifier = useStoredAnswer()?.assetIdentifier ?? identifier;
+  const storedAnswer = useStoredAnswer();
+  const assetIdentifier = storedAnswer?.assetIdentifier ?? identifier;
+  const requestedSegment = searchParams.get('recordingSegment');
+  const screenAssetIdentifier = requestedSegment && storedAnswer?.recordingSegments?.includes(requestedSegment)
+    ? requestedSegment
+    : assetIdentifier;
 
   useEffect(
     () => {
@@ -225,8 +231,13 @@ export function ScreenRecordingReplay({ webcamOnly = false }: ScreenRecordingRep
               }
             };
             const [screenUrl, webcamUrl] = await Promise.all([
-              safeGetRecording(() => storageEngine.getScreenRecording(assetIdentifier, participantId)),
-              safeGetRecording(() => storageEngine.getWebcamRecording(assetIdentifier, participantId)),
+              safeGetRecording(() => getScreenRecordingSegmentUrl(
+                storageEngine,
+                participantId,
+                screenAssetIdentifier,
+                storedAnswer?.recordingChunkKeys?.[screenAssetIdentifier] ?? [],
+              )),
+              safeGetRecording(() => storageEngine.getWebcamRecording(screenAssetIdentifier, participantId)),
             ]);
 
             if (cancelled) {
@@ -291,6 +302,9 @@ export function ScreenRecordingReplay({ webcamOnly = false }: ScreenRecordingRep
     [
       isAnalysis,
       assetIdentifier,
+      screenAssetIdentifier,
+      storedAnswer?.recordingChunkKeys,
+      storedAnswer?.recordingSegments,
       identifier, storageEngine,
       participantId,
       storeDispatch,

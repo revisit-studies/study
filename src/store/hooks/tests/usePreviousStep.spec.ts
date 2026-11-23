@@ -19,10 +19,14 @@ const mockNavigate = vi.fn();
 const mockDispatch = vi.fn();
 const mockDeleteDynamicBlockAnswers = vi.fn(() => ({ type: 'deleteDynamicBlockAnswers' }));
 const mockUseStoreSelector = vi.fn((selector: (s: StoreState) => unknown) => selector({ answers: {} } as StoreState));
+const mockWindowEvents = vi.hoisted(() => ({ finalizeVisit: undefined as undefined | ((beforeComplete?: () => Promise<void>) => Promise<boolean>) }));
 
 vi.mock('react-router', () => ({
   useNavigate: () => mockNavigate,
   useParams: vi.fn(() => ({})),
+}));
+vi.mock('react-redux', () => ({
+  useStore: () => ({ getState: () => ({ answers: {} }) }),
 }));
 
 vi.mock('../../../routes/utils', () => ({
@@ -33,6 +37,8 @@ vi.mock('../../../routes/utils', () => ({
 vi.mock('../useIsAnalysis', () => ({
   useIsAnalysis: vi.fn(() => false),
 }));
+
+vi.mock('../useWindowEvents', () => ({ useOptionalWindowEvents: () => mockWindowEvents }));
 
 vi.mock('../useStudyConfig', () => ({
   useStudyConfig: vi.fn(() => ({
@@ -50,6 +56,7 @@ vi.mock('../../store', () => ({
   useStoreActions: () => ({ deleteDynamicBlockAnswers: mockDeleteDynamicBlockAnswers }),
   useStoreSelector: (...args: Parameters<typeof mockUseStoreSelector>) => mockUseStoreSelector(...args),
 }));
+vi.mock('../../../storage/storageEngineHooks', () => ({ useStorageEngine: () => ({ storageEngine: undefined }) }));
 
 vi.mock('../../../utils/encryptDecryptIndex', () => ({
   encryptIndex: (n: number) => String(n),
@@ -74,6 +81,7 @@ beforeEach(() => {
   useIsAnalysisMock.mockReturnValue(false);
   mockDispatch.mockReset();
   mockDeleteDynamicBlockAnswers.mockClear();
+  mockWindowEvents.finalizeVisit = undefined;
 });
 
 afterEach(() => {
@@ -108,36 +116,66 @@ describe('isPreviousDisabled', () => {
 });
 
 describe('goToPreviousStep', () => {
-  test('navigates to the previous step index', () => {
+  test('navigates to the previous step index', async () => {
     useCurrentStepMock.mockReturnValue(2);
     const { result } = renderHook(() => usePreviousStep());
-    act(() => result.current.goToPreviousStep());
+    await act(async () => { await result.current.goToPreviousStep(); });
     // previous step = 1; encryptIndex(1) = '1'
     expect(mockNavigate).toHaveBeenCalledWith(expect.stringContaining('/1'));
   });
 
-  test('does nothing when currentStep is not a number', () => {
-    useCurrentStepMock.mockReturnValue('root-path');
+  test('waits for the outgoing recording checkpoint before navigating', async () => {
+    useCurrentStepMock.mockReturnValue(2);
+    let finishFinalization!: (saved: boolean) => void;
+    mockWindowEvents.finalizeVisit = vi.fn(() => new Promise<boolean>((resolve) => { finishFinalization = resolve; }));
     const { result } = renderHook(() => usePreviousStep());
-    act(() => result.current.goToPreviousStep());
+
+    let finishNavigation!: Promise<void>;
+    await act(async () => {
+      finishNavigation = result.current.goToPreviousStep();
+      await Promise.resolve();
+    });
+    expect(mockWindowEvents.finalizeVisit).toHaveBeenCalledOnce();
+    expect(mockNavigate).not.toHaveBeenCalled();
+
+    await act(async () => {
+      finishFinalization(true);
+      await finishNavigation;
+    });
+    expect(mockNavigate).toHaveBeenCalledWith(expect.stringContaining('/1'));
+  });
+
+  test('stays on the current task when the outgoing recording checkpoint fails', async () => {
+    useCurrentStepMock.mockReturnValue(2);
+    mockWindowEvents.finalizeVisit = vi.fn(async () => false);
+    const { result } = renderHook(() => usePreviousStep());
+
+    await act(async () => { await result.current.goToPreviousStep(); });
     expect(mockNavigate).not.toHaveBeenCalled();
   });
 
-  test('dispatches deleteDynamicBlockAnswers and navigates when in a funcIndex block', () => {
+  test('does nothing when currentStep is not a number', async () => {
+    useCurrentStepMock.mockReturnValue('root-path');
+    const { result } = renderHook(() => usePreviousStep());
+    await act(async () => { await result.current.goToPreviousStep(); });
+    expect(mockNavigate).not.toHaveBeenCalled();
+  });
+
+  test('dispatches deleteDynamicBlockAnswers and navigates when in a funcIndex block', async () => {
     useCurrentStepMock.mockReturnValue(1);
     useParamsMock.mockReturnValue({ funcIndex: '2' }); // funcIndex = '2' → decryptIndex = 2 → not 0 → stays in block
     const { result } = renderHook(() => usePreviousStep());
-    act(() => result.current.goToPreviousStep());
+    await act(async () => { await result.current.goToPreviousStep(); });
     expect(mockDispatch).toHaveBeenCalled();
     // navigates to previous funcIndex: encryptIndex(2 - 1) = '1'
     expect(mockNavigate).toHaveBeenCalledWith(expect.stringContaining('/1/1'));
   });
 
-  test('exits dynamic block when funcIndex is 0', () => {
+  test('exits dynamic block when funcIndex is 0', async () => {
     useCurrentStepMock.mockReturnValue(1);
     useParamsMock.mockReturnValue({ funcIndex: '0' }); // decryptIndex = 0
     const { result } = renderHook(() => usePreviousStep());
-    act(() => result.current.goToPreviousStep());
+    await act(async () => { await result.current.goToPreviousStep(); });
     // dispatches delete, then falls through to normal navigate (previous step = 0 which is 'intro', not a func block)
     expect(mockDispatch).toHaveBeenCalled();
     expect(mockNavigate).toHaveBeenCalledWith(expect.stringContaining('/0'));
@@ -165,7 +203,7 @@ describe('goToPreviousStep', () => {
     vi.mocked(findFuncBlockMock).mockReturnValue({ id: 'dynamic-block' } as never);
 
     const { result } = renderHook(() => usePreviousStep());
-    act(() => result.current.goToPreviousStep());
+    await act(async () => { await result.current.goToPreviousStep(); });
 
     expect(mockDispatch).not.toHaveBeenCalled();
     expect(mockNavigate).toHaveBeenCalledWith(expect.stringContaining('/1/0'));
@@ -183,7 +221,7 @@ describe('goToPreviousStep', () => {
     } as unknown as StoreState));
 
     const { result } = renderHook(() => usePreviousStep());
-    act(() => result.current.goToPreviousStep());
+    await act(async () => { await result.current.goToPreviousStep(); });
 
     expect(mockNavigate).toHaveBeenCalledWith(expect.stringContaining('/0'));
   });

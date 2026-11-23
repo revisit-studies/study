@@ -1,9 +1,9 @@
 import {
   createContext, useCallback, useContext, useEffect, useLayoutEffect, useRef, useState,
 } from 'react';
-import { useTrialAssetIdentifier } from './useTrialAssetIdentifier';
+import { useRotateTrialAssetIdentifier, useTrialAssetIdentifier } from './useTrialAssetIdentifier';
 import { useStudyConfig } from './useStudyConfig';
-import { useCurrentComponent, useCurrentIdentifier } from '../../routes/utils';
+import { useCurrentComponent, useCurrentIdentifier, useStudyId } from '../../routes/utils';
 import { useStorageEngine } from '../../storage/storageEngineHooks';
 import { useRecordingConfig } from './useRecordingConfig';
 import { useStoredAnswer } from './useStoredAnswer';
@@ -73,12 +73,41 @@ export function useRecording() {
   const webcamMediaRecorder = useRef<MediaRecorder | null>(null);
   const isStoppingCapture = useRef(false);
   const captureAttempt = useRef(0);
+  const screenCaptureRevision = useRef(0);
   const audioCaptureAttempt = useRef(0);
   const isStartingCapture = useRef(false);
   const isMounted = useRef(true);
 
+  const attachScreenPreview = useCallback(() => {
+    const video = recordVideoRef.current;
+    const stream = screenMediaStream.current;
+    if (video && stream && video.srcObject !== stream) {
+      video.srcObject = stream;
+      Promise.resolve(video.play()).catch(() => undefined);
+    }
+  }, []);
+
+  const attachWebcamPreview = useCallback(() => {
+    const video = webcamVideoRef.current;
+    const stream = webcamMediaStream.current;
+    if (video && stream && video.srcObject !== stream) {
+      video.srcObject = stream;
+      Promise.resolve(video.play()).catch(() => undefined);
+    }
+  }, []);
+
   const currentTrialName = useRef<string | null>(null);
+  const currentTrialAssetIdentifier = useRef<string | null>(null);
+  const recordingChunkKeys = useRef<Map<string, string[]>>(new Map());
+  const recordingChunkUploadStates = useRef<Map<string, Map<number, boolean | undefined>>>(new Map());
+  const recordingChunkListeners = useRef(new Set<(trialName: string, chunkKeys: string[]) => void>());
+  const pendingRecorderStops = useRef(new Set<Promise<void>>());
+  const recordingStartTimes = useRef<Map<string, number>>(new Map());
+  const recordingStopTimes = useRef<Map<string, number>>(new Map());
+  const recorderStopPromises = useRef(new WeakMap<MediaRecorder, Promise<void>>());
   const assetIdentifier = useTrialAssetIdentifier();
+  const rotateTrialAssetIdentifier = useRotateTrialAssetIdentifier();
+  const interruptedCapture = useRef(false);
   const identifier = useCurrentIdentifier();
   const status = useStoredAnswer();
   const isAnalysis = useIsAnalysis();
@@ -86,11 +115,15 @@ export function useRecording() {
 
   const { storageEngine } = useStorageEngine();
   const { dataCollectionEnabled } = useStoreSelector((state) => state.modes);
+  const participantId = useStoreSelector((state) => state.participantId);
+  const studyId = useStudyId();
   const completed = useStoreSelector((state) => state.completed);
   const completedRef = useRef(completed);
   completedRef.current = completed;
 
   const currentComponent = useCurrentComponent();
+  const currentComponentRef = useRef(currentComponent);
+  currentComponentRef.current = currentComponent;
 
   const [pageTitle] = useState(document.title);
 
@@ -104,6 +137,66 @@ export function useRecording() {
     currentComponentHasClickToRecord,
   } = useRecordingConfig();
 
+  const hasActiveVerifiedScreenCapture = useCallback(() => {
+    const track = screenMediaStream.current?.getVideoTracks()[0];
+    const requiredRecordersAreRunning = (!currentComponentHasScreenRecording || currentMediaRecorder.current?.state === 'recording')
+      && (!currentComponentHasWebcamRecording || webcamMediaRecorder.current?.state === 'recording')
+      && (!currentComponentHasAudioRecording || audioMediaRecorder.current?.state === 'recording');
+    return !isStartingCapture.current && requiredRecordersAreRunning && !!track && track.readyState === 'live'
+      && (!requireEntireScreen || track.getSettings().displaySurface === 'monitor');
+  }, [currentComponentHasAudioRecording, currentComponentHasScreenRecording, currentComponentHasWebcamRecording, requireEntireScreen]);
+  const getScreenCaptureRevision = useCallback(() => screenCaptureRevision.current, []);
+  const getRecordingChunkKeys = useCallback((trialName: string) => {
+    const current = recordingChunkKeys.current.get(`${studyId}:${trialName}`) ?? [];
+    try {
+      const stored = window.sessionStorage.getItem(`revisit-recording-chunks:${studyId}:${participantId ?? 'anonymous'}:${trialName}`);
+      if (stored) return Array.from(new Set([...JSON.parse(stored) as string[], ...current]));
+    } catch {
+      // Keep the in-memory chunk list if browser storage is unavailable.
+    }
+    return current;
+  }, [participantId, studyId]);
+  const getScreenRecordingStartTime = useCallback((trialName: string) => recordingStartTimes.current.get(`${studyId}:${trialName}`), [studyId]);
+  const getRecordingStopTime = useCallback((trialName: string) => recordingStopTimes.current.get(`${studyId}:${trialName}`), [studyId]);
+  const persistSuccessfulChunkPrefix = useCallback((trialName: string) => {
+    const recordingKey = `${studyId}:${trialName}`;
+    const chunkUploads = recordingChunkUploadStates.current.get(recordingKey);
+    if (!chunkUploads) return;
+    const successfulChunkKeys: string[] = [];
+    for (let index = 0; chunkUploads.get(index) === true; index += 1) {
+      successfulChunkKeys.push(`${trialName}__chunk_${index}`);
+    }
+    recordingChunkKeys.current.set(recordingKey, successfulChunkKeys);
+    try {
+      window.sessionStorage.setItem(
+        `revisit-recording-chunks:${studyId}:${participantId ?? 'anonymous'}:${trialName}`,
+        JSON.stringify(successfulChunkKeys),
+      );
+    } catch {
+      // Keep the in-memory manifest when browser storage is unavailable.
+    }
+    recordingChunkListeners.current.forEach((listener) => listener(trialName, successfulChunkKeys));
+  }, [participantId, studyId]);
+  const subscribeToRecordingChunkUpdates = useCallback((listener: (trialName: string, chunkKeys: string[]) => void) => {
+    recordingChunkListeners.current.add(listener);
+    return () => { recordingChunkListeners.current.delete(listener); };
+  }, []);
+
+  useEffect(() => {
+    if (!storageEngine || typeof storageEngine.subscribeToAssetUploadSuccess !== 'function') return undefined;
+    return storageEngine.subscribeToAssetUploadSuccess((assetKey) => {
+      const prefix = 'screenRecording/';
+      if (!assetKey.startsWith(prefix)) return;
+      const match = /^(.*)__chunk_(\d+)$/.exec(assetKey.slice(prefix.length));
+      if (!match) return;
+      const [, trialName, index] = match;
+      const chunkUploads = recordingChunkUploadStates.current.get(`${studyId}:${trialName}`);
+      if (!chunkUploads) return;
+      chunkUploads.set(Number(index), true);
+      persistSuccessfulChunkPrefix(trialName);
+    });
+  }, [persistSuccessfulChunkPrefix, storageEngine, studyId]);
+
   useLayoutEffect(() => {
     setIsMuted(currentComponentHasClickToRecord);
   }, [currentComponentHasClickToRecord, identifier]);
@@ -114,6 +207,7 @@ export function useRecording() {
 
   // Stop all persistent media capture streams.
   const stopScreenCapture = useCallback(() => {
+    screenCaptureRevision.current += 1;
     captureAttempt.current += 1;
     audioCaptureAttempt.current += 1;
     isStartingCapture.current = false;
@@ -172,26 +266,64 @@ export function useRecording() {
     saveBlob: ((blob: Blob, trialName: string) => Promise<void>) | undefined,
     trialName: string,
     errorLabel: string,
-  ) => {
+    persistChunks = false,
+  ): Promise<void> => {
     let chunks: Blob[] = [];
+    const recordingKey = `${studyId}:${trialName}`;
+    const chunkUploads = recordingChunkUploadStates.current.get(recordingKey) ?? new Map<number, boolean | undefined>();
+    recordingChunkUploadStates.current.set(recordingKey, chunkUploads);
+    let chunkIndex = 0;
+    let resolveStopped!: () => void;
+    const stopped = new Promise<void>((resolve) => { resolveStopped = resolve; });
+    pendingRecorderStops.current.add(stopped);
+    stopped.then(() => pendingRecorderStops.current.delete(stopped));
+    const pendingSaves: Promise<void>[] = [];
+    const save = (blob: Blob, recordingIdentifier: string) => {
+      if (!saveBlob) return Promise.resolve(false);
+      const pending = saveBlob(blob, recordingIdentifier).then(() => true).catch((error) => {
+        console.error(`Error saving ${errorLabel}:`, error);
+        return false;
+      });
+      pendingSaves.push(pending.then(() => undefined));
+      return pending;
+    };
+
+    if (persistChunks) {
+      const existingChunkKeys = getRecordingChunkKeys(trialName);
+      const existingChunkIndices = existingChunkKeys
+        .map((key) => Number(key.slice(key.lastIndexOf('_') + 1)))
+        .filter(Number.isInteger);
+      existingChunkIndices.forEach((index) => chunkUploads.set(index, true));
+      chunkIndex = existingChunkIndices.length > 0 ? Math.max(...existingChunkIndices) + 1 : 0;
+    }
 
     recorder.addEventListener('start', () => {
       chunks = [];
+      recordingStartTimes.current.set(recordingKey, Date.now());
+      recordingStopTimes.current.delete(recordingKey);
     });
     recorder.addEventListener('dataavailable', (event: BlobEvent) => {
       if (event.data && event.data.size > 0) {
         chunks.push(event.data);
+        if (persistChunks && saveBlob) {
+          const chunkIdentifier = `${trialName}__chunk_${chunkIndex}`;
+          const currentChunkIndex = chunkIndex;
+          chunkIndex += 1;
+          chunkUploads.set(currentChunkIndex, undefined);
+          save(event.data, chunkIdentifier).then((saved) => {
+            chunkUploads.set(currentChunkIndex, saved || chunkUploads.get(currentChunkIndex) === true);
+            persistSuccessfulChunkPrefix(trialName);
+          });
+        }
       }
     });
     recorder.addEventListener('stop', () => {
-      if (!saveBlob) {
-        return;
-      }
-      saveBlob(new Blob(chunks, { type: recorder.mimeType }), trialName).catch((error) => {
-        console.error(`Error saving ${errorLabel}:`, error);
-      });
+      recordingStopTimes.current.set(recordingKey, Math.max(recordingStopTimes.current.get(recordingKey) ?? 0, Date.now()));
+      save(new Blob(chunks, { type: recorder.mimeType }), trialName);
+      Promise.all(pendingSaves).then(resolveStopped);
     });
-  }, []);
+    return stopped;
+  }, [getRecordingChunkKeys, persistSuccessfulChunkPrefix, studyId]);
 
   // Start separate per-trial screen, webcam, and audio recordings from persistent capture streams.
   const startScreenRecording = useCallback((trialName: string) => {
@@ -221,12 +353,13 @@ export function useRecording() {
       ]);
       const recorder = new MediaRecorder(screenStream);
       currentMediaRecorder.current = recorder;
-      attachSaveHandler(
+      recorderStopPromises.current.set(recorder, attachSaveHandler(
         recorder,
         storageEngine ? storageEngine.saveScreenRecording.bind(storageEngine) : undefined,
         trialName,
         'screen recording',
-      );
+        requireEntireScreen,
+      ));
       recorder.start(1000);
     }
 
@@ -235,12 +368,12 @@ export function useRecording() {
       const recorder = new MediaRecorder(webcamStream);
       webcamMediaRecorder.current = recorder;
       currentMediaRecorder.current ??= recorder;
-      attachSaveHandler(
+      recorderStopPromises.current.set(recorder, attachSaveHandler(
         recorder,
         storageEngine ? storageEngine.saveWebcamRecording.bind(storageEngine) : undefined,
         trialName,
         'webcam recording',
-      );
+      ));
       recorder.start(1000);
     }
 
@@ -249,12 +382,12 @@ export function useRecording() {
       const recorder = new MediaRecorder(audioStream);
       audioMediaRecorder.current = recorder;
       currentMediaRecorder.current ??= recorder;
-      attachSaveHandler(
+      recorderStopPromises.current.set(recorder, attachSaveHandler(
         recorder,
         storageEngine ? storageEngine.saveAudioRecording.bind(storageEngine) : undefined,
         trialName,
         'audio recording',
-      );
+      ));
       recorder.start(1000);
     }
 
@@ -270,21 +403,26 @@ export function useRecording() {
     currentComponentHasScreenRecording,
     currentComponentHasWebcamRecording,
     dataCollectionEnabled,
+    requireEntireScreen,
     storageEngine,
   ]);
 
   // Stop screen recording. This does not stop screen capture.
-  const stopScreenRecording = useCallback(() => {
+  const stopScreenRecording = useCallback(async () => {
     setIsScreenRecording(false);
     setIsAudioRecording(false);
     setIsWebcamRecording(false);
     setScreenWithAudioRecording(false);
-    stopRecorder(currentMediaRecorder.current);
-    stopRecorder(webcamMediaRecorder.current);
-    stopRecorder(audioMediaRecorder.current);
+    const recorders = [currentMediaRecorder.current, webcamMediaRecorder.current, audioMediaRecorder.current]
+      .filter((recorder): recorder is MediaRecorder => !!recorder);
+    recorders.forEach(stopRecorder);
     currentMediaRecorder.current = null;
     webcamMediaRecorder.current = null;
     audioMediaRecorder.current = null;
+    await Promise.all([
+      ...recorders.map((recorder) => recorderStopPromises.current.get(recorder)),
+      ...pendingRecorderStops.current,
+    ]);
   }, []);
 
   const stopAudioRecording = useCallback(() => {
@@ -300,10 +438,18 @@ export function useRecording() {
       stopRecorder(audioMediaRecorder.current);
       audioMediaRecorder.current = null;
     }
+    // Audio-only studies acquire a microphone stream for each task. The visit
+    // finalizer may already have cleared the recorder ref, so release that
+    // standalone stream independently. Combined capture owns this stream for
+    // the duration of the shared screen/webcam capture and must keep it alive.
+    if (!studyHasScreenRecording && !studyHasWebcamRecording) {
+      stopMediaTracks(audioMediaStream.current);
+      audioMediaStream.current = null;
+    }
     stopMediaTracks(analysisAudioStream.current);
     analysisAudioStream.current = null;
     setAnalysisStreamReady(false);
-  }, []);
+  }, [studyHasScreenRecording, studyHasWebcamRecording]);
 
   useEffect(() => {
     const isPermissionComponent = currentComponent === SCREEN_PERMISSION_COMPONENT
@@ -353,27 +499,12 @@ export function useRecording() {
 
       const recorder = new MediaRecorder(s);
       audioMediaRecorder.current = recorder;
-
-      let chunks: Blob[] = [];
-
-      recorder.addEventListener('start', () => {
-        chunks = [];
-      });
-
-      recorder.addEventListener('dataavailable', (event: BlobEvent) => {
-        if (event.data && event.data.size > 0) {
-          chunks.push(event.data);
-        }
-      });
-
-      recorder.addEventListener('stop', () => {
-        const { mimeType } = recorder;
-        const blob = new Blob(chunks, { type: mimeType });
-        storageEngine?.saveAudioRecording(blob, trialName).catch((error) => {
-          console.error('Error saving audio recording:', error);
-        });
-      });
-
+      recorderStopPromises.current.set(recorder, attachSaveHandler(
+        recorder,
+        storageEngine?.saveAudioRecording.bind(storageEngine),
+        trialName,
+        'audio recording',
+      ));
       recorder.start();
       setAudioRecordingError(null);
       setIsAudioRecording(true);
@@ -383,11 +514,11 @@ export function useRecording() {
       setAudioRecordingError('Microphone permission denied');
       setIsAudioRecording(false);
     });
-  }, [currentComponentHasClickToRecord, dataCollectionEnabled, storageEngine]);
+  }, [attachSaveHandler, currentComponentHasClickToRecord, dataCollectionEnabled, storageEngine]);
 
   // For study with just audio recording
   useEffect(() => {
-    if (startupInteractionBlocked || completed || !studyConfig || studyHasScreenRecording || studyHasWebcamRecording || !studyHasAudioRecording || !storageEngine || (status && status.endTime > 0 && !studyConfig.globalVariables) || isAnalysis) {
+    if (startupInteractionBlocked || completed || !studyConfig || studyHasScreenRecording || studyHasWebcamRecording || !studyHasAudioRecording || !storageEngine || (status && status.endTime > 0 && !studyConfig.globalVariables && !requireEntireScreen) || isAnalysis) {
       return undefined;
     }
 
@@ -395,16 +526,19 @@ export function useRecording() {
     if (!currentComponentHasAudioRecording && audioMediaRecorder.current) {
       stopAudioRecording();
       currentTrialName.current = null;
+      currentTrialAssetIdentifier.current = null;
       return undefined;
     }
 
     if (audioMediaRecorder.current) {
       stopAudioRecording();
       currentTrialName.current = null;
+      currentTrialAssetIdentifier.current = null;
     }
 
     if (assetIdentifier && currentComponent !== 'end' && currentTrialName.current !== identifier && (currentComponentHasAudioRecording)) {
       currentTrialName.current = identifier;
+      currentTrialAssetIdentifier.current = assetIdentifier;
       startAudioRecording(assetIdentifier);
       return () => {
         stopAudioRecording();
@@ -418,17 +552,22 @@ export function useRecording() {
 
   // For studies with screen or webcam recording.
   useEffect(() => {
-    if (startupInteractionBlocked || completed || !studyConfig || !(studyHasScreenRecording || studyHasWebcamRecording) || !storageEngine || (status && status.endTime > 0 && !studyConfig.globalVariables) || isAnalysis) {
-      return;
-    }
-
     if (currentMediaRecorder.current || webcamMediaRecorder.current || audioMediaRecorder.current) {
       stopScreenRecording();
       currentTrialName.current = null;
+      currentTrialAssetIdentifier.current = null;
     }
 
-    if (assetIdentifier && currentComponent !== 'end' && isMediaCapturing && currentTrialName.current !== identifier && (currentComponentHasAudioRecording || currentComponentHasScreenRecording || currentComponentHasWebcamRecording)) {
+    if (startupInteractionBlocked || completed || !studyConfig || !(studyHasScreenRecording || studyHasWebcamRecording) || !storageEngine
+      || (status && status.endTime > 0 && !studyConfig.globalVariables && !requireEntireScreen) || isAnalysis) {
+      return;
+    }
+
+    if (assetIdentifier && currentComponent !== 'end' && isMediaCapturing
+      && (currentTrialName.current !== identifier || currentTrialAssetIdentifier.current !== assetIdentifier)
+      && (currentComponentHasAudioRecording || currentComponentHasScreenRecording || currentComponentHasWebcamRecording)) {
       currentTrialName.current = identifier;
+      currentTrialAssetIdentifier.current = assetIdentifier;
       startScreenRecording(assetIdentifier);
     }
 
@@ -437,7 +576,7 @@ export function useRecording() {
     }
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [startupInteractionBlocked, assetIdentifier, currentComponent, identifier, currentComponentHasAudioRecording, currentComponentHasScreenRecording, currentComponentHasWebcamRecording, isMediaCapturing, completed]);
+  }, [startupInteractionBlocked, assetIdentifier, currentComponent, identifier, currentComponentHasAudioRecording, currentComponentHasScreenRecording, currentComponentHasWebcamRecording, isMediaCapturing, completed, requireEntireScreen]);
 
   // Start persistent capture. Per-trial recording begins in the navigation effect above.
   const startMediaCapture = useCallback(async ({
@@ -470,6 +609,14 @@ export function useRecording() {
       && stream.getTracks().every((track) => track.readyState !== 'ended');
     const stopOnEnded = () => {
       if (!isStoppingCapture.current) {
+        interruptedCapture.current = true;
+        currentTrialName.current = null;
+        if (requireEntireScreen
+          && currentComponentRef.current !== SCREEN_PERMISSION_COMPONENT
+          && currentComponentRef.current !== WEBCAM_PERMISSION_COMPONENT
+          && currentComponentRef.current !== 'end') {
+          setIsRejected(true);
+        }
         stopScreenCapture();
       }
     };
@@ -488,6 +635,13 @@ export function useRecording() {
     try {
       setRecordingError(null);
       setAudioRecordingError(null);
+
+      if (includeScreen && requireEntireScreen
+        && typeof navigator.mediaDevices?.getDisplayMedia !== 'function') {
+        setScreenCaptureVerificationError('This browser does not support whole-monitor sharing. Please use a supported browser to continue.');
+        setRecordingError('Whole-monitor sharing is not supported in this browser');
+        return;
+      }
 
       screenStream = includeScreen ? await navigator.mediaDevices.getDisplayMedia({
         video: { displaySurface: requireEntireScreen ? 'monitor' : 'browser', ...(recordScreenFPS ? { frameRate: { ideal: recordScreenFPS } } : {}) },
@@ -508,6 +662,16 @@ export function useRecording() {
           setRecordingError('Whole-monitor sharing could not be verified');
           return;
         }
+        if (!isCurrentAttempt()) {
+          stopAcquiredStreams();
+          return;
+        }
+        if (!hasLiveTracks(screenStream)) {
+          stopAcquiredStreams();
+          setScreenCaptureVerificationError('The selected monitor share has already ended. Please share your monitor again.');
+          setRecordingError('The selected monitor share has ended');
+          return;
+        }
       }
       setScreenCaptureVerificationError(null);
       attachEndedHandler(screenStream);
@@ -516,6 +680,7 @@ export function useRecording() {
         return;
       }
       screenMediaStream.current = screenStream;
+      attachScreenPreview();
 
       webcamStream = includeWebcam ? await navigator.mediaDevices.getUserMedia({
         video: true,
@@ -527,6 +692,7 @@ export function useRecording() {
         return;
       }
       webcamMediaStream.current = webcamStream;
+      attachWebcamPreview();
 
       if (includeAudio) {
         try {
@@ -557,15 +723,15 @@ export function useRecording() {
       }
 
       if (recordVideoRef.current) {
-        recordVideoRef.current.srcObject = screenStream;
-        if (screenStream) {
-          recordVideoRef.current.play().catch(() => undefined);
+        if (recordVideoRef.current.srcObject !== screenStream) {
+          recordVideoRef.current.srcObject = screenStream;
+          if (screenStream) Promise.resolve(recordVideoRef.current.play()).catch(() => undefined);
         }
       }
       if (webcamVideoRef.current) {
-        webcamVideoRef.current.srcObject = webcamStream;
-        if (webcamStream) {
-          webcamVideoRef.current.play().catch(() => undefined);
+        if (webcamVideoRef.current.srcObject !== webcamStream) {
+          webcamVideoRef.current.srcObject = webcamStream;
+          if (webcamStream) Promise.resolve(webcamVideoRef.current.play()).catch(() => undefined);
         }
       }
 
@@ -589,15 +755,19 @@ export function useRecording() {
       }
       document.title = pageTitle;
     }
-  }, [currentComponentHasClickToRecord, dataCollectionEnabled, pageTitle, recordAudio, recordScreenFPS, requireEntireScreen, stopScreenCapture]);
+  }, [attachScreenPreview, attachWebcamPreview, currentComponentHasClickToRecord, dataCollectionEnabled, pageTitle, recordAudio, recordScreenFPS, requireEntireScreen, stopScreenCapture]);
 
   const startScreenCapture = useCallback(() => {
+    if (interruptedCapture.current && requireEntireScreen) {
+      rotateTrialAssetIdentifier();
+      interruptedCapture.current = false;
+    }
     startMediaCapture({
       includeScreen: studyHasScreenRecording,
       includeAudio: studyHasAudioRecording,
       includeWebcam: studyHasWebcamRecording,
     });
-  }, [startMediaCapture, studyHasAudioRecording, studyHasScreenRecording, studyHasWebcamRecording]);
+  }, [requireEntireScreen, rotateTrialAssetIdentifier, startMediaCapture, studyHasAudioRecording, studyHasScreenRecording, studyHasWebcamRecording]);
 
   const startWebcamCapture = useCallback(() => {
     startMediaCapture({
@@ -693,7 +863,9 @@ export function useRecording() {
 
   return {
     recordVideoRef,
+    attachScreenPreview,
     webcamVideoRef,
+    attachWebcamPreview,
     studyHasScreenRecording,
     studyHasAudioRecording,
     studyHasWebcamRecording,
@@ -710,6 +882,12 @@ export function useRecording() {
     screenRecordingError,
     screenCaptureVerificationError,
     requireEntireScreen,
+    hasActiveVerifiedScreenCapture,
+    getScreenCaptureRevision,
+    getRecordingChunkKeys,
+    subscribeToRecordingChunkUpdates,
+    getScreenRecordingStartTime,
+    getRecordingStopTime,
     audioRecordingError,
     isScreenRecording,
     isAudioRecording,
@@ -745,4 +923,8 @@ export function useRecordingContext() {
     throw new Error('useRecordingContext must be used within a RecordingProvider');
   }
   return context;
+}
+
+export function useOptionalRecordingContext() {
+  return useContext(RecordingContext);
 }

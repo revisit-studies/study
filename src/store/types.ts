@@ -51,13 +51,14 @@ type ScrollEvent = [number, 'scroll', number[]];
 type VisibilityEvent = [number, 'visibility', string];
 type StudyActivityEvent = [number, 'studyactivity', 'pointer-left' | 'pointer-entered' | 'focus-lost' | 'focus-regained' | 'hidden' | 'visible'];
 type DisplayStatusEvent = [number, 'displaystatus', 'single' | 'multiple' | 'unknown'];
+type CaptureInterruptedEvent = [number, 'captureinterrupted', 'screen'];
 // Gamepad input is polled rather than delivered as DOM events, so these timestamps
 // mark when the poll observed the change, within one animation frame of the press.
 type GamepadConnectionEvent = [number, 'gamepadconnection', string];
 type GamepadButtonDownEvent = [number, 'gamepadbuttondown', string];
 type GamepadButtonUpEvent = [number, 'gamepadbuttonup', string];
 type GamepadAxisEvent = [number, 'gamepadaxis', number[]];
-export type EventType = MouseMoveEvent | MouseDownEvent | MouseUpEvent | KeydownEvent | KeyupEvent | ScrollEvent | FocusEvent | InputEvent | ResizeEvent | VisibilityEvent | StudyActivityEvent | DisplayStatusEvent | GamepadConnectionEvent | GamepadButtonDownEvent | GamepadButtonUpEvent | GamepadAxisEvent;
+export type EventType = MouseMoveEvent | MouseDownEvent | MouseUpEvent | KeydownEvent | KeyupEvent | ScrollEvent | FocusEvent | InputEvent | ResizeEvent | VisibilityEvent | StudyActivityEvent | DisplayStatusEvent | CaptureInterruptedEvent | GamepadConnectionEvent | GamepadButtonDownEvent | GamepadButtonUpEvent | GamepadAxisEvent;
 
 export type ValidationStatus = {
   valid: boolean;
@@ -107,6 +108,23 @@ export interface StoredAnswer {
   globalStoreEntry?: GlobalStoreValues;
   /** Recording/transcription key for this accepted entry. Legacy records use identifier. */
   assetIdentifier?: string;
+  /** All distinct recording asset keys captured for this task across interrupted/reloaded visits. */
+  recordingSegments?: string[];
+  /** Epoch time range captured for each retained recording segment. */
+  recordingSegmentRanges?: Array<{
+    assetIdentifier: string;
+    startTime: number;
+    endTime: number;
+    visitStartTime?: number;
+  }>;
+  /** Epoch time range for each retained media segment, including audio and webcam. */
+  recordingSegmentTimes?: Record<string, { startTime: number; endTime: number }>;
+  /** Independently persisted MediaRecorder chunks, keyed by recording segment. */
+  recordingChunkKeys?: Record<string, string[]>;
+  /** Latest observed recording time; remains valid when endTime is -1 for an interrupted task. */
+  recordingEndTime?: number;
+  /** Start of retained non-screen media when response completion timestamps are reset. */
+  recordingStartTime?: number;
   /** Object whose keys are the "id"s in the Response list of the component in the StudyConfig and whose value is the inputted value from the participant. */
   answer: Record<string, JsonValue>;
   identifier: string;

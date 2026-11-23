@@ -162,5 +162,6 @@ test('media exports follow the retained recording references for original and re
   await downloadParticipantsAudioZip({ storageEngine, participants: [{ participantId: 'p1', answers: { intro_0: revisedAnswer } }], studyId: 'budget' });
   expect(getAudioUrl).toHaveBeenCalledWith('original-recording', 'p1');
   expect(getAudioUrl).toHaveBeenCalledWith('revised-recording', 'p1');
+  expect(getAudioUrl).not.toHaveBeenCalledWith('intro_0', 'p1');
   expect(getAudioUrl).toHaveBeenCalledTimes(2);
 });

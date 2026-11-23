@@ -110,7 +110,7 @@ export function SingleTask({
 
   return (
     <g
-      onClick={() => navigateToTrial(trialOrder, participantId, studyId, condition)}
+      onClick={() => navigateToTrial(trialOrder, participantId, studyId, condition, identifier)}
       onPointerEnter={onHover}
       onPointerLeave={onHoverEnd}
       onPointerCancel={onHoverEnd}

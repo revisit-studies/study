@@ -8,7 +8,6 @@ import {
 import type { Answer, NumericalResponse, StudyConfig } from '../../../parser/types';
 import { Sequence, StoredAnswer } from '../../../store/types';
 import { makeStudyConfig, makeStoredAnswer } from '../../../tests/utils';
-import { getDynamicComponentsForBlock } from '../StepsPanel.utils';
 import { StepsPanel } from '../StepsPanel';
 import { UNKNOWN_ANSWER_LABEL } from '../UnknownAnswerIcon';
 
@@ -32,9 +31,11 @@ vi.mock('../../../routes/utils', () => ({
 }));
 
 const mockNavigate = vi.fn();
+let mockLocationSearch = '';
+let mockLocationPathname = '/';
 vi.mock('react-router', () => ({
   useNavigate: () => mockNavigate,
-  useLocation: () => ({ pathname: '/', search: '' }),
+  useLocation: () => ({ pathname: mockLocationPathname, search: mockLocationSearch }),
 }));
 
 vi.mock('../../../utils/getSequenceFlatMap', () => ({
@@ -65,8 +66,18 @@ vi.mock('@mantine/core', () => ({
       Dropdown: ({ children }: { children: ReactNode }) => <div>{children}</div>,
     },
   ),
-  NavLink: ({ children, label, onClick }: { children?: ReactNode; label?: ReactNode; onClick?: () => void }) => (
-    <div role="link" onClick={onClick}>
+  NavLink: ({
+    children,
+    label,
+    onClick,
+    active,
+  }: {
+    children?: ReactNode;
+    label?: ReactNode;
+    onClick?: () => void;
+    active?: boolean;
+  }) => (
+    <div role="link" data-active={active} onClick={onClick}>
       {label}
       {children}
     </div>
@@ -123,8 +134,7 @@ const minimalStudyConfig = makeStudyConfig({
   },
   sequence: minimalSequence,
 });
-
-afterEach(() => { cleanup(); });
+afterEach(() => { cleanup(); mockLocationSearch = ''; mockLocationPathname = '/'; });
 
 // ── component rendering tests ──────────────────────────────────────────────────
 
@@ -509,6 +519,144 @@ describe('StepsPanel NavLink click handler', () => {
     expect(mockNavigate).toHaveBeenCalledWith(expect.stringContaining('analysis'));
   });
 
+  test('analyst replay links select the saved dynamic answer', async () => {
+    mockNavigate.mockClear();
+    mockLocationSearch = '?participantId=p1&revisitPageId=page-1';
+    const dynamicSequence: Sequence = {
+      id: 'root',
+      orderPath: 'root',
+      order: 'fixed',
+      components: [{
+        id: 'adaptive', order: 'dynamic', orderPath: 'root-0', components: [], skip: [],
+      }],
+      skip: [],
+    };
+    const config = makeStudyConfig({
+      components: {
+        earlier: { type: 'markdown', path: 'earlier.md', response: [] },
+        current: { type: 'markdown', path: 'current.md', response: [] },
+      },
+      sequence: dynamicSequence,
+    });
+    const answers = {
+      adaptive_0_earlier_0: makeStoredAnswer({
+        identifier: 'adaptive_0_earlier_0',
+        componentName: 'earlier',
+        trialOrder: '0_0',
+        recordingSegments: ['earlier-segment'],
+      }),
+      adaptive_0_current_0: makeStoredAnswer({
+        identifier: 'adaptive_0_current_0', componentName: 'current', trialOrder: '0_0',
+      }),
+    };
+    const { getAllByRole, unmount } = await act(async () => render(
+      <StepsPanel participantSequence={dynamicSequence} participantAnswers={answers} studyConfig={config} isReplay />,
+    ));
+    const linkFor = (name: string) => getAllByRole('link').find((link) => link.querySelector('p')?.textContent === name);
+
+    act(() => { fireEvent.click(linkFor('earlier')!); });
+    expect(mockNavigate).toHaveBeenLastCalledWith('/test-study/0/0?participantId=p1&revisitPageId=page-1&analysisAnswerId=adaptive_0_earlier_0');
+
+    act(() => { fireEvent.click(linkFor('current')!); });
+    expect(mockNavigate).toHaveBeenLastCalledWith('/test-study/0/0?participantId=p1&revisitPageId=page-1&analysisAnswerId=adaptive_0_current_0');
+
+    unmount();
+  });
+
+  test('only the exact selected dynamic answer is highlighted in replay mode', async () => {
+    mockLocationPathname = '/test-study/0/0';
+    mockLocationSearch = '?participantId=p1&analysisAnswerId=adaptive_0_current_0';
+    const dynamicSequence: Sequence = {
+      id: 'root',
+      orderPath: 'root',
+      order: 'fixed',
+      components: [{
+        id: 'adaptive', order: 'dynamic', orderPath: 'root-0', components: [], skip: [],
+      }],
+      skip: [],
+    };
+    const config = makeStudyConfig({
+      components: {
+        earlier: { type: 'markdown', path: 'earlier.md', response: [] },
+        current: { type: 'markdown', path: 'current.md', response: [] },
+      },
+      sequence: dynamicSequence,
+    });
+    const answers = {
+      adaptive_0_earlier_0: makeStoredAnswer({
+        identifier: 'adaptive_0_earlier_0', componentName: 'earlier', trialOrder: '0_0',
+      }),
+      adaptive_0_current_0: makeStoredAnswer({ identifier: 'adaptive_0_current_0', componentName: 'current', trialOrder: '0_0' }),
+    };
+
+    const { getAllByRole } = await act(async () => render(
+      <StepsPanel participantSequence={dynamicSequence} participantAnswers={answers} studyConfig={config} isReplay />,
+    ));
+    const linkFor = (name: string) => getAllByRole('link').find((link) => link.querySelector('p')?.textContent === name);
+
+    expect(linkFor('earlier')?.getAttribute('data-active')).toBe('false');
+    expect(linkFor('current')?.getAttribute('data-active')).toBe('true');
+  });
+
+  test('highlights the selected static answer and replaces stale selections on click', async () => {
+    mockLocationPathname = '/test-study/0';
+    mockLocationSearch = '?participantId=p1&analysisAnswerId=old-dynamic-answer';
+    const answers = {
+      intro_0: makeStoredAnswer({ identifier: 'intro_0', componentName: 'intro', trialOrder: '0' }),
+    };
+    const { getAllByRole } = await act(async () => render(
+      <StepsPanel participantSequence={minimalSequence} participantAnswers={answers} studyConfig={minimalStudyConfig} isReplay />,
+    ));
+    const intro = getAllByRole('link').find((link) => link.querySelector('p')?.textContent === 'intro');
+
+    expect(intro?.getAttribute('data-active')).toBe('true');
+    act(() => { fireEvent.click(intro!); });
+    expect(mockNavigate).toHaveBeenLastCalledWith('/test-study/0?participantId=p1&analysisAnswerId=intro_0');
+  });
+
+  test.each([
+    ['', 'missing query'],
+    ['&analysisAnswerId=old-dynamic-answer', 'stale query'],
+  ])('selects the regenerated dynamic row when replay has a %s', async (query) => {
+    mockLocationPathname = '/test-study/0/0';
+    mockLocationSearch = `?participantId=p1${query}`;
+    const dynamicSequence: Sequence = {
+      id: 'root',
+      orderPath: 'root',
+      order: 'fixed',
+      components: [{
+        id: 'adaptive',
+        order: 'dynamic',
+        orderPath: 'root-0',
+        components: [],
+        skip: [],
+      }],
+      skip: [],
+    };
+    const config = makeStudyConfig({
+      components: {
+        earlier: { type: 'markdown', path: 'earlier.md', response: [] },
+        current: { type: 'markdown', path: 'current.md', response: [] },
+      },
+      sequence: dynamicSequence,
+    });
+    const answers = {
+      adaptive_0_earlier_0: makeStoredAnswer({
+        identifier: 'adaptive_0_earlier_0', componentName: 'earlier', trialOrder: '0_0',
+      }),
+      adaptive_0_current_0: makeStoredAnswer({
+        identifier: 'adaptive_0_current_0', componentName: 'current', trialOrder: '0_0',
+      }),
+    };
+    const { getAllByRole } = await act(async () => render(
+      <StepsPanel participantSequence={dynamicSequence} participantAnswers={answers} studyConfig={config} isReplay />,
+    ));
+    const linkFor = (name: string) => getAllByRole('link').find((link) => link.querySelector('p')?.textContent === name);
+
+    expect(linkFor('earlier')?.getAttribute('data-active')).toBe('false');
+    expect(linkFor('current')?.getAttribute('data-active')).toBe('true');
+  });
+
   test('clicking a block item toggles collapse/expand', async () => {
     const { getAllByRole, queryAllByRole } = await act(async () => render(
       <StepsPanel
@@ -880,72 +1028,5 @@ describe('StepsPanel nested expand', () => {
       await act(async () => { fireEvent.click(linksAfterCollapse[0]); });
     }
     expect(queryAllByRole('link').length).toBeGreaterThan(0);
-  });
-});
-
-// ── utility tests ──────────────────────────────────────────────────────────────
-
-describe('StepsPanel tree walking', () => {
-  test('does not append answer-derived components for non-dynamic blocks', () => {
-    const block: Sequence = {
-      id: 'drawing100m',
-      order: 'fixed',
-      orderPath: 'root-0',
-      components: ['drawing100m', 'drawingFollowUp100M'],
-      skip: [],
-      interruptions: [],
-    };
-
-    const participantAnswers = {
-      drawing100m_3: {
-        componentName: 'drawing100m',
-      } as StoredAnswer,
-    };
-
-    expect(getDynamicComponentsForBlock(block, participantAnswers, 3)).toEqual([]);
-  });
-
-  test('appends answer-derived components for dynamic blocks', () => {
-    const block: Sequence = {
-      id: 'dynamicDrawing',
-      order: 'dynamic',
-      orderPath: 'root-0',
-      components: [],
-      skip: [],
-      interruptions: [],
-    };
-
-    const participantAnswers = {
-      dynamicDrawing_2_generatedA_0: {
-        componentName: 'generatedA',
-      } as StoredAnswer,
-      dynamicDrawing_2_generatedB_1: {
-        componentName: 'generatedB',
-      } as StoredAnswer,
-    };
-
-    expect(getDynamicComponentsForBlock(block, participantAnswers, 2)).toEqual(['generatedA', 'generatedB']);
-  });
-
-  test('does not include answers from similarly prefixed indices', () => {
-    const block: Sequence = {
-      id: 'dynamicDrawing',
-      order: 'dynamic',
-      orderPath: 'root-0',
-      components: [],
-      skip: [],
-      interruptions: [],
-    };
-
-    const participantAnswers = {
-      dynamicDrawing_2_generatedA_0: {
-        componentName: 'generatedA',
-      } as StoredAnswer,
-      dynamicDrawing_20_generatedWrong_0: {
-        componentName: 'generatedWrong',
-      } as StoredAnswer,
-    };
-
-    expect(getDynamicComponentsForBlock(block, participantAnswers, 2)).toEqual(['generatedA']);
   });
 });

@@ -610,7 +610,7 @@ export async function studyStoreCreator(
     store,
     actions: storeSlice.actions,
     globalStoreUpdaters: new Map<string, GlobalStoreUpdater>(),
-    trialAssetEntry: undefined as { identifier: string; key: string } | undefined,
+    trialAssetEntry: undefined as { identifier: string; studyId: string; key: string; segments?: string[] } | undefined,
   };
 }
 

@@ -22,7 +22,6 @@ export function projectGlobalStoreAnswers(answers: ParticipantData['answers'], a
           incorrectAnswers: {},
           startTime: 0,
           endTime: -1,
-          windowEvents: [],
           timedOut: false,
           helpButtonClickedCount: 0,
           checkAnswer: undefined,

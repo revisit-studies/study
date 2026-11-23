@@ -572,6 +572,7 @@ describe('ComponentController', () => {
     }));
     compile.mockRestore();
   });
+
   beforeEach(() => {
     vi.mocked(useCurrentComponent).mockReturnValue('end');
   });

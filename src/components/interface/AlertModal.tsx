@@ -10,6 +10,8 @@ import {
 import { useStoreActions, useStoreDispatch, useStoreSelector } from '../../store/store';
 import { useStorageEngine } from '../../storage/storageEngineHooks';
 
+export const STORAGE_RETRY_SUCCESS_EVENT = 'revisit-storage-retry-success';
+
 export function AlertModal() {
   const alertModal = useStoreSelector((state) => state.alertModal);
 
@@ -52,6 +54,7 @@ export function AlertModal() {
     setIsRetrying(true);
     try {
       await storageEngine.retryFailedWrites();
+      window.dispatchEvent(new Event(STORAGE_RETRY_SUCCESS_EVENT));
       close();
     } catch (error) {
       console.error('Failed to retry participant response data persistence', error);

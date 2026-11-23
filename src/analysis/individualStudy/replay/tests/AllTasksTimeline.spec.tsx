@@ -368,6 +368,7 @@ describe('AllTasksTimeline', () => {
             [t0 + 1_000, 'studyactivity', 'pointer-left'],
             [t0 + 2_000, 'studyactivity', 'focus-lost'],
             [t0 + 3_000, 'displaystatus', 'multiple'],
+            [t0 + 4_000, 'captureinterrupted', 'screen'],
           ],
         }),
       },
@@ -378,7 +379,146 @@ describe('AllTasksTimeline', () => {
     expect(html).toContain('Pointer left study page for trial1_0');
     expect(html).toContain('Study window lost focus for trial1_0');
     expect(html).toContain('Display status: multiple for trial1_0');
+    expect(html).toContain('Screen sharing stopped for trial1_0');
     expect(html).toContain('data-testid="study-activity-marker"');
+    expect(html).toContain('role="img" tabindex="0"');
+  });
+
+  test('maps activity markers into the task slot in uniform mode', () => {
+    const participant = makeParticipant({
+      answers: {
+        trial1_0: makeAnswer({
+          startTime: t0,
+          endTime: t0 + 10_000,
+          windowEvents: [[t0 + 5_000, 'studyactivity', 'pointer-left']],
+        }),
+      },
+    });
+    const html = renderToStaticMarkup(
+      <AllTasksTimeline
+        participantData={participant}
+        width={600}
+        studyId="test-study"
+        studyConfig={emptyConfig}
+        maxLength={undefined}
+        timelineMode="uniform"
+      />,
+    );
+    const marker = html.match(/<circle cx="([^"]+)"[^>]*data-task-identifier="trial1_0"/);
+    expect(marker).not.toBeNull();
+    expect(Number(marker?.[1])).toBeGreaterThan(20);
+    expect(Number(marker?.[1])).toBeLessThan(580);
+  });
+
+  test('includes earlier retained visits when positioning aggregate timeline markers', () => {
+    const participant = makeParticipant({
+      answers: {
+        trial1_0: makeAnswer({
+          startTime: t0 + 20_000,
+          endTime: t0 + 30_000,
+          recordingSegmentRanges: [
+            { assetIdentifier: 'segment-earlier', startTime: t0, endTime: t0 + 10_000 },
+            { assetIdentifier: 'segment-latest', startTime: t0 + 20_000, endTime: t0 + 30_000 },
+          ],
+          windowEvents: [
+            [t0 + 5_000, 'studyactivity', 'focus-lost'],
+            [t0 + 25_000, 'displaystatus', 'multiple'],
+          ],
+        }),
+      },
+    });
+    const html = renderToStaticMarkup(
+      <AllTasksTimeline
+        participantData={participant}
+        width={600}
+        studyId="test-study"
+        studyConfig={emptyConfig}
+        maxLength={undefined}
+        timelineMode="time"
+      />,
+    );
+    const markers = Array.from(html.matchAll(/<circle cx="([^"]+)"[^>]*data-task-identifier="trial1_0"/g));
+    expect(markers).toHaveLength(2);
+    expect(Number(markers[0][1])).toBeGreaterThan(20);
+    expect(Number(markers[1][1])).toBeGreaterThan(Number(markers[0][1]));
+  });
+
+  test('positions interrupted activity markers using the observed recording interval', () => {
+    const participant = makeParticipant({
+      answers: {
+        trial1_0: makeAnswer({
+          startTime: t0,
+          endTime: -1,
+          recordingEndTime: t0 + 10_000,
+          windowEvents: [
+            [t0 + 2_500, 'studyactivity', 'focus-lost'],
+            [t0 + 7_500, 'studyactivity', 'pointer-left'],
+          ],
+        }),
+      },
+    });
+    const html = renderToStaticMarkup(
+      <AllTasksTimeline
+        participantData={participant}
+        width={600}
+        studyId="test-study"
+        studyConfig={emptyConfig}
+        maxLength={undefined}
+        timelineMode="uniform"
+      />,
+    );
+    const markers = Array.from(html.matchAll(/<circle cx="([^"]+)"[^>]*data-task-identifier="trial1_0"/g));
+    expect(markers).toHaveLength(2);
+    expect(Number(markers[1][1])).toBeGreaterThan(Number(markers[0][1]));
+  });
+
+  test('draws an interrupted task bar across its observed interval in time mode', () => {
+    const participant = makeParticipant({
+      answers: {
+        trial1_0: makeAnswer({ startTime: t0, endTime: -1, recordingEndTime: t0 + 10_000 }),
+      },
+    });
+    const html = renderToStaticMarkup(
+      <AllTasksTimeline
+        participantData={participant}
+        width={600}
+        studyId="test-study"
+        studyConfig={emptyConfig}
+        maxLength={undefined}
+        timelineMode="time"
+      />,
+    );
+    const bar = html.match(/<rect[^>]*width="([^"]+)"[^>]*>/);
+    expect(Number(bar?.[1])).toBeGreaterThan(0);
+  });
+
+  test('uses archived audio segment times for incomplete task geometry in time mode', () => {
+    const participant = makeParticipant({
+      answers: {
+        trial1_0: makeAnswer({
+          startTime: 0,
+          endTime: -1,
+          recordingStartTime: t0 + 5_000,
+          recordingEndTime: t0 + 15_000,
+          recordingSegmentTimes: {
+            'audio-visit': { startTime: t0 + 5_000, endTime: t0 + 15_000 },
+          },
+        }),
+      },
+    });
+    const html = renderToStaticMarkup(
+      <AllTasksTimeline
+        participantData={participant}
+        width={600}
+        studyId="test-study"
+        studyConfig={emptyConfig}
+        maxLength={undefined}
+        timelineMode="time"
+      />,
+    );
+    const bar = html.match(/<rect[^>]*width="([^"]+)"[^>]*>/);
+    expect(Number(bar?.[1])).toBeGreaterThan(0);
+    expect(html).toContain('fill="#e9ecef"');
   });
 
   test('uses equal-width task slots and omits browsed-away intervals in uniform mode', () => {

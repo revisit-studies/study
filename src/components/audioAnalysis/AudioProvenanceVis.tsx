@@ -1,5 +1,5 @@
 import {
-  Box, Group, LoadingOverlay, Stack, useComputedColorScheme, useMantineTheme,
+  Box, Group, LoadingOverlay, Select, Stack, Text, useComputedColorScheme, useMantineTheme,
 } from '@mantine/core';
 import {
   useLocation, useNavigate, useParams, useSearchParams,
@@ -29,6 +29,8 @@ import { syncChannel, syncEmitter } from '../../utils/syncReplay';
 import type { ProvenanceLocation, StoredProvenance } from '../../store/types';
 import { getCombinedProvenance, getLegacyStoredAnswerProvenance } from '../../store/provenance';
 import { getReplaySelection } from './provenanceReplay';
+import { getRecordingEventLabel } from '../../utils/recordingEvents';
+import { getScreenRecordingSegmentUrl } from '../../utils/recordingAssets';
 
 const margin = {
   left: 20, top: 0, right: 20, bottom: 0,
@@ -61,7 +63,7 @@ export function AudioProvenanceVis({
   const participantId = useMemo(() => searchParams.get('participantId') || '', [searchParams]);
 
   const {
-    audioRef, updateReplayRef, duration, setDuration, seekTime,
+    audioRef, updateReplayRef, duration, setDuration, seekTime, setSeekTime,
   } = useReplayContext();
 
   const { storageEngine } = useStorageEngine();
@@ -83,7 +85,26 @@ export function AudioProvenanceVis({
   const [waveSurferWidth, setWaveSurferWidth] = useState<number>(0);
 
   const assetIdentifier = answers[taskName]?.assetIdentifier ?? taskName;
-  const startTime = useMemo(() => answers[taskName]?.startTime || 0, [answers, taskName]);
+  const recordingSegments = useMemo(() => {
+    const segments = answers[taskName]?.recordingSegments ?? [];
+    return Array.from(new Set([...segments, assetIdentifier]));
+  }, [answers, assetIdentifier, taskName]);
+  const [selectedRecordingSegment, setSelectedRecordingSegment] = useState(searchParams.get('recordingSegment') ?? assetIdentifier);
+  const [loadedRecordingSegment, setLoadedRecordingSegment] = useState(assetIdentifier);
+  const recordingSegmentRange = answers[taskName]?.recordingSegmentRanges
+    ?.find((range) => range.assetIdentifier === selectedRecordingSegment);
+  const recordingSegmentTime = answers[taskName]?.recordingSegmentTimes?.[selectedRecordingSegment];
+  const startTime = recordingSegmentRange?.startTime
+    ?? recordingSegmentTime?.startTime
+    ?? answers[taskName]?.recordingStartTime
+    ?? answers[taskName]?.startTime
+    ?? 0;
+  const answerEndTime = answers[taskName]?.endTime ?? -1;
+  const selectedSegmentEndTime = recordingSegmentRange?.endTime
+    ?? recordingSegmentTime?.endTime
+    ?? (answerEndTime > startTime ? answerEndTime : answers[taskName]?.recordingEndTime)
+    ?? startTime;
+  const selectedSegmentDuration = Math.max(0, (selectedSegmentEndTime - startTime) / 1000);
 
   const [currentNode, setCurrentNode] = useState<string | null>(null);
   const [currentResponseNodes, setCurrentResponseNodes] = useState<Record<ProvenanceLocation, string | undefined>>({
@@ -99,7 +120,22 @@ export function AudioProvenanceVis({
   const [playTime, setPlayTime] = useState<number>(0);
 
   const wavesurfer = useRef<WaveSurferType | null>(null);
+  const requestedRecordingSegment = useRef(assetIdentifier);
+  useEffect(() => {
+    requestedRecordingSegment.current = assetIdentifier;
+    setSelectedRecordingSegment(assetIdentifier);
+    setLoadedRecordingSegment(assetIdentifier);
+  }, [assetIdentifier, taskName]);
+  useEffect(() => {
+    const requestedSegment = searchParams.get('recordingSegment');
+    if (requestedSegment && recordingSegments.includes(requestedSegment)) {
+      setSelectedRecordingSegment(requestedSegment);
+    } else {
+      setSelectedRecordingSegment(assetIdentifier);
+    }
+  }, [assetIdentifier, recordingSegments, searchParams]);
   const loadedAnalysisUrls = useRef<string[]>([]);
+  const loadedAnalysisUrlGeneration = useRef<number | null>(null);
   const analysisLoadGeneration = useRef(0);
 
   const waveSurferDiv = useRef(null);
@@ -107,6 +143,7 @@ export function AudioProvenanceVis({
   const navigate = useNavigate();
 
   const [waveSurferLoading, setWaveSurferLoading] = useState<boolean>(true);
+  const [recordingLoadError, setRecordingLoadError] = useState<string | null>(null);
 
   const trrackForTrial = useRef<Trrack<object, string> | null>(null);
   const hasLoadableTask = Boolean(participantId && taskName && answers[taskName]);
@@ -115,6 +152,7 @@ export function AudioProvenanceVis({
     analysisLoadGeneration.current += 1;
     loadedAnalysisUrls.current.forEach((url) => URL.revokeObjectURL(url));
     loadedAnalysisUrls.current = [];
+    loadedAnalysisUrlGeneration.current = null;
   }, []);
 
   useEffect(() => {
@@ -178,7 +216,7 @@ export function AudioProvenanceVis({
       if (answers[taskName]?.trialOrder) {
         syncChannel.postMessage({
           key: 'trialOrder',
-          value: answers[taskName].trialOrder,
+          value: { trialOrder: answers[taskName].trialOrder, answerIdentifier: taskName },
         });
       }
     }
@@ -193,14 +231,18 @@ export function AudioProvenanceVis({
       });
     };
 
-    const trialOrderListener = (newValue: string) => {
-      const { step, funcIndex } = parseTrialOrder(newValue);
+    const trialOrderListener = (newValue: string | { trialOrder: string; answerIdentifier?: string }) => {
+      const trialOrder = typeof newValue === 'string' ? newValue : newValue.trialOrder;
+      const answerIdentifier = typeof newValue === 'string' ? undefined : newValue.answerIdentifier;
+      const { step, funcIndex } = parseTrialOrder(trialOrder);
       if (!studyId || step === null) {
         return;
       }
 
       const params = new URLSearchParams(routerLocation.search);
       params.set('participantId', participantId || '');
+      if (answerIdentifier) params.set('analysisAnswerId', answerIdentifier);
+      else params.delete('analysisAnswerId');
       const search = params.toString();
 
       if (context === 'provenanceVis') {
@@ -211,7 +253,9 @@ export function AudioProvenanceVis({
         return;
       }
 
-      const matchingIdentifier = Object.entries(answers).find(([_identifier, answer]) => answer.trialOrder === newValue)?.[0];
+      const matchingIdentifier = answerIdentifier
+        ? (answers[answerIdentifier]?.trialOrder === trialOrder ? answerIdentifier : undefined)
+        : Object.entries(answers).find(([_identifier, answer]) => answer.trialOrder === trialOrder)?.[0];
       if (!matchingIdentifier) {
         return;
       }
@@ -301,10 +345,8 @@ export function AudioProvenanceVis({
   }, [taskName, playTime, setTimeString, startTime, duration]);
 
   useEffect(() => {
-    // eslint-disable-next-line no-unsafe-optional-chaining
-    const length = answers[taskName]?.endTime - answers[taskName]?.startTime;
-    setDuration(length > -1 ? length / 1000 : 0);
-  }, [analysisHasAudio, answers, taskName, setDuration]);
+    setDuration(selectedSegmentDuration);
+  }, [analysisHasAudio, selectedSegmentDuration, setDuration]);
 
   const isAnalysis = useIsAnalysis();
   const theme = useMantineTheme();
@@ -321,66 +363,95 @@ export function AudioProvenanceVis({
 
   const handleWSMount = useEvent(
     async (waveSurfer: WaveSurferType | null) => {
+      requestedRecordingSegment.current = selectedRecordingSegment;
       const loadGeneration = analysisLoadGeneration.current + 1;
       analysisLoadGeneration.current = loadGeneration;
       loadedAnalysisUrls.current.forEach((url) => URL.revokeObjectURL(url));
       loadedAnalysisUrls.current = [];
+      loadedAnalysisUrlGeneration.current = null;
       wavesurfer.current = waveSurfer;
 
       audioRef.current = null;
       updateReplayRef();
 
       if (waveSurfer && isAnalysis && hasLoadableTask && storageEngine) {
+        let ownedUrl: string | null = null;
         try {
           if (!participantId) {
             throw new Error('Participant ID is required to load audio');
           }
 
-          const [audioUrl, screenUrl] = await Promise.all([
-            safe(storageEngine.getAudio(assetIdentifier, participantId)),
-            safe(storageEngine.getScreenRecording(assetIdentifier, participantId)),
+          const [audioUrl, screenResult] = await Promise.all([
+            safe(Promise.resolve().then(() => storageEngine.getAudio(selectedRecordingSegment, participantId))),
+            getScreenRecordingSegmentUrl(
+              storageEngine,
+              participantId,
+              selectedRecordingSegment,
+              answers[taskName]?.recordingChunkKeys?.[selectedRecordingSegment] ?? [],
+            ).then((url) => ({ url, failed: false })).catch(() => ({ url: null, failed: true })),
           ]);
+          const { url: screenUrl, failed: screenLoadFailed } = screenResult;
           const loadedUrls = [audioUrl, screenUrl]
             .filter((url): url is string => !!url && url.startsWith('blob:'));
           if (loadGeneration !== analysisLoadGeneration.current) {
             loadedUrls.forEach((url) => URL.revokeObjectURL(url));
             return;
           }
-          loadedAnalysisUrls.current = loadedUrls;
-
           const url = screenUrl ?? audioUrl ?? null;
+          ownedUrl = url;
           const hasAudioSource = !!(screenUrl ?? audioUrl);
+          loadedUrls.filter((loadedUrl) => loadedUrl !== url).forEach((loadedUrl) => URL.revokeObjectURL(loadedUrl));
+          loadedAnalysisUrls.current = url?.startsWith('blob:') ? [url] : [];
+          loadedAnalysisUrlGeneration.current = loadGeneration;
+          setRecordingLoadError(screenLoadFailed ? 'The screen recording segment could not be loaded. Playing available audio instead.' : null);
 
           if (!url) {
             setAnalysisHasAudio(false);
             setWaveSurferLoading(false);
             wavesurfer.current?.empty();
+            if (screenLoadFailed) setRecordingLoadError('This recording segment could not be loaded. It may be incomplete.');
             return;
           }
 
           await waveSurfer.load(url!, undefined, duration);
           if (loadGeneration !== analysisLoadGeneration.current) {
-            loadedUrls.forEach((loadedUrl) => URL.revokeObjectURL(loadedUrl));
+            loadedUrls.filter((loadedUrl) => loadedUrl === url).forEach((loadedUrl) => URL.revokeObjectURL(loadedUrl));
+            if (loadedAnalysisUrlGeneration.current === loadGeneration) {
+              loadedAnalysisUrls.current = [];
+              loadedAnalysisUrlGeneration.current = null;
+            }
             return;
           }
           setWaveSurferLoading(false);
+          setLoadedRecordingSegment(selectedRecordingSegment);
 
           audioRef.current = waveSurfer.getMediaElement();
           updateReplayRef();
 
           setWaveSurferWidth(waveSurfer.getWidth());
           setAnalysisHasAudio(hasAudioSource);
-          waveSurfer.seekTo(0);
           waveSurfer.on('redrawcomplete', () => setWaveSurferWidth(waveSurfer.getWidth()));
-        } catch (error: unknown) {
+        } catch {
           if (loadGeneration !== analysisLoadGeneration.current) {
+            if (ownedUrl?.startsWith('blob:')) URL.revokeObjectURL(ownedUrl);
+            if (loadedAnalysisUrlGeneration.current === loadGeneration) {
+              loadedAnalysisUrls.current = [];
+              loadedAnalysisUrlGeneration.current = null;
+            }
             return;
+          }
+          if (loadedAnalysisUrlGeneration.current === loadGeneration) {
+            loadedAnalysisUrls.current.forEach((url) => URL.revokeObjectURL(url));
+            loadedAnalysisUrls.current = [];
+            loadedAnalysisUrlGeneration.current = null;
+          } else if (ownedUrl?.startsWith('blob:')) {
+            URL.revokeObjectURL(ownedUrl);
           }
           setAnalysisHasAudio(false);
           setWaveSurferLoading(false);
+          setRecordingLoadError('This recording segment could not be loaded. It may be incomplete.');
           audioRef.current = null;
           updateReplayRef();
-          throw new Error(error as string);
         }
       } else {
         setAnalysisHasAudio(false);
@@ -392,19 +463,133 @@ export function AudioProvenanceVis({
     },
   );
 
+  useEffect(() => {
+    if (!wavesurfer.current || !isAnalysis || !hasLoadableTask || !storageEngine
+      || !participantId
+      || (selectedRecordingSegment === loadedRecordingSegment
+        && selectedRecordingSegment === requestedRecordingSegment.current)) return undefined;
+    let canceled = false;
+    const waveSurfer = wavesurfer.current;
+    const generation = analysisLoadGeneration.current + 1;
+    analysisLoadGeneration.current = generation;
+    requestedRecordingSegment.current = selectedRecordingSegment;
+    loadedAnalysisUrls.current.forEach((url) => URL.revokeObjectURL(url));
+    loadedAnalysisUrls.current = [];
+    loadedAnalysisUrlGeneration.current = null;
+    setWaveSurferLoading(true);
+    setRecordingLoadError(null);
+    let ownedUrl: string | null = null;
+    const load = async () => {
+      const [audioUrl, screenResult] = await Promise.all([
+        safe(Promise.resolve().then(() => storageEngine.getAudio(selectedRecordingSegment, participantId))),
+        getScreenRecordingSegmentUrl(
+          storageEngine,
+          participantId,
+          selectedRecordingSegment,
+          answers[taskName]?.recordingChunkKeys?.[selectedRecordingSegment] ?? [],
+        ).then((url) => ({ url, failed: false })).catch(() => ({ url: null, failed: true })),
+      ]);
+      const { url: screenUrl, failed: screenLoadFailed } = screenResult;
+      const selectedUrls = Array.from(new Set([audioUrl, screenUrl].filter((candidate): candidate is string => !!candidate && candidate.startsWith('blob:'))));
+      const url = screenUrl ?? audioUrl;
+      ownedUrl = url;
+      if (canceled || generation !== analysisLoadGeneration.current) {
+        selectedUrls.forEach((selectedUrl) => URL.revokeObjectURL(selectedUrl));
+        return;
+      }
+      selectedUrls.filter((candidate) => candidate !== url).forEach((unusedUrl) => URL.revokeObjectURL(unusedUrl));
+      if (url?.startsWith('blob:')) {
+        loadedAnalysisUrls.current = [url];
+        loadedAnalysisUrlGeneration.current = generation;
+      }
+      setRecordingLoadError(screenLoadFailed
+        ? 'The screen recording segment could not be loaded. Playing available audio instead.'
+        : null);
+      if (url) await waveSurfer.load(url, undefined, duration);
+      if (canceled || generation !== analysisLoadGeneration.current) {
+        if (url?.startsWith('blob:')) URL.revokeObjectURL(url);
+        if (loadedAnalysisUrlGeneration.current === generation) {
+          loadedAnalysisUrls.current = [];
+          loadedAnalysisUrlGeneration.current = null;
+        }
+        return;
+      }
+      if (url) {
+        audioRef.current = waveSurfer.getMediaElement();
+        updateReplayRef();
+        setAnalysisHasAudio(true);
+      } else {
+        setAnalysisHasAudio(false);
+        if (screenLoadFailed) setRecordingLoadError('This recording segment could not be loaded. It may be incomplete.');
+        audioRef.current = null;
+        updateReplayRef();
+        waveSurfer.empty();
+      }
+      setWaveSurferLoading(false);
+      setLoadedRecordingSegment(selectedRecordingSegment);
+    };
+    load().catch(() => {
+      if (canceled || generation !== analysisLoadGeneration.current) {
+        if (ownedUrl?.startsWith('blob:')) URL.revokeObjectURL(ownedUrl);
+        if (loadedAnalysisUrlGeneration.current === generation) {
+          loadedAnalysisUrls.current = [];
+          loadedAnalysisUrlGeneration.current = null;
+        }
+        return;
+      }
+      if (loadedAnalysisUrlGeneration.current === generation) {
+        loadedAnalysisUrls.current.forEach((url) => URL.revokeObjectURL(url));
+        loadedAnalysisUrls.current = [];
+        loadedAnalysisUrlGeneration.current = null;
+      } else if (ownedUrl?.startsWith('blob:')) {
+        URL.revokeObjectURL(ownedUrl);
+      }
+      setAnalysisHasAudio(false);
+      setWaveSurferLoading(false);
+      setRecordingLoadError('This recording segment could not be loaded. It may be incomplete.');
+      audioRef.current = null;
+      updateReplayRef();
+    });
+    return () => { canceled = true; };
+  }, [answers, assetIdentifier, audioRef, duration, hasLoadableTask, isAnalysis, loadedRecordingSegment, participantId, selectedRecordingSegment, setAnalysisHasAudio, storageEngine, taskName, updateReplayRef]);
+
   const xScale = useMemo(() => {
-    if (!answers[taskName]?.startTime || !answers[taskName]?.endTime) {
+    if (!startTime || selectedSegmentDuration <= 0) {
       return null;
     }
-    const scale = d3.scaleLinear([margin.left, width - margin.right]).domain([0, duration]).clamp(true);
+    const scale = d3.scaleLinear([margin.left, width - margin.right]).domain([0, selectedSegmentDuration]).clamp(true);
 
     return scale;
-  }, [answers, taskName, duration, width]);
+  }, [selectedSegmentDuration, startTime, width]);
+  const activityEvents = useMemo(() => (answers[taskName]?.windowEvents ?? []).flatMap((event) => {
+    const label = getRecordingEventLabel(event);
+    return label && event[0] >= startTime && event[0] <= selectedSegmentEndTime ? [{ event, label }] : [];
+  }), [answers, selectedSegmentEndTime, startTime, taskName]);
 
   return (
     <Group wrap="nowrap" gap={0} mx={0}>
       <Stack ref={ref} style={{ width: '100%' }} gap={0}>
+        {recordingSegments.length > 1 && (
+          <Select
+            aria-label="Recording segment"
+            data={recordingSegments.map((segment, index) => ({ value: segment, label: `Recording segment ${index + 1}` }))}
+            value={selectedRecordingSegment}
+            onChange={(value) => {
+              if (!value) return;
+              setSeekTime(0);
+              setSelectedRecordingSegment(value);
+              setSearchParams((params) => {
+                params.set('recordingSegment', value);
+                return params;
+              }, { replace: true });
+            }}
+            size="xs"
+            w={190}
+            mb="xs"
+          />
+        )}
         <LoadingOverlay visible={waveSurferLoading && hasLoadableTask} overlayProps={{ blur: 5, backgroundOpacity: 0.35 }} />
+        {recordingLoadError && <Text c="red" role="alert">{recordingLoadError}</Text>}
 
         {hasLoadableTask
           ? (
@@ -434,9 +619,54 @@ export function AudioProvenanceVis({
               width={waveSurferWidth || (width - margin.left - margin.right)}
               height={25}
               margin={margin}
-              startTime={answers[taskName]?.startTime}
+              startTime={startTime}
             />
           ) : null}
+
+        {xScale && activityEvents.length > 0 && (
+          <>
+            <svg
+              aria-hidden="true"
+              data-testid="task-activity-playback-timeline"
+              width={width}
+              style={{ width, height: 16, display: 'block' }}
+            >
+              {activityEvents.map(({ event, label }, index) => (
+                <circle
+                  key={`${event[0]}-${index}`}
+                  cx={xScale((event[0] - startTime) / 1000)}
+                  cy={8}
+                  r={4}
+                  fill={event[1] === 'studyactivity' ? 'var(--mantine-color-orange-filled)' : 'var(--mantine-color-violet-filled)'}
+                  data-testid="task-activity-playback-marker"
+                >
+                  <title>{`${label} at ${youtubeReadableDuration(Math.max(0, event[0] - startTime))}`}</title>
+                </circle>
+              ))}
+            </svg>
+            <div
+              role="list"
+              aria-label="Task activity events"
+              style={{
+                position: 'absolute',
+                width: 1,
+                height: 1,
+                padding: 0,
+                margin: -1,
+                overflow: 'hidden',
+                clipPath: 'inset(50%)',
+                whiteSpace: 'nowrap',
+                border: 0,
+              }}
+            >
+              {activityEvents.map(({ event, label }, index) => (
+                <div role="listitem" key={`${event[0]}-${index}`}>
+                  {`${youtubeReadableDuration(Math.max(0, event[0] - startTime))}: ${label}`}
+                </div>
+              ))}
+            </div>
+          </>
+        )}
 
         {xScale ? (
           <Timer height={(analysisHasAudio ? 49 : 0) + 25} width={width} xScale={xScale} debounceUpdateTimer={_setPlayTime} />

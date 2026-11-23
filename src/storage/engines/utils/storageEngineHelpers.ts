@@ -78,7 +78,7 @@ export function calculateProgressData(
       return 1;
     }
 
-    return Object.entries(answers).filter(([key, _]) => key.includes(`${step}_`)).length;
+    return Object.entries(answers).filter(([key]) => key.includes(`${step}_`)).length;
   }).reduce((a, b) => a + b, 0);
 
   return { total, answered, isDynamic };

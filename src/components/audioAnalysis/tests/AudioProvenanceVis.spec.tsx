@@ -1,7 +1,7 @@
 import { forwardRef, ReactNode } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import {
-  render, act, cleanup, renderHook,
+  render, act, cleanup, renderHook, fireEvent, waitFor,
 } from '@testing-library/react';
 import {
   afterEach, beforeAll, beforeEach, describe, expect, test, vi,
@@ -19,9 +19,17 @@ import { syncChannel, syncEmitter } from '../../../utils/syncReplay';
 
 let mockColorScheme = 'light';
 let mockSearchParams = new URLSearchParams('participantId=p1');
+const mockProvenanceStartTime = vi.hoisted(() => vi.fn());
+const mockAudioState = vi.hoisted(() => ({ isAnalysis: false, storageEngine: null as unknown }));
+const mockWaveState = vi.hoisted(() => ({ onMount: undefined as ((waveSurfer: unknown) => void) | undefined }));
+const mockNavigate = vi.hoisted(() => vi.fn());
+let mockRouterLocationSearch = '';
 
 vi.mock('wavesurfer-react', () => ({
-  WaveSurfer: vi.fn(({ children }: { children?: ReactNode }) => <div data-testid="wavesurfer">{children}</div>),
+  WaveSurfer: vi.fn(({ children, onMount }: { children?: ReactNode; onMount?: (waveSurfer: unknown) => void }) => {
+    mockWaveState.onMount = onMount;
+    return <div data-testid="wavesurfer">{children}</div>;
+  }),
   WaveForm: () => <div data-testid="waveform" />,
 }));
 
@@ -32,9 +40,19 @@ vi.mock('@mantine/core', async () => ({
   Box: forwardRef<HTMLDivElement, { children?: ReactNode }>(function Box({ children }, ref) { // eslint-disable-line prefer-arrow-callback
     return <div ref={ref}>{children}</div>;
   }),
+  Text: ({ children, ...props }: { children?: ReactNode; [key: string]: unknown }) => <div {...props}>{children}</div>,
   Group: ({ children }: { children?: ReactNode }) => <div>{children}</div>,
   LoadingOverlay: ({ visible }: { visible: boolean }) => (
     visible ? <div data-testid="loading-overlay" /> : null
+  ),
+  Select: ({
+    data, value, onChange, ...props
+  }: {
+    data: Array<{ value: string; label: string }>; value: string; onChange: (value: string) => void; [key: string]: unknown;
+  }) => (
+    <select {...props} value={value} onChange={(event) => onChange(event.target.value)}>
+      {data.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}
+    </select>
   ),
   Stack: forwardRef<HTMLDivElement, { children?: ReactNode }>(function Stack({ children }, ref) { // eslint-disable-line prefer-arrow-callback
     return <div ref={ref}>{children}</div>;
@@ -47,8 +65,8 @@ vi.mock('@mantine/hooks', () => ({
 }));
 
 vi.mock('react-router', () => ({
-  useLocation: () => ({ search: '' }),
-  useNavigate: () => vi.fn(),
+  useLocation: () => ({ search: mockRouterLocationSearch }),
+  useNavigate: () => mockNavigate,
   useParams: () => ({ studyId: 'test-study' }),
   useSearchParams: () => {
     const params = mockSearchParams;
@@ -60,15 +78,18 @@ vi.mock('react-router', () => ({
 }));
 
 vi.mock('../../../storage/storageEngineHooks', () => ({
-  useStorageEngine: () => ({ storageEngine: null }),
+  useStorageEngine: () => ({ storageEngine: mockAudioState.storageEngine }),
 }));
 
 vi.mock('../TaskProvenanceTimeline', () => ({
-  TaskProvenanceTimeline: () => <div data-testid="provenance-timeline" />,
+  TaskProvenanceTimeline: ({ startTime }: { startTime: number }) => {
+    mockProvenanceStartTime(startTime);
+    return <div data-testid="provenance-timeline" />;
+  },
 }));
 
 vi.mock('../../../store/hooks/useIsAnalysis', () => ({
-  useIsAnalysis: () => false,
+  useIsAnalysis: () => mockAudioState.isAnalysis,
 }));
 
 vi.mock('../Timer', () => ({
@@ -88,7 +109,10 @@ vi.mock('../../../utils/encryptDecryptIndex', () => ({
 }));
 
 vi.mock('../../../utils/parseTrialOrder', () => ({
-  parseTrialOrder: vi.fn(() => ({ step: 0, funcIndex: null })),
+  parseTrialOrder: vi.fn((trialOrder: string) => {
+    const [step, funcIndex] = trialOrder.split('_');
+    return { step: Number(step), funcIndex: funcIndex === undefined ? null : Number(funcIndex) };
+  }),
 }));
 
 const mockImportObject = vi.fn();
@@ -168,7 +192,16 @@ function makeNode(
 
 const rootNode = makeNode('root');
 
-beforeEach(() => { vi.clearAllMocks(); mockColorScheme = 'light'; });
+beforeEach(() => {
+  vi.clearAllMocks();
+  mockColorScheme = 'light';
+  mockSearchParams = new URLSearchParams('participantId=p1');
+  mockAudioState.isAnalysis = false;
+  mockAudioState.storageEngine = null;
+  mockWaveState.onMount = undefined;
+  mockRouterLocationSearch = '';
+  mockReplayContext.seekTime = 0;
+});
 afterEach(() => { cleanup(); });
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -445,11 +478,446 @@ describe('AudioProvenanceVis', () => {
     expect(getByTestId('provenance-timeline')).toBeDefined();
   });
 
+  test('shows recorded activity markers and accessible event times without a provenance graph', async () => {
+    const { getByTestId, getAllByTestId, getByRole } = await act(async () => render(
+      <AudioProvenanceVis
+        {...defaultProps}
+        answers={{
+          trial_0: makeStoredAnswer({
+            startTime: 1000,
+            endTime: -1,
+            recordingEndTime: 6000,
+            windowEvents: [
+              [2000, 'studyactivity', 'pointer-left'],
+              [4000, 'displaystatus', 'multiple'],
+            ],
+          }),
+        }}
+      />,
+    ));
+    expect(getByTestId('task-activity-playback-timeline')).toBeDefined();
+    expect(getAllByTestId('task-activity-playback-marker')).toHaveLength(2);
+    const activityList = getByRole('list', { name: 'Task activity events' });
+    expect(activityList.textContent).toContain('1000: Pointer left study page');
+    expect(activityList.textContent).toContain('3000: Display status: multiple');
+    const markerPositions = getAllByTestId('task-activity-playback-marker').map((marker) => marker.getAttribute('cx'));
+    expect(markerPositions[0]).not.toBe(markerPositions[1]);
+  });
+
+  test('keeps late activity markers inside the SVG when WaveSurfer reports a narrower width', async () => {
+    mockAudioState.isAnalysis = true;
+    mockAudioState.storageEngine = {
+      getAudio: vi.fn(async () => null),
+      getScreenRecording: vi.fn(async () => 'screen-recording-url'),
+      getProvenance: vi.fn(async () => null),
+    };
+    const answer = makeStoredAnswer({
+      assetIdentifier: 'segment-a',
+      startTime: 1000,
+      endTime: 2000,
+      recordingEndTime: 2000,
+      recordingSegmentRanges: [{ assetIdentifier: 'segment-a', startTime: 1000, endTime: 2000 }],
+      windowEvents: [[2000, 'displaystatus', 'multiple']],
+    });
+    const view = await act(async () => render(
+      <AudioProvenanceVis {...defaultProps} answers={{ trial_0: answer }} />,
+    ));
+    const waveSurfer = {
+      load: vi.fn(async () => {}),
+      getMediaElement: () => document.createElement('audio'),
+      getWidth: () => 420,
+      seekTo: vi.fn(),
+      on: vi.fn(),
+      empty: vi.fn(),
+      setOptions: vi.fn(),
+    };
+    await act(async () => { await mockWaveState.onMount?.(waveSurfer); });
+
+    const timeline = view.getByTestId('task-activity-playback-timeline');
+    const marker = view.getByTestId('task-activity-playback-marker');
+    expect(timeline.getAttribute('width')).toBe('500');
+    expect(Number(marker.getAttribute('cx'))).toBeLessThanOrEqual(Number(timeline.getAttribute('width')));
+    expect(marker.getAttribute('cx')).toBe('480');
+  });
+
+  test('offers prior recording segments for replay', async () => {
+    const { getByRole } = await act(async () => render(
+      <AudioProvenanceVis
+        {...defaultProps}
+        answers={{
+          trial_0: makeStoredAnswer({
+            assetIdentifier: 'segment-2',
+            recordingSegments: ['segment-1', 'segment-2'],
+            recordingSegmentRanges: [
+              { assetIdentifier: 'segment-1', startTime: 1000, endTime: 4000 },
+              { assetIdentifier: 'segment-2', startTime: 5000, endTime: 8000 },
+            ],
+            startTime: 1000,
+            endTime: 8000,
+          }),
+        }}
+      />,
+    ));
+    expect(getByRole('combobox', { name: 'Recording segment' })).toBeDefined();
+  });
+
+  test('loads audio from the selected earlier segment', async () => {
+    mockAudioState.isAnalysis = true;
+    mockSearchParams = new URLSearchParams('participantId=p1');
+    const getAudio = vi.fn(async (identifier: string) => `audio-${identifier}`);
+    mockAudioState.storageEngine = {
+      getAudio,
+      getScreenRecording: vi.fn(async () => null),
+      getProvenance: vi.fn(async () => null),
+    };
+    const waveSurfer = {
+      load: vi.fn(async () => {}),
+      getMediaElement: () => document.createElement('audio'),
+      getWidth: () => 500,
+      seekTo: vi.fn(),
+      on: vi.fn(),
+      empty: vi.fn(),
+      setOptions: vi.fn(),
+    };
+    const view = await act(async () => render(
+      <AudioProvenanceVis
+        {...defaultProps}
+        answers={{
+          trial_0: makeStoredAnswer({
+            assetIdentifier: 'audio-latest',
+            recordingSegments: ['audio-earlier', 'audio-latest'],
+            recordingSegmentTimes: {
+              'audio-earlier': { startTime: 1000, endTime: 3000 },
+              'audio-latest': { startTime: 4000, endTime: 6000 },
+            },
+          }),
+        }}
+      />,
+    ));
+    await act(async () => { mockWaveState.onMount?.(waveSurfer); });
+    fireEvent.change(view.getByRole('combobox', { name: 'Recording segment' }), { target: { value: 'audio-earlier' } });
+
+    await waitFor(() => expect(waveSurfer.load).toHaveBeenLastCalledWith('audio-audio-earlier', undefined, expect.any(Number)));
+    expect(getAudio).toHaveBeenCalledWith('audio-earlier', 'p1');
+    await waitFor(() => expect(mockReplayContext.setDuration).toHaveBeenLastCalledWith(2));
+  });
+
+  test('preserves the replay position while the initial waveform load is pending', async () => {
+    mockAudioState.isAnalysis = true;
+    mockSearchParams = new URLSearchParams('participantId=p1&t=7');
+    mockReplayContext.seekTime = 7;
+    mockReplayContext.setSeekTime.mockClear();
+    mockAudioState.storageEngine = {
+      getAudio: vi.fn(async () => 'audio-initial'),
+      getScreenRecording: vi.fn(async () => null),
+      getProvenance: vi.fn(async () => null),
+    };
+    let finishWaveformLoad!: () => void;
+    const waveSurfer = {
+      load: vi.fn(() => new Promise<void>((resolve) => { finishWaveformLoad = resolve; })),
+      getMediaElement: () => document.createElement('audio'),
+      getWidth: () => 500,
+      seekTo: vi.fn(),
+      on: vi.fn(),
+      empty: vi.fn(),
+      setOptions: vi.fn(),
+    };
+    const view = await act(async () => render(<AudioProvenanceVis {...defaultProps} answers={answersWithTask} />));
+    act(() => { mockWaveState.onMount?.(waveSurfer); });
+    await waitFor(() => expect(waveSurfer.load).toHaveBeenCalledWith('audio-initial', undefined, expect.any(Number)));
+
+    mockReplayContext.seekTime = 12;
+    mockReplayContext.setSeekTime(12);
+    await act(async () => { finishWaveformLoad(); });
+
+    expect(mockReplayContext.setSeekTime).toHaveBeenLastCalledWith(12);
+    expect(mockReplayContext.setSeekTime).not.toHaveBeenCalledWith(0);
+    expect(view.queryByTestId('loading-overlay')).toBeNull();
+  });
+
+  test('keeps standalone audio playable when screen reconstruction fails on mount and segment change', async () => {
+    mockAudioState.isAnalysis = true;
+    mockSearchParams = new URLSearchParams('participantId=p1&recordingSegment=segment-a');
+    mockAudioState.storageEngine = {
+      getAudio: vi.fn(async (identifier: string) => `blob:audio-${identifier}`),
+      getScreenRecording: vi.fn(async () => null),
+      getProvenance: vi.fn(async () => null),
+    };
+    const revokeObjectURL = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {});
+    const waveSurfer = {
+      load: vi.fn(async () => {}),
+      getMediaElement: () => document.createElement('audio'),
+      getWidth: () => 500,
+      seekTo: vi.fn(),
+      on: vi.fn(),
+      empty: vi.fn(),
+      setOptions: vi.fn(),
+    };
+    const answers = {
+      trial_0: {
+        ...answersWithTask.trial_0,
+        assetIdentifier: 'segment-b',
+        recordingSegments: ['segment-a', 'segment-b'],
+        recordingSegmentRanges: [
+          { assetIdentifier: 'segment-a', startTime: 1000, endTime: 3000 },
+          { assetIdentifier: 'segment-b', startTime: 4000, endTime: 6000 },
+        ],
+        recordingChunkKeys: {
+          'segment-a': ['segment-a__chunk_0'],
+          'segment-b': ['segment-b__chunk_0'],
+        },
+      },
+    };
+    const view = await act(async () => render(<AudioProvenanceVis {...defaultProps} answers={answers} />));
+
+    await act(async () => { mockWaveState.onMount?.(waveSurfer); });
+    await waitFor(() => expect(waveSurfer.load).toHaveBeenCalledWith('blob:audio-segment-a', undefined, expect.any(Number)));
+    expect(view.getByText('The screen recording segment could not be loaded. Playing available audio instead.')).toBeDefined();
+    expect(view.queryByTestId('loading-overlay')).toBeNull();
+
+    fireEvent.change(view.getByRole('combobox', { name: 'Recording segment' }), { target: { value: 'segment-b' } });
+    expect(mockSearchParams.get('recordingSegment')).toBe('segment-b');
+    await waitFor(() => expect(waveSurfer.load).toHaveBeenLastCalledWith('blob:audio-segment-b', undefined, expect.any(Number)));
+    expect(view.queryByTestId('loading-overlay')).toBeNull();
+    expect(revokeObjectURL).toHaveBeenCalledWith('blob:audio-segment-a');
+    view.unmount();
+    expect(revokeObjectURL).toHaveBeenCalledWith('blob:audio-segment-b');
+  });
+
+  test('returns to the latest segment when cross-window sync clears the segment selection', async () => {
+    mockAudioState.isAnalysis = true;
+    mockSearchParams = new URLSearchParams('participantId=p1&recordingSegment=segment-a');
+    const answers = {
+      trial_0: {
+        ...answersWithTask.trial_0,
+        assetIdentifier: 'segment-b',
+        recordingSegments: ['segment-a', 'segment-b'],
+      },
+    };
+    const view = await act(async () => render(<AudioProvenanceVis {...defaultProps} answers={answers} />));
+    const segmentSelect = view.getByRole('combobox', { name: 'Recording segment' }) as HTMLSelectElement;
+    expect(segmentSelect.value).toBe('segment-a');
+
+    mockSearchParams = new URLSearchParams('participantId=p1');
+    await act(async () => view.rerender(<AudioProvenanceVis {...defaultProps} answers={answers} />));
+
+    expect(segmentSelect.value).toBe('segment-b');
+  });
+
+  test('uses retained recording timing for an incomplete task duration', async () => {
+    mockAudioState.isAnalysis = true;
+    mockAudioState.storageEngine = {
+      getAudio: vi.fn(async () => 'archived-audio'),
+      getScreenRecording: vi.fn(async () => null),
+      getProvenance: vi.fn(async () => null),
+    };
+    await act(async () => render(
+      <AudioProvenanceVis
+        {...defaultProps}
+        answers={{
+          trial_0: makeStoredAnswer({
+            startTime: 0,
+            endTime: -1,
+            recordingStartTime: 1000,
+            recordingEndTime: 6000,
+          }),
+        }}
+      />,
+    ));
+
+    await waitFor(() => expect(mockReplayContext.setDuration).toHaveBeenCalledWith(5));
+  });
+
+  test('uses the selected recording segment start for provenance markers', async () => {
+    mockSearchParams = new URLSearchParams('participantId=p1&recordingSegment=segment-2');
+    const { getAllByTestId, getByRole } = await act(async () => render(
+      <AudioProvenanceVis
+        {...defaultProps}
+        answers={{
+          trial_0: {
+            ...answersWithStimulus.trial_0,
+            ...makeStoredAnswer({
+              assetIdentifier: 'segment-2',
+              recordingSegments: ['segment-1', 'segment-2'],
+              recordingSegmentRanges: [
+                { assetIdentifier: 'segment-1', startTime: 1000, endTime: 4000 },
+                { assetIdentifier: 'segment-2', startTime: 5000, endTime: 8000 },
+              ],
+              startTime: 1000,
+              endTime: 8000,
+              windowEvents: [
+                [2000, 'studyactivity', 'pointer-left'],
+                [6000, 'displaystatus', 'multiple'],
+              ],
+            }),
+          },
+        }}
+      />,
+    ));
+    expect(mockProvenanceStartTime).toHaveBeenCalledWith(5000);
+    expect(getAllByTestId('task-activity-playback-marker')).toHaveLength(1);
+    const activityList = getByRole('list', { name: 'Task activity events' });
+    expect(activityList.textContent).toContain('Display status: multiple');
+    expect(activityList.textContent).not.toContain('Pointer left study page');
+  });
+
+  test('restores the requested source when selection returns to a segment with a deferred load in flight', async () => {
+    mockAudioState.isAnalysis = true;
+    mockSearchParams = new URLSearchParams('participantId=p1&recordingSegment=segment-a');
+    mockAudioState.storageEngine = {
+      getScreenRecording: vi.fn(async (identifier: string) => `url-${identifier}`),
+      getProvenance: vi.fn(async () => null),
+    };
+    let resolveSegmentB!: () => void;
+    let currentSource = '';
+    const waveSurfer = {
+      load: vi.fn((url: string) => {
+        currentSource = url;
+        return url === 'url-segment-b' ? new Promise<void>((resolve) => { resolveSegmentB = resolve; }) : Promise.resolve();
+      }),
+      getMediaElement: () => document.createElement('audio'),
+      getWidth: () => 500,
+      seekTo: vi.fn(),
+      on: vi.fn(),
+      empty: vi.fn(),
+      setOptions: vi.fn(),
+    };
+    const answers = {
+      trial_0: {
+        ...answersWithTask.trial_0,
+        assetIdentifier: 'segment-c',
+        recordingSegments: ['segment-a', 'segment-b', 'segment-c'],
+        recordingSegmentRanges: [
+          { assetIdentifier: 'segment-a', startTime: 1000, endTime: 3000 },
+          { assetIdentifier: 'segment-b', startTime: 4000, endTime: 6000 },
+          { assetIdentifier: 'segment-c', startTime: 7000, endTime: 9000 },
+        ],
+      },
+    };
+    const view = await act(async () => render(<AudioProvenanceVis {...defaultProps} answers={answers} />));
+    await act(async () => { mockWaveState.onMount?.(waveSurfer); });
+    await waitFor(() => expect(waveSurfer.load).toHaveBeenCalledWith('url-segment-a', undefined, expect.any(Number)));
+    mockReplayContext.setSeekTime.mockClear();
+
+    fireEvent.change(view.getByRole('combobox', { name: 'Recording segment' }), { target: { value: 'segment-b' } });
+    await waitFor(() => expect(resolveSegmentB).toBeTypeOf('function'));
+    expect(currentSource).toBe('url-segment-b');
+
+    fireEvent.change(view.getByRole('combobox', { name: 'Recording segment' }), { target: { value: 'segment-a' } });
+    await waitFor(() => expect(waveSurfer.load).toHaveBeenLastCalledWith('url-segment-a', undefined, expect.any(Number)));
+    await waitFor(() => expect(currentSource).toBe('url-segment-a'));
+    expect(mockReplayContext.setSeekTime).toHaveBeenCalledWith(0);
+    await act(async () => { resolveSegmentB(); });
+    expect(waveSurfer.load).toHaveBeenLastCalledWith('url-segment-a', undefined, expect.any(Number));
+    expect(view.queryByTestId('loading-overlay')).toBeNull();
+  });
+
+  test('stale initial load cannot revoke a newer segment URL', async () => {
+    mockAudioState.isAnalysis = true;
+    mockSearchParams = new URLSearchParams('participantId=p1&recordingSegment=segment-a');
+    mockAudioState.storageEngine = {
+      getAudio: vi.fn(async (identifier: string) => `blob:audio-${identifier}`),
+      getScreenRecording: vi.fn(async (identifier: string) => `blob:screen-${identifier}`),
+      getProvenance: vi.fn(async () => null),
+    };
+    let resolveInitialLoad!: () => void;
+    let currentSource = '';
+    const waveSurfer = {
+      load: vi.fn((url: string) => {
+        currentSource = url;
+        return url === 'blob:screen-segment-a' ? new Promise<void>((resolve) => { resolveInitialLoad = resolve; }) : Promise.resolve();
+      }),
+      getMediaElement: () => document.createElement('audio'),
+      getWidth: () => 500,
+      seekTo: vi.fn(),
+      on: vi.fn(),
+      empty: vi.fn(),
+      setOptions: vi.fn(),
+    };
+    const revokeObjectURL = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {});
+    const answers = {
+      trial_0: {
+        ...answersWithTask.trial_0,
+        assetIdentifier: 'segment-b',
+        recordingSegments: ['segment-a', 'segment-b'],
+        recordingSegmentRanges: [
+          { assetIdentifier: 'segment-a', startTime: 1000, endTime: 3000 },
+          { assetIdentifier: 'segment-b', startTime: 4000, endTime: 6000 },
+        ],
+      },
+    };
+    const view = await act(async () => render(<AudioProvenanceVis {...defaultProps} answers={answers} />));
+    act(() => { mockWaveState.onMount?.(waveSurfer); });
+    await waitFor(() => expect(waveSurfer.load).toHaveBeenCalledWith('blob:screen-segment-a', undefined, expect.any(Number)));
+
+    fireEvent.change(view.getByRole('combobox', { name: 'Recording segment' }), { target: { value: 'segment-b' } });
+    await waitFor(() => expect(waveSurfer.load).toHaveBeenLastCalledWith('blob:screen-segment-b', undefined, expect.any(Number)));
+    expect(currentSource).toBe('blob:screen-segment-b');
+
+    await act(async () => { resolveInitialLoad(); });
+
+    expect(revokeObjectURL).not.toHaveBeenCalledWith('blob:screen-segment-b');
+    expect(currentSource).toBe('blob:screen-segment-b');
+    expect(view.queryByTestId('loading-overlay')).toBeNull();
+    view.unmount();
+  });
+
+  test('revokes both blob media URLs when a segment load is canceled', async () => {
+    mockAudioState.isAnalysis = true;
+    mockSearchParams = new URLSearchParams('participantId=p1&recordingSegment=segment-a');
+    let resolveScreenB!: (url: string) => void;
+    mockAudioState.storageEngine = {
+      getAudio: vi.fn(async (identifier: string) => (identifier === 'segment-b' ? 'blob:audio-b' : `audio-${identifier}`)),
+      getScreenRecording: vi.fn((identifier: string) => (identifier === 'segment-b'
+        ? new Promise<string>((resolve) => { resolveScreenB = resolve; })
+        : Promise.resolve(`screen-${identifier}`))),
+      getProvenance: vi.fn(async () => null),
+    };
+    const revokeObjectURL = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {});
+    const waveSurfer = {
+      load: vi.fn(async () => {}),
+      getMediaElement: () => document.createElement('audio'),
+      getWidth: () => 500,
+      seekTo: vi.fn(),
+      on: vi.fn(),
+      empty: vi.fn(),
+      setOptions: vi.fn(),
+    };
+    const answers = {
+      trial_0: {
+        ...answersWithTask.trial_0,
+        assetIdentifier: 'segment-c',
+        recordingSegments: ['segment-a', 'segment-b', 'segment-c'],
+        recordingSegmentRanges: [
+          { assetIdentifier: 'segment-a', startTime: 1000, endTime: 3000 },
+          { assetIdentifier: 'segment-b', startTime: 4000, endTime: 6000 },
+          { assetIdentifier: 'segment-c', startTime: 7000, endTime: 9000 },
+        ],
+      },
+    };
+    const view = await act(async () => render(<AudioProvenanceVis {...defaultProps} answers={answers} />));
+    await act(async () => { mockWaveState.onMount?.(waveSurfer); });
+    await waitFor(() => expect(waveSurfer.load).toHaveBeenCalledWith('screen-segment-a', undefined, expect.any(Number)));
+
+    fireEvent.change(view.getByRole('combobox', { name: 'Recording segment' }), { target: { value: 'segment-b' } });
+    await waitFor(() => expect(resolveScreenB).toBeTypeOf('function'));
+    fireEvent.change(view.getByRole('combobox', { name: 'Recording segment' }), { target: { value: 'segment-a' } });
+    await act(async () => { resolveScreenB('blob:screen-b'); });
+
+    await waitFor(() => expect(revokeObjectURL).toHaveBeenCalledWith('blob:audio-b'));
+    expect(revokeObjectURL).toHaveBeenCalledWith('blob:screen-b');
+    view.unmount();
+  });
+
   test('syncChannel.postMessage fires when answers have trialOrder', async () => {
     await act(async () => render(
       <AudioProvenanceVis {...defaultProps} answers={answersWithTask} />,
     ));
     expect(vi.mocked(syncChannel.postMessage)).toHaveBeenCalled();
+    expect(vi.mocked(syncChannel.postMessage)).toHaveBeenCalledWith(expect.objectContaining({
+      key: 'trialOrder',
+      value: { trialOrder: '0', answerIdentifier: 'trial_0' },
+    }));
   });
 
   test('_setCurrentNode in provenanceVis calls saveProvenance', async () => {
@@ -488,6 +956,43 @@ describe('AudioProvenanceVis — syncEmitter listeners', () => {
     const listener = entry?.[1] as ((v: string) => void) | undefined;
     expect(listener).toBeDefined();
     await act(async () => { listener?.('0'); });
+  });
+
+  test('trialOrderListener routes transcript sync to the exact colliding dynamic answer', async () => {
+    mockRouterLocationSearch = '?participantId=p1&revisitPageId=shared&analysisAnswerId=old-answer';
+    const syncedAnswers = {
+      'old-answer': makeStoredAnswer({ identifier: 'old-answer', componentName: 'old', trialOrder: '2_0' }),
+      'new-answer': makeStoredAnswer({ identifier: 'new-answer', componentName: 'new', trialOrder: '2_0' }),
+    };
+    await act(async () => render(<AudioProvenanceVis {...defaultProps} answers={syncedAnswers} />));
+    const listener = vi.mocked(syncEmitter.on).mock.calls.find(([event]) => event === 'trialOrder')?.[1] as
+      ((value: { trialOrder: string; answerIdentifier: string }) => void) | undefined;
+
+    await act(async () => { listener?.({ trialOrder: '2_0', answerIdentifier: 'new-answer' }); });
+
+    expect(mockNavigate).toHaveBeenCalledWith({
+      pathname: '/analysis/stats/test-study/tagging/new-answer',
+      search: '?participantId=p1&revisitPageId=shared&analysisAnswerId=new-answer',
+    });
+  });
+
+  test('trialOrderListener syncs exact selection into an Analyst replay route', async () => {
+    mockAudioState.isAnalysis = true;
+    mockRouterLocationSearch = '?participantId=p1&revisitPageId=shared&analysisAnswerId=old-answer';
+    const syncedAnswers = {
+      'old-answer': makeStoredAnswer({ identifier: 'old-answer', componentName: 'old', trialOrder: '2_0' }),
+      'new-answer': makeStoredAnswer({ identifier: 'new-answer', componentName: 'new', trialOrder: '2_0' }),
+    };
+    await act(async () => render(<AudioProvenanceVis {...defaultProps} context="provenanceVis" answers={syncedAnswers} />));
+    const listener = vi.mocked(syncEmitter.on).mock.calls.find(([event]) => event === 'trialOrder')?.[1] as
+      ((value: { trialOrder: string; answerIdentifier: string }) => void) | undefined;
+
+    await act(async () => { listener?.({ trialOrder: '2_0', answerIdentifier: 'new-answer' }); });
+
+    expect(mockNavigate).toHaveBeenCalledWith({
+      pathname: '/test-study/2/0',
+      search: '?participantId=p1&revisitPageId=shared&analysisAnswerId=new-answer',
+    });
   });
 
   test('cleanup removes syncEmitter listeners on unmount', async () => {

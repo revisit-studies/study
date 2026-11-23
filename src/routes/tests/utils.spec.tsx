@@ -36,7 +36,7 @@ let mockParams: Record<string, string | undefined> = { studyId: 'test-study' };
 let mockSearchParams = new URLSearchParams();
 let mockNavigate = vi.fn();
 let mockFlatSequence: string[] = ['intro', 'end'];
-let mockAnswers: Record<string, Record<string, string | number | object | undefined>> = {};
+let mockAnswers: Record<string, Record<string, string | number | boolean | object | undefined>> = {};
 let mockParticipantSequence: Sequence = {
   id: 'root', orderPath: 'root', order: 'fixed', components: ['intro', 'end'], skip: [],
 };
@@ -219,6 +219,37 @@ describe('useCurrentComponent', () => {
       : null));
     const { result } = renderHook(() => useCurrentComponent());
     expect(result.current).toBe('CompOne');
+  });
+
+  test('analysis replay resolves the explicitly selected dynamic answer', () => {
+    const selectedAnswerId = 'myFunc_2_OldComponent_0';
+    mockParams = { studyId: 'test-study', index: '2', funcIndex: '0' };
+    mockFlatSequence = ['intro', 'other', 'myFunc', 'end'];
+    mockSearchParams = new URLSearchParams(`participantId=p1&analysisAnswerId=${selectedAnswerId}`);
+    mockAnswers = {
+      [selectedAnswerId]: {
+        identifier: selectedAnswerId,
+        componentName: 'OldComponent',
+        trialOrder: '2_0',
+      },
+      myFunc_2_NewComponent_0: {
+        identifier: 'myFunc_2_NewComponent_0',
+        componentName: 'NewComponent',
+        trialOrder: '2_0',
+      },
+    };
+    vi.mocked(parseTrialOrder).mockImplementation((trialOrder) => (trialOrder === '2_0'
+      ? { step: 2, funcIndex: 0 }
+      : { step: null, funcIndex: null }));
+    vi.mocked(getComponent).mockImplementation((name) => (name === 'OldComponent' || name === 'NewComponent'
+      ? { type: 'markdown', path: `${name}.md`, response: [] } as IndividualComponent
+      : null));
+
+    const component = renderHook(() => useCurrentComponent());
+    expect(component.result.current).toBe('OldComponent');
+
+    const identifier = renderHook(() => useCurrentIdentifier());
+    expect(identifier.result.current).toBe(selectedAnswerId);
   });
 
   test('recreates a dynamic iteration when its only stored answer is malformed', async () => {

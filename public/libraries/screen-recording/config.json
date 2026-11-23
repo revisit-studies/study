@@ -21,5 +21,5 @@
     }
   },
   "sequences": {},
-  "additionalDescription": "The `screenRecordingPermission` component is required before any screen recording begins. It also handles webcam permission for combined screen and webcam studies, and includes a microphone check when audio recording is enabled. See [Record Screen and Webcam](https://revisit.dev/docs/designing-studies/record-screen/) for setup and participant permission details."
+  "additionalDescription": "The `screenRecordingPermission` component is required before any screen recording begins. It also handles webcam permission for combined screen and webcam studies, and includes a microphone check when audio recording is enabled. Set `uiConfig.requireEntireScreen` to `true` alongside `uiConfig.recordScreen: true` to require a verified entire-monitor share for recorded tasks. In that mode, recorded tasks stay blocked until the browser verifies a monitor capture, and participant page-exit, focus, visibility, and display-count observations appear on the Analyst timeline. Browser support for capture-source and display-count reporting varies. See [Record Screen and Webcam](https://revisit.dev/docs/designing-studies/record-screen/) for setup and participant permission details."
 }
