@@ -479,6 +479,7 @@ describe('getTableData', () => {
       ...participant.answers.testComponent_0,
       identifier: 'adaptive_0_testComponent_0',
       trialOrder: '0_0',
+      answer: {},
       endTime: -1,
       recordingArchived: true,
     };
@@ -513,6 +514,7 @@ describe('getTableData', () => {
       rejectTime: new Date(rejectedAt).toISOString(),
       percentComplete: '100.00',
     }));
+    expect(tableData.rows).not.toContainEqual(expect.objectContaining({ trialOrder: '0_0' }));
   });
 
   test('omits window event rows by default', async () => {

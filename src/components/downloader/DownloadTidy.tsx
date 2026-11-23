@@ -166,7 +166,7 @@ function participantDataToRows(
       ...(properties.includes('condition') ? { condition: conditionValue } : {}),
       ...(properties.includes('stage') ? { stage: participant.stage } : {}),
     }] : []),
-    ...Object.values(participant.answers).map((trialAnswer) => {
+    ...activeAnswers.map(([, trialAnswer]) => {
       // Get the whole component, including the base component if there is inheritance
       const trialId = trialAnswer.componentName;
       const { trialOrder } = trialAnswer;

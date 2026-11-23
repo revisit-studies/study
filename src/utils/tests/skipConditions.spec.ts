@@ -39,6 +39,28 @@ test('skip decisions preserve the dynamic threshold for saved fractional scores'
   }, answers, config)).toBe(true);
 });
 
+test('dynamic skip evaluation prefers the stored component name when an identifier prefix collides', () => {
+  const config = makeConfig();
+  config.components.adaptive_1_trial = {
+    ...config.components.trial,
+    correctAnswer: [{ id: 'q', answer: 8 }],
+  };
+  const stored = makeStoredAnswer({
+    identifier: 'adaptive_1_trial_0',
+    componentName: 'trial',
+    trialOrder: '1_0',
+    answer: { q: 8 },
+    correctAnswer: [{ id: 'q', answer: 10 }],
+  });
+  const answers = getStoredAnswersForSkipEvaluation({ [stored.identifier]: stored });
+
+  expect(conditionIsTriggered({
+    ...skipOnIncorrect,
+    firstIndex: 1,
+    lastIndex: 1,
+  }, answers, config)).toBe(true);
+});
+
 test('an explicitly empty dynamic rule list does not restore template grading during skips', () => {
   const answers = getStoredAnswersForSkipEvaluation({
     trial_0: makeStoredAnswer({ answer: { q: 5 }, correctAnswer: [] }),

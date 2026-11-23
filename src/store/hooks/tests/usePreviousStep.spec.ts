@@ -76,6 +76,7 @@ const findFuncBlockMock = vi.mocked(findFuncBlock);
 
 beforeEach(() => {
   vi.clearAllMocks();
+  mockUseStoreSelector.mockImplementation((selector) => selector({ answers: {} } as StoreState));
   useParamsMock.mockReturnValue({});
   useCurrentStepMock.mockReturnValue(1);
   useIsAnalysisMock.mockReturnValue(false);
@@ -164,6 +165,11 @@ describe('goToPreviousStep', () => {
   test('dispatches deleteDynamicBlockAnswers and navigates when in a funcIndex block', async () => {
     useCurrentStepMock.mockReturnValue(1);
     useParamsMock.mockReturnValue({ funcIndex: '2' }); // funcIndex = '2' → decryptIndex = 2 → not 0 → stays in block
+    mockUseStoreSelector.mockImplementation((selector) => selector({
+      answers: {
+        trial1_1_question_1: { componentName: 'question', trialOrder: '1_1' },
+      },
+    } as unknown as StoreState));
     const { result } = renderHook(() => usePreviousStep());
     await act(async () => { await result.current.goToPreviousStep(); });
     expect(mockDispatch).toHaveBeenCalled();
@@ -201,6 +207,11 @@ describe('goToPreviousStep', () => {
     useParamsMock.mockReturnValue({ funcIndex: '1' });
     vi.mocked(getSequenceFlatMapMock).mockReturnValue(['intro', 'dynamic-block', 'end']);
     vi.mocked(findFuncBlockMock).mockReturnValue({ id: 'dynamic-block' } as never);
+    mockUseStoreSelector.mockImplementation((selector) => selector({
+      answers: {
+        'dynamic-block_1_question_0': { componentName: 'question', trialOrder: '1_0' },
+      },
+    } as unknown as StoreState));
 
     const { result } = renderHook(() => usePreviousStep());
     await act(async () => { await result.current.goToPreviousStep(); });

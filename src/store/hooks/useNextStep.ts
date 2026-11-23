@@ -555,6 +555,8 @@ export function useNextStep(responses?: Response[], correctAnswers?: Answer[]) {
         answersForSkipEvaluation[identifier] = {
           answer: answerToPersist,
           timedOut: false,
+          componentName: toSave.componentName,
+          trialOrder: toSave.trialOrder,
           checkAnswer: submissionCheckAnswer,
           correctAnswer: correctAnswerConfig,
           store: entryStore,
