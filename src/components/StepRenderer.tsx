@@ -937,6 +937,7 @@ export function StepRenderer() {
                   width={sidebarWidth}
                   top={showTitleBar ? 70 : 0}
                   bottom={isAnalysis ? 180 : 0}
+                  constrainToViewport={isAnalysis}
                   sidebarOpen={sidebarOpen}
                   inert={isVisitFinalizing}
                 />
