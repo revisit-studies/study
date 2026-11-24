@@ -11,19 +11,16 @@ import {
 } from '@tabler/icons-react';
 import { PREFIX } from '../../utils/Prefix';
 import { useAppColorMode } from '../../components/AppThemeProvider';
-
-const STUDY_SCHEMA_VERSION_REGEX = /\/study\/(v\d+\.\d+\.\d+)\//;
+import { APP_VERSION, formatAppVersion } from '../../utils/version';
 
 export function AppHeader({
   studyIds,
   selectedStudyId,
   studyHref,
-  studyConfigs,
 }: {
   studyIds: string[];
   selectedStudyId?: string;
   studyHref?: string;
-  studyConfigs?: Record<string, { $schema?: unknown } | null>;
 }) {
   const navigate = useNavigate();
   const { studyId } = useParams();
@@ -32,14 +29,6 @@ export function AppHeader({
   const colorModeLabel = colorMode === 'dark' ? 'Switch to light mode' : 'Switch to dark mode';
 
   const selectorData = studyIds.map((id) => ({ value: id, label: id })).sort((a, b) => a.label.localeCompare(b.label));
-  const revisitVersion = studyIds
-    .map((id) => {
-      const schema = studyConfigs?.[id]?.$schema;
-      return typeof schema === 'string' ? schema.match(STUDY_SCHEMA_VERSION_REGEX)?.[1] : undefined;
-    })
-    .filter((version): version is string => version !== undefined)
-    .sort((a, b) => b.localeCompare(a, undefined, { numeric: true }))[0];
-
   const inAnalysis = matchPath('/analysis/*', location.pathname) !== null;
   const showThemeToggle = ['/', '/settings', '/login'].some((path) => matchPath(path, location.pathname)) || inAnalysis;
 
@@ -85,7 +74,7 @@ export function AppHeader({
                 </ActionIcon>
               </Tooltip>
             )}
-            {revisitVersion && <Text c="dimmed" size="sm" mr="sm">{`reVISit ${revisitVersion}`}</Text>}
+            <Text c="dimmed" size="sm" mr="sm">{formatAppVersion(APP_VERSION)}</Text>
             <IconSettings onClick={() => navigate('/settings')} style={{ cursor: 'pointer' }} />
           </Flex>
         </Grid.Col>

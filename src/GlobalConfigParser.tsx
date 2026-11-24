@@ -72,7 +72,7 @@ function HomeRoute({
         padding="md"
         header={{ height: 70 }}
       >
-        <AppHeader studyIds={globalConfig.configsList} studyConfigs={studyConfigs} />
+        <AppHeader studyIds={globalConfig.configsList} />
         <ConfigSwitcher
           globalConfig={globalConfig}
           studyConfigs={studyConfigs}

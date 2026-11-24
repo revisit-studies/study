@@ -5,39 +5,57 @@ on:
     branches: [main]
     types: [closed]
 
+permissions:
+  contents: write
+
 jobs:
   release:
-    if: github.event.pull_request.merged && startsWith(github.event.pull_request.title, 'v')
+    if: github.event.pull_request.merged
     runs-on: ubuntu-latest
     env:
       RELEASE_TAG: ${{ github.event.pull_request.title }}
     steps:
-      - name: Ensure PR title matches vx.x.x
-        run: |
-          [[ "$RELEASE_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]
-        shell: bash
-
       - uses: actions/checkout@v7
         with:
+          ref: main
+          fetch-depth: 0
           token: ${{ secrets.PAT }}
 
-      - name: Run make-release.sh to modify version numbers across the repo
-        run: |
-          find src public -type f -exec env LANG=C sed -i -E "s/githubusercontent\.com\/re[Vv][Ii][Ss]it-studies\/study\/.*\/src/githubusercontent.com\/revisit-studies\/study\/${RELEASE_TAG}\/src/g" {} +
-          find src public -type f -exec env LANG=C sed -i -E "s/github.com\/re[Vv][Ii][Ss]it-studies\/study\/tree\/v[^\/]*\/([^\s]*)/github.com\/revisit-studies\/study\/tree\/${RELEASE_TAG}\/\1/g" {} +
+      - name: Validate release PR title
+        run: node scripts/release-version.mjs validate-title "$RELEASE_TAG"
 
-      - name: Commit changes
+      - name: Prepare release
+        id: prepare
+        shell: bash
         run: |
-          git config --local user.email "jackwilburn@tutanota.com"
-          git config --local user.name "Jack Wilburn"
-          git add .
-          git commit -m "Release version $RELEASE_TAG"
+          set -euo pipefail
+          if git show-ref --verify --quiet "refs/tags/$RELEASE_TAG"; then
+            tagged_version="$(git show "$RELEASE_TAG:VERSION" 2>/dev/null | tr -d '\n')"
+            if [[ "$tagged_version" == "${RELEASE_TAG#v}" ]] && git merge-base --is-ancestor "$RELEASE_TAG^{commit}" main; then
+              echo "publish=false" >> "$GITHUB_OUTPUT"
+              echo "Release $RELEASE_TAG was already published; skipping duplicate commit, tag, and dispatch."
+              exit 0
+            fi
+            echo "Tag $RELEASE_TAG already exists but does not identify this release on main." >&2
+            exit 1
+          fi
+
+          node scripts/release-version.mjs release "$RELEASE_TAG"
+          git add VERSION package.json package-lock.json src public docsLibraries README.md
+          if [[ -f typedocReadMe.md ]]; then git add typedocReadMe.md; fi
+          if ! git diff --cached --quiet; then
+            git config --local user.email "jackwilburn@tutanota.com"
+            git config --local user.name "Jack Wilburn"
+            git commit -m "Release version $RELEASE_TAG"
+          fi
+          test "$(tr -d '\n' < VERSION)" = "${RELEASE_TAG#v}"
           git tag -a "$RELEASE_TAG" -m "Release version $RELEASE_TAG"
-          git push --follow-tags
+          git push origin main --follow-tags
+          echo "publish=true" >> "$GITHUB_OUTPUT"
 
       - uses: peter-evans/repository-dispatch@v4
-        name: Build documentation in revisit.dev if repo is in revisit-studies
-        if: ${{ github.repository_owner == 'revisit-studies' }}
+        name: Build documentation in revisit.dev
+        if: ${{ github.repository_owner == 'revisit-studies' && steps.prepare.outputs.publish == 'true' }}
         with:
           token: ${{ secrets.PAT }}
           repository: revisit-studies/reVISit-studies.github.io
@@ -45,17 +63,19 @@ jobs:
           client-payload: '{"release_tag": "${{ env.RELEASE_TAG }}"}'
 
       - uses: peter-evans/repository-dispatch@v4
-        name: Build documentation in revisit.dev if repo is in revisit-studies
-        if: ${{ github.repository_owner == 'revisit-studies' }}
+        name: Publish revisitpy
+        if: ${{ github.repository_owner == 'revisit-studies' && steps.prepare.outputs.publish == 'true' }}
         with:
           token: ${{ secrets.PAT }}
           repository: revisit-studies/revisitpy
           event-type: study_repo_publish
+          client-payload: '{"release_tag": "${{ env.RELEASE_TAG }}"}'
 
       - uses: peter-evans/repository-dispatch@v4
-        name: Build documentation in revisit.dev if repo is in revisit-studies
-        if: ${{ github.repository_owner == 'revisit-studies' }}
+        name: Publish revisitpy-server
+        if: ${{ github.repository_owner == 'revisit-studies' && steps.prepare.outputs.publish == 'true' }}
         with:
           token: ${{ secrets.PAT }}
           repository: revisit-studies/revisitpy-server
           event-type: study_repo_publish
+          client-payload: '{"release_tag": "${{ env.RELEASE_TAG }}"}'

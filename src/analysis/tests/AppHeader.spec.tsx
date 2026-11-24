@@ -6,6 +6,7 @@ import { ReactNode } from 'react';
 import { matchPath } from 'react-router';
 import { cleanup, fireEvent, render } from '@testing-library/react';
 import { AppHeader } from '../interface/AppHeader';
+import { APP_VERSION, formatAppVersion } from '../../utils/version';
 
 let mockPathname = '/analysis/stats/my-study';
 let mockColorMode = 'light';
@@ -48,6 +49,7 @@ vi.mock('@mantine/core', () => {
       <button type="button" aria-label={label} onClick={onClick}>{children}</button>
     ),
     Tooltip: Div,
+    Text: ({ children }: { children?: ReactNode }) => <span>{children}</span>,
   };
 });
 
@@ -109,10 +111,10 @@ describe('AppHeader', () => {
     expect(html).toContain('Go to Study');
   });
 
-  test('does not crash when a loaded config has no schema', () => {
+  test('shows the application version from the repository version source', () => {
     const html = renderToStaticMarkup(
-      <AppHeader studyIds={['my-study']} studyConfigs={{ 'my-study': {} }} />,
+      <AppHeader studyIds={['my-study']} />,
     );
-    expect(html).toContain('ReVISit Analytics Platform');
+    expect(html).toContain(formatAppVersion(APP_VERSION));
   });
 });

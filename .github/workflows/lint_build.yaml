@@ -7,7 +7,8 @@ on:
   
   push:
     branches:
-    - main
+      - main
+      - dev
 
 jobs:
   lint:
@@ -22,6 +23,13 @@ jobs:
 
       - name: Install yarn packages (from cache if available)
         run: yarn install --frozen-lockfile
+
+      - name: Check version metadata and current pointers
+        run: node scripts/release-version.mjs check pull-request
+
+      - name: Check branch version suffix
+        if: github.event_name == 'push'
+        run: node scripts/release-version.mjs check "$GITHUB_REF_NAME"
 
       - name: Run linter
         run: yarn lint

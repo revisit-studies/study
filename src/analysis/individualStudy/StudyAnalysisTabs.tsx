@@ -423,7 +423,6 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
         <AppHeader
           studyIds={globalConfig.configsList}
           selectedStudyId={displayStudyId}
-          studyConfigs={displayStudyId ? { [displayStudyId]: studyConfig } : undefined}
         />
         <AppShell.Main>
           <ErrorLoadingConfig issues={studyConfig.errors} type="error" />
@@ -458,7 +457,7 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
 
   return (
     <>
-      <AppHeader studyIds={globalConfig.configsList} selectedStudyId={displayStudyId} studyConfigs={studyConfig && displayStudyId ? { [displayStudyId]: studyConfig } : undefined} />
+      <AppHeader studyIds={globalConfig.configsList} selectedStudyId={displayStudyId} />
       <AppShell.Main style={{ height: '100dvh', paddingBottom: analysisTab === 'tagging' && codingEnabled ? `calc(var(--app-shell-padding) + ${footerHeight}px)` : undefined }}>
         <Stack ref={ref} style={{ height: '100%', maxHeight: '100dvh', overflow: 'hidden' }} justify="space-between">
           <Flex direction="row" align="center" justify="space-between" p="sm" gap="md" wrap="wrap" style={{ minWidth: 0 }}>
