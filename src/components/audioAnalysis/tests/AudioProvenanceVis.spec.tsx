@@ -1,4 +1,4 @@
-import { forwardRef, ReactNode } from 'react';
+import { CSSProperties, forwardRef, ReactNode } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import {
   render, act, cleanup, renderHook, fireEvent, waitFor,
@@ -37,8 +37,8 @@ vi.mock('@mantine/core', async () => ({
   DEFAULT_THEME: (await vi.importActual<{ DEFAULT_THEME: typeof DEFAULT_THEME }>('@mantine/core')).DEFAULT_THEME,
   useMantineTheme: () => DEFAULT_THEME,
   useComputedColorScheme: () => mockColorScheme,
-  Box: forwardRef<HTMLDivElement, { children?: ReactNode }>(function Box({ children }, ref) { // eslint-disable-line prefer-arrow-callback
-    return <div ref={ref}>{children}</div>;
+  Box: forwardRef<HTMLDivElement, { children?: ReactNode; style?: CSSProperties; 'data-testid'?: string }>(function Box({ children, ...props }, ref) { // eslint-disable-line prefer-arrow-callback
+    return <div ref={ref} {...props}>{children}</div>;
   }),
   Text: ({ children, ...props }: { children?: ReactNode; [key: string]: unknown }) => <div {...props}>{children}</div>,
   Group: ({ children }: { children?: ReactNode }) => <div>{children}</div>,
@@ -82,9 +82,30 @@ vi.mock('../../../storage/storageEngineHooks', () => ({
 }));
 
 vi.mock('../TaskProvenanceTimeline', () => ({
-  TaskProvenanceTimeline: ({ startTime }: { startTime: number }) => {
+  TaskProvenanceTimeline: ({
+    startTime, width, height, xScale, activityEvents = [],
+  }: {
+    startTime: number;
+    width: number;
+    height: number;
+    xScale: d3.ScaleLinear<number, number>;
+    activityEvents?: Array<{ event: [number, string, string | number[]]; label: string }>;
+  }) => {
     mockProvenanceStartTime(startTime);
-    return <div data-testid="provenance-timeline" />;
+    return (
+      <>
+        <div data-testid="provenance-timeline" />
+        {activityEvents.length > 0 && (
+          <svg data-testid="task-activity-playback-timeline" width={width} height={height}>
+            {activityEvents.map(({ event, label }, index) => (
+              <circle key={`${event[0]}-${index}`} cx={xScale.copy().range([0, width])((event[0] - startTime) / 1000)} data-testid="task-activity-playback-marker">
+                <title>{label}</title>
+              </circle>
+            ))}
+          </svg>
+        )}
+      </>
+    );
   },
 }));
 
@@ -278,6 +299,54 @@ describe('TaskProvenanceTimeline', () => {
     );
     expect(html).toContain('margin-left:20px');
   });
+
+  test('shows compact marker tooltips on the existing centered timeline', () => {
+    const html = renderToStaticMarkup(
+      <RealTaskProvenanceTimeline
+        xScale={d3.scaleLinear().domain([0, 2]).range([20, 180])}
+        provenanceGraph={null}
+        activityEvents={[
+          { event: [1500, 'studyactivity', 'pointer-left'], label: 'Pointer left study page' },
+          { event: [2000, 'displaystatus', 'multiple'], label: 'Display status: multiple' },
+        ]}
+        width={160}
+        height={25}
+        currentNode={null}
+        trialName="trial_0"
+        startTime={1000}
+        margin={{
+          left: 20, right: 20, top: 0, bottom: 0,
+        }}
+      />,
+    );
+    expect(html).toContain('data-testid="task-activity-playback-timeline"');
+    expect(html).toContain('cx="40"');
+    expect(html).toContain('aria-label="Pointer left · 00:01"');
+    expect(html).toContain('<title>Pointer left · 00:01</title>');
+    expect(html).toContain('<title>Multiple displays · 00:01</title>');
+    expect(html).toContain('width:160px;height:25px;margin-left:20px');
+  });
+
+  test('shows an explicit event tooltip when hovering a marker', () => {
+    const view = render(
+      <RealTaskProvenanceTimeline
+        xScale={d3.scaleLinear().domain([0, 2]).range([20, 180])}
+        provenanceGraph={null}
+        activityEvents={[{ event: [1500, 'studyactivity', 'pointer-left'], label: 'Pointer left study page' }]}
+        width={160}
+        height={25}
+        currentNode={null}
+        trialName="trial_0"
+        startTime={1000}
+        margin={{
+          left: 20, right: 20, top: 0, bottom: 0,
+        }}
+      />,
+    );
+
+    fireEvent.mouseEnter(view.getByTestId('task-activity-playback-marker'));
+    expect(view.getByRole('tooltip').textContent).toBe('Pointer left · 00:01');
+  });
 });
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -460,8 +529,31 @@ describe('AudioProvenanceVis', () => {
     const { getByTestId } = await act(async () => render(
       <AudioProvenanceVis {...defaultProps} answers={answersWithTask} />,
     ));
-    expect(getByTestId('loading-overlay')).toBeDefined();
+    const loadingOverlay = getByTestId('loading-overlay');
+    expect(loadingOverlay.parentElement?.getAttribute('data-testid')).toBe('recording-area');
     expect(getByTestId('wavesurfer')).toBeDefined();
+  });
+
+  test('keeps the recording area height when loading fails', async () => {
+    mockAudioState.isAnalysis = true;
+    mockAudioState.storageEngine = {
+      getAudio: vi.fn(async () => null),
+      getScreenRecording: vi.fn(async () => { throw new Error('missing recording'); }),
+      getProvenance: vi.fn(async () => null),
+    };
+    const failedRecordingAnswer = makeStoredAnswer({
+      assetIdentifier: 'screen-segment',
+      recordingChunkKeys: { 'screen-segment': ['chunk-0'] },
+    });
+    const view = await act(async () => render(
+      <AudioProvenanceVis {...defaultProps} answers={{ trial_0: failedRecordingAnswer }} />,
+    ));
+    await act(async () => {
+      await mockWaveState.onMount?.({ empty: vi.fn() });
+    });
+
+    expect(view.getByRole('alert').textContent).toContain('could not be loaded');
+    expect(view.getByTestId('recording-area').style.height).toBe('50px');
   });
 
   test('renders in provenanceVis context', async () => {
@@ -496,6 +588,7 @@ describe('AudioProvenanceVis', () => {
       />,
     ));
     expect(getByTestId('task-activity-playback-timeline')).toBeDefined();
+    expect(getByTestId('task-activity-playback-timeline').getAttribute('height')).toBe('25');
     expect(getAllByTestId('task-activity-playback-marker')).toHaveLength(2);
     const activityList = getByRole('list', { name: 'Task activity events' });
     expect(activityList.textContent).toContain('1000: Pointer left study page');
@@ -527,7 +620,7 @@ describe('AudioProvenanceVis', () => {
     expect(getAllByTestId('task-activity-playback-marker')).toHaveLength(2);
   });
 
-  test('keeps late activity markers inside the SVG when WaveSurfer reports a narrower width', async () => {
+  test('aligns activity markers to the recording area when WaveSurfer reports a narrower width', async () => {
     mockAudioState.isAnalysis = true;
     mockAudioState.storageEngine = {
       getAudio: vi.fn(async () => null),
@@ -560,7 +653,7 @@ describe('AudioProvenanceVis', () => {
     const marker = view.getByTestId('task-activity-playback-marker');
     expect(timeline.getAttribute('width')).toBe('500');
     expect(Number(marker.getAttribute('cx'))).toBeLessThanOrEqual(Number(timeline.getAttribute('width')));
-    expect(marker.getAttribute('cx')).toBe('480');
+    expect(marker.getAttribute('cx')).toBe('500');
   });
 
   test('offers prior recording segments for replay', async () => {
@@ -623,6 +716,54 @@ describe('AudioProvenanceVis', () => {
     await waitFor(() => expect(waveSurfer.load).toHaveBeenLastCalledWith('audio-audio-earlier', undefined, expect.any(Number)));
     expect(getAudio).toHaveBeenCalledWith('audio-earlier', 'p1');
     await waitFor(() => expect(mockReplayContext.setDuration).toHaveBeenLastCalledWith(2));
+  });
+
+  test('renders a screen-only waveform without waiting for the screen video', async () => {
+    mockAudioState.isAnalysis = true;
+    mockSearchParams = new URLSearchParams('participantId=p1&recordingSegment=segment-a');
+    const getScreenRecording = vi.fn(async () => 'video-segment-a');
+    mockAudioState.storageEngine = {
+      getAudio: vi.fn(async () => null),
+      getScreenRecording,
+      getProvenance: vi.fn(async () => null),
+    };
+    let finishLoad!: () => void;
+    const waveSurfer = {
+      load: vi.fn(() => new Promise<void>((resolve) => { finishLoad = resolve; })),
+      getMediaElement: () => document.createElement('audio'),
+      getWidth: () => 500,
+      seekTo: vi.fn(),
+      on: vi.fn(),
+      empty: vi.fn(),
+      setOptions: vi.fn(),
+    };
+    const props = {
+      ...defaultProps,
+      answers: {
+        trial_0: makeStoredAnswer({
+          assetIdentifier: 'segment-b',
+          recordingSegments: ['segment-a', 'segment-b'],
+          recordingSegmentRanges: [
+            { assetIdentifier: 'segment-a', startTime: 1000, endTime: 3000 },
+            { assetIdentifier: 'segment-b', startTime: 4000, endTime: 6000 },
+          ],
+        }),
+      },
+    };
+    const view = await act(async () => render(<AudioProvenanceVis {...props} />));
+
+    act(() => { mockWaveState.onMount?.(waveSurfer); });
+    await waitFor(() => expect(waveSurfer.load).toHaveBeenCalledExactlyOnceWith('', [[0]], 2));
+    expect(view.getByTestId('loading-overlay')).toBeDefined();
+    mockReplayContext.duration = 2;
+    await act(async () => { view.rerender(<AudioProvenanceVis {...props} />); });
+
+    expect(getScreenRecording).not.toHaveBeenCalled();
+    expect(waveSurfer.load).toHaveBeenCalledOnce();
+    expect(view.getByTestId('loading-overlay')).toBeDefined();
+    await act(async () => { finishLoad(); });
+    await waitFor(() => expect(view.queryByTestId('loading-overlay')).toBeNull());
+    mockReplayContext.duration = 0;
   });
 
   test('preserves the replay position while the initial waveform load is pending', async () => {
@@ -694,7 +835,7 @@ describe('AudioProvenanceVis', () => {
     const view = await act(async () => render(<AudioProvenanceVis {...defaultProps} answers={answers} />));
 
     await act(async () => { mockWaveState.onMount?.(waveSurfer); });
-    await waitFor(() => expect(waveSurfer.load).toHaveBeenCalledWith('blob:audio-segment-a', undefined, expect.any(Number)));
+    await waitFor(() => expect(waveSurfer.load).toHaveBeenCalledWith('blob:audio-segment-a', undefined, 2));
     expect(view.getByText('The screen recording segment could not be loaded. Playing available audio instead.')).toBeDefined();
     expect(view.queryByTestId('loading-overlay')).toBeNull();
 
@@ -788,6 +929,7 @@ describe('AudioProvenanceVis', () => {
     mockAudioState.isAnalysis = true;
     mockSearchParams = new URLSearchParams('participantId=p1&recordingSegment=segment-a');
     mockAudioState.storageEngine = {
+      getAudio: vi.fn(async (identifier: string) => `audio-${identifier}`),
       getScreenRecording: vi.fn(async (identifier: string) => `url-${identifier}`),
       getProvenance: vi.fn(async () => null),
     };
@@ -819,7 +961,7 @@ describe('AudioProvenanceVis', () => {
     };
     const view = await act(async () => render(<AudioProvenanceVis {...defaultProps} answers={answers} />));
     await act(async () => { mockWaveState.onMount?.(waveSurfer); });
-    await waitFor(() => expect(waveSurfer.load).toHaveBeenCalledWith('url-segment-a', undefined, expect.any(Number)));
+    await waitFor(() => expect(waveSurfer.load).toHaveBeenCalledWith('url-segment-a', undefined, 2));
     mockReplayContext.setSeekTime.mockClear();
 
     fireEvent.change(view.getByRole('combobox', { name: 'Recording segment' }), { target: { value: 'segment-b' } });
@@ -827,11 +969,11 @@ describe('AudioProvenanceVis', () => {
     expect(currentSource).toBe('url-segment-b');
 
     fireEvent.change(view.getByRole('combobox', { name: 'Recording segment' }), { target: { value: 'segment-a' } });
-    await waitFor(() => expect(waveSurfer.load).toHaveBeenLastCalledWith('url-segment-a', undefined, expect.any(Number)));
+    await waitFor(() => expect(waveSurfer.load).toHaveBeenLastCalledWith('url-segment-a', undefined, 2));
     await waitFor(() => expect(currentSource).toBe('url-segment-a'));
     expect(mockReplayContext.setSeekTime).toHaveBeenCalledWith(0);
     await act(async () => { resolveSegmentB(); });
-    expect(waveSurfer.load).toHaveBeenLastCalledWith('url-segment-a', undefined, expect.any(Number));
+    expect(waveSurfer.load).toHaveBeenLastCalledWith('url-segment-a', undefined, 2);
     expect(view.queryByTestId('loading-overlay')).toBeNull();
   });
 
@@ -843,12 +985,11 @@ describe('AudioProvenanceVis', () => {
       getScreenRecording: vi.fn(async (identifier: string) => `blob:screen-${identifier}`),
       getProvenance: vi.fn(async () => null),
     };
-    let resolveInitialLoad!: () => void;
     let currentSource = '';
     const waveSurfer = {
       load: vi.fn((url: string) => {
         currentSource = url;
-        return url === 'blob:screen-segment-a' ? new Promise<void>((resolve) => { resolveInitialLoad = resolve; }) : Promise.resolve();
+        return Promise.resolve();
       }),
       getMediaElement: () => document.createElement('audio'),
       getWidth: () => 500,
@@ -871,13 +1012,11 @@ describe('AudioProvenanceVis', () => {
     };
     const view = await act(async () => render(<AudioProvenanceVis {...defaultProps} answers={answers} />));
     act(() => { mockWaveState.onMount?.(waveSurfer); });
-    await waitFor(() => expect(waveSurfer.load).toHaveBeenCalledWith('blob:screen-segment-a', undefined, expect.any(Number)));
+    await waitFor(() => expect(waveSurfer.load).toHaveBeenCalledWith('blob:screen-segment-a', undefined, 2));
 
     fireEvent.change(view.getByRole('combobox', { name: 'Recording segment' }), { target: { value: 'segment-b' } });
     await waitFor(() => expect(waveSurfer.load).toHaveBeenLastCalledWith('blob:screen-segment-b', undefined, expect.any(Number)));
     expect(currentSource).toBe('blob:screen-segment-b');
-
-    await act(async () => { resolveInitialLoad(); });
 
     expect(revokeObjectURL).not.toHaveBeenCalledWith('blob:screen-segment-b');
     expect(currentSource).toBe('blob:screen-segment-b');
@@ -920,7 +1059,7 @@ describe('AudioProvenanceVis', () => {
     };
     const view = await act(async () => render(<AudioProvenanceVis {...defaultProps} answers={answers} />));
     await act(async () => { mockWaveState.onMount?.(waveSurfer); });
-    await waitFor(() => expect(waveSurfer.load).toHaveBeenCalledWith('screen-segment-a', undefined, expect.any(Number)));
+    await waitFor(() => expect(waveSurfer.load).toHaveBeenCalledWith('screen-segment-a', undefined, 2));
 
     fireEvent.change(view.getByRole('combobox', { name: 'Recording segment' }), { target: { value: 'segment-b' } });
     await waitFor(() => expect(resolveScreenB).toBeTypeOf('function'));

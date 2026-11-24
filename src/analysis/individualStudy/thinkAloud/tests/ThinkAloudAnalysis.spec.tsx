@@ -99,7 +99,7 @@ vi.mock('@mantine/core', async () => ({
   Alert: ({ children }: { children: ReactNode }) => <div role="alert">{children}</div>,
   AppShell: Object.assign(
     ({ children }: { children: ReactNode }) => <div>{children}</div>,
-    { Footer: ({ children }: { children: ReactNode }) => <footer>{children}</footer> },
+    { Footer: ({ children, style }: { children: ReactNode; style?: object }) => <footer style={style}>{children}</footer> },
   ),
   Box: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   Button: ({
@@ -171,8 +171,8 @@ vi.mock('@mantine/core', async () => ({
       {rightSection}
     </div>
   ),
-  Stack: forwardRef<HTMLDivElement, { children: ReactNode }>(function Stack({ children }, ref) { // eslint-disable-line prefer-arrow-callback
-    return <div ref={ref}>{children}</div>;
+  Stack: forwardRef<HTMLDivElement, { children: ReactNode; style?: object }>(function Stack({ children, style }, ref) { // eslint-disable-line prefer-arrow-callback
+    return <div ref={ref} style={style}>{children}</div>;
   }),
   Text: ({ children }: { children: ReactNode }) => <p>{children}</p>,
   Textarea: forwardRef<HTMLTextAreaElement, {
@@ -674,6 +674,15 @@ describe('ThinkAloudFooter', () => {
     const { getAllByRole } = await act(async () => render(<RealThinkAloudFooter {...footerDefaultProps} isReplay />));
     const speedBtn = getAllByRole('button').find((b) => b.textContent === '1x');
     expect(speedBtn).toBeDefined();
+  });
+
+  test('lets the replay footer fit its contents and keeps bottom spacing', async () => {
+    const { container } = await act(async () => render(<RealThinkAloudFooter {...footerDefaultProps} isReplay />));
+    const footer = container.querySelector('footer');
+    const footerContent = container.querySelector('div[style*="padding-bottom"]');
+    expect((footer as HTMLElement | null)?.style.height).toBe('auto');
+    expect((footerContent as HTMLElement | null)?.style.height).toBe('auto');
+    expect((footerContent as HTMLElement | null)?.style.paddingBottom).toBe('var(--mantine-spacing-md)');
   });
 
   test('includes the selected recording segment in the Replay link', async () => {

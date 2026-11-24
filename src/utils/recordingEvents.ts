@@ -26,3 +26,22 @@ export function getRecordingEventLabel(event: EventType) {
   };
   return labels[event[2]];
 }
+
+export function getRecordingEventShortLabel(event: EventType) {
+  if (event[1] === 'displaystatus') {
+    const labels = { single: 'Single display', multiple: 'Multiple displays', unknown: 'Display unknown' };
+    return labels[event[2]];
+  }
+  if (event[1] === 'captureinterrupted') return 'Sharing stopped';
+  if (event[1] !== 'studyactivity') return undefined;
+
+  const labels = {
+    'pointer-left': 'Pointer left',
+    'pointer-entered': 'Pointer entered',
+    'focus-lost': 'Focus lost',
+    'focus-regained': 'Focus regained',
+    hidden: 'Page hidden',
+    visible: 'Page visible',
+  };
+  return labels[event[2]];
+}

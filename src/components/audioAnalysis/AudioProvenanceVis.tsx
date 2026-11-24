@@ -40,6 +40,12 @@ function safe<T>(p: Promise<T>): Promise<T | null> {
   return p.catch(() => null);
 }
 
+function hasStoredScreenSegment(answer: StoredAnswer | undefined, segment: string) {
+  return answer?.recordingSegments?.includes(segment)
+    || !!answer?.recordingChunkKeys?.[segment]?.length
+    || !!answer?.recordingSegmentRanges?.some((range) => range.assetIdentifier === segment);
+}
+
 export function AudioProvenanceVis({
   setTimeString,
   answers,
@@ -81,8 +87,8 @@ export function AudioProvenanceVis({
     setHasAudio(b);
   }, [setHasAudio]);
 
-  const [ref, { width }] = useResizeObserver();
-  const [waveSurferWidth, setWaveSurferWidth] = useState<number>(0);
+  const [containerRef, { width }] = useResizeObserver();
+  const [recordingAreaRef, { width: recordingAreaWidth }] = useResizeObserver();
 
   const assetIdentifier = answers[taskName]?.assetIdentifier ?? taskName;
   const recordingSegments = useMemo(() => {
@@ -90,7 +96,6 @@ export function AudioProvenanceVis({
     return Array.from(new Set([...segments, assetIdentifier]));
   }, [answers, assetIdentifier, taskName]);
   const [selectedRecordingSegment, setSelectedRecordingSegment] = useState(searchParams.get('recordingSegment') ?? assetIdentifier);
-  const [loadedRecordingSegment, setLoadedRecordingSegment] = useState(assetIdentifier);
   const recordingSegmentRange = answers[taskName]?.recordingSegmentRanges
     ?.find((range) => range.assetIdentifier === selectedRecordingSegment);
   const recordingSegmentTime = answers[taskName]?.recordingSegmentTimes?.[selectedRecordingSegment];
@@ -122,9 +127,7 @@ export function AudioProvenanceVis({
   const wavesurfer = useRef<WaveSurferType | null>(null);
   const requestedRecordingSegment = useRef(assetIdentifier);
   useEffect(() => {
-    requestedRecordingSegment.current = assetIdentifier;
     setSelectedRecordingSegment(assetIdentifier);
-    setLoadedRecordingSegment(assetIdentifier);
   }, [assetIdentifier, taskName]);
   useEffect(() => {
     const requestedSegment = searchParams.get('recordingSegment');
@@ -137,8 +140,6 @@ export function AudioProvenanceVis({
   const loadedAnalysisUrls = useRef<string[]>([]);
   const loadedAnalysisUrlGeneration = useRef<number | null>(null);
   const analysisLoadGeneration = useRef(0);
-
-  const waveSurferDiv = useRef(null);
 
   const navigate = useNavigate();
 
@@ -381,15 +382,31 @@ export function AudioProvenanceVis({
             throw new Error('Participant ID is required to load audio');
           }
 
-          const [audioUrl, screenResult] = await Promise.all([
-            safe(Promise.resolve().then(() => storageEngine.getAudio(selectedRecordingSegment, participantId))),
-            getScreenRecordingSegmentUrl(
-              storageEngine,
-              participantId,
-              selectedRecordingSegment,
-              answers[taskName]?.recordingChunkKeys?.[selectedRecordingSegment] ?? [],
-            ).then((url) => ({ url, failed: false })).catch(() => ({ url: null, failed: true })),
-          ]);
+          const audioUrl = await safe(Promise.resolve().then(() => storageEngine.getAudio(selectedRecordingSegment, participantId)));
+          if (loadGeneration !== analysisLoadGeneration.current) {
+            if (audioUrl?.startsWith('blob:')) URL.revokeObjectURL(audioUrl);
+            return;
+          }
+          const storedScreenOnlyRecording = !audioUrl && hasStoredScreenSegment(answers[taskName], selectedRecordingSegment);
+          if (storedScreenOnlyRecording) {
+            loadedAnalysisUrls.current = [];
+            loadedAnalysisUrlGeneration.current = loadGeneration;
+            setRecordingLoadError(null);
+            await waveSurfer.load('', [[0]], selectedSegmentDuration || 0.001);
+            if (loadGeneration !== analysisLoadGeneration.current) return;
+            setWaveSurferLoading(false);
+            audioRef.current = waveSurfer.getMediaElement();
+            updateReplayRef();
+            setAnalysisHasAudio(true);
+            return;
+          }
+
+          const screenResult = await getScreenRecordingSegmentUrl(
+            storageEngine,
+            participantId,
+            selectedRecordingSegment,
+            answers[taskName]?.recordingChunkKeys?.[selectedRecordingSegment] ?? [],
+          ).then((url) => ({ url, failed: false })).catch(() => ({ url: null, failed: true }));
           const { url: screenUrl, failed: screenLoadFailed } = screenResult;
           const loadedUrls = [audioUrl, screenUrl]
             .filter((url): url is string => !!url && url.startsWith('blob:'));
@@ -397,7 +414,8 @@ export function AudioProvenanceVis({
             loadedUrls.forEach((url) => URL.revokeObjectURL(url));
             return;
           }
-          const url = screenUrl ?? audioUrl ?? null;
+          const screenOnlyRecording = !audioUrl && !!screenUrl;
+          const url = screenOnlyRecording ? '' : screenUrl ?? audioUrl ?? null;
           ownedUrl = url;
           const hasAudioSource = !!(screenUrl ?? audioUrl);
           loadedUrls.filter((loadedUrl) => loadedUrl !== url).forEach((loadedUrl) => URL.revokeObjectURL(loadedUrl));
@@ -405,7 +423,7 @@ export function AudioProvenanceVis({
           loadedAnalysisUrlGeneration.current = loadGeneration;
           setRecordingLoadError(screenLoadFailed ? 'The screen recording segment could not be loaded. Playing available audio instead.' : null);
 
-          if (!url) {
+          if (!url && !screenOnlyRecording) {
             setAnalysisHasAudio(false);
             setWaveSurferLoading(false);
             wavesurfer.current?.empty();
@@ -413,7 +431,11 @@ export function AudioProvenanceVis({
             return;
           }
 
-          await waveSurfer.load(url!, undefined, duration);
+          await waveSurfer.load(
+            url ?? '',
+            screenOnlyRecording ? [[0]] : undefined,
+            selectedSegmentDuration || (screenOnlyRecording ? 0.001 : undefined),
+          );
           if (loadGeneration !== analysisLoadGeneration.current) {
             loadedUrls.filter((loadedUrl) => loadedUrl === url).forEach((loadedUrl) => URL.revokeObjectURL(loadedUrl));
             if (loadedAnalysisUrlGeneration.current === loadGeneration) {
@@ -423,14 +445,11 @@ export function AudioProvenanceVis({
             return;
           }
           setWaveSurferLoading(false);
-          setLoadedRecordingSegment(selectedRecordingSegment);
 
           audioRef.current = waveSurfer.getMediaElement();
           updateReplayRef();
 
-          setWaveSurferWidth(waveSurfer.getWidth());
           setAnalysisHasAudio(hasAudioSource);
-          waveSurfer.on('redrawcomplete', () => setWaveSurferWidth(waveSurfer.getWidth()));
         } catch {
           if (loadGeneration !== analysisLoadGeneration.current) {
             if (ownedUrl?.startsWith('blob:')) URL.revokeObjectURL(ownedUrl);
@@ -466,8 +485,7 @@ export function AudioProvenanceVis({
   useEffect(() => {
     if (!wavesurfer.current || !isAnalysis || !hasLoadableTask || !storageEngine
       || !participantId
-      || (selectedRecordingSegment === loadedRecordingSegment
-        && selectedRecordingSegment === requestedRecordingSegment.current)) return undefined;
+      || selectedRecordingSegment === requestedRecordingSegment.current) return undefined;
     let canceled = false;
     const waveSurfer = wavesurfer.current;
     const generation = analysisLoadGeneration.current + 1;
@@ -480,18 +498,35 @@ export function AudioProvenanceVis({
     setRecordingLoadError(null);
     let ownedUrl: string | null = null;
     const load = async () => {
-      const [audioUrl, screenResult] = await Promise.all([
-        safe(Promise.resolve().then(() => storageEngine.getAudio(selectedRecordingSegment, participantId))),
-        getScreenRecordingSegmentUrl(
-          storageEngine,
-          participantId,
-          selectedRecordingSegment,
-          answers[taskName]?.recordingChunkKeys?.[selectedRecordingSegment] ?? [],
-        ).then((url) => ({ url, failed: false })).catch(() => ({ url: null, failed: true })),
-      ]);
+      const audioUrl = await safe(Promise.resolve().then(() => storageEngine.getAudio(selectedRecordingSegment, participantId)));
+      const storedScreenOnlyRecording = !audioUrl && hasStoredScreenSegment(answers[taskName], selectedRecordingSegment);
+      if (canceled || generation !== analysisLoadGeneration.current) {
+        if (audioUrl?.startsWith('blob:')) URL.revokeObjectURL(audioUrl);
+        return;
+      }
+      if (storedScreenOnlyRecording) {
+        loadedAnalysisUrls.current = [];
+        loadedAnalysisUrlGeneration.current = generation;
+        setRecordingLoadError(null);
+        await waveSurfer.load('', [[0]], selectedSegmentDuration || 0.001);
+        if (canceled || generation !== analysisLoadGeneration.current) return;
+        audioRef.current = waveSurfer.getMediaElement();
+        updateReplayRef();
+        setAnalysisHasAudio(true);
+        setWaveSurferLoading(false);
+        return;
+      }
+
+      const screenResult = await getScreenRecordingSegmentUrl(
+        storageEngine,
+        participantId,
+        selectedRecordingSegment,
+        answers[taskName]?.recordingChunkKeys?.[selectedRecordingSegment] ?? [],
+      ).then((url) => ({ url, failed: false })).catch(() => ({ url: null, failed: true }));
       const { url: screenUrl, failed: screenLoadFailed } = screenResult;
       const selectedUrls = Array.from(new Set([audioUrl, screenUrl].filter((candidate): candidate is string => !!candidate && candidate.startsWith('blob:'))));
-      const url = screenUrl ?? audioUrl;
+      const screenOnlyRecording = !audioUrl && !!screenUrl;
+      const url = screenOnlyRecording ? '' : screenUrl ?? audioUrl;
       ownedUrl = url;
       if (canceled || generation !== analysisLoadGeneration.current) {
         selectedUrls.forEach((selectedUrl) => URL.revokeObjectURL(selectedUrl));
@@ -505,7 +540,13 @@ export function AudioProvenanceVis({
       setRecordingLoadError(screenLoadFailed
         ? 'The screen recording segment could not be loaded. Playing available audio instead.'
         : null);
-      if (url) await waveSurfer.load(url, undefined, duration);
+      if (url || screenOnlyRecording) {
+        await waveSurfer.load(
+          url ?? '',
+          screenOnlyRecording ? [[0]] : undefined,
+          selectedSegmentDuration || (screenOnlyRecording ? 0.001 : undefined),
+        );
+      }
       if (canceled || generation !== analysisLoadGeneration.current) {
         if (url?.startsWith('blob:')) URL.revokeObjectURL(url);
         if (loadedAnalysisUrlGeneration.current === generation) {
@@ -514,7 +555,7 @@ export function AudioProvenanceVis({
         }
         return;
       }
-      if (url) {
+      if (url || screenOnlyRecording) {
         audioRef.current = waveSurfer.getMediaElement();
         updateReplayRef();
         setAnalysisHasAudio(true);
@@ -526,7 +567,6 @@ export function AudioProvenanceVis({
         waveSurfer.empty();
       }
       setWaveSurferLoading(false);
-      setLoadedRecordingSegment(selectedRecordingSegment);
     };
     load().catch(() => {
       if (canceled || generation !== analysisLoadGeneration.current) {
@@ -551,7 +591,7 @@ export function AudioProvenanceVis({
       updateReplayRef();
     });
     return () => { canceled = true; };
-  }, [answers, assetIdentifier, audioRef, duration, hasLoadableTask, isAnalysis, loadedRecordingSegment, participantId, selectedRecordingSegment, setAnalysisHasAudio, storageEngine, taskName, updateReplayRef]);
+  }, [answers, assetIdentifier, audioRef, hasLoadableTask, isAnalysis, participantId, selectedRecordingSegment, selectedSegmentDuration, setAnalysisHasAudio, storageEngine, taskName, updateReplayRef]);
 
   const xScale = useMemo(() => {
     if (!startTime || selectedSegmentDuration <= 0) {
@@ -580,7 +620,7 @@ export function AudioProvenanceVis({
 
   return (
     <Group wrap="nowrap" gap={0} mx={0}>
-      <Stack ref={ref} style={{ width: '100%' }} gap={0}>
+      <Stack ref={containerRef} style={{ width: '100%' }} gap={0}>
         {recordingSegments.length > 1 && (
           <Select
             aria-label="Recording segment"
@@ -600,14 +640,23 @@ export function AudioProvenanceVis({
             mb="xs"
           />
         )}
-        <LoadingOverlay visible={waveSurferLoading && hasLoadableTask} overlayProps={{ blur: 5, backgroundOpacity: 0.35 }} />
-        {recordingLoadError && <Text c="red" role="alert">{recordingLoadError}</Text>}
 
         {hasLoadableTask
           ? (
-            <Box pos="relative" ml={margin.left} mr={margin.right}>
+            <Box ref={recordingAreaRef} pos="relative" ml={margin.left} mr={margin.right} data-testid="recording-area" style={{ height: 50 }}>
+              <LoadingOverlay data-testid="audio-provenance-loading-overlay" visible={waveSurferLoading} overlayProps={{ blur: 5, backgroundOpacity: 0.35 }} />
+              {recordingLoadError && (
+                <Text
+                  c="red"
+                  role="alert"
+                  style={{
+                    position: 'absolute', inset: 0, zIndex: 1, display: 'flex', alignItems: 'center', fontSize: 12,
+                  }}
+                >
+                  {recordingLoadError}
+                </Text>
+              )}
               <Box
-                ref={waveSurferDiv}
                 style={{
                   overflow: 'hidden', width: '100%', pointerEvents: 'none',
                 }}
@@ -621,14 +670,15 @@ export function AudioProvenanceVis({
             </Box>
           ) : null}
 
-        {xScale && taskName && provenanceGraph
+        {xScale && taskName && (provenanceGraph || activityEvents.length > 0)
           ? (
             <TaskProvenanceTimeline
               xScale={xScale}
               trialName={taskName}
               currentNode={currentGlobalNode?.name || ''}
               provenanceGraph={provenanceGraph}
-              width={waveSurferWidth || (width - margin.left - margin.right)}
+              activityEvents={activityEvents}
+              width={recordingAreaWidth || (width - margin.left - margin.right)}
               height={25}
               margin={margin}
               startTime={startTime}
@@ -636,48 +686,27 @@ export function AudioProvenanceVis({
           ) : null}
 
         {xScale && activityEvents.length > 0 && (
-          <>
-            <svg
-              aria-hidden="true"
-              data-testid="task-activity-playback-timeline"
-              width={width}
-              style={{ width, height: 16, display: 'block' }}
-            >
-              {activityEvents.map(({ event, label }, index) => (
-                <circle
-                  key={`${event[0]}-${index}`}
-                  cx={xScale((event[0] - startTime) / 1000)}
-                  cy={8}
-                  r={4}
-                  fill={event[1] === 'studyactivity' ? 'var(--mantine-color-orange-filled)' : 'var(--mantine-color-violet-filled)'}
-                  data-testid="task-activity-playback-marker"
-                >
-                  <title>{`${label} at ${youtubeReadableDuration(Math.max(0, event[0] - startTime))}`}</title>
-                </circle>
-              ))}
-            </svg>
-            <div
-              role="list"
-              aria-label="Task activity events"
-              style={{
-                position: 'absolute',
-                width: 1,
-                height: 1,
-                padding: 0,
-                margin: -1,
-                overflow: 'hidden',
-                clipPath: 'inset(50%)',
-                whiteSpace: 'nowrap',
-                border: 0,
-              }}
-            >
-              {activityEvents.map(({ event, label }, index) => (
-                <div role="listitem" key={`${event[0]}-${index}`}>
-                  {`${youtubeReadableDuration(Math.max(0, event[0] - startTime))}: ${label}`}
-                </div>
-              ))}
-            </div>
-          </>
+          <div
+            role="list"
+            aria-label="Task activity events"
+            style={{
+              position: 'absolute',
+              width: 1,
+              height: 1,
+              padding: 0,
+              margin: -1,
+              overflow: 'hidden',
+              clipPath: 'inset(50%)',
+              whiteSpace: 'nowrap',
+              border: 0,
+            }}
+          >
+            {activityEvents.map(({ event, label }, index) => (
+              <div role="listitem" key={`${event[0]}-${index}`}>
+                {`${youtubeReadableDuration(Math.max(0, event[0] - startTime))}: ${label}`}
+              </div>
+            ))}
+          </div>
         )}
 
         {xScale ? (

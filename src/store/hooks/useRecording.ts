@@ -16,6 +16,7 @@ import {
 } from '../../utils/recordingWarnings';
 import { useStartupInteractionBlocked } from '../../components/StartupContext';
 import { useStoreSelector } from '../store';
+import { createRecordingMediaRecorder } from '../../utils/recordingMedia';
 
 const SCREEN_PERMISSION_COMPONENT = '$screen-recording.components.screenRecordingPermission';
 const WEBCAM_PERMISSION_COMPONENT = '$webcam-recording.components.webcamRecordingPermission';
@@ -351,7 +352,7 @@ export function useRecording() {
         ...screenMediaStream.current.getVideoTracks(),
         ...(wantsAudio ? audioMediaStream.current?.getAudioTracks() ?? [] : []),
       ]);
-      const recorder = new MediaRecorder(screenStream);
+      const recorder = createRecordingMediaRecorder(screenStream);
       currentMediaRecorder.current = recorder;
       recorderStopPromises.current.set(recorder, attachSaveHandler(
         recorder,
@@ -365,7 +366,7 @@ export function useRecording() {
 
     if (wantsWebcam && webcamMediaStream.current) {
       const webcamStream = new MediaStream(webcamMediaStream.current.getVideoTracks());
-      const recorder = new MediaRecorder(webcamStream);
+      const recorder = createRecordingMediaRecorder(webcamStream);
       webcamMediaRecorder.current = recorder;
       currentMediaRecorder.current ??= recorder;
       recorderStopPromises.current.set(recorder, attachSaveHandler(
@@ -379,7 +380,7 @@ export function useRecording() {
 
     if (wantsAudio && audioMediaStream.current) {
       const audioStream = new MediaStream(audioMediaStream.current.getAudioTracks());
-      const recorder = new MediaRecorder(audioStream);
+      const recorder = createRecordingMediaRecorder(audioStream);
       audioMediaRecorder.current = recorder;
       currentMediaRecorder.current ??= recorder;
       recorderStopPromises.current.set(recorder, attachSaveHandler(
@@ -497,7 +498,7 @@ export function useRecording() {
         track.enabled = !currentComponentHasClickToRecord;
       });
 
-      const recorder = new MediaRecorder(s);
+      const recorder = createRecordingMediaRecorder(s);
       audioMediaRecorder.current = recorder;
       recorderStopPromises.current.set(recorder, attachSaveHandler(
         recorder,

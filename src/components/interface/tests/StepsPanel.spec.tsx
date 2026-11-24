@@ -259,6 +259,36 @@ describe('StepsPanel rendering', () => {
     expect(container.textContent).toContain('2/3');
   });
 
+  test('excludes archived dynamic iterations from block counts', async () => {
+    const dynamicSequence: Sequence = {
+      id: 'adaptive', order: 'dynamic', orderPath: 'root-0', components: [], skip: [],
+    };
+    const studySequence: Sequence = {
+      id: 'root', order: 'fixed', orderPath: 'root', components: [dynamicSequence], skip: [],
+    };
+    const studyConfig = makeStudyConfig({
+      components: {
+        earlier: { type: 'markdown', path: 'earlier.md', response: [] },
+        current: { type: 'markdown', path: 'current.md', response: [] },
+      },
+      sequence: studySequence,
+    });
+    const answers = {
+      adaptive_0_earlier_0: makeStoredAnswer({
+        identifier: 'adaptive_0_earlier_0', componentName: 'earlier', trialOrder: '0_0', recordingArchived: true,
+      }),
+      adaptive_0_current_1: makeStoredAnswer({
+        identifier: 'adaptive_0_current_1', componentName: 'current', trialOrder: '0_1',
+      }),
+    };
+    const { container } = await act(async () => render(
+      <StepsPanel participantSequence={studySequence} participantAnswers={answers} studyConfig={studyConfig} />,
+    ));
+
+    expect(container.textContent).toContain('1/1');
+    expect(container.textContent).not.toContain('2/2');
+  });
+
   test('renders in analysis mode', async () => {
     const { container } = await act(async () => render(
       <StepsPanel

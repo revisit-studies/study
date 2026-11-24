@@ -96,7 +96,8 @@ function countComponentsInSequence(
 
   // Dynamic blocks generate components at runtime, so we count from participant answers
   if (isDynamicBlock(sequence)) {
-    return Object.entries(participantAnswers).filter(([key]) => key.startsWith(`${sequence.id}_`)).length;
+    return Object.entries(participantAnswers)
+      .filter(([key, answer]) => key.startsWith(`${sequence.id}_`) && !answer.recordingArchived).length;
   }
 
   sequence.components.forEach((component) => {

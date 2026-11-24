@@ -60,6 +60,7 @@ export function AppNavBar({
       bg="light-dark(var(--mantine-color-gray-1), var(--mantine-color-dark-6))"
       display={sidebarOpen ? 'block' : 'none'}
       style={{
+        maxHeight: bottom > 0 ? `calc(100vh - ${top + bottom}px)` : undefined,
         marginBottom: bottom,
         marginTop: top,
         position: 'relative',

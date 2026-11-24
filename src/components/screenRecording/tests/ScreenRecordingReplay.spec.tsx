@@ -58,7 +58,7 @@ vi.mock('@mantine/core', () => ({
       {data.map((item) => <button type="button" key={item.value} aria-pressed={item.value === value} onClick={() => onChange(item.value)}>{item.label}</button>)}
     </div>
   ),
-  Text: ({ children }: { children?: React.ReactNode }) => <span>{children}</span>,
+  Text: ({ children, ...props }: { children?: React.ReactNode; [key: string]: unknown }) => <span {...props}>{children}</span>,
 }));
 
 vi.mock('../../../storage/storageEngineHooks', () => ({
@@ -195,6 +195,20 @@ describe('ScreenRecordingReplay', () => {
     const screenVideo = container.querySelectorAll('video')[0];
     await waitFor(() => expect(screenVideo.src).toBe('http://example.com/video.mp4'));
     expect(mockUpdateReplayRef).toHaveBeenCalled();
+  });
+
+  test('explains when the current browser cannot play a recording format', async () => {
+    mockIsAnalysis = true;
+    mockStorageEngine = {
+      getScreenRecording: vi.fn().mockResolvedValue('http://example.com/video.webm'),
+      getWebcamRecording: vi.fn().mockResolvedValue(null),
+    };
+    mockSearchParams = new URLSearchParams({ participantId: 'p1' });
+    const view = await act(async () => render(<ScreenRecordingReplay />));
+
+    fireEvent.error(view.container.querySelectorAll('video')[0]);
+
+    expect(view.getByRole('alert').textContent).toContain('Try opening it in the browser used to record it');
   });
 
   test('loads a webcam recording when no screen recording exists', async () => {

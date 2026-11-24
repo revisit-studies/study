@@ -130,7 +130,7 @@ export function usePreviousStep() {
         return;
       }
     }
-  }, [answers, graph, completed, submitting, buildSearch, currentStep, deleteDynamicBlockAnswers, funcIndex, isAnalysis, navigate, sequence, storageEngine, storeDispatch, studyConfig.globalVariables, studyId]);
+  }, [answers, graph, completed, submitting, buildSearch, currentStep, deleteDynamicBlockAnswers, funcIndex, isAnalysis, navigate, sequence, storeDispatch, studyConfig.globalVariables, studyId]);
 
   const goToPreviousStep = useCallback(async () => {
     if (typeof currentStep !== 'number' || completed || submitting || previousNavigationInFlight.current) return;

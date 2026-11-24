@@ -759,7 +759,7 @@ export function StepRenderer() {
     [isAnalysis, currentComponent, developmentModeEnabled, isCompleted, dataCollectionEnabled, isSubmittingFinal],
   );
 
-  const [hasAudio, setHasAudio] = useState<boolean>();
+  const [, setHasAudio] = useState<boolean>();
   const [isExportingPdf, setIsExportingPdf] = useState(false);
   const exportInProgressRef = useRef(false);
   const pdfExportRootRef = useRef<HTMLDivElement>(null);
@@ -854,7 +854,7 @@ export function StepRenderer() {
             padding="md"
             header={{ height: showTitleBar ? 70 : 0 }}
             aside={{ width: STUDY_BROWSER_WIDTH, breakpoint: 'xs', collapsed: { desktop: !asideOpen, mobile: !asideOpen } }}
-            footer={{ height: isAnalysis ? 125 + (hasAudio ? 55 : 0) : 0 }}
+            footer={{ height: isAnalysis ? 180 : 0 }}
             style={{ '--app-shell-aside-offset': '0rem' } as CSSProperties}
           >
             {showTitleBar && (
@@ -936,7 +936,7 @@ export function StepRenderer() {
                 <AppNavBar
                   width={sidebarWidth}
                   top={showTitleBar ? 70 : 0}
-                  bottom={isAnalysis ? 125 + (hasAudio ? 55 : 0) : 0}
+                  bottom={isAnalysis ? 180 : 0}
                   sidebarOpen={sidebarOpen}
                   inert={isVisitFinalizing}
                 />
