@@ -6,9 +6,9 @@ In this example, you will complete an HSL color code test by choosing the square
 The difficulty of the next question will adjust based on your correctness on the previous one.
 
 ## Relevant files:
- * [The Config](https://github.com/revisit-studies/study/blob/main/public/demo-dynamic/config.json)
- * [The React HSL Component](https://github.com/revisit-studies/study/blob/main/src/public/demo-dynamic/assets/HSL.tsx)
- * [The function determining the dynamic order based on previous responses](https://github.com/revisit-studies/study/blob/main/src/public/demo-dynamic/assets/dynamic.tsx)
+ * [The Config](https://github.com/revisit-studies/study/blob/dev/public/demo-dynamic/config.json)
+ * [The React HSL Component](https://github.com/revisit-studies/study/blob/dev/src/public/demo-dynamic/assets/HSL.tsx)
+ * [The function determining the dynamic order based on previous responses](https://github.com/revisit-studies/study/blob/dev/src/public/demo-dynamic/assets/dynamic.tsx)
 
 ## Relevant documentation:
  * [Dynamic Blocks](https://revisit.dev/docs/designing-studies/sequences/dynamic-blocks/)

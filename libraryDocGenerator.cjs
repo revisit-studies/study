@@ -10,7 +10,7 @@ const LIBRARIES_TO_SKIP = new Set(['test']);
 
 const joinMdSections = (sections) => `${sections.filter((section) => section !== undefined).join('\n\n')}\n`;
 
-const generateMd = (library, libraryConfig, forDocs, title = library) => joinMdSections([
+const generateMd = (library, libraryConfig, forDocs, title = library, sourceRef = 'dev') => joinMdSections([
   `# ${title}`,
   !forDocs ? `This is a demo of the library \`${library}\`.` : undefined,
   libraryConfig.description,
@@ -36,8 +36,8 @@ import StructuredLinks from '@site/src/components/StructuredLinks/StructuredLink
         {name: "${library} Demo", url: "https://revisit.dev/study/library-${library}"}
       ]}
       codeLinks={[
-        {name: "${library} Demo Code", url: "https://github.com/revisit-studies/study/tree/main/public/library-${library}"},
-        {name: "${library} Library Code", url: "https://github.com/revisit-studies/study/tree/main/public/libraries/${library}"}
+        {name: "${library} Demo Code", url: "https://github.com/revisit-studies/study/tree/${sourceRef}/public/library-${library}"},
+        {name: "${library} Library Code", url: "https://github.com/revisit-studies/study/tree/${sourceRef}/public/libraries/${library}"}
       ]}
       ${(libraryConfig.doi || libraryConfig.externalLink)
     ? `referenceLinks={[
@@ -65,6 +65,10 @@ const getExistingTitle = (markdownPath) => {
 };
 
 const generateLibraryDocs = (base) => {
+  const version = fs.existsSync(path.join(base, 'VERSION'))
+    ? fs.readFileSync(path.join(base, 'VERSION'), 'utf8').trim()
+    : '0.0.0-dev';
+  const sourceRef = version.endsWith('-dev') ? 'dev' : `v${version}`;
   const librariesPath = path.join(base, 'public', 'libraries');
   const docsLibrariesPath = path.join(base, 'docsLibraries');
 
@@ -78,7 +82,7 @@ const generateLibraryDocs = (base) => {
     const libraryPath = path.join(librariesPath, library, 'config.json');
     const libraryConfig = JSON.parse(fs.readFileSync(libraryPath, 'utf8'));
 
-    const docsMd = generateMd(library, libraryConfig, true);
+    const docsMd = generateMd(library, libraryConfig, true, library, sourceRef);
 
     // Save to docsLibraries folder
     const docsLibraryPath = path.join(docsLibrariesPath, `${library}.md`);
@@ -92,7 +96,7 @@ const generateLibraryDocs = (base) => {
     if (fs.existsSync(exampleAssetsPath)) {
       const exampleDocsPath = path.join(exampleAssetsPath, `${library}.md`);
       const exampleTitle = getExistingTitle(exampleDocsPath) || library;
-      const exampleMd = generateMd(library, libraryConfig, false, exampleTitle);
+      const exampleMd = generateMd(library, libraryConfig, false, exampleTitle, sourceRef);
       fs.writeFileSync(exampleDocsPath, exampleMd);
 
       // eslint-disable-next-line no-console

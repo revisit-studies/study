@@ -3,8 +3,8 @@ This demo shows an UpSet visualization rendered as a pre-existing React componen
 Use this study to explore the component setup and interaction behavior. UpSet also implements provenance tracking with Trrack.
 
 ## Relevant files:
- * [The Config](https://github.com/revisit-studies/study/blob/main/public/demo-upset/config.json)
- * [The React Component](https://github.com/revisit-studies/study/blob/main/src/public/demo-upset/assets/Upset.tsx)
+ * [The Config](https://github.com/revisit-studies/study/blob/dev/public/demo-upset/config.json)
+ * [The React Component](https://github.com/revisit-studies/study/blob/dev/src/public/demo-upset/assets/Upset.tsx)
  * [The UpSet Code](https://github.com/visdesignlab/upset2/)
 
 ## Relevant documentation:

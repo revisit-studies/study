@@ -10,8 +10,8 @@ Below we describe what makes the chatbot good for studies, the core features, an
 
 ## Relevant Files:
 
-* [The Config](https://github.com/revisit-studies/study/blob/main/public/example-llm-chatbot/config.json)
-* [The React Files](https://github.com/revisit-studies/study/tree/main/src/public/example-llm-chatbot)
+* [The Config](https://github.com/revisit-studies/study/blob/dev/public/example-llm-chatbot/config.json)
+* [The React Files](https://github.com/revisit-studies/study/tree/dev/src/public/example-llm-chatbot)
 
 ## Features
 

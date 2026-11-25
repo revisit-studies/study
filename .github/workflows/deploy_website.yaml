@@ -23,6 +23,9 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
+      - name: Validate stable release version
+        run: node scripts/release-version.mjs check main
+
       - uses: actions/setup-node@v7
         with:
           node-version: lts/*
@@ -33,7 +36,7 @@ jobs:
       - name: Build main deployment
         run: |
           if [ "$GITHUB_REPOSITORY" = "revisit-studies/study" ]; then
-            VITE_RECAPTCHA_ENTERPRISE_SITE_KEY=6LeksfUtAAAAADwbkOg-HyN8ZkMD04uIbJvrSWeX VITE_STORAGE_ENGINE=firebase VITE_REPO_URL=https://github.com/revisit-studies/study/tree/main/public/ yarn build
+            VITE_RECAPTCHA_ENTERPRISE_SITE_KEY=6LeksfUtAAAAADwbkOg-HyN8ZkMD04uIbJvrSWeX VITE_STORAGE_ENGINE=firebase VITE_REPO_URL=https://github.com/revisit-studies/study/tree/dev/public/ yarn build
           else
             if [ -z "$VITE_STORAGE_ENGINE" ]; then unset VITE_STORAGE_ENGINE; fi
             yarn build
@@ -58,7 +61,7 @@ jobs:
         run: yarn build
         env:
           VITE_BASE_PATH: "/${{ github.event.repository.name }}/supabase/"
-          VITE_REPO_URL: "https://github.com/revisit-studies/study/tree/main/public/"
+          VITE_REPO_URL: "https://github.com/revisit-studies/study/tree/dev/public/"
           VITE_STORAGE_ENGINE: supabase
 
       - name: Deploy current-only main Supabase snapshot

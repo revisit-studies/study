@@ -37,6 +37,8 @@ describe('libraryExampleStudyGenerator', () => {
     expect(config.importedLibraries).toEqual(['my-lib']);
     expect(config.components.introduction.path).toBe('library-my-lib/assets/my-lib.md');
     expect(config.sequence.components).toEqual(['introduction']);
+    expect(config.$schema).toContain('/dev/src/parser/StudyConfigSchema.json');
+    expect(createExampleConfig('my-lib', 'v3.4.2').$schema).toContain('/v3.4.2/src/parser/StudyConfigSchema.json');
   });
 
   it('getLibraries filters hidden entries and .DS_Store entries', () => {
@@ -58,6 +60,7 @@ describe('libraryExampleStudyGenerator', () => {
     const libraryName = 'alpha';
     const librariesPath = path.join(base, 'public', 'libraries', libraryName);
     fs.mkdirSync(librariesPath, { recursive: true });
+    fs.writeFileSync(path.join(base, 'VERSION'), '3.4.2\n');
 
     const generateDocsFn = vi.fn();
     generateLibraryExamples(base, generateDocsFn);
@@ -69,6 +72,7 @@ describe('libraryExampleStudyGenerator', () => {
     expect(fs.existsSync(examplePath)).toBe(true);
     expect(fs.existsSync(assetsPath)).toBe(true);
     expect(fs.existsSync(configPath)).toBe(true);
+    expect(JSON.parse(fs.readFileSync(configPath, 'utf8')).$schema).toContain('/v3.4.2/src/parser/StudyConfigSchema.json');
     expect(generateDocsFn).toHaveBeenCalledTimes(1);
     expect(generateDocsFn).toHaveBeenCalledWith(base);
   });

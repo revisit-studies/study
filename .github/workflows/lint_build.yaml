@@ -25,11 +25,15 @@ jobs:
         run: yarn install --frozen-lockfile
 
       - name: Check version metadata and current pointers
-        run: node scripts/release-version.mjs check pull-request
-
-      - name: Check branch version suffix
-        if: github.event_name == 'push'
-        run: node scripts/release-version.mjs check "$GITHUB_REF_NAME"
+        run: |
+          if [[ "$GITHUB_EVENT_NAME" == 'pull_request' ]]; then
+            node scripts/release-version.mjs check-pr "$GITHUB_BASE_REF" "$PR_TITLE"
+          else
+            node scripts/release-version.mjs check "$GITHUB_REF_NAME"
+          fi
+        env:
+          GITHUB_BASE_REF: ${{ github.base_ref }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
 
       - name: Run linter
         run: yarn lint

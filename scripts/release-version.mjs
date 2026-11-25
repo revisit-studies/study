@@ -1,13 +1,15 @@
 import { readFile, readdir, writeFile } from 'node:fs/promises';
+import { realpathSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const VERSION_PATTERN = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(-dev)?$/;
 const RELEASE_TITLE_PATTERN = /^v(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/;
-const CURRENT_POINTER_PATTERN = /(https:\/\/(?:raw\.githubusercontent\.com\/revisit-studies\/study|github\.com\/revisit-studies\/study\/(?:tree|blob))\/)(?:dev|v(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*))(?=\/)/g;
-const POINTER_PATTERN = /https:\/\/(?:raw\.githubusercontent\.com\/revisit-studies\/study|github\.com\/revisit-studies\/study\/(?:tree|blob))\/(dev|v(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*))(?=\/)/g;
-const TEXT_EXTENSIONS = new Set(['.json', '.md', '.mdx', '.ts', '.tsx', '.yaml', '.yml']);
+const CURRENT_POINTER_PATTERN = /(https:\/\/(?:raw\.githubusercontent\.com\/revisit-studies\/study|github\.com\/revisit-studies\/study\/(?:tree|blob))\/)(?:dev|main|v(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*))(?=\/)/g;
+const POINTER_PATTERN = /https:\/\/(?:raw\.githubusercontent\.com\/revisit-studies\/study|github\.com\/revisit-studies\/study\/(?:tree|blob))\/(dev|main|v(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*))(?=\/)/g;
+const TEXT_EXTENSIONS = new Set(['.cjs', '.json', '.md', '.mdx', '.ts', '.tsx', '.yaml', '.yml']);
 
 export function parseReleaseTitle(title) {
   const match = RELEASE_TITLE_PATTERN.exec(title);
@@ -29,6 +31,39 @@ export function validateVersionForBranch(version, branch) {
   }
 }
 
+export function branchForPullRequestCheck(baseBranch, title) {
+  return baseBranch === 'main' && RELEASE_TITLE_PATTERN.test(title) ? 'dev' : baseBranch;
+}
+
+function compareVersions(leftVersion, rightVersion) {
+  const left = leftVersion.split('.').map(Number);
+  const right = rightVersion.split('.').map(Number);
+  const differingIndex = left.findIndex((part, index) => part !== right[index]);
+  if (differingIndex === -1) return 0;
+  return left[differingIndex] < right[differingIndex] ? -1 : 1;
+}
+
+export function mergedReleaseVersionsAfter(root, originSha, mergedPullRequests) {
+  return mergedPullRequests.flatMap(({ title, merge_commit_sha: mergeCommitSha }) => {
+    if (!mergeCommitSha || mergeCommitSha === originSha || !RELEASE_TITLE_PATTERN.test(title)) return [];
+    if (!isAncestor(root, originSha, mergeCommitSha) || !isAncestor(root, mergeCommitSha, 'HEAD')) return [];
+    return [parseReleaseTitle(title)];
+  });
+}
+
+export function validateReleaseOrder(currentVersion, releaseVersion, laterReleaseVersions = []) {
+  validateVersionForBranch(currentVersion, currentVersion.endsWith('-dev') ? 'dev' : 'main');
+  validateVersionForBranch(releaseVersion, 'main');
+  const currentStableVersion = currentVersion.replace(/-dev$/, '');
+  if (compareVersions(releaseVersion, currentStableVersion) < 0) {
+    throw new Error(`Release ${releaseVersion} is superseded by ${currentVersion} already on main`);
+  }
+  const supersedingRelease = laterReleaseVersions.find((version) => compareVersions(version, releaseVersion) >= 0);
+  if (supersedingRelease) {
+    throw new Error(`Release ${releaseVersion} is superseded by later merged release ${supersedingRelease}`);
+  }
+}
+
 async function* walk(directory) {
   for (const entry of await readdir(directory, { withFileTypes: true })) {
     const entryPath = path.join(directory, entry.name);
@@ -41,14 +76,14 @@ async function* walk(directory) {
 }
 
 async function* currentPointerFiles(root) {
-  for (const directory of ['src', 'public', 'docsLibraries']) {
+  for (const directory of ['src', 'public', 'docsLibraries', '.github/workflows']) {
     try {
       yield* walk(path.join(root, directory));
     } catch (error) {
       if (error.code !== 'ENOENT') throw error;
     }
   }
-  for (const filename of ['README.md', 'typedocReadMe.md']) {
+  for (const filename of ['.env', 'README.md', 'typedocReadMe.md', 'libraryExampleStudyGenerator.cjs']) {
     try {
       const filePath = path.join(root, filename);
       await readFile(filePath);
@@ -105,10 +140,58 @@ export async function checkVersion(root, branch) {
   }
 }
 
-export async function syncVersion(root) {
+function git(root, args) {
+  return execFileSync('git', args, { cwd: root, encoding: 'utf8' }).trim();
+}
+
+function isAncestor(root, ancestor, descendant) {
+  try {
+    execFileSync('git', ['merge-base', '--is-ancestor', ancestor, descendant], { cwd: root, stdio: 'ignore' });
+    return true;
+  } catch (error) {
+    if (error.status === 1) return false;
+    throw error;
+  }
+}
+
+export async function validatePreparedTag(root, tag, expectedOrigin) {
+  const releaseVersion = parseReleaseTitle(tag);
+  const tagCommit = git(root, ['rev-parse', `${tag}^{commit}`]);
+  if (git(root, ['rev-parse', 'HEAD']) !== tagCommit) {
+    throw new Error(`HEAD does not match release tag ${tag}`);
+  }
+
+  const version = (await readFile(path.join(root, 'VERSION'), 'utf8')).trim();
+  if (version !== releaseVersion) {
+    throw new Error(`Tag ${tag} points to VERSION ${version}, expected ${releaseVersion}`);
+  }
+  await checkVersion(root, 'main');
+
+  if (git(root, ['cat-file', '-t', `refs/tags/${tag}`]) !== 'tag') {
+    throw new Error(`Tag ${tag} must be an annotated prepared release tag`);
+  }
+  if (git(root, ['show', '-s', '--format=%s', tagCommit]) !== `Release version ${tag}`) {
+    throw new Error(`Tag ${tag} does not point to a release preparation commit`);
+  }
+
+  const tagBody = git(root, ['for-each-ref', '--format=%(contents:body)', `refs/tags/${tag}`]);
+  const origins = tagBody.split(/\r?\n/).filter((line) => line.startsWith('Release PR merge '));
+  const tagOrigin = origins.length === 1 ? origins[0].slice('Release PR merge '.length) : '';
+  if (!/^[0-9a-f]{40,64}$/.test(tagOrigin) || !isAncestor(root, tagOrigin, tagCommit)) {
+    throw new Error(`Tag ${tag} is not tied to its originating release PR`);
+  }
+  if (expectedOrigin !== undefined && tagOrigin !== expectedOrigin) {
+    throw new Error(`Tag ${tag} was prepared for a different release PR`);
+  }
+  if (!isAncestor(root, tagCommit, 'origin/main')) {
+    throw new Error(`Tag ${tag} is not reachable from main`);
+  }
+}
+
+export async function syncVersion(root, branch) {
   const version = (await readFile(path.join(root, 'VERSION'), 'utf8')).trim();
   await setVersion(root, version);
-  await checkVersion(root, version.endsWith('-dev') ? 'dev' : 'main');
+  await checkVersion(root, branch);
 }
 
 async function main() {
@@ -117,8 +200,31 @@ async function main() {
     parseReleaseTitle(value ?? '');
     return;
   }
+  if (command === 'validate-release-order') {
+    const currentVersion = (await readFile(path.join(ROOT, 'VERSION'), 'utf8')).trim();
+    const [,, releaseMergeSha, pullRequestsPath] = process.argv.slice(2);
+    const pullRequestLines = pullRequestsPath === undefined
+      ? []
+      : (await readFile(pullRequestsPath, 'utf8')).split(/\r?\n/).filter(Boolean);
+    const mergedPullRequests = pullRequestLines.map((line) => JSON.parse(line));
+    const laterReleaseVersions = releaseMergeSha === undefined
+      ? []
+      : mergedReleaseVersionsAfter(ROOT, releaseMergeSha, mergedPullRequests);
+    validateReleaseOrder(currentVersion, value ?? '', laterReleaseVersions);
+    return;
+  }
   if (command === 'check') {
     await checkVersion(ROOT, value ?? process.env.GITHUB_REF_NAME);
+    return;
+  }
+  if (command === 'check-pr') {
+    const [, , title] = process.argv.slice(2);
+    await checkVersion(ROOT, branchForPullRequestCheck(value ?? '', title ?? ''));
+    return;
+  }
+  if (command === 'validate-tag') {
+    const [, , expectedOrigin] = process.argv.slice(2);
+    await validatePreparedTag(ROOT, value ?? '', expectedOrigin);
     return;
   }
   if (command === 'release') {
@@ -128,16 +234,16 @@ async function main() {
     return;
   }
   if (command === 'sync') {
-    if (value !== undefined) {
-      throw new Error('The sync command reads the version from VERSION and does not accept a version argument');
+    if (value === undefined) {
+      throw new Error('The sync command requires the target branch name');
     }
-    await syncVersion(ROOT);
+    await syncVersion(ROOT, value);
     return;
   }
-  throw new Error('Usage: node scripts/release-version.mjs validate-title <title> | check [branch] | release <vX.Y.Z> | sync');
+  throw new Error('Usage: node scripts/release-version.mjs validate-title <title> | validate-release-order <version> [merge-sha] [merged-prs.jsonl] | validate-tag <vX.Y.Z> | check [branch] | check-pr <base-branch> <title> | release <vX.Y.Z> | sync <branch>');
 }
 
-if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+if (process.argv[1] && realpathSync(process.argv[1]) === realpathSync(fileURLToPath(import.meta.url))) {
   main().catch((error) => {
     console.error(error.message);
     process.exitCode = 1;

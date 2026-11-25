@@ -21,14 +21,14 @@ Pair them with `if` to show something only when a value exists (`\{{#if (lookupA
 
 ## Relevant files:
 
-- [The Config](https://github.com/revisit-studies/study/blob/main/public/demo-templating/config.json)
-- [hint-europe.md](https://github.com/revisit-studies/study/blob/main/public/demo-templating/assets/hint-europe.md)
-- [quiz-help.md](https://github.com/revisit-studies/study/blob/main/public/demo-templating/assets/quiz-help.md)
-- [capital-picker.html](https://github.com/revisit-studies/study/blob/main/public/demo-templating/assets/capital-picker.html)
-- [global-budget.md](https://github.com/revisit-studies/study/blob/main/public/demo-templating/assets/global-budget.md)
-- [GlobalBudget.tsx](https://github.com/revisit-studies/study/blob/main/src/public/demo-templating/assets/GlobalBudget.tsx)
-- [global-budget.html](https://github.com/revisit-studies/study/blob/main/public/demo-templating/assets/global-budget.html)
-- [summary.md](https://github.com/revisit-studies/study/blob/main/public/demo-templating/assets/summary.md)
+- [The Config](https://github.com/revisit-studies/study/blob/dev/public/demo-templating/config.json)
+- [hint-europe.md](https://github.com/revisit-studies/study/blob/dev/public/demo-templating/assets/hint-europe.md)
+- [quiz-help.md](https://github.com/revisit-studies/study/blob/dev/public/demo-templating/assets/quiz-help.md)
+- [capital-picker.html](https://github.com/revisit-studies/study/blob/dev/public/demo-templating/assets/capital-picker.html)
+- [global-budget.md](https://github.com/revisit-studies/study/blob/dev/public/demo-templating/assets/global-budget.md)
+- [GlobalBudget.tsx](https://github.com/revisit-studies/study/blob/dev/src/public/demo-templating/assets/GlobalBudget.tsx)
+- [global-budget.html](https://github.com/revisit-studies/study/blob/dev/public/demo-templating/assets/global-budget.html)
+- [summary.md](https://github.com/revisit-studies/study/blob/dev/public/demo-templating/assets/summary.md)
 
 ## Relevant documentation:
 

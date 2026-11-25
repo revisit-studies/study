@@ -140,8 +140,8 @@ describe('libraryDocGenerator', () => {
       sequences: {},
     }, true);
 
-    expect(md).toContain('{name: "demo-lib Demo Code", url: "https://github.com/revisit-studies/study/tree/main/public/library-demo-lib"}');
-    expect(md).toContain('{name: "demo-lib Library Code", url: "https://github.com/revisit-studies/study/tree/main/public/libraries/demo-lib"}');
+    expect(md).toContain('{name: "demo-lib Demo Code", url: "https://github.com/revisit-studies/study/tree/dev/public/library-demo-lib"}');
+    expect(md).toContain('{name: "demo-lib Library Code", url: "https://github.com/revisit-studies/study/tree/dev/public/libraries/demo-lib"}');
   });
 
   it('getLibraries filters hidden entries and .DS_Store entries', () => {
@@ -185,6 +185,24 @@ describe('libraryDocGenerator', () => {
     expect(fs.readFileSync(docsOut, 'utf8')).toContain('# alpha');
     expect(fs.readFileSync(exampleOut, 'utf8')).toContain('# alpha');
     expect(fs.readFileSync(exampleOut, 'utf8')).toContain('This is a demo');
+  });
+
+  it('generates stable source links from the authoritative VERSION', () => {
+    const base = fs.mkdtempSync(path.join(os.tmpdir(), 'lib-doc-stable-'));
+    tempDirs.push(base);
+    const libraryName = 'alpha';
+    const librariesPath = path.join(base, 'public', 'libraries', libraryName);
+    fs.mkdirSync(librariesPath, { recursive: true });
+    fs.writeFileSync(path.join(base, 'VERSION'), '3.4.2\n');
+    fs.writeFileSync(path.join(librariesPath, 'config.json'), JSON.stringify({
+      description: 'Alpha description', components: {}, sequences: {},
+    }));
+
+    generateLibraryDocs(base);
+
+    const docs = fs.readFileSync(path.join(base, 'docsLibraries', `${libraryName}.md`), 'utf8');
+    expect(docs).toContain('study/tree/v3.4.2/public/library-alpha');
+    expect(docs).toContain('study/tree/v3.4.2/public/libraries/alpha');
   });
 
   it('removes stale documentation for skipped and removed libraries', () => {

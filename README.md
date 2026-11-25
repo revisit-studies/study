@@ -58,7 +58,7 @@ yarn test
 
 ## Release Instructions
 
-The root `VERSION` file is the source of truth for the application version. On `dev`, update it manually with a `-dev` suffix and run `node scripts/release-version.mjs sync` to synchronize package metadata and current-release schema and source pointers. CI validates this state but does not update `dev`. On `main`, the release workflow sets the stable version and updates its pointers when the release PR is merged.
+The root `VERSION` file is the source of truth for the application version. On `dev`, update it manually with a `-dev` suffix and run `node scripts/release-version.mjs sync dev` to synchronize package metadata and current-release schema and source pointers. CI validates this state but does not update `dev`. On `main`, the release workflow sets the stable version and updates its pointers when the release PR is merged.
 
 Releasing reVISit.dev happens automatically when a release PR is merged into the `main` branch. The pull request title must exactly match the release version, e.g. `vX.Y.Z`. The release workflow sets the version from that title, updates current-release pointers, creates a release commit, and pushes a tag with the same name as the PR. Pushing the tag automatically creates the official GitHub release with generated release notes. The `main` branch is protected and requires two reviews before merging.
 

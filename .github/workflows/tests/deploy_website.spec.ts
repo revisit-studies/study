@@ -29,6 +29,18 @@ function expand(value: string, engine = '') {
   }[expression] ?? ''));
 }
 
+test('main deployment validates stable version metadata before building', () => {
+  const { steps } = workflow.jobs['deploy-main'];
+  const validationIndex = steps.findIndex(({ name }) => name === 'Validate stable release version');
+  const buildIndex = steps.findIndex(({ name }) => name === 'Build main deployment');
+  const publishIndex = steps.findIndex(({ name }) => name === 'Deploy current-only main snapshot');
+
+  expect(validationIndex).toBeGreaterThan(-1);
+  expect(steps[validationIndex].run).toBe('node scripts/release-version.mjs check main');
+  expect(validationIndex).toBeLessThan(buildIndex);
+  expect(validationIndex).toBeLessThan(publishIndex);
+});
+
 test.each(['deploy-main', 'deploy-dev', 'pr-deploy'])('release regression: %s honors the downstream storage variable', (job) => {
   const directory = temporaryDirectory();
   // Replace only the expensive build boundary; execute the workflow's actual shell.
