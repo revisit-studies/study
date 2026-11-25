@@ -5,7 +5,7 @@
   margin-inline: auto;
 }
 
-:where(.responseBlock-aboveStimulus, .responseBlock-belowStimulus, .stimulus.markdown, .stimulus-instruction) {
+:where(.responseBlock-aboveStimulus, .responseBlock-belowStimulus, .stimulus, .stimulus-instruction) {
   padding-inline: clamp(16px, 3vw, 40px);
 }
 
