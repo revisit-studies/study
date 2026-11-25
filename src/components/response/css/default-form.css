@@ -1,12 +1,28 @@
-:where(.responseBlock-aboveStimulus, .responseBlock-belowStimulus, .stimulus, .responseBlock-actions) {
+:where(.responseBlock-aboveStimulus, .responseBlock-belowStimulus, .stimulus, .stimulus-instruction, .responseBlock-actions) {
   box-sizing: border-box;
   width: 100%;
   max-width: 880px;
   margin-inline: auto;
 }
 
-:where(.responseBlock-aboveStimulus, .responseBlock-belowStimulus) {
+:where(.responseBlock-aboveStimulus, .responseBlock-belowStimulus, .stimulus.markdown, .stimulus-instruction) {
   padding-inline: clamp(16px, 3vw, 40px);
+}
+
+/* adapt px size here to change sidebar content gap */
+.main[data-sidebar-open="true"] {
+  --sidebar-content-gap: clamp(16px, 6.25vw, 40px); 
+  --sidebar-content-offset: max(0px, calc(var(--sidebar-content-gap) - var(--app-shell-padding) - 10px));
+}
+
+.main[data-sidebar-open="true"] :where(.responseBlock-aboveStimulus, .responseBlock-belowStimulus, .stimulus, .stimulus-instruction, .responseBlock-actions) {
+  max-width: min(880px, calc(100% - var(--sidebar-content-offset)));
+  margin-left: var(--sidebar-content-offset);
+  margin-right: auto;
+}
+
+.main[data-sidebar-open="true"] :where(.responseBlock-aboveStimulus, .responseBlock-belowStimulus, .stimulus.markdown, .stimulus-instruction, .responseBlock-actions[data-alignment="left"]) {
+  padding-left: 0;
 }
 
 :where(.responseBlock-actions[data-alignment="left"]) {

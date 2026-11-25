@@ -426,6 +426,7 @@ export function StepRenderer() {
                 {/* 10px is the gap between the sidebar and the main content */}
                 <AppShell.Main
                   className="main"
+                  data-sidebar-open={sidebarOpen}
                   style={{
                     display: 'flex',
                     flexDirection: 'column',

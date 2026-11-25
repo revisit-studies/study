@@ -313,7 +313,11 @@ export function ComponentController() {
   return (
     <>
       {globalStoreError && <Text role="alert" c="red">{globalStoreError}</Text>}
-      {instructionLocation === 'aboveStimulus' && <ReactMarkdownWrapper text={instruction} />}
+      {instructionLocation === 'aboveStimulus' && (
+        <Box className="stimulus-instruction">
+          <ReactMarkdownWrapper text={instruction} />
+        </Box>
+      )}
       <ResponseBlock
         key={`${currentStep}-above-response-block`}
         status={status}
@@ -343,7 +347,11 @@ export function ComponentController() {
         )}
       </Box>
 
-      {(instructionLocation === 'belowStimulus' || (instructionLocation === undefined && !instructionInSideBar)) && <ReactMarkdownWrapper text={instruction} />}
+      {(instructionLocation === 'belowStimulus' || (instructionLocation === undefined && !instructionInSideBar)) && (
+        <Box className="stimulus-instruction">
+          <ReactMarkdownWrapper text={instruction} />
+        </Box>
+      )}
       <ResponseBlock
         key={`${currentStep}-below-response-block`}
         status={status}
