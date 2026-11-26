@@ -5,28 +5,36 @@
   margin-inline: auto;
 }
 
-:where(.responseBlock-aboveStimulus, .responseBlock-belowStimulus, .stimulus, .stimulus-instruction) {
+:where(.stimulus:not(.markdown):not(.image):not(.video):not(:has(.revisit-drawing-surface))) {
+  padding-inline: var(--stimulus-content-inset);
+}
+
+:where(.responseBlock-aboveStimulus, .responseBlock-belowStimulus, .stimulus.markdown, .stimulus-instruction) {
   padding-inline: clamp(16px, 3vw, 40px);
 }
 
-/* adapt px size here to change sidebar content gap */
 .main[data-sidebar-open="true"] {
   --sidebar-content-gap: clamp(16px, 6.25vw, 40px); 
   --sidebar-content-offset: max(0px, calc(var(--sidebar-content-gap) - var(--app-shell-padding) - 10px));
+  --stimulus-content-inset: 0px;
 }
 
-.main[data-sidebar-open="true"] :where(.responseBlock-aboveStimulus, .responseBlock-belowStimulus, .stimulus, .stimulus-instruction, .responseBlock-actions) {
+:where(.main) {
+  --stimulus-content-inset: clamp(16px, 3vw, 40px);
+}
+
+:where(.main[data-sidebar-open="true"] .responseBlock-aboveStimulus, .main[data-sidebar-open="true"] .responseBlock-belowStimulus, .main[data-sidebar-open="true"] .stimulus, .main[data-sidebar-open="true"] .stimulus-instruction, .main[data-sidebar-open="true"] .responseBlock-actions) {
   max-width: min(880px, calc(100% - var(--sidebar-content-offset)));
   margin-left: var(--sidebar-content-offset);
   margin-right: auto;
 }
 
-.main[data-sidebar-open="true"] :where(.responseBlock-aboveStimulus, .responseBlock-belowStimulus, .stimulus.markdown, .stimulus-instruction, .responseBlock-actions[data-alignment="left"]) {
-  padding-left: 0;
-}
-
 :where(.responseBlock-actions[data-alignment="left"]) {
   padding-left: clamp(16px, 3vw, 40px);
+}
+
+:where(.main[data-sidebar-open="true"] .responseBlock-aboveStimulus, .main[data-sidebar-open="true"] .responseBlock-belowStimulus, .main[data-sidebar-open="true"] .stimulus.markdown, .main[data-sidebar-open="true"] .stimulus-instruction, .main[data-sidebar-open="true"] .responseBlock-actions[data-alignment="left"]) {
+  padding-left: 0;
 }
 
 :where(.responseBlock-aboveStimulus, .responseBlock-belowStimulus) > div {

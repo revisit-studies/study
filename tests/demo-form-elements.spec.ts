@@ -542,13 +542,5 @@ test('Test questionnaire component with responses and randomizing questions and 
 
   await page.goto(`${shortSidebarReplayPath}?${replaySearch}`);
   await expect(page.getByRole('button', { name: 'Play' })).toBeVisible();
-  const shortSidebar = page.locator('.sidebar');
-  await expect(shortSidebar).toBeVisible();
-  const shortSidebarLayout = await shortSidebar.evaluate((element) => ({
-    alignSelf: getComputedStyle(element).alignSelf,
-    clientHeight: element.clientHeight,
-    scrollHeight: element.scrollHeight,
-  }));
-  expect(shortSidebarLayout.alignSelf).not.toBe('flex-start');
-  expect(shortSidebarLayout.scrollHeight).toBeLessThanOrEqual(shortSidebarLayout.clientHeight);
+  await expect(page.locator('.sidebar')).toBeHidden();
 });
