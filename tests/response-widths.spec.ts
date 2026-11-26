@@ -119,7 +119,7 @@ test('matrix choices fit when possible and scroll inside the form when needed', 
   await expect(matrix.getByRole('checkbox').first()).toBeChecked();
 });
 
-test('full-width buttons use one row when they fit and balanced two-row layouts when they do not', async ({ page }) => {
+test('full-width buttons wrap to fit available rows and center incomplete rows', async ({ page }) => {
   await page.setViewportSize({ width: 500, height: 900 });
   let optionCount = 6;
   let shortLabels = false;
@@ -151,7 +151,11 @@ test('full-width buttons use one row when they fit and balanced two-row layouts 
   await page.getByRole('complementary').locator('.mantine-CloseButton-root').click();
 
   const buttons = page.locator('#q-buttons [data-button-option]');
-  for (const [count, sizes] of [[6, [3, 3]], [7, [4, 3]], [10, [5, 5]]] as const) {
+  for (const [count, sizes] of [
+    [6, [2, 2, 2]],
+    [7, [1, 1, 1, 1, 1, 1, 1]],
+    [10, [1, 1, 1, 1, 1, 1, 1, 1, 1, 1]],
+  ] as const) {
     optionCount = count;
     await page.setViewportSize({ width: count === 10 ? 200 : count === 6 ? 400 : 500, height: 900 });
     await resetClientStudyState(page);
@@ -226,11 +230,11 @@ test('full-width buttons use one row when they fit and balanced two-row layouts 
   });
   expect(compoundKeyFits).toBe(true);
   const buttonScrollRegion = page.locator('#q-buttons [data-button-scroll-region]');
-  expect(await buttonScrollRegion.evaluate((element) => element.scrollWidth - element.clientWidth)).toBeGreaterThan(0);
+  expect(await buttonScrollRegion.evaluate((element) => element.scrollWidth - element.clientWidth)).toBeLessThanOrEqual(1);
   expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(1);
   expect(labelAndKeyBounds.labelHeight).toBeGreaterThan(labelAndKeyBounds.lineHeight);
   const wrappedCardHeights = await buttons.evaluateAll((elements) => elements.map((element) => element.getBoundingClientRect().height));
-  expect(Math.max(...wrappedCardHeights) - Math.min(...wrappedCardHeights)).toBeLessThanOrEqual(1);
+  expect(Math.max(...wrappedCardHeights)).toBeGreaterThan(Math.min(...wrappedCardHeights));
 
   optionCount = 6;
   await page.setViewportSize({ width: 1440, height: 900 });
@@ -288,13 +292,13 @@ test('full-width buttons use one row when they fit and balanced two-row layouts 
       verticalGap: secondRow.top - firstRow.bottom,
     };
   });
-  expect(twoRowLayout.horizontalGap).toBe(oneRowHorizontalGap);
+  expect(Number.parseFloat(twoRowLayout.horizontalGap)).toBeLessThan(Number.parseFloat(oneRowHorizontalGap));
   expect(twoRowLayout.verticalGap).toBe(18);
   await page.setViewportSize({ width: 200, height: 900 });
   await expect.poll(() => buttons.evaluateAll((elements) => {
     const tops = [...new Set(elements.map((element) => Math.round(element.getBoundingClientRect().top)))].sort();
     return tops.map((top) => elements.filter((element) => Math.round(element.getBoundingClientRect().top) === top).length);
-  })).toEqual([5, 5]);
+  })).toEqual([2, 2, 2, 2, 2]);
   optionCount = 2;
   includeArrowKey = true;
   await resetClientStudyState(page);

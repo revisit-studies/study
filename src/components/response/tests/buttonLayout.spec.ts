@@ -6,8 +6,8 @@ describe('getButtonRowSizes', () => {
     expect(getButtonRowSizes([80, 90, 100], 320, 8)).toEqual([3]);
   });
 
-  test('uses two rows when unequal labels would not fit equal-width buttons', () => {
-    expect(getButtonRowSizes([40, 40, 160], 300, 8)).toEqual([2, 1]);
+  test('wraps when the widest label does not fit in a row', () => {
+    expect(getButtonRowSizes([40, 40, 160], 300, 8)).toEqual([1, 1, 1]);
   });
 
   test('lets short labels use a smaller content-based minimum', () => {
@@ -15,10 +15,11 @@ describe('getButtonRowSizes', () => {
   });
 
   test.each([
-    [6, [3, 3]],
-    [7, [4, 3]],
-    [10, [5, 5]],
-  ])('balances %i options across at most two rows', (optionCount, expectedRows) => {
-    expect(getButtonRowSizes(Array.from({ length: optionCount }, () => 100), 300, 8)).toEqual(expectedRows);
+    [6, 300, [2, 2, 2]],
+    [7, 500, [4, 3]],
+    [10, 800, [7, 3]],
+    [14, 500, [4, 4, 4, 2]],
+  ])('fills rows for %i options based on available width', (optionCount, availableWidth, expectedRows) => {
+    expect(getButtonRowSizes(Array.from({ length: optionCount }, () => 100), availableWidth, 8)).toEqual(expectedRows);
   });
 });

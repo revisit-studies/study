@@ -104,7 +104,6 @@ export function ButtonsInput({
 }) {
   const optionRefs = useRef<Record<string, HTMLButtonElement | null>>({});
   const buttonsRef = useRef<HTMLDivElement>(null);
-  const [buttonRows, setButtonRows] = useState(1);
   const {
     prompt,
     required,
@@ -121,8 +120,8 @@ export function ButtonsInput({
     () => parseStringOptions(optionOrders[response.id] || options),
     [optionOrders, options, response.id],
   );
-  const firstRowSize = Math.ceil(orderedOptions.length / 2);
-  const rowSize = Math.max(1, buttonRows === 1 ? orderedOptions.length : firstRowSize);
+  const [buttonRows, setButtonRows] = useState<number[]>([1]);
+  const buttonColumns = Math.max(...buttonRows);
   const [minimumButtonWidth, setMinimumButtonWidth] = useState(48);
   const [buttonGap, setButtonGap] = useState('var(--mantine-spacing-xl)');
 
@@ -133,7 +132,7 @@ export function ButtonsInput({
     const updateRows = () => {
       const buttons = Array.from(container.querySelectorAll<HTMLButtonElement>('[data-button-option]'));
       if (buttons.length < 2) {
-        setButtonRows(1);
+        setButtonRows([Math.max(1, buttons.length)]);
         return;
       }
       const grid = container.querySelector<HTMLElement>('[data-button-grid]');
@@ -185,13 +184,11 @@ export function ButtonsInput({
       const rowsWithRegularGap = getButtonRowSizes(optionWidths, availableWidth, regularGap, nextMinimumWidth);
       const rowsWithCompactGap = getButtonRowSizes(optionWidths, availableWidth, compactGap, nextMinimumWidth);
       const fitsWithRegularGap = rowsWithRegularGap.length === 1;
-      const nextButtonRows = fitsWithRegularGap || rowsWithCompactGap.length === 1 ? 1 : 2;
-      const buttonsPerRow = nextButtonRows === 1 ? buttons.length : Math.ceil(buttons.length / 2);
-      const widestButton = Math.max(nextMinimumWidth, ...optionWidths);
-      const rowFitsWithRegularGap = widestButton * buttonsPerRow + regularGap * (buttonsPerRow - 1) <= availableWidth;
+      const nextButtonRows = fitsWithRegularGap ? rowsWithRegularGap : rowsWithCompactGap;
+      const nextButtonGap = fitsWithRegularGap ? 'var(--mantine-spacing-xl)' : 'var(--mantine-spacing-xs)';
       setMinimumButtonWidth(nextMinimumWidth);
       setButtonRows(nextButtonRows);
-      setButtonGap(rowFitsWithRegularGap ? 'var(--mantine-spacing-xl)' : 'var(--mantine-spacing-xs)');
+      setButtonGap(nextButtonGap);
     };
 
     const observer = new ResizeObserver(updateRows);
@@ -199,6 +196,19 @@ export function ButtonsInput({
     updateRows();
     return () => observer.disconnect();
   }, [orderedOptions]);
+
+  const buttonPositions: { row: number; column: number; offsetHalfColumn: boolean }[] = [];
+  buttonRows.forEach((rowSize, row) => {
+    const columnDifference = buttonColumns - rowSize;
+    const rowOffset = Math.floor(columnDifference / 2);
+    for (let column = 0; column < rowSize; column += 1) {
+      buttonPositions.push({
+        row: row + 1,
+        column: rowOffset + column + 1,
+        offsetHalfColumn: columnDifference % 2 === 1,
+      });
+    }
+  });
 
   const handleValueChange = (value: string, source: 'keyboard' | 'click' = 'click') => {
     answer?.onChange?.(value, source);
@@ -259,20 +269,15 @@ export function ButtonsInput({
           data-button-grid
           style={{
             display: 'grid',
-            width: `max(100%, calc(${minimumButtonWidth}px * ${rowSize} + ${buttonGap} * ${rowSize - 1}))`,
-            gridTemplateColumns: `repeat(${rowSize * (buttonRows === 2 ? 2 : 1)}, minmax(${buttonRows === 2 ? 0 : minimumButtonWidth}px, 1fr))`,
-            gridTemplateRows: buttonRows === 2 ? 'repeat(2, 1fr)' : undefined,
+            width: '100%',
+            gridTemplateColumns: `repeat(${buttonColumns}, minmax(${minimumButtonWidth}px, 1fr))`,
             columnGap: buttonGap,
             rowGap: '18px',
           }}
         >
           {orderedOptions.map((radio, idx) => {
             const hasKeyVisual = !hideKeyVisual && Boolean(radio.key);
-            const secondRow = idx >= firstRowSize;
-            const column = secondRow
-              ? (orderedOptions.length % 2 ? 2 : 1) + (idx - firstRowSize) * 2
-              : idx * 2 + 1;
-
+            const position = buttonPositions[idx];
             return (
               <Radio.Card
                 key={`radio-${idx}`}
@@ -291,9 +296,12 @@ export function ButtonsInput({
                   width: '100%',
                   overflow: 'hidden',
                   padding: 0,
-                  minWidth: buttonRows === 2 ? `${minimumButtonWidth}px` : 0,
-                  gridColumn: buttonRows === 2 ? `${column} / span 2` : undefined,
-                  gridRow: buttonRows === 2 ? (secondRow ? 2 : 1) : undefined,
+                  minWidth: `${minimumButtonWidth}px`,
+                  gridColumn: position?.column,
+                  gridRow: position?.row,
+                  transform: position?.offsetHalfColumn
+                    ? `translateX(calc((100% + ${buttonGap}) / 2))`
+                    : undefined,
                 }}
               >
                 <div
