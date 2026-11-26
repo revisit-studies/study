@@ -37,6 +37,41 @@ export class ParticipantConfigValidationError extends Error {
   }
 }
 
+/** Older stored configs used acceptable bounds as correct ranges even when an answer was present. */
+function migrateLegacyAnswerRanges(component: IndividualComponent): IndividualComponent {
+  if (!component.correctAnswer) return component;
+
+  return {
+    ...component,
+    correctAnswer: component.correctAnswer.map((answer) => {
+      const { acceptableLow, acceptableHigh } = answer;
+      const numericAnswer = typeof answer.answer === 'number'
+        ? answer.answer
+        : typeof answer.answer === 'string' && answer.answer.trim() !== ''
+          ? Number(answer.answer)
+          : Number.NaN;
+      if (!Number.isFinite(numericAnswer)
+        || (acceptableLow === undefined && acceptableHigh === undefined)
+        || (acceptableLow !== undefined && !Number.isFinite(acceptableLow))
+        || (acceptableHigh !== undefined && !Number.isFinite(acceptableHigh))
+        || (acceptableLow !== undefined && acceptableHigh !== undefined && acceptableLow > acceptableHigh)) {
+        return answer;
+      }
+
+      const migratedAnswer = { ...answer };
+      delete migratedAnswer.acceptableLow;
+      delete migratedAnswer.acceptableHigh;
+      const lowerBounds = [answer.lowestCorrect, acceptableLow].filter((bound): bound is number => bound !== undefined);
+      const upperBounds = [answer.highestCorrect, acceptableHigh].filter((bound): bound is number => bound !== undefined);
+      return {
+        ...migratedAnswer,
+        ...(lowerBounds.length > 0 ? { lowestCorrect: Math.min(...lowerBounds) } : {}),
+        ...(upperBounds.length > 0 ? { highestCorrect: Math.max(...upperBounds) } : {}),
+      };
+    }),
+  };
+}
+
 function normalizeLibraryMacroReference(reference: string): string {
   let normalizedReference = reference;
   if (normalizedReference.includes('.co.')) {
@@ -1661,6 +1696,7 @@ export function materializeParticipantConfig(
   config: StudyConfig,
   globalParameters: Record<string, unknown>,
   participantSequence: StudyConfig['sequence'] | Sequence = config.sequence,
+  migrateLegacyCorrectAnswerRanges = false,
 ): StudyConfig {
   const components = Object.fromEntries(
     Object.entries(config.components).map(([componentId, component]) => {
@@ -1670,10 +1706,13 @@ export function materializeParticipantConfig(
         ...globalParameters,
       };
       const materializedComponent = deepFillTemplateStrings(inheritedComponent, parameters);
+      const runtimeComponent = migrateLegacyCorrectAnswerRanges
+        ? migrateLegacyAnswerRanges(materializedComponent)
+        : materializedComponent;
       return [
         componentId,
         {
-          ...materializedComponent,
+          ...runtimeComponent,
           parameters: deepFillTemplate(parameters, parameters),
         },
       ];

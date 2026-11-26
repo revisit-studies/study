@@ -562,7 +562,8 @@ function StudyShell({ globalConfig }: { globalConfig: GlobalConfig }) {
           };
         }
         let participantConfig = activeConfig;
-        if (participantSession.participantConfigHash !== activeHash) {
+        const isArchivedConfig = participantSession.participantConfigHash !== activeHash;
+        if (isArchivedConfig) {
           participantConfig = (await storageEngine.getAllConfigsFromHash(
             [participantSession.participantConfigHash],
             canonicalStudyId,
@@ -578,11 +579,18 @@ function StudyShell({ globalConfig }: { globalConfig: GlobalConfig }) {
         const filteredParticipantSequence = filterSequenceByCondition(participantSession.sequence, resolvedCondition);
         // Resolve participant-global templates only after loading the participant's persisted
         // sequence, while keeping the canonical config used for hashing unchanged.
-        const runtimeConfig = prevalidatedRuntimeConfig ?? materializeParticipantConfig(
-          participantConfig,
-          filteredParticipantSequence.parameters || {},
-          filteredParticipantSequence,
-        );
+        const runtimeConfig = isArchivedConfig
+          ? materializeParticipantConfig(
+            participantConfig,
+            filteredParticipantSequence.parameters || {},
+            filteredParticipantSequence,
+            true,
+          )
+          : prevalidatedRuntimeConfig ?? materializeParticipantConfig(
+            participantConfig,
+            filteredParticipantSequence.parameters || {},
+            filteredParticipantSequence,
+          );
         const globalProvenance = participantSession.globalStoreHead
           ? await storageEngine.getProvenance(GLOBAL_STORE_TASK, participantSession.participantId, true) : null;
         let globalGraph = globalProvenance?.globalStore;
