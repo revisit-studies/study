@@ -12,6 +12,8 @@ import {
 import { mergeComponentConfigs, studyComponentToIndividualComponent } from '../utils/handleComponentInheritance';
 import { PREFIX } from '../utils/Prefix';
 import { getSequenceFlatMapWithInterruptions } from '../utils/getSequenceFlatMap';
+import { getCorrectAnswerConfigError } from '../utils/correctAnswer';
+import type { Sequence } from '../store/types';
 
 const ajv = new Ajv({ allowUnionTypes: true });
 ajv.addSchema(librarySchema);
@@ -27,6 +29,48 @@ type SequenceWithImportReference = StudyConfig['sequence'] & {
 type LibraryConfigWithInheritanceMetadata = LibraryConfig & {
   __revisitInheritedComponentMetadata?: Record<string, { baseComponent: string; withSidebar?: boolean }>;
 };
+
+export class ParticipantConfigValidationError extends Error {
+  constructor(readonly issue: ParserErrorWarning) {
+    super(issue.message);
+    this.name = 'ParticipantConfigValidationError';
+  }
+}
+
+/** Older stored configs used acceptable bounds as correct ranges even when an answer was present. */
+function migrateLegacyAnswerRanges(component: IndividualComponent): IndividualComponent {
+  if (!component.correctAnswer) return component;
+
+  return {
+    ...component,
+    correctAnswer: component.correctAnswer.map((answer) => {
+      const { acceptableLow, acceptableHigh } = answer;
+      const numericAnswer = typeof answer.answer === 'number'
+        ? answer.answer
+        : typeof answer.answer === 'string' && answer.answer.trim() !== ''
+          ? Number(answer.answer)
+          : Number.NaN;
+      if (!Number.isFinite(numericAnswer)
+        || (acceptableLow === undefined && acceptableHigh === undefined)
+        || (acceptableLow !== undefined && !Number.isFinite(acceptableLow))
+        || (acceptableHigh !== undefined && !Number.isFinite(acceptableHigh))
+        || (acceptableLow !== undefined && acceptableHigh !== undefined && acceptableLow > acceptableHigh)) {
+        return answer;
+      }
+
+      const migratedAnswer = { ...answer };
+      delete migratedAnswer.acceptableLow;
+      delete migratedAnswer.acceptableHigh;
+      const lowerBounds = [answer.lowestCorrect, acceptableLow].filter((bound): bound is number => bound !== undefined);
+      const upperBounds = [answer.highestCorrect, acceptableHigh].filter((bound): bound is number => bound !== undefined);
+      return {
+        ...migratedAnswer,
+        ...(lowerBounds.length > 0 ? { lowestCorrect: Math.min(...lowerBounds) } : {}),
+        ...(upperBounds.length > 0 ? { highestCorrect: Math.max(...upperBounds) } : {}),
+      };
+    }),
+  };
+}
 
 function normalizeLibraryMacroReference(reference: string): string {
   let normalizedReference = reference;
@@ -278,9 +322,10 @@ function deepFillTemplateStrings<T>(value: T, vars: Record<string, unknown>): T 
     return value.map((item) => deepFillTemplateStrings(item, vars)) as unknown as T;
   }
   if (value && typeof value === 'object') {
-    return Object.fromEntries(
+    const materialized = Object.fromEntries(
       Object.entries(value).map(([key, child]) => [key, deepFillTemplateStrings(child, vars)]),
-    ) as T;
+    );
+    return materialized as T;
   }
   return value;
 }
@@ -1650,6 +1695,8 @@ export function compileFactorBlocks(
 export function materializeParticipantConfig(
   config: StudyConfig,
   globalParameters: Record<string, unknown>,
+  participantSequence: StudyConfig['sequence'] | Sequence = config.sequence,
+  migrateLegacyCorrectAnswerRanges = false,
 ): StudyConfig {
   const components = Object.fromEntries(
     Object.entries(config.components).map(([componentId, component]) => {
@@ -1659,15 +1706,34 @@ export function materializeParticipantConfig(
         ...globalParameters,
       };
       const materializedComponent = deepFillTemplateStrings(inheritedComponent, parameters);
+      const runtimeComponent = migrateLegacyCorrectAnswerRanges
+        ? migrateLegacyAnswerRanges(materializedComponent)
+        : materializedComponent;
       return [
         componentId,
         {
-          ...materializedComponent,
+          ...runtimeComponent,
           parameters: deepFillTemplate(parameters, parameters),
         },
       ];
     }),
   );
+
+  const instantiatedComponents = new Set(getSequenceFlatMapWithInterruptions(participantSequence));
+  Object.entries(components).forEach(([componentId, component]) => {
+    if (!instantiatedComponents.has(componentId)) return;
+    component.correctAnswer?.forEach((answer, index) => {
+      const validationError = getCorrectAnswerConfigError(answer);
+      if (validationError) {
+        throw new ParticipantConfigValidationError({
+          message: validationError,
+          instancePath: `/components/${componentId}/correctAnswer/${index}`,
+          params: { action: 'Fix the answer and its numeric bounds' },
+          category: 'invalid-config',
+        });
+      }
+    });
+  });
 
   return { ...config, components };
 }

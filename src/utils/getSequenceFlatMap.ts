@@ -51,7 +51,7 @@ export function findFuncBlock(name: string, sequence: StudyConfig['sequence'] | 
   return allFuncBlocks.find((funcBlock) => funcBlock.id === name);
 }
 
-export function getSequenceFlatMapWithInterruptions(sequence: StudyConfig['sequence']): string[] {
+export function getSequenceFlatMapWithInterruptions(sequence: StudyConfig['sequence'] | Sequence): string[] {
   if (isDynamicBlock(sequence) || isFactorBlock(sequence)) {
     return [];
   }

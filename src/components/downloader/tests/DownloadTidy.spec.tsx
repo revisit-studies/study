@@ -222,7 +222,7 @@ describe('getTableData', () => {
         ...configWithComponentMetadata.components,
         testComponent: {
           ...configWithComponentMetadata.components.testComponent,
-          correctAnswer: [{ id: 'response', acceptableLow: 1, acceptableHigh: 5 }],
+          correctAnswer: [{ id: 'response', lowestCorrect: 1, highestCorrect: 5 }],
         },
       },
     } as StudyConfig;
@@ -235,12 +235,17 @@ describe('getTableData', () => {
       'test-study',
     );
 
-    expect(tableData.rows[0].correctAnswer).toBe(JSON.stringify({ acceptableLow: 1, acceptableHigh: 5 }));
+    expect(tableData.rows[0].correctAnswer).toBe(JSON.stringify({ lowestCorrect: 1, highestCorrect: 5 }));
   });
 
   test.each([
     [{ id: 'response', acceptableAnswers: ['saved option'] }, JSON.stringify(['saved option'])],
-    [{ id: 'response', acceptableLow: 0, acceptableHigh: 5 }, JSON.stringify({ acceptableLow: 0, acceptableHigh: 5 })],
+    [
+      {
+        id: 'response', answer: 3, acceptableLow: 0, acceptableHigh: 5,
+      },
+      JSON.stringify({ answer: 3, acceptableLow: 0, acceptableHigh: 5 }),
+    ],
   ])('uses a saved answer rule instead of a configured exact answer: %j', async (savedRule, expected) => {
     const configWithExactAnswer = {
       ...configWithComponentMetadata,

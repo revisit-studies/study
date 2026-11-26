@@ -7,7 +7,6 @@ const definitions = { budget: { initialValue: 100 } };
 const answer = (identifier: string, trialOrder: string, cost: number) => makeStoredAnswer({
   identifier, trialOrder, componentName: 'purchase', answer: { cost }, endTime: 20,
 });
-
 test('historical replay retains each recording and the latest unchanged visit through a later edit', () => {
   const originalA = { ...answer('A', '0', 30), assetIdentifier: 'A__global_0' };
   const originalB = { ...answer('B', '1', 20), assetIdentifier: 'B__global_1' };
@@ -27,7 +26,6 @@ test('historical replay retains each recording and the latest unchanged visit th
   expect(history.map((entry) => entry.submission.answer.assetIdentifier).sort()).toEqual(['A__global_0', 'A__global_2', 'B__global_1', 'B__global_3']);
   expect(history.find((entry) => entry.nodeId === repeated.nodeId)).toMatchObject({ before: { budget: 100 }, after: { budget: 70 }, active: true });
 });
-
 test('replay reconstructs either recorded path from provenance, including invalidated answers', () => {
   const a = createGlobalStoreSubmission(undefined, definitions, answer('A', '0', 30), { budget: 70 }, [], {});
   const b = createGlobalStoreSubmission(a.graph, definitions, answer('B', '1', 20), { budget: 50 }, [], {});

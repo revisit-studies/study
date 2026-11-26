@@ -505,6 +505,29 @@ describe('stage capacity', () => {
       .toEqual({ LIMITED: 1 });
   });
 
+  test('releases a newly assigned slot when participant sequence validation fails', async () => {
+    const sequenceArray = await generateSequenceArray(betweenSubjectsConfig);
+    await storageEngine.setSequenceArray(sequenceArray);
+
+    await expect(storageEngine.initializeParticipantSession(
+      {},
+      betweenSubjectsConfig,
+      metadata,
+      'invalid-participant',
+      {
+        modesDocument: await storageEngine.getModes(studyId),
+        sequenceArray,
+        validateSequence: () => { throw new Error('Invalid participant-specific config'); },
+      },
+    )).rejects.toThrow('Invalid participant-specific config');
+
+    expect(getStageParticipantCounts(await storageEngine.getAllSequenceAssignments(studyId))).toEqual({});
+    const validParticipant = await storageEngine.initializeParticipantSession({}, betweenSubjectsConfig, metadata, 'valid-participant');
+    expect(validParticipant.participantId).toBe('valid-participant');
+    expect(getStageParticipantCounts(await storageEngine.getAllSequenceAssignments(studyId)))
+      .toEqual({ LIMITED: 1 });
+  });
+
   test('unclaims a reusable slot when replacement assignment creation fails', async () => {
     const firstParticipant = await storageEngine.initializeParticipantSession({}, config, metadata, 'source-participant');
     await storageEngine.rejectParticipant(firstParticipant.participantId, 'Test rejection');

@@ -149,12 +149,27 @@ describe('comparison conditions', () => {
       ...responses[1], visibleIf: { responseId: 'attended', comparison: 'isCorrect', value: expected },
     }];
     const correctAnswers = [{
-      id: 'attended', answer: 21, acceptableLow: 20, acceptableHigh: 22,
+      id: 'attended', answer: 21, lowestCorrect: 20, highestCorrect: 22,
     }];
     expect(resolveResponseVisibility(fields, { attended: '21' }, {}, correctAnswers).visibleIds.has('name')).toBe(expected);
     expect(resolveResponseVisibility(fields, { attended: 23 }, {}, correctAnswers).visibleIds.has('name')).toBe(!expected);
     expect(resolveResponseVisibility(fields, {}, {}, correctAnswers).visibleIds.has('name')).toBe(false);
     expect(resolveResponseVisibility(fields, { attended: 21 }).visibleIds.has('name')).toBe(false);
+  });
+
+  test('isCorrect skip conditions treat an almost-correct numeric response as correct', () => {
+    const fields: Response[] = [
+      { id: 'attended', type: 'numerical', prompt: '' },
+      {
+        ...responses[1], visibleIf: { responseId: 'attended', comparison: 'isCorrect', value: true },
+      },
+    ];
+    const correctAnswers = [{
+      id: 'attended', answer: 25, acceptableLow: 22, acceptableHigh: 28,
+    }];
+
+    expect(resolveResponseVisibility(fields, { attended: 22 }, {}, correctAnswers).visibleIds.has('name')).toBe(true);
+    expect(resolveResponseVisibility(fields, { attended: 21 }, {}, correctAnswers).visibleIds.has('name')).toBe(false);
   });
 
   test('isCorrect applies the configured 80% correctness threshold', () => {
