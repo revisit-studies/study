@@ -63,6 +63,12 @@ test('multiline questions keep numbering on the first line and info beside final
   // The demo reserves 300px for its participant sidebar; leave a narrow form column.
   await page.setViewportSize({ width: 700, height: 844 });
   await resetClientStudyState(page);
+  await page.route('**/demo-form-elements/config.json', async (route) => {
+    const result = await route.fetch();
+    const config = await result.json();
+    config.uiConfig.withSidebar = true;
+    await route.fulfill({ response: result, json: config });
+  });
   await page.goto('/demo-form-elements/reviewer-Form%20Elements');
   await page.getByRole('complementary').locator('.mantine-CloseButton-root').click();
   await expect(page.getByRole('complementary')).toHaveCount(0);

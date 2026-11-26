@@ -6,19 +6,106 @@ test.beforeEach(async ({ page }) => {
   await resetClientStudyState(page);
 });
 
-test('Next follows a configured stimulus width', async ({ page }) => {
-  await page.setViewportSize({ width: 1440, height: 900 });
+test('configured stimulus and actions stay within a narrow viewport', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 900 });
+  await page.route('**/demo-style/config.json', async (route) => {
+    const result = await route.fetch();
+    const config = await result.json();
+    config.uiConfig.withSidebar = false;
+    config.components['markdown-component'].style = {
+      ...config.components['markdown-component'].style,
+      width: '800px',
+    };
+    delete config.components['markdown-component'].style.maxWidth;
+    delete config.components['markdown-component'].style.margin;
+    await route.fulfill({ response: result, json: config });
+  });
   await page.goto('/demo-style/reviewer-markdown-component');
-  const stimulus = page.locator('.stimulus');
-  const actions = page.locator('.responseBlock-actions');
-  const next = page.getByRole('button', { name: 'Next', exact: true });
-  await expect(stimulus).toHaveCSS('width', '800px');
-  await expect(actions).toHaveCSS('width', '800px');
-  const rightEdges = await Promise.all([
-    stimulus.evaluate((element) => element.getBoundingClientRect().right),
-    next.evaluate((button) => button.getBoundingClientRect().right),
+  await page.getByRole('complementary').locator('.mantine-CloseButton-root').click();
+
+  const main = page.locator('.main');
+  const stimulus = main.locator('.stimulus.markdown');
+  const actions = main.locator('.responseBlock-actions');
+  await expect(stimulus).toBeVisible();
+  for (const [name, element] of [['stimulus', stimulus], ['actions', actions]] as const) {
+    const bounds = await element.evaluate((node) => {
+      const rect = node.getBoundingClientRect();
+      const mainRect = node.closest('.main')!.getBoundingClientRect();
+      return {
+        left: rect.left,
+        right: rect.right,
+        mainLeft: mainRect.left,
+        mainRight: mainRect.right,
+      };
+    });
+    expect(bounds.left, `${name} left edge`).toBeGreaterThanOrEqual(bounds.mainLeft - 1);
+    expect(bounds.right, `${name} right edge`).toBeLessThanOrEqual(bounds.mainRight + 1);
+  }
+});
+
+for (const maxWidth of ['100%', 'max-content', 'fit-content']) {
+  test(`configured stimulus remains clamped to sidebar content with maxWidth ${maxWidth}`, async ({ page }) => {
+    await page.setViewportSize({ width: 1000, height: 900 });
+    await page.route('**/demo-style/config.json', async (route) => {
+      const result = await route.fetch();
+      const config = await result.json();
+      config.uiConfig.withSidebar = true;
+      config.components['markdown-component'].style = {
+        ...config.components['markdown-component'].style,
+        width: '100%',
+        maxWidth,
+      };
+      delete config.components['markdown-component'].style.margin;
+      await route.fulfill({ response: result, json: config });
+    });
+    await page.goto('/demo-style/reviewer-markdown-component');
+
+    const main = page.locator('.main');
+    const stimulus = main.locator('.stimulus.markdown');
+    await expect(main).toHaveAttribute('data-sidebar-open', 'true');
+    await expect(stimulus).toBeVisible();
+    if (maxWidth !== '100%') await expect(stimulus).toHaveCSS('max-width', maxWidth);
+    const bounds = await stimulus.evaluate((node) => {
+      const rect = node.getBoundingClientRect();
+      const mainElement = node.closest('.main')!;
+      const mainRect = mainElement.getBoundingClientRect();
+      const mainStyle = getComputedStyle(mainElement);
+      const contentRight = mainRect.right - Number.parseFloat(mainStyle.paddingRight);
+      return { right: rect.right, contentRight };
+    });
+    expect(bounds.right).toBeLessThanOrEqual(bounds.contentRight + 1);
+  });
+}
+
+test('fixed-width stimulus aligns with above-stimulus content in the sidebar layout', async ({ page }) => {
+  await page.setViewportSize({ width: 1600, height: 900 });
+  await page.route('**/demo-style/config.json', async (route) => {
+    const result = await route.fetch();
+    const config = await result.json();
+    config.uiConfig.withSidebar = true;
+    config.components['react-component'].style = {
+      ...config.components['react-component'].style,
+      width: '700px',
+    };
+    delete config.components['react-component'].style.margin;
+    await route.fulfill({ response: result, json: config });
+  });
+  await page.goto('/demo-style/reviewer-react-component');
+
+  const main = page.locator('.main');
+  const stimulus = main.locator('.stimulus.react-component');
+  const aboveStimulus = main.locator('.responseBlock-aboveStimulus');
+  await expect(main).toHaveAttribute('data-sidebar-open', 'true');
+  await expect(stimulus).toHaveCSS('width', '700px');
+  await expect(aboveStimulus).toBeVisible();
+  const leftEdges = await Promise.all([
+    stimulus.evaluate((element) => element.getBoundingClientRect().left),
+    aboveStimulus.evaluate((element) => {
+      const rect = element.getBoundingClientRect();
+      return rect.left + Number.parseFloat(getComputedStyle(element).paddingLeft);
+    }),
   ]);
-  expect(Math.abs(rightEdges[0] - rightEdges[1])).toBeLessThanOrEqual(1);
+  expect(Math.abs(leftEdges[0] - leftEdges[1])).toBeLessThanOrEqual(1);
 });
 
 test('form blocks and stimulus center within the available space and allow study CSS overrides', async ({ page }) => {
@@ -91,6 +178,7 @@ test('wide matrix choices stay scrollable inside the form', async ({ page }) => 
 });
 
 test('default answer widths leave questions and long text full width', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto('/demo-form-elements/reviewer-Form%20Elements');
   await page.getByRole('complementary').locator('.mantine-CloseButton-root').click();
   await expect(page.locator('#q-numerical input[type="text"]')).toHaveCSS('width', '150px');
@@ -101,6 +189,7 @@ test('default answer widths leave questions and long text full width', async ({ 
     field: response.querySelector('textarea')!.getBoundingClientRect().width,
     numericalQuestion: document.querySelector('#q-numerical')!.getBoundingClientRect().width,
   }));
+  expect(widths.response).toBeCloseTo(800, 0);
   expect(widths.field).toBeCloseTo(widths.response, 0);
   expect(widths.numericalQuestion).toBeGreaterThan(240);
 });

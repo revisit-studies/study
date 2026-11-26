@@ -6,6 +6,23 @@ import {
   waitForStudyEndMessage,
 } from './utils';
 
+test('configured image keeps its width when the study sidebar is closed', async ({ page }) => {
+  await resetClientStudyState(page);
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.route('**/demo-image/config.json', async (route) => {
+    const result = await route.fetch();
+    const config = await result.json();
+    config.uiConfig.withSidebar = false;
+    await route.fulfill({ response: result, json: config });
+  });
+  await page.goto('/demo-image');
+  await nextClick(page);
+
+  const image = page.getByRole('main').getByRole('img');
+  await expect(image).toBeVisible();
+  expect((await image.boundingBox())?.width).toBeCloseTo(800, 0);
+});
+
 test('Test image component', async ({ page }) => {
   await resetClientStudyState(page);
   await openStudyFromLanding(page, 'Demo Studies', [

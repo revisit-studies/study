@@ -39,6 +39,7 @@ const pdfExportMocks = vi.hoisted(() => ({
 let mockShowTitleBar = true;
 let mockShowStudyBrowser = false;
 let mockDevelopmentModeEnabled = false;
+let mockComponentSidebar = true;
 let mockStorageEngine: Pick<LocalStorageEngine, 'subscribeToParticipantDataWriteErrors'> = {
   subscribeToParticipantDataWriteErrors: mockSubscribeToParticipantDataWriteErrors,
 };
@@ -213,7 +214,7 @@ vi.mock('../../routes/utils', () => ({
 vi.mock('../../utils/handleComponentInheritance', () => ({
   studyComponentToIndividualComponent: vi.fn(() => ({
     captureGamepad: gamepadMocks.capture,
-    withSidebar: true,
+    withSidebar: mockComponentSidebar,
     sidebarWidth: 300,
     showTitleBar: mockShowTitleBar,
     windowEventDebounceTime: 100,
@@ -259,7 +260,11 @@ vi.mock('@mantine/core', () => ({
       Header: ({ children }: { children: ReactNode }) => <header>{children}</header>,
       Navbar: ({ children }: { children: ReactNode }) => <nav>{children}</nav>,
       Aside: ({ children }: { children: ReactNode }) => <aside>{children}</aside>,
-      Main: ({ children }: { children: ReactNode }) => <main>{children}</main>,
+      Main: ({
+        children, className, 'data-sidebar-open': sidebarOpen,
+      }: { children: ReactNode; className?: string; 'data-sidebar-open'?: boolean }) => (
+        <main className={className} data-sidebar-open={sidebarOpen}>{children}</main>
+      ),
       Footer: ({ children }: { children: ReactNode }) => <footer>{children}</footer>,
     },
   ),
@@ -310,6 +315,7 @@ describe('StepRenderer', () => {
     mockShowTitleBar = true;
     mockShowStudyBrowser = false;
     mockDevelopmentModeEnabled = false;
+    mockComponentSidebar = true;
     mockStorageEngine = {
       subscribeToParticipantDataWriteErrors: mockSubscribeToParticipantDataWriteErrors,
     };
@@ -427,6 +433,13 @@ describe('StepRenderer', () => {
   test('renders the app shell', async () => {
     const { getByTestId } = await act(async () => render(<StepRenderer />));
     expect(getByTestId('app-shell')).toBeDefined();
+  });
+
+  test.each([true, false])('sets the content layout sidebar state to %s', async (sidebarOpen) => {
+    mockComponentSidebar = sidebarOpen;
+    const { container } = await act(async () => render(<StepRenderer />));
+
+    expect(container.querySelector('.main')?.getAttribute('data-sidebar-open')).toBe(String(sidebarOpen));
   });
 
   test('places the header and main content before the study browser in reading order', async () => {

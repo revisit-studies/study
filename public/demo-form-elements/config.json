@@ -20,7 +20,7 @@
     "logoPath": "revisitAssets/revisitLogoSquare.svg",
     "withProgressBar": true,
     "autoDownloadStudy": false,
-    "withSidebar": true,
+    "withSidebar": false,
     "enumerateQuestions": true
   },
   "components": {
@@ -1254,6 +1254,7 @@
     },
     "Sidebar Form Elements": {
       "type": "questionnaire",
+      "withSidebar": true,
       "response": [
         {
           "id": "title",

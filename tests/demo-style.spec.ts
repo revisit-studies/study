@@ -55,6 +55,24 @@ test('demo-style explicit response width overrides the default field limit', asy
   await expect(shortText.locator('input')).toHaveCSS('width', '280px');
 });
 
+test('demo-style preserves configured video player width without default padding', async ({ page }) => {
+  await openComponent(page, 'video-component');
+  const stimulus = page.locator('.stimulus.video');
+  const video = stimulus.locator('video');
+  await expect(video).toBeVisible();
+  await expect(stimulus).toHaveCSS('padding-left', '0px');
+  const widths = await Promise.all([
+    stimulus.evaluate((element) => {
+      const style = getComputedStyle(element);
+      return element.getBoundingClientRect().width
+        - Number.parseFloat(style.borderLeftWidth)
+        - Number.parseFloat(style.borderRightWidth);
+    }),
+    video.evaluate((element) => element.getBoundingClientRect().width),
+  ]);
+  expect(widths[1]).toBeCloseTo(widths[0], 0);
+});
+
 test('demo-style custom form and grid styles still apply', async ({ page }) => {
   await openComponent(page, 'survey-form');
   const occupation = page.locator('#form-occupation');
