@@ -72,22 +72,246 @@ test('form blocks and stimulus center within the available space and allow study
   expect(padding).toBeLessThan(40);
 });
 
-test('wide matrix choices stay scrollable inside the form', async ({ page }) => {
-  await page.setViewportSize({ width: 500, height: 900 });
+test('matrix choices fit when possible and scroll inside the form when needed', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
   await page.route('**/demo-form-elements/config.json', async (route) => {
     const result = await route.fetch();
     const config = await result.json();
     config.uiConfig.withSidebar = false;
+    config.components['Form Elements'].response.find((response: { id: string }) => response.id === 'multi-custom').answerOptions = Array.from({ length: 10 }, (_, index) => ({
+      label: `Choice ${index + 1} with a longer descriptive label`,
+      value: `choice-${index + 1}`,
+      infoText: `Additional information for choice ${index + 1}`,
+    }));
     await route.fulfill({ response: result, json: config });
   });
   await page.goto('/demo-form-elements/reviewer-Form%20Elements');
   await page.getByRole('complementary').locator('.mantine-CloseButton-root').click();
-  const matrix = page.locator('#q-multi-satisfaction');
-  const scrollRegion = matrix.locator('..');
+  const response = page.locator('#multi-custom');
+  const matrix = response.locator('.matrix-grid');
+  const scrollRegion = response.locator('..');
+  await expect.poll(() => scrollRegion.evaluate((element) => element.scrollWidth - element.clientWidth)).toBeLessThanOrEqual(1);
+  const columnAlignment = await matrix.evaluate((element) => {
+    const header = element.children[1].children[0].getBoundingClientRect();
+    const checkbox = element.children[3].querySelector('input[type="checkbox"]')!.getBoundingClientRect();
+    return Math.abs((header.left + header.right) / 2 - (checkbox.left + checkbox.right) / 2);
+  });
+  expect(columnAlignment).toBeLessThanOrEqual(1);
+
+  await page.setViewportSize({ width: 500, height: 900 });
+  await expect.poll(() => scrollRegion.evaluate((element) => element.scrollWidth - element.clientWidth)).toBeLessThanOrEqual(1);
+  await page.setViewportSize({ width: 350, height: 900 });
   expect(await scrollRegion.evaluate((element) => element.scrollWidth - element.clientWidth)).toBeGreaterThan(0);
   expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(1);
-  await matrix.getByRole('radio').first().check();
-  await expect(matrix.getByRole('radio').first()).toBeChecked();
+  const matrixHeaderCells = matrix.locator(':scope > div').nth(1).locator(':scope > div');
+  const headersContainLabelAndInfo = await matrix.locator(':scope > div').nth(1).locator(':scope > div').evaluateAll((cells) => cells.every((cell) => {
+    const cellBounds = cell.getBoundingClientRect();
+    const labelBounds = cell.querySelector('.mantine-Text-root')!.getBoundingClientRect();
+    const infoBounds = cell.querySelector('svg')!.getBoundingClientRect();
+    return labelBounds.left >= cellBounds.left
+      && labelBounds.right <= cellBounds.right
+      && infoBounds.left >= cellBounds.left
+      && infoBounds.right <= cellBounds.right;
+  }));
+  expect(headersContainLabelAndInfo).toBe(true);
+  await expect(matrixHeaderCells).toHaveCount(10);
+  await matrix.getByRole('checkbox').first().check();
+  await expect(matrix.getByRole('checkbox').first()).toBeChecked();
+});
+
+test('full-width buttons wrap to fit available rows and center incomplete rows', async ({ page }) => {
+  await page.setViewportSize({ width: 500, height: 900 });
+  let optionCount = 6;
+  let shortLabels = false;
+  let includeArrowKey = false;
+  await page.route('**/demo-form-elements/config.json', async (route) => {
+    const result = await route.fetch();
+    const config = await result.json();
+    config.uiConfig.withSidebar = false;
+    config.components['Form Elements'].response.find((response: { id: string }) => response.id === 'q-buttons').options = Array.from({ length: optionCount }, (_, index) => {
+      const label = shortLabels
+        ? String.fromCharCode(65 + index)
+        : optionCount === 6 && index === 5
+          ? 'Long option'
+          : optionCount >= 7 && index === 0
+            ? 'Averylongunbrokenbuttonlabelthatmustwrap'
+            : `Option ${index + 1}`;
+      const key = !shortLabels && optionCount >= 7 && index === 0
+        ? 'PageDown'
+        : !shortLabels && optionCount === 10 && index === 1
+          ? 'Shift+Alt+ArrowRight'
+          : includeArrowKey && index === 0
+            ? 'ArrowLeft'
+            : undefined;
+      return { label, value: `value-${index + 1}`, key };
+    });
+    await route.fulfill({ response: result, json: config });
+  });
+  await page.goto('/demo-form-elements/reviewer-Form%20Elements');
+  await page.getByRole('complementary').locator('.mantine-CloseButton-root').click();
+
+  const buttons = page.locator('#q-buttons [data-button-option]');
+  for (const [count, sizes] of [
+    [6, [2, 2, 2]],
+    [7, [1, 1, 1, 1, 1, 1, 1]],
+    [10, [1, 1, 1, 1, 1, 1, 1, 1, 1, 1]],
+  ] as const) {
+    optionCount = count;
+    await page.setViewportSize({ width: count === 10 ? 200 : count === 6 ? 400 : 500, height: 900 });
+    await resetClientStudyState(page);
+    await page.goto('/demo-form-elements/reviewer-Form%20Elements');
+    await page.getByRole('complementary').locator('.mantine-CloseButton-root').click();
+    await expect(buttons).toHaveCount(count);
+    await expect.poll(() => buttons.evaluateAll((elements) => {
+      const tops = [...new Set(elements.map((element) => Math.round(element.getBoundingClientRect().top)))].sort();
+      return tops.map((top) => elements.filter((element) => Math.round(element.getBoundingClientRect().top) === top).length);
+    })).toEqual(sizes);
+    const cardWidths = await buttons.evaluateAll((elements) => elements.map((element) => element.getBoundingClientRect().width));
+    expect(Math.max(...cardWidths) - Math.min(...cardWidths)).toBeLessThanOrEqual(1);
+    expect(Math.min(...cardWidths)).toBeGreaterThanOrEqual(24);
+    if (count === 7) {
+      const lowerRowIsCentered = await buttons.evaluateAll((elements) => {
+        const gridBounds = elements[0].parentElement!.getBoundingClientRect();
+        const rowTops = [...new Set(elements.map((element) => Math.round(element.getBoundingClientRect().top)))].sort();
+        const lowerRow = elements.filter((element) => Math.round(element.getBoundingClientRect().top) === rowTops[1]);
+        const lowerRowBounds = lowerRow.map((element) => element.getBoundingClientRect());
+        const lowerRowCenter = (lowerRowBounds[0].left + lowerRowBounds[lowerRowBounds.length - 1].right) / 2;
+        return Math.abs(lowerRowCenter - (gridBounds.left + gridBounds.right) / 2) <= 1;
+      });
+      expect(lowerRowIsCentered).toBe(true);
+    }
+    if (count === 6) {
+      await buttons.nth(4).focus();
+      await page.setViewportSize({ width: 1440, height: 900 });
+      await expect(buttons.nth(4)).toBeFocused();
+      await page.keyboard.press('ArrowRight');
+      await expect(buttons.nth(5)).toBeFocused();
+    }
+  }
+  await expect(buttons.first()).toContainText('Averylongunbrokenbuttonlabelthatmustwrap');
+  await expect(buttons.last()).toContainText('Option 10');
+  const labelAndKeyBounds = await buttons.first().evaluate((button) => {
+    const label = button.querySelector('.mantine-Text-root')!;
+    const key = button.querySelector('.mantine-Kbd-root')!;
+    const labelBounds = label.getBoundingClientRect();
+    const keyBounds = key.getBoundingClientRect();
+    const buttonBounds = button.getBoundingClientRect();
+    return {
+      labelInsideButton: labelBounds.right <= buttonBounds.right,
+      keyInsideButton: keyBounds.right <= buttonBounds.right,
+      labelDoesNotOverlapKey: labelBounds.right <= keyBounds.left,
+      contentFitsHorizontally: button.scrollWidth <= button.clientWidth,
+      keyFitsHorizontally: key.scrollWidth <= key.clientWidth,
+      buttonWidth: buttonBounds.width,
+      keyRight: keyBounds.right,
+      buttonRight: buttonBounds.right,
+      keyWidth: keyBounds.width,
+      labelHeight: labelBounds.height,
+      lineHeight: Number.parseFloat(getComputedStyle(label).lineHeight),
+    };
+  });
+  expect(labelAndKeyBounds.labelInsideButton).toBe(true);
+  expect(labelAndKeyBounds.keyRight).toBeLessThanOrEqual(labelAndKeyBounds.buttonRight);
+  expect(labelAndKeyBounds.labelDoesNotOverlapKey).toBe(true);
+  expect(labelAndKeyBounds.contentFitsHorizontally).toBe(true);
+  expect(labelAndKeyBounds.keyFitsHorizontally).toBe(true);
+  await expect(buttons.first().locator('.mantine-Kbd-root')).toContainText('PAGEDOWN');
+  const compoundKeyBadge = buttons.nth(1).locator('.mantine-Kbd-root');
+  await expect(compoundKeyBadge.locator('svg')).toHaveCount(1);
+  const compoundKeyFits = await compoundKeyBadge.evaluate((badge) => {
+    const badgeBounds = badge.getBoundingClientRect();
+    const button = badge.closest('[data-button-option]')!;
+    const buttonBounds = button.getBoundingClientRect();
+    const labelBounds = button.querySelector('.mantine-Text-root')!.getBoundingClientRect();
+    return badge.scrollWidth <= badge.clientWidth
+      && badgeBounds.right <= buttonBounds.right
+      && labelBounds.width >= 24
+      && labelBounds.right <= badgeBounds.left;
+  });
+  expect(compoundKeyFits).toBe(true);
+  const buttonScrollRegion = page.locator('#q-buttons [data-button-scroll-region]');
+  expect(await buttonScrollRegion.evaluate((element) => element.scrollWidth - element.clientWidth)).toBeLessThanOrEqual(1);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(1);
+  expect(labelAndKeyBounds.labelHeight).toBeGreaterThan(labelAndKeyBounds.lineHeight);
+  const wrappedCardHeights = await buttons.evaluateAll((elements) => elements.map((element) => element.getBoundingClientRect().height));
+  expect(Math.max(...wrappedCardHeights)).toBeGreaterThan(Math.min(...wrappedCardHeights));
+
+  optionCount = 6;
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await resetClientStudyState(page);
+  await page.goto('/demo-form-elements/reviewer-Form%20Elements');
+  await page.getByRole('complementary').locator('.mantine-CloseButton-root').click();
+  await expect(buttons).toHaveCount(6);
+  await expect(buttons.last()).toContainText('Long option');
+  await expect.poll(() => buttons.evaluateAll((elements) => new Set(elements.map((element) => Math.round(element.getBoundingClientRect().top))).size)).toBe(1);
+  const oneRowWidths = await buttons.evaluateAll((elements) => elements.map((element) => element.getBoundingClientRect().width));
+  expect(Math.max(...oneRowWidths) - Math.min(...oneRowWidths)).toBeLessThanOrEqual(1);
+  const oneRowBounds = await buttons.evaluateAll((elements) => {
+    const row = elements[0].parentElement!.getBoundingClientRect();
+    return elements.every((element) => {
+      const bounds = element.getBoundingClientRect();
+      return bounds.left >= row.left && bounds.right <= row.right;
+    });
+  });
+  expect(oneRowBounds).toBe(true);
+
+  await page.setViewportSize({ width: 500, height: 900 });
+  await expect.poll(() => buttons.evaluateAll((elements) => {
+    const tops = [...new Set(elements.map((element) => Math.round(element.getBoundingClientRect().top)))].sort();
+    return tops.map((top) => elements.filter((element) => Math.round(element.getBoundingClientRect().top) === top).length);
+  })).toEqual([3, 3]);
+  const transitionLayouts = await buttons.evaluateAll(async (elements) => {
+    const capture = () => [...new Set(elements.map((element) => Math.round(element.getBoundingClientRect().top)))].sort().join(',');
+    const layouts = [];
+    for (let frame = 0; frame < 4; frame += 1) {
+      layouts.push(capture());
+      await new Promise<void>((resolve) => {
+        requestAnimationFrame(() => resolve());
+      });
+    }
+    return layouts;
+  });
+  expect(new Set(transitionLayouts).size).toBe(1);
+
+  shortLabels = true;
+  optionCount = 10;
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await resetClientStudyState(page);
+  await page.goto('/demo-form-elements/reviewer-Form%20Elements');
+  await page.getByRole('complementary').locator('.mantine-CloseButton-root').click();
+  await expect(buttons).toHaveCount(10);
+  await expect.poll(() => buttons.evaluateAll((elements) => new Set(elements.map((element) => Math.round(element.getBoundingClientRect().top))).size)).toBe(1);
+  const oneRowHorizontalGap = await page.locator('#q-buttons [data-button-grid]').evaluate((grid) => getComputedStyle(grid).columnGap);
+  await page.setViewportSize({ width: 500, height: 900 });
+  await expect.poll(() => buttons.evaluateAll((elements) => new Set(elements.map((element) => Math.round(element.getBoundingClientRect().top))).size)).toBe(2);
+  const twoRowLayout = await buttons.evaluateAll((elements) => {
+    const firstRow = elements[0].getBoundingClientRect();
+    const secondRow = elements.find((element) => element.getBoundingClientRect().top > firstRow.top)!.getBoundingClientRect();
+    return {
+      horizontalGap: getComputedStyle(elements[0].parentElement!).columnGap,
+      verticalGap: secondRow.top - firstRow.bottom,
+    };
+  });
+  expect(Number.parseFloat(twoRowLayout.horizontalGap)).toBeLessThan(Number.parseFloat(oneRowHorizontalGap));
+  expect(twoRowLayout.verticalGap).toBe(18);
+  await page.setViewportSize({ width: 200, height: 900 });
+  await expect.poll(() => buttons.evaluateAll((elements) => {
+    const tops = [...new Set(elements.map((element) => Math.round(element.getBoundingClientRect().top)))].sort();
+    return tops.map((top) => elements.filter((element) => Math.round(element.getBoundingClientRect().top) === top).length);
+  })).toEqual([2, 2, 2, 2, 2]);
+  optionCount = 2;
+  includeArrowKey = true;
+  await resetClientStudyState(page);
+  await page.goto('/demo-form-elements/reviewer-Form%20Elements');
+  await page.getByRole('complementary').locator('.mantine-CloseButton-root').click();
+  await expect(buttons).toHaveCount(2);
+  await expect(buttons.first().locator('.mantine-Kbd-root svg')).toHaveCount(1);
+  const narrowArrowBounds = await buttons.first().evaluate((button) => {
+    const label = button.querySelector('.mantine-Text-root')!.getBoundingClientRect();
+    const badge = button.querySelector('.mantine-Kbd-root')!.getBoundingClientRect();
+    return label.width > 0 && label.right <= badge.left;
+  });
+  expect(narrowArrowBounds).toBe(true);
 });
 
 test('default answer widths leave questions and long text full width', async ({ page }) => {

@@ -8,13 +8,15 @@
     <script>
       let inkColor;
       let word;
-      const colors = ["RED", "YELLOW", "GREEN", "BLUE", "BLACK"]
-      const idx = Math.floor(Math.random() * (colors.length - 1));
+      const colors = ["RED", "ORANGE", "YELLOW", "GREEN", "BLUE", "PURPLE", "PINK", "BROWN", "GRAY", "BLACK", "CYAN", "MAGENTA", "LIME", "TEAL"];
 
       // Get data from the config file
       Revisit.onDataReceive((data) => {
         word = data.color;
-        inkColor = data.congruence == "neutral" ? word : colors.filter(d => d != word)[idx];
+        const incongruentColors = colors.filter((color) => color !== word);
+        inkColor = data.congruence === "neutral"
+          ? word
+          : incongruentColors[Math.floor(Math.random() * incongruentColors.length)];
         
         const stimuli = document.querySelector("p#stimuli");
         stimuli.innerHTML = word;

@@ -26,10 +26,6 @@
   width: max-content;
 }
 
-:where(.responseBlock-aboveStimulus, .responseBlock-belowStimulus) .matrix-grid {
-  min-width: var(--matrix-min-width);
-}
-
 /* numerical, date (date/month/year), shortText (phoneNumber/usPhoneNumber) */
 :where(.response[data-answer-width="xs"]) {
   --response-field-max-width: 150px;
