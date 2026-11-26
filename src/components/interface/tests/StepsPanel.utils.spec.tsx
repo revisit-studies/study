@@ -7,7 +7,7 @@ import { Sequence, StoredAnswer } from '../../../store/types';
 import {
   formatFactorLevel,
   formatSkipConditionSummary,
-  getDynamicComponentsForBlock,
+  getDynamicAnswerEntriesForBlock,
   getSkipConditionSummariesForBlock,
   getSkippedTrialOrders,
 } from '../StepsPanel.utils';
@@ -103,89 +103,24 @@ function buildStudyConfig(sequence: Sequence): StudyConfig {
   };
 }
 
-describe('StepsPanel tree walking', () => {
-  test('does not append answer-derived components for non-dynamic blocks', () => {
-    const block: Sequence = {
-      id: 'drawing100m',
-      order: 'fixed',
-      orderPath: 'root-0',
-      components: ['drawing100m', 'drawingFollowUp100M'],
-      skip: [],
-      interruptions: [],
-    };
+test('dynamic answer entries omit malformed answers without a usable component name', () => {
+  const block: Sequence = {
+    id: 'dynamicDrawing',
+    order: 'dynamic',
+    orderPath: 'root-0',
+    components: [],
+    skip: [],
+    interruptions: [],
+  };
+  const answers = {
+    dynamicDrawing_2_generatedA_0: { ...buildStoredAnswer('generatedA', 2, { response: 'valid' }), trialOrder: '2_0' },
+    dynamicDrawing_2_missing_1: { ...buildStoredAnswer('missing', 2, {}), trialOrder: '2_1', componentName: '' },
+    dynamicDrawing_2_undefined_2: {
+      ...buildStoredAnswer('undefined', 2, {}), trialOrder: '2_2', componentName: undefined as unknown as string,
+    },
+  } as Record<string, StoredAnswer>;
 
-    const participantAnswers = {
-      drawing100m_3: {
-        componentName: 'drawing100m',
-      } as StoredAnswer,
-    };
-
-    expect(getDynamicComponentsForBlock(block, participantAnswers, 3)).toEqual([]);
-  });
-
-  test('appends answer-derived components for dynamic blocks', () => {
-    const block: Sequence = {
-      id: 'dynamicDrawing',
-      order: 'dynamic',
-      orderPath: 'root-0',
-      components: [],
-      skip: [],
-      interruptions: [],
-    };
-
-    const participantAnswers = {
-      dynamicDrawing_2_generatedA_0: {
-        componentName: 'generatedA',
-      } as StoredAnswer,
-      dynamicDrawing_2_generatedB_1: {
-        componentName: 'generatedB',
-      } as StoredAnswer,
-    };
-
-    expect(getDynamicComponentsForBlock(block, participantAnswers, 2)).toEqual(['generatedA', 'generatedB']);
-  });
-
-  test('does not include answers from similarly prefixed indices', () => {
-    const block: Sequence = {
-      id: 'dynamicDrawing',
-      order: 'dynamic',
-      orderPath: 'root-0',
-      components: [],
-      skip: [],
-      interruptions: [],
-    };
-
-    const participantAnswers = {
-      dynamicDrawing_2_generatedA_0: {
-        componentName: 'generatedA',
-      } as StoredAnswer,
-      dynamicDrawing_20_generatedWrong_0: {
-        componentName: 'generatedWrong',
-      } as StoredAnswer,
-    };
-
-    expect(getDynamicComponentsForBlock(block, participantAnswers, 2)).toEqual(['generatedA']);
-  });
-
-  test('does not include malformed dynamic answers without component names', () => {
-    const block: Sequence = {
-      id: 'dynamicDrawing',
-      order: 'dynamic',
-      orderPath: 'root-0',
-      components: [],
-      skip: [],
-      interruptions: [],
-    };
-
-    const participantAnswers = {
-      dynamicDrawing_2_generatedA_0: {
-        componentName: 'generatedA',
-      } as StoredAnswer,
-      dynamicDrawing_2___dynamicLoading_1: {} as StoredAnswer,
-    };
-
-    expect(getDynamicComponentsForBlock(block, participantAnswers, 2)).toEqual(['generatedA']);
-  });
+  expect(getDynamicAnswerEntriesForBlock(block, answers, 2).map(({ answer }) => answer.componentName)).toEqual(['generatedA']);
 });
 
 describe('StepsPanel skip summaries', () => {

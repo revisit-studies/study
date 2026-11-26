@@ -5,7 +5,7 @@ import {
 } from 'vitest';
 import { useSearchParams } from 'react-router';
 import { ReplayContext, useReplay, useReplayContext } from '../useReplay';
-import { syncEmitter } from '../../../utils/syncReplay';
+import { syncChannel, syncEmitter } from '../../../utils/syncReplay';
 
 vi.mock('react-router', () => ({
   useSearchParams: vi.fn(() => [new URLSearchParams(), vi.fn()]),
@@ -192,6 +192,16 @@ describe('useReplay — returned function invocation', () => {
 });
 
 describe('useReplay — syncEmitter listener', () => {
+  test('broadcasts the selected recording segment with playback state', () => {
+    useSearchParamsMock.mockReturnValue(makeSearchParamsResult(new URLSearchParams('recordingSegment=segment-earlier')));
+    renderHook(() => useReplay());
+
+    expect(vi.mocked(syncChannel.postMessage)).toHaveBeenCalledWith(expect.objectContaining({
+      key: 'replaySync',
+      value: expect.objectContaining({ recordingSegment: 'segment-earlier' }),
+    }));
+  });
+
   test('replaySyncListener body is covered when called via captured on() arg', () => {
     const { result } = renderHook(() => useReplay());
     // Find the listener registered with syncEmitter.on('replaySync', ...)
@@ -209,6 +219,28 @@ describe('useReplay — syncEmitter listener', () => {
     expect(result.current.seekTime).toBe(0);
     expect(result.current.hasEnded).toBe(false);
     expect(result.current.isPlaying).toBe(true);
+  });
+
+  test('applies a remote recording segment to this window URL', () => {
+    const setSearchParams = vi.fn();
+    useSearchParamsMock.mockReturnValue([
+      new URLSearchParams('participantId=p1'),
+      setSearchParams,
+    ] as ReturnType<typeof useSearchParams>);
+    renderHook(() => useReplay());
+    const listener = vi.mocked(syncEmitter.on).mock.calls
+      .find(([event]) => event === 'replaySync')?.[1] as ((value: {
+        seekTime: number; isPlaying: boolean; speed: number; recordingSegment?: string | null;
+      }) => void) | undefined;
+
+    act(() => {
+      listener?.({
+        seekTime: 0, isPlaying: false, speed: 1, recordingSegment: 'segment-earlier',
+      });
+    });
+
+    const updateSearchParams = setSearchParams.mock.calls[0][0] as (params: URLSearchParams) => URLSearchParams;
+    expect(updateSearchParams(new URLSearchParams('participantId=p1')).get('recordingSegment')).toBe('segment-earlier');
   });
 
   test('cleanup removes the replaySync listener on unmount', () => {

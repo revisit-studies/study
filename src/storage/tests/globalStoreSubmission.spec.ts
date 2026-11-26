@@ -79,6 +79,10 @@ class SubmissionStorage extends LocalStorageEngine {
     this.participantData = { ...structuredClone(participant), participantId: 'next-participant' };
   }
 
+  switchStudy(studyId: string) {
+    this.studyId = studyId;
+  }
+
   pauseNextWrite(suffix: string) {
     const original = this.participantStore.setItem.bind(this.participantStore);
     let entered!: () => void;
@@ -174,6 +178,27 @@ test('switching participants during submission preparation cannot accept the old
   expect(storage.getCurrentParticipantDataSnapshot()).toMatchObject({ participantId: 'next-participant', answers: {} });
   expect(storage.getCurrentParticipantDataSnapshot()?.globalStoreRevision).toBeUndefined();
   expect(storage.local.size).toBe(0);
+});
+
+test('rollback after a study switch only touches the originating study cache', async () => {
+  const storage = new SubmissionStorage();
+  const { graph } = submission();
+  const prefix = (storage as unknown as { collectionPrefix: string }).collectionPrefix;
+  const otherStudySnapshot = `${prefix}other-study/participants/participant/localParticipantData`;
+  const otherStudyTaskProvenance = `${prefix}other-study/participants/participant/localProvenance/purchase_0`;
+  const otherStudyRevisionProvenance = `${prefix}other-study/participants/participant/localProvenance/${GLOBAL_STORE_TASK}/1`;
+  storage.local.set(otherStudySnapshot, 'other snapshot');
+  storage.local.set(otherStudyTaskProvenance, 'other task provenance');
+  storage.local.set(otherStudyRevisionProvenance, 'other revision provenance');
+  const { paused, release } = storage.pauseNextWrite('/localProvenance/purchase_0');
+  const pending = storage.saveGlobalStoreSubmission({ purchase_0: answer }, graph, 1, 'purchase_0', createEmptyProvenance());
+  await paused;
+  storage.switchStudy('other-study');
+  release();
+  await expect(pending).rejects.toThrow('session changed');
+  expect(storage.local.get(otherStudySnapshot)).toBe('other snapshot');
+  expect(storage.local.get(otherStudyTaskProvenance)).toBe('other task provenance');
+  expect(storage.local.get(otherStudyRevisionProvenance)).toBe('other revision provenance');
 });
 
 class RecoveryStorage extends SubmissionStorage {

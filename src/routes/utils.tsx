@@ -1,4 +1,4 @@
-import { useNavigate, useParams } from 'react-router';
+import { useNavigate, useParams, useSearchParams } from 'react-router';
 import {
   useEffect, useMemo, useState,
 } from 'react';
@@ -15,6 +15,7 @@ import { getComponent } from '../utils/handleComponentInheritance';
 import { getGlobalStoreContextBeforeTrial } from '../store/globalStoreProvenance';
 import { useGlobalStoreSavePending } from '../store/hooks/useGlobalStoreSavePending';
 import { useStartupInteractionBlocked } from '../components/StartupContext';
+import { parseTrialOrder } from '../utils/parseTrialOrder';
 
 export function useStudyId(): string {
   const { studyId } = useParams();
@@ -52,6 +53,7 @@ export function useCurrentComponent(): string {
   const savePending = useGlobalStoreSavePending();
   const isAnalysis = useIsAnalysis();
   const { funcIndex } = useParams();
+  const [searchParams] = useSearchParams();
   const globalVariables = useStoreSelector((state) => state.globalVariables);
   const globalGraph = useStoreSelector((state) => state.globalStoreGraph);
   const _answers = useStoreSelector((state) => state.answers);
@@ -64,6 +66,7 @@ export function useCurrentComponent(): string {
   const storeDispatch = useStoreDispatch();
   const { pushToFuncSequence } = useStoreActions();
   const startupInteractionBlocked = useStartupInteractionBlocked();
+  const analysisAnswerId = searchParams.get('analysisAnswerId');
 
   const currentComponent = useMemo(() => (typeof currentStep === 'number' ? getComponent(flatSequence[currentStep], studyConfig) : currentStep.includes('reviewer-') || currentStep.startsWith('__') ? currentStep : null), [currentStep, flatSequence, studyConfig]);
 
@@ -75,12 +78,37 @@ export function useCurrentComponent(): string {
     if (typeof currentStep !== 'number' || currentComponent) return undefined;
     const funcName = flatSequence[currentStep];
     const index = funcIndex ? decryptIndex(funcIndex) : 0;
-    return Object.entries(_answers).find(([key, answer]) => key.startsWith(`${funcName}_${currentStep}_`)
+    const selectedAnalysisAnswer = isAnalysis && analysisAnswerId ? _answers[analysisAnswerId] : undefined;
+    if (selectedAnalysisAnswer) {
+      const { step, funcIndex: answerFuncIndex } = parseTrialOrder(selectedAnalysisAnswer.trialOrder);
+      if (step === currentStep && answerFuncIndex === index
+        && typeof selectedAnalysisAnswer.componentName === 'string'
+        && selectedAnalysisAnswer.componentName.length > 0
+        && Boolean(getComponent(selectedAnalysisAnswer.componentName, studyConfig))) {
+        return selectedAnalysisAnswer.componentName;
+      }
+    }
+
+    const answerMatchesIteration = ([key, answer]: [string, typeof _answers[string]]) => key.startsWith(`${funcName}_${currentStep}_`)
       && key.endsWith(`_${index}`)
+      && !answer.recordingArchived
       && typeof answer.componentName === 'string'
       && answer.componentName.length > 0
-      && Boolean(getComponent(answer.componentName, studyConfig)))?.[1].componentName;
-  }, [_answers, currentComponent, currentStep, flatSequence, funcIndex, studyConfig]);
+      && Boolean(getComponent(answer.componentName, studyConfig));
+    const answersForIteration = Object.entries(_answers)
+      .filter(answerMatchesIteration)
+      .sort(([firstIdentifier, firstAnswer], [secondIdentifier, secondAnswer]) => (
+        (parseTrialOrder(firstAnswer.trialOrder).funcIndex ?? -1) - (parseTrialOrder(secondAnswer.trialOrder).funcIndex ?? -1)
+        || firstIdentifier.localeCompare(secondIdentifier)
+      ));
+    const savedAnswer = answersForIteration[0];
+
+    if (savedAnswer) {
+      return savedAnswer[1].componentName;
+    }
+
+    return undefined;
+  }, [_answers, analysisAnswerId, currentComponent, currentStep, flatSequence, funcIndex, isAnalysis, studyConfig]);
 
   const nextFunc:((params: JumpFunctionParameters<unknown>) => JumpFunctionReturnVal) | null = useMemo(() => {
     if (typeof currentStep === 'number' && !currentComponent) {
@@ -130,7 +158,10 @@ export function useCurrentComponent(): string {
           : undefined;
         const context = studyConfig.globalVariables !== undefined
           ? getGlobalStoreContextBeforeTrial(globalGraph, studyConfig.globalVariables, currentStep, decryptedFuncIndex)
-          : { store: globalVariables, answers: _answers };
+          : {
+            store: globalVariables,
+            answers: Object.fromEntries(Object.entries(_answers).filter(([, answer]) => !answer.recordingArchived)),
+          };
         const { component: currCompName, parameters: _params, correctAnswer } = nextFunc({
           store: Object.freeze({ ...context.store }),
           answers: context.answers,
@@ -182,7 +213,19 @@ export function useCurrentIdentifier(): string {
   const currentComponent = useCurrentComponent();
 
   const { funcIndex } = useParams();
+  const [searchParams] = useSearchParams();
+  const isAnalysis = useIsAnalysis();
+  const answers = useStoreSelector((state) => state.answers);
+  const analysisAnswerId = searchParams.get('analysisAnswerId');
   const identifier = useMemo(() => (funcIndex && typeof currentStep === 'number' ? `${participantSequence[currentStep]}_${currentStep}_${currentComponent}_${decryptIndex(funcIndex)}` : `${currentComponent}_${currentStep}`), [currentComponent, currentStep, funcIndex, participantSequence]);
+
+  const selectedAnswer = analysisAnswerId ? answers[analysisAnswerId] : undefined;
+  if (isAnalysis && selectedAnswer?.componentName === currentComponent && typeof currentStep === 'number') {
+    const { step, funcIndex: answerFuncIndex } = parseTrialOrder(selectedAnswer.trialOrder);
+    if (step === currentStep && answerFuncIndex === (funcIndex ? decryptIndex(funcIndex) : null)) {
+      return selectedAnswer.identifier;
+    }
+  }
 
   return identifier;
 }

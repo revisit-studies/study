@@ -1,6 +1,8 @@
 /* eslint-disable no-await-in-loop */
 import { test, expect, Page } from '@playwright/test';
-import { nextClick, openStudyFromLanding, resetClientStudyState } from './utils';
+import {
+  advanceStudyStep, nextClick, openStudyFromLanding, resetClientStudyState,
+} from './utils';
 import { FACE_BUTTON_COLORS } from '../src/utils/gamepadButtons';
 import { getColorForKey, normalizeActionName } from '../src/components/audioAnalysis/provenanceColors';
 
@@ -53,7 +55,12 @@ async function installFakeGamepad(page: Page) {
         };
         paint();
         setInterval(paint, 100);
-        return (canvas as HTMLCanvasElement & { captureStream: (fps: number) => MediaStream }).captureStream(10);
+        const stream = (canvas as HTMLCanvasElement & { captureStream: (fps: number) => MediaStream }).captureStream(10);
+        stream.getVideoTracks().forEach((track) => {
+          const getSettings = track.getSettings.bind(track);
+          track.getSettings = () => ({ ...getSettings(), displaySurface: 'monitor' });
+        });
+        return stream;
       };
     }
   });
@@ -143,7 +150,7 @@ async function readStoredTrial(page: Page, trialPrefix: string) {
     });
 
     type StoredWindowEvent = [number, string, unknown];
-    type StoredAnswerShape = { windowEvents?: StoredWindowEvent[] };
+    type StoredAnswerShape = { answer?: Record<string, unknown>; windowEvents?: StoredWindowEvent[] };
     type ParticipantShape = { answers: Record<string, StoredAnswerShape> };
     type ProvenanceNodeShape = { event?: string; sideEffects?: { do?: { type?: string }[] } };
     type StoredProvenanceShape = { stimulus?: { nodes?: Record<string, ProvenanceNodeShape> } };
@@ -164,7 +171,9 @@ async function readStoredTrial(page: Page, trialPrefix: string) {
     const nodes = (provenance as StoredProvenanceShape | null)?.stimulus?.nodes ?? {};
 
     return {
+      answer: answer?.answer ?? null,
       windowEventKinds: Array.from(new Set((answer?.windowEvents ?? []).map((event) => event[1]))),
+      focusEvents: (answer?.windowEvents ?? []).filter((event) => event[1] === 'studyactivity' && (event[2] === 'focus-lost' || event[2] === 'focus-regained')).map((event) => event[2]),
       nodeActionTypes: Object.values(nodes).map(
         (node) => node?.sideEffects?.do?.[0]?.type ?? node?.event ?? '',
       ),
@@ -236,6 +245,34 @@ test.describe('Gamepad stimulus with provenance and screen recording', () => {
     await nextClick(page);
     await expect(page).not.toHaveURL(firstTrialUrl);
     await expect(page.getByText('Press any button on your controller')).toBeVisible();
+  });
+
+  test('does not record focus loss when a participant focuses a same-origin study iframe', async ({ page }) => {
+    await openStudyFromLanding(page, 'Demo Studies', 'Entire Screen Recording');
+    await nextClick(page);
+    await page.getByRole('button', { name: 'Start Recording' }).click();
+    const continueButton = page.getByRole('button', { name: 'Continue', exact: true });
+    await expect(continueButton).toBeEnabled({ timeout: 15000 });
+    await continueButton.click();
+    await expect(page.getByRole('button', { name: 'Next', exact: true })).toBeVisible({ timeout: 15000 });
+    const numericalAnswer = page.locator('#answer input');
+    await numericalAnswer.fill('3');
+    await expect(numericalAnswer).toHaveValue('3');
+
+    await page.evaluate(() => {
+      const iframe = document.createElement('iframe');
+      iframe.title = 'Same-origin study focus probe';
+      iframe.srcdoc = '<button type="button">Focus study iframe</button>';
+      document.body.append(iframe);
+    });
+    await page.frameLocator('iframe[title="Same-origin study focus probe"]').getByRole('button', { name: 'Focus study iframe' }).click();
+    await page.locator('body').click({ position: { x: 5, y: 5 } });
+    await expect.poll(() => page.evaluate(() => document.hasFocus())).toBe(true);
+
+    await advanceStudyStep(page);
+    await expect.poll(async () => (await readStoredTrial(page, 'recorded_task')).answer, { timeout: 30000 })
+      .toEqual({ answer: 3 });
+    await expect.poll(async () => (await readStoredTrial(page, 'recorded_task')).focusEvents).toEqual([]);
   });
 
   test('stores gamepad telemetry and button-colored provenance', async ({ page }) => {

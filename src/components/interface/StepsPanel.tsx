@@ -32,7 +32,7 @@ import { getComponentAnswerStatus } from '../../utils/componentCorrectness';
 import { studyComponentToIndividualComponent } from '../../utils/handleComponentInheritance';
 import { UnknownAnswerIcon } from './UnknownAnswerIcon';
 import {
-  getDynamicComponentsForBlock,
+  getDynamicAnswerEntriesForBlock,
   getSkipConditionSummariesForBlock,
   getSkippedTrialOrders,
   formatFactorLevel,
@@ -77,7 +77,10 @@ function findMatchingComponentInFullOrder(
   return studySequence;
 }
 
-function countComponentsInSequence(sequence: Sequence, participantAnswers: ParticipantData['answers']) {
+function countComponentsInSequence(
+  sequence: Sequence,
+  participantAnswers: ParticipantData['answers'],
+) {
   let count = 0;
 
   if (
@@ -93,7 +96,8 @@ function countComponentsInSequence(sequence: Sequence, participantAnswers: Parti
 
   // Dynamic blocks generate components at runtime, so we count from participant answers
   if (isDynamicBlock(sequence)) {
-    return Object.entries(participantAnswers).filter(([key, _]) => key.startsWith(`${sequence.id}_`)).length;
+    return Object.entries(participantAnswers)
+      .filter(([key, answer]) => key.startsWith(`${sequence.id}_`) && !answer.recordingArchived).length;
   }
 
   sequence.components.forEach((component) => {
@@ -125,6 +129,7 @@ type ComponentStepItem = StepItemBase & {
   importedLibraryName?: string;
   component?: StudyConfig['components'][string];
   componentAnswer?: StoredAnswer;
+  analysisAnswerId?: string;
   componentName: string; // Full component name (e.g., package.components.ComponentName)
   isExcluded?: boolean; // Component was excluded from participant sequence
 };
@@ -239,12 +244,14 @@ export function StepsPanel({
   participantAnswers,
   studyConfig,
   isAnalysis,
+  isReplay = false,
 }: {
   globalGraph?: GlobalStoreGraph;
   participantSequence?: Sequence;
   participantAnswers: ParticipantData['answers'];
   studyConfig: StudyConfig;
   isAnalysis?: boolean;
+  isReplay?: boolean;
 }) {
   // Constants
   const INITIAL_CLAMP = 6;
@@ -264,6 +271,18 @@ export function StepsPanel({
   const studyId = useStudyId();
   const navigate = useNavigate();
   const location = useLocation();
+  const selectedAnalysisAnswerId = new URLSearchParams(location.search).get('analysisAnswerId');
+  const replayRowsForCurrentPath = isReplay
+    ? fullFlatTree.filter((item): item is ComponentStepItem => item.type === 'component'
+      && item.href === location.pathname && !item.isExcluded)
+    : [];
+  const selectedReplayAnswerIsArchived = !!selectedAnalysisAnswerId
+    && participantAnswers[selectedAnalysisAnswerId]?.recordingArchived === true;
+  const selectedReplayRow = replayRowsForCurrentPath
+    .find((item) => item.analysisAnswerId === selectedAnalysisAnswerId);
+  const effectiveReplayAnswerId = isReplay && !selectedReplayAnswerIsArchived
+    ? selectedReplayRow?.analysisAnswerId ?? replayRowsForCurrentPath[0]?.analysisAnswerId
+    : undefined;
 
   const fullOrder = useMemo(() => {
     let r = structuredClone(studyConfig.sequence) as Sequence;
@@ -342,6 +361,7 @@ export function StepsPanel({
         parentPath: string,
         dynamic = false,
         parentExclusionReason?: ExclusionReason,
+        dynamicAnswer?: ReturnType<typeof getDynamicAnswerEntriesForBlock>[number],
       ) => {
         if (typeof node === 'string') {
           // Check to see if the component is from imported library
@@ -355,8 +375,11 @@ export function StepsPanel({
             : undefined;
 
           // Generate component identifier for participantAnswers lookup
-          const componentIdentifier = dynamic ? `${parentNode.id}_${idx}_${node}_${dynamicIdx}` : `${node}_${idx}`;
-          const componentPath = `${parentPath}.${node}_${dynamic ? dynamicIdx : idx}`;
+          const answerIndex = dynamicAnswer?.funcIndex ?? dynamicIdx;
+          const componentIdentifier = dynamicAnswer?.identifier ?? (dynamic ? `${parentNode.id}_${idx}_${node}_${dynamicIdx}` : `${node}_${idx}`);
+          const componentPath = dynamicAnswer
+            ? `${parentPath}.${dynamicAnswer.identifier}`
+            : `${parentPath}.${node}_${dynamic ? dynamicIdx : idx}`;
           const isSkipped = !dynamic && skippedTrialOrders.has(idx);
 
           newFlatTree.push({
@@ -371,15 +394,17 @@ export function StepsPanel({
             importedLibraryName,
 
             // Component Attributes
-            href: dynamic ? `/${studyId}/${encryptIndex(idx)}/${encryptIndex(dynamicIdx)}` : `/${studyId}/${encryptIndex(idx)}`,
+            href: dynamic ? `/${studyId}/${encryptIndex(idx)}/${encryptIndex(answerIndex)}` : `/${studyId}/${encryptIndex(idx)}`,
             isInterruption: (parentNode.interruptions || []).flatMap((intr) => intr.components).includes(node),
             component,
-            componentAnswer: participantAnswers[componentIdentifier],
+            componentAnswer: dynamicAnswer?.answer ?? participantAnswers[componentIdentifier],
+            analysisAnswerId: dynamicAnswer?.identifier
+              ?? (isReplay ? participantAnswers[componentIdentifier]?.identifier : undefined),
             componentName: node,
           });
 
           if (dynamic) {
-            dynamicIdx += 1;
+            dynamicIdx = Math.max(dynamicIdx + 1, answerIndex + 1);
           } else {
             idx += 1;
           }
@@ -458,12 +483,22 @@ export function StepsPanel({
         }
 
         // Loop through components, including any dynamic components added via participantAnswers
-        const dynamicComponents = getDynamicComponentsForBlock(node, participantAnswers, idx);
+        const dynamicAnswerEntries = getDynamicAnswerEntriesForBlock(node, participantAnswers, idx);
+        const dynamicComponents = dynamicAnswerEntries.map(({ answer }) => answer.componentName);
         const blockComponents = [...node.components, ...dynamicComponents];
         if (blockComponents.length > 0) {
-          blockComponents.forEach((child) => {
-            traverse(child, indentLevel + 1, node, blockPath, node.order === 'dynamic', exclusionReason);
-          });
+          if (node.order === 'dynamic') {
+            node.components.forEach((child) => {
+              traverse(child, indentLevel + 1, node, blockPath, true, exclusionReason);
+            });
+            dynamicAnswerEntries.forEach((entry) => {
+              traverse(entry.answer.componentName, indentLevel + 1, node, blockPath, true, exclusionReason, entry);
+            });
+          } else {
+            blockComponents.forEach((child) => {
+              traverse(child, indentLevel + 1, node, blockPath, node.order === 'dynamic', exclusionReason);
+            });
+          }
         }
         if (node.order === 'dynamic') {
           idx += 1;
@@ -624,7 +659,7 @@ export function StepsPanel({
     // Set full and rendered flat tree
     setFullFlatTree(newFlatTree);
     setRenderedFlatTree(newFlatTree);
-  }, [factorLabels, fullOrder, participantAnswers, participantSequence, skippedTrialOrders, studyConfig, studyId]);
+  }, [factorLabels, fullOrder, isReplay, participantAnswers, participantSequence, skippedTrialOrders, studyConfig, studyId]);
 
   const collapseBlock = useCallback((startIndex: number, startItem: StepItem) => {
     setRenderedFlatTree((prevRenderedFlatTree) => {
@@ -768,6 +803,7 @@ export function StepsPanel({
             component,
             componentAnswer,
             componentName,
+            analysisAnswerId,
             isLibraryImport: isComponentLibraryImport,
             importedLibraryName: componentImportedLibraryName,
           } = (comp ?? {}) as Partial<ComponentStepItem>;
@@ -841,7 +877,13 @@ export function StepsPanel({
                       if (isAnalysis) {
                         navigate(`/analysis/stats/${studyId}/stats/${encodeURIComponent(String(componentName))}${location.search}`);
                       } else {
-                        navigate(`${href}${location.search}`);
+                        const searchParams = new URLSearchParams(location.search);
+                        if (isReplay) {
+                          if (analysisAnswerId) searchParams.set('analysisAnswerId', analysisAnswerId);
+                          else searchParams.delete('analysisAnswerId');
+                        }
+                        const search = searchParams.toString();
+                        navigate(`${href}${search ? `?${search}` : ''}`);
                       }
                     } else if (!isComponent) {
                       // Both included and excluded blocks can be collapsed/expanded
@@ -852,7 +894,8 @@ export function StepsPanel({
                       }
                     }
                   }}
-                  active={!isExcluded && href === location.pathname}
+                  active={!isExcluded && href === location.pathname
+                    && (!isReplay || effectiveReplayAnswerId === analysisAnswerId)}
                   disabled={isExcluded && isComponent}
                   style={{
                     opacity: isSkipped ? 0.65 : isExcluded ? 0.5 : 1,

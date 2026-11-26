@@ -6,7 +6,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import {
   afterEach, beforeEach, describe, expect, test, vi,
 } from 'vitest';
-import { AlertModal } from '../AlertModal';
+import { AlertModal, STORAGE_RETRY_SUCCESS_EVENT } from '../AlertModal';
 
 // ── mutable state ─────────────────────────────────────────────────────────────
 
@@ -223,6 +223,8 @@ describe('AlertModal', () => {
 
   test('retry keeps the save failure modal open until all failed writes are saved', async () => {
     let resolveRetry: (() => void) | undefined;
+    const retrySuccessListener = vi.fn();
+    window.addEventListener(STORAGE_RETRY_SUCCESS_EVENT, retrySuccessListener);
     mockRetryFailedWrites.mockImplementation(() => new Promise<void>((resolve) => {
       resolveRetry = resolve;
     }));
@@ -245,6 +247,8 @@ describe('AlertModal', () => {
       show: false,
       title: '',
     })));
+    expect(retrySuccessListener).toHaveBeenCalledOnce();
+    window.removeEventListener(STORAGE_RETRY_SUCCESS_EVENT, retrySuccessListener);
   });
 
   test('retry failure leaves the save failure modal open for another attempt', async () => {

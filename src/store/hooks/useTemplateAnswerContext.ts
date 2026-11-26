@@ -27,12 +27,16 @@ export function useTemplateAnswerContext() {
   const currentComponent = useCurrentComponent();
   const { funcIndex } = useParams();
   const decryptedFuncIndex = funcIndex ? decryptIndex(funcIndex) : undefined;
+  const activeAnswers = useMemo(
+    () => Object.fromEntries(Object.entries(answers).filter(([, answer]) => !answer.recordingArchived)),
+    [answers],
+  );
   return useMemo(
     () => (currentComponent === '__dynamicLoading'
       ? undefined
       : {
-        globalVariables: store, answers, flatSequence, currentStep, currentComponent, funcIndex: decryptedFuncIndex,
+        globalVariables: store, answers: activeAnswers, flatSequence, currentStep, currentComponent, funcIndex: decryptedFuncIndex,
       }),
-    [store, answers, flatSequence, currentStep, currentComponent, decryptedFuncIndex],
+    [store, activeAnswers, flatSequence, currentStep, currentComponent, decryptedFuncIndex],
   );
 }

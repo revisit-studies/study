@@ -2,7 +2,7 @@ import { openConfirmModal } from '@mantine/modals';
 import isEqual from 'lodash.isequal';
 import { useCallback, useContext, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router';
-import { useTrialAssetIdentifier } from './useTrialAssetIdentifier';
+import { useTrialAssetSegments } from './useTrialAssetIdentifier';
 import { summarizeResponseIssues } from '../../components/response/responseErrors';
 import { getCustomResponseModule, getCustomResponseModuleLoadError } from '../../components/response/customResponseModules';
 import { useGlobalStore } from './useGlobalStore';
@@ -41,10 +41,12 @@ import {
   getStoredAnswersForSkipEvaluation,
 } from '../../utils/skipConditions';
 import { useStartupInteractionBlocked } from '../../components/StartupContext';
+import { useOptionalRecordingContext } from './useRecording';
 
 export function useNextStep(responses?: Response[], correctAnswers?: Answer[]) {
   const context = useContext(StudyStoreContext);
-  const assetIdentifier = useTrialAssetIdentifier();
+  const assetSegments = useTrialAssetSegments();
+  const assetIdentifier = assetSegments[assetSegments.length - 1];
   const entryStore = useGlobalStore();
   const submitting = useStoreSelector((state) => state.globalStoreSubmitting);
   const completed = useStoreSelector((state) => state.completed);
@@ -73,12 +75,11 @@ export function useNextStep(responses?: Response[], correctAnswers?: Answer[]) {
   const startupInteractionBlocked = useStartupInteractionBlocked();
 
   const { dataCollectionEnabled } = modes;
+  const recordingContext = useOptionalRecordingContext();
 
   // Status of the next button. If false, the next button should be disabled
   const isAnalysis = useIsAnalysis();
   const assetStatus = trialValidation[identifier]?.assetStatus;
-  const isNextDisabled = typeof currentStep !== 'number' || isAnalysis || completed || !!submitting || (assetStatus !== undefined && assetStatus !== 'ready' && assetStatus !== 'missing');
-
   const storedAnswer = useStoredAnswer();
   const currentComponentConfig = storedAnswer?.componentName
     ? studyConfig.components[storedAnswer.componentName]
@@ -86,6 +87,24 @@ export function useNextStep(responses?: Response[], correctAnswers?: Answer[]) {
   const resolvedComponentConfig = useMemo(() => (currentComponentConfig
     ? studyComponentToIndividualComponent(currentComponentConfig, studyConfig)
     : undefined), [currentComponentConfig, studyConfig]);
+  const isScreenPermissionComponent = storedAnswer?.componentName === '$screen-recording.components.screenRecordingPermission'
+    || storedAnswer?.componentName === '$webcam-recording.components.webcamRecordingPermission';
+  const recordsScreen = resolvedComponentConfig?.recordScreen ?? studyConfig.uiConfig?.recordScreen ?? false;
+  const recordsAudio = resolvedComponentConfig?.recordAudio ?? studyConfig.uiConfig?.recordAudio ?? false;
+  const recordsWebcam = resolvedComponentConfig?.recordWebcam ?? studyConfig.uiConfig?.recordWebcam ?? false;
+  const isRequiredMonitorRecordingTask = !!studyConfig.uiConfig?.requireEntireScreen
+    && dataCollectionEnabled
+    && !isAnalysis
+    && !isScreenPermissionComponent
+    && (recordsScreen || recordsAudio || recordsWebcam);
+  const requiresVerifiedEntireScreen = isRequiredMonitorRecordingTask
+    && !recordingContext?.hasActiveVerifiedScreenCapture();
+  const isNextDisabled = typeof currentStep !== 'number'
+    || isAnalysis
+    || completed
+    || !!submitting
+    || (assetStatus !== undefined && assetStatus !== 'ready' && assetStatus !== 'missing')
+    || requiresVerifiedEntireScreen;
   const responseConfig = useMemo(() => resolveGlobalStoreResponses(resolvedComponentConfig?.response ?? responses ?? [], entryStore), [responses, resolvedComponentConfig, entryStore]);
   const correctAnswerConfig = useMemo(() => correctAnswers
     ?? storedAnswer?.correctAnswer
@@ -102,11 +121,16 @@ export function useNextStep(responses?: Response[], correctAnswers?: Answer[]) {
     const usesGlobalStore = studyConfig.globalVariables !== undefined;
     let locked = false;
     let navigated = false;
+    let recordingSubmissionPending = false;
+    let recordingFinalizingPending = false;
+    let recordingSubmissionSucceeded = false;
     let bypassResponseValidation = false;
+    let retainRecordingSegments = false;
     const route = window.location.href;
+    const captureRevision = recordingContext?.getScreenCaptureRevision?.();
     if (startupInteractionBlocked) return;
     try {
-      if (isNextDisabled) {
+      if (isNextDisabled || !!windowEvents.visitFinalizing || (isRequiredMonitorRecordingTask && !recordingContext?.hasActiveVerifiedScreenCapture())) {
         return;
       }
       const live = usesGlobalStore ? context.store.getState() : undefined;
@@ -135,6 +159,11 @@ export function useNextStep(responses?: Response[], correctAnswers?: Answer[]) {
         }
         storeDispatch(setGlobalStoreSubmitting(identifier));
         locked = true;
+        if (studyConfig.uiConfig?.requireEntireScreen) {
+          windowEvents.submissionPending = true;
+          recordingSubmissionPending = true;
+          await windowEvents.checkpointPending;
+        }
       }
       // Get answer from across the 3 response blocks and the provenance graph
       const validation = trialValidation[identifier];
@@ -257,21 +286,90 @@ export function useNextStep(responses?: Response[], correctAnswers?: Answer[]) {
       const provenanceGraph = validation?.provenanceGraph ? structuredClone(validation.provenanceGraph) : undefined;
       const endTime = Date.now();
       const answerToPersist = collectData ? answer : {};
+      const requiresEntireScreen = !!studyConfig.uiConfig?.requireEntireScreen;
+      retainRecordingSegments = requiresEntireScreen && (recordsScreen || recordsAudio || recordsWebcam);
+      const retainScreenRanges = requiresEntireScreen && recordsScreen;
+      const preserveAcceptedAnswer = retainRecordingSegments
+        && !usesGlobalStore && !clickedPrevious && storedAnswer.endTime > 0;
 
       // Get current window events. Splice empties the array and returns the removed elements, which handles clearing the array
       windowEvents.flushPending?.();
-      const currentWindowEvents = windowEvents.current.slice();
+      let currentWindowEvents = windowEvents.current.slice();
+      const currentSegmentRange = storedAnswer.recordingSegmentRanges
+        ?.find((range) => range.assetIdentifier === assetIdentifier);
+      const currentVisitStartTime = currentSegmentRange?.visitStartTime
+        ?? (storedAnswer.assetIdentifier === assetIdentifier ? storedAnswer.startTime : startTime);
+      const actualRecordingStartTime = assetIdentifier
+        ? recordingContext?.getScreenRecordingStartTime?.(assetIdentifier)
+        : undefined;
 
       let committedValues = { ...entryStore };
       let activeAnswers = answers;
-      const toSave = {
+      let toSave = {
         ...storedAnswer,
         identifier,
-        ...(usesGlobalStore ? { assetIdentifier, globalStoreEntry: { ...entryStore } } : {}),
-        answer: answerToPersist,
-        startTime: usesGlobalStore ? startTime : storedAnswer.startTime > 0 ? Math.min(storedAnswer.startTime, startTime) : startTime,
-        endTime: Math.max(storedAnswer.endTime, endTime),
-        windowEvents: [...(usesGlobalStore ? [] : storedAnswer.windowEvents ?? []), ...currentWindowEvents],
+        ...((usesGlobalStore || retainRecordingSegments)
+          ? {
+            assetIdentifier,
+            ...(usesGlobalStore ? { globalStoreEntry: { ...entryStore } } : {}),
+            ...(retainRecordingSegments ? {
+              recordingSegments: Array.from(new Set([
+                ...(storedAnswer.recordingSegments ?? []),
+                ...(storedAnswer.assetIdentifier ? [storedAnswer.assetIdentifier] : []),
+                ...assetSegments,
+                ...(assetIdentifier ? [assetIdentifier] : []),
+              ])),
+              recordingSegmentRanges: (() => {
+                const ranges = storedAnswer.recordingSegmentRanges ?? [];
+                if (!retainScreenRanges) return ranges;
+                const existing = ranges.find((range) => range.assetIdentifier === assetIdentifier);
+                return assetIdentifier
+                  ? (existing
+                    ? ranges.map((range) => (range.assetIdentifier === assetIdentifier
+                      ? {
+                        ...range,
+                        startTime: actualRecordingStartTime ?? range.startTime,
+                        endTime,
+                        visitStartTime: range.visitStartTime ?? currentVisitStartTime,
+                      }
+                      : range))
+                    : [...ranges, {
+                      assetIdentifier,
+                      startTime: actualRecordingStartTime
+                        ?? (storedAnswer.assetIdentifier === assetIdentifier
+                          ? (storedAnswer.startTime || startTime)
+                          : startTime),
+                      endTime,
+                      visitStartTime: currentVisitStartTime,
+                    }])
+                  : ranges;
+              })(),
+              ...(recordsScreen ? {
+                recordingChunkKeys: {
+                  ...(storedAnswer.recordingChunkKeys ?? {}),
+                  ...Object.fromEntries(assetSegments.flatMap((segment) => {
+                    const chunkKeys = recordingContext?.getRecordingChunkKeys?.(segment) ?? [];
+                    return chunkKeys.length > 0 ? [[segment, chunkKeys]] : [];
+                  })),
+                },
+              } : {}),
+              recordingSegmentTimes: {
+                ...(storedAnswer.recordingSegmentTimes ?? {}),
+                ...(assetIdentifier ? { [assetIdentifier]: { startTime: actualRecordingStartTime ?? startTime, endTime } } : {}),
+              },
+            } : {}),
+          }
+          : {}),
+        answer: preserveAcceptedAnswer ? storedAnswer.answer : answerToPersist,
+        startTime: preserveAcceptedAnswer ? storedAnswer.startTime : usesGlobalStore ? startTime : storedAnswer.startTime > 0 ? Math.min(storedAnswer.startTime, startTime) : startTime,
+        endTime: preserveAcceptedAnswer ? storedAnswer.endTime : Math.max(storedAnswer.endTime, endTime),
+        ...(retainRecordingSegments ? { recordingStartTime: startTime, recordingEndTime: endTime } : {}),
+        windowEvents: [
+          ...(usesGlobalStore
+            ? (studyConfig.uiConfig?.requireEntireScreen ? storedAnswer.windowEvents ?? [] : [])
+            : storedAnswer.windowEvents ?? []),
+          ...currentWindowEvents,
+        ],
         timedOut: !collectData,
         responseSubmitAttempted,
         checkAnswer: submissionCheckAnswer,
@@ -289,21 +387,26 @@ export function useNextStep(responses?: Response[], correctAnswers?: Answer[]) {
             ]);
           }
         } finally { clearTimeout(timer); }
-        const preparationIsCurrent = () => {
+        const captureIsCurrent = () => !isRequiredMonitorRecordingTask
+          || (!!recordingContext?.hasActiveVerifiedScreenCapture()
+            && recordingContext.getScreenCaptureRevision?.() === captureRevision);
+        const submissionStateIsCurrent = () => {
           const current = context.store.getState();
           const currentValidation = current.trialValidation[identifier];
-          return route === window.location.href && !current.completed && current.participantId === live!.participantId
+          return !current.completed && current.participantId === live!.participantId
+            && captureIsCurrent()
             && current.globalStoreRevision === live!.globalStoreRevision
             && (!collectData || (updater === context.globalStoreUpdaters.get(identifier)
               && currentValidation && (currentValidation.assetStatus === undefined || currentValidation.assetStatus === 'ready' || currentValidation.assetStatus === 'missing')
               && (['aboveStimulus', 'belowStimulus', 'sidebar', 'stimulus'] as const).every((location) => currentValidation[location].valid)))
             && isEqual(answer, getPersistedAnswersFromAllLocations(currentValidation, responseConfig, correctAnswerConfig, checkAnswerState, entryStore));
         };
+        const preparationIsCurrent = () => route === window.location.href && submissionStateIsCurrent();
         if (!preparationIsCurrent()) return;
         const update = collectData
           ? evaluateGlobalStoreUpdates(studyConfig.globalVariables!, entryStore, responseConfig, answer, patch)
           : { values: { ...entryStore }, operations: [] };
-        const next = createGlobalStoreSubmission(live!.globalStoreGraph, studyConfig.globalVariables!, toSave, update.values, update.operations, provenanceGraph ?? {});
+        let next = createGlobalStoreSubmission(live!.globalStoreGraph, studyConfig.globalVariables!, toSave, update.values, update.operations, provenanceGraph ?? {});
         if (next.invalidated.length > 0) {
           const confirmed = await new Promise<boolean>((resolve) => {
             openConfirmModal({
@@ -317,21 +420,92 @@ export function useNextStep(responses?: Response[], correctAnswers?: Answer[]) {
           });
           if (!confirmed || !preparationIsCurrent()) return;
         }
+        if (studyConfig.uiConfig?.requireEntireScreen) {
+          // Flush debounced observations, then cut off this visit before taking
+          // the final snapshot. Events after this point must not leak to the
+          // following task while the durable save is pending.
+          windowEvents.flushPending?.();
+          windowEvents.submissionFinalizing = true;
+          recordingFinalizingPending = true;
+          windowEvents.flushPending?.();
+          const latestAnswer = context.store.getState().answers[identifier] ?? storedAnswer;
+          currentWindowEvents = [
+            ...windowEvents.current,
+            ...(windowEvents.submissionDeferredEvents ?? []).splice(0),
+          ];
+          const recordingEndTime = Date.now();
+          const rangesByAsset = new Map((toSave.recordingSegmentRanges ?? []).map((range) => [range.assetIdentifier, range]));
+          (latestAnswer.recordingSegmentRanges ?? []).forEach((range) => {
+            const previousRange = rangesByAsset.get(range.assetIdentifier);
+            if (!previousRange || range.endTime >= previousRange.endTime) rangesByAsset.set(range.assetIdentifier, range);
+          });
+          const chunkKeys = { ...toSave.recordingChunkKeys, ...latestAnswer.recordingChunkKeys };
+          Object.keys(chunkKeys).forEach((segment) => {
+            chunkKeys[segment] = Array.from(new Set([
+              ...(toSave.recordingChunkKeys?.[segment] ?? []),
+              ...(latestAnswer.recordingChunkKeys?.[segment] ?? []),
+              ...(recordsScreen ? recordingContext?.getRecordingChunkKeys?.(segment) ?? [] : []),
+            ]));
+          });
+          const mergedEvents = [...(toSave.windowEvents ?? [])];
+          [...(latestAnswer.windowEvents ?? []), ...currentWindowEvents].forEach((event) => {
+            if (!mergedEvents.some((saved) => isEqual(saved, event))) mergedEvents.push(event);
+          });
+          mergedEvents.sort((first, second) => first[0] - second[0]);
+          const recordingSegments = Array.from(new Set([
+            ...(toSave.recordingSegments ?? []),
+            ...(latestAnswer.recordingSegments ?? []),
+            ...(retainRecordingSegments && latestAnswer.assetIdentifier ? [latestAnswer.assetIdentifier] : []),
+            ...(retainRecordingSegments ? assetSegments : []),
+            ...(retainRecordingSegments && assetIdentifier ? [assetIdentifier] : []),
+          ]));
+          const currentRange = assetIdentifier ? rangesByAsset.get(assetIdentifier) : undefined;
+          if (retainScreenRanges && assetIdentifier && currentRange) {
+            rangesByAsset.set(assetIdentifier, {
+              ...currentRange,
+              startTime: actualRecordingStartTime ?? currentRange.startTime,
+              endTime: recordingEndTime,
+            });
+          }
+          toSave = {
+            ...toSave,
+            ...(recordingSegments.length > 0 ? { recordingSegments } : {}),
+            ...(rangesByAsset.size > 0 || retainScreenRanges ? { recordingSegmentRanges: Array.from(rangesByAsset.values()) } : {}),
+            ...(Object.keys(chunkKeys).length > 0 ? { recordingChunkKeys: chunkKeys } : {}),
+            ...(retainRecordingSegments && assetIdentifier ? {
+              recordingSegmentTimes: {
+                ...(toSave.recordingSegmentTimes ?? {}),
+                ...(latestAnswer.recordingSegmentTimes ?? {}),
+                [assetIdentifier]: {
+                  startTime: actualRecordingStartTime ?? toSave.recordingSegmentTimes?.[assetIdentifier]?.startTime ?? startTime,
+                  endTime: recordingEndTime,
+                },
+              },
+            } : {}),
+            ...(retainRecordingSegments || latestAnswer.recordingEndTime !== undefined
+              ? { recordingEndTime: Math.max(toSave.recordingEndTime ?? 0, latestAnswer.recordingEndTime ?? 0, retainRecordingSegments ? recordingEndTime : 0) }
+              : {}),
+            windowEvents: mergedEvents,
+          };
+          next = createGlobalStoreSubmission(live!.globalStoreGraph, studyConfig.globalVariables!, toSave, update.values, update.operations, provenanceGraph ?? {});
+        }
         const replacing = !!getGlobalStoreNodeState(next.graph, next.nodeId).submission?.replaces && !next.unchanged;
-        activeAnswers = projectGlobalStoreAnswers(answers, toSave, replacing);
+        activeAnswers = projectGlobalStoreAnswers(context.store.getState().answers, toSave, replacing);
         const revision = (live!.globalStoreRevision ?? 0) + 1;
         if (!storageEngine) throw new Error('Storage is unavailable. Please reload and try again.');
-        await storageEngine.saveGlobalStoreSubmission(activeAnswers, next.graph, revision, identifier, provenanceGraph ?? {
+        if (!preparationIsCurrent()) return;
+        const submissionCommitted = await storageEngine.saveGlobalStoreSubmission(activeAnswers, next.graph, revision, identifier, provenanceGraph ?? {
           aboveStimulus: undefined, belowStimulus: undefined, sidebar: undefined, stimulus: undefined,
-        });
-        if (context.store.getState().participantId !== live!.participantId) return;
+        }, submissionStateIsCurrent);
+        if (context.store.getState().participantId !== live!.participantId || submissionCommitted === false) return;
         storeDispatch(acceptGlobalStoreSubmission({
           graph: next.graph, answers: activeAnswers, revision, invalidateAfter: replacing ? toSave.trialOrder : undefined,
         }));
+        recordingSubmissionSucceeded = true;
         // Local acceptance belongs to this participant even if browser navigation moved on.
         if (route !== window.location.href) return;
         committedValues = next.unchanged ? update.values : getGlobalStoreNodeState(next.graph).values;
-      } else if (dataCollectionEnabled && (storedAnswer.endTime === -1 || clickedPrevious)) {
+      } else if (dataCollectionEnabled && (storedAnswer.endTime === -1 || clickedPrevious || preserveAcceptedAnswer)) {
         const answersToPersist = { ...answers, [identifier]: toSave };
 
         if (storageEngine) {
@@ -361,7 +535,10 @@ export function useNextStep(responses?: Response[], correctAnswers?: Answer[]) {
         storeDispatch(setRankingAnswers(null));
       }
 
-      windowEvents.current.splice(0, currentWindowEvents.length);
+      currentWindowEvents.forEach((event) => {
+        const index = windowEvents.current.indexOf(event);
+        if (index !== -1) windowEvents.current.splice(index, 1);
+      });
       let nextStep = currentStep + 1;
       let skipped = false;
 
@@ -378,6 +555,8 @@ export function useNextStep(responses?: Response[], correctAnswers?: Answer[]) {
         answersForSkipEvaluation[identifier] = {
           answer: answerToPersist,
           timedOut: false,
+          componentName: toSave.componentName,
+          trialOrder: toSave.trialOrder,
           checkAnswer: submissionCheckAnswer,
           correctAnswer: correctAnswerConfig,
           store: entryStore,
@@ -422,12 +601,39 @@ export function useNextStep(responses?: Response[], correctAnswers?: Answer[]) {
         color: 'red',
       });
     } finally {
+      if (recordingFinalizingPending) {
+        const deferredEvents = windowEvents.submissionDeferredEvents ?? [];
+        if (!recordingSubmissionSucceeded) {
+          windowEvents.current.push(...deferredEvents);
+          const latestState = context.store.getState();
+          const latestAnswer = latestState.answers[identifier];
+          if (latestAnswer && windowEvents.current.length > 0) {
+            const retainedEvents = [...(latestAnswer.windowEvents ?? [])];
+            windowEvents.current.forEach((event) => {
+              if (!retainedEvents.some((saved) => isEqual(saved, event))) retainedEvents.push(event);
+            });
+            retainedEvents.sort((first, second) => first[0] - second[0]);
+            const interruptedAnswer = {
+              ...latestAnswer,
+              windowEvents: retainedEvents,
+              ...(retainRecordingSegments ? { recordingEndTime: Math.max(latestAnswer.recordingEndTime ?? 0, Date.now()) } : {}),
+            };
+            storeDispatch(saveTrialAnswer(interruptedAnswer));
+            storageEngine?.saveAnswers({ ...latestState.answers, [identifier]: interruptedAnswer }).catch((error) => {
+              console.error('Failed to save observations after a screen recording submission failed', error);
+            });
+          }
+        }
+        windowEvents.submissionDeferredEvents = [];
+        windowEvents.submissionFinalizing = false;
+      }
+      if (recordingSubmissionPending) windowEvents.submissionPending = false;
       if (locked && !navigated) storeDispatch(setGlobalStoreSubmitting(false));
     }
-  }, [startupInteractionBlocked, assetIdentifier, context, entryStore, setGlobalStoreSubmitting, setGlobalStoreError, acceptGlobalStoreSubmission, setResponseSubmitAttempt, setStimulusSubmitAttempt, resolvedComponentConfig, isNextDisabled, currentStep, trialValidation, identifier, storedAnswer, windowEvents, dataCollectionEnabled, clickedPrevious, sequence, answers, startTime, funcIndex, storeDispatch, saveTrialAnswer, storageEngine, setReactiveAnswers, setMatrixAnswersCheckbox, setMatrixAnswersRadio, setRankingAnswers, setAlertModal, studyConfig, participantSequence, navigate, studyId, responseSubmitAttempted, checkAnswerState, responseConfig, correctAnswerConfig]);
+  }, [startupInteractionBlocked, assetIdentifier, assetSegments, context, entryStore, setGlobalStoreSubmitting, setGlobalStoreError, acceptGlobalStoreSubmission, setResponseSubmitAttempt, setStimulusSubmitAttempt, resolvedComponentConfig, isNextDisabled, isRequiredMonitorRecordingTask, recordsScreen, recordsAudio, recordsWebcam, recordingContext, currentStep, trialValidation, identifier, storedAnswer, windowEvents, dataCollectionEnabled, clickedPrevious, sequence, answers, startTime, funcIndex, storeDispatch, saveTrialAnswer, storageEngine, setReactiveAnswers, setMatrixAnswersCheckbox, setMatrixAnswersRadio, setRankingAnswers, setAlertModal, studyConfig, participantSequence, navigate, studyId, responseSubmitAttempted, checkAnswerState, responseConfig, correctAnswerConfig]);
 
   return {
-    isNextDisabled: isNextDisabled || startupInteractionBlocked,
+    isNextDisabled: isNextDisabled || startupInteractionBlocked || !!windowEvents.visitFinalizing,
     goToNextStep,
   };
 }

@@ -3,18 +3,23 @@ import { createContext, type ReactNode } from 'react';
 import {
   beforeEach, expect, test, vi,
 } from 'vitest';
-import { useTrialAssetIdentifier } from '../useTrialAssetIdentifier';
+import { useRotateTrialAssetIdentifier, useTrialAssetIdentifier, useTrialAssetSegments } from '../useTrialAssetIdentifier';
 import { StudyStoreContext, type StudyStore } from '../../store';
 
 const state = vi.hoisted(() => ({
-  identifier: 'purchase_0', globalStoreRevision: 0, enabled: true, globalStoreSubmitting: false, globalStorePendingRevision: 0,
+  identifier: 'purchase_0', studyId: 'study-one', globalStoreRevision: 0, enabled: true, requireEntireScreen: false, globalStoreSubmitting: false, globalStorePendingRevision: 0,
 }));
-vi.mock('../../../routes/utils', () => ({ useCurrentIdentifier: () => state.identifier }));
+vi.mock('../../../routes/utils', () => ({ useCurrentIdentifier: () => state.identifier, useStudyId: () => state.studyId }));
 vi.mock('../../store', async () => ({
   StudyStoreContext: (await vi.importActual<{ createContext: typeof createContext }>('react')).createContext(null),
   useStoreSelector: (selector: (value: typeof state) => unknown) => selector(state),
 }));
-vi.mock('../useStudyConfig', () => ({ useStudyConfig: () => ({ globalVariables: state.enabled ? { budget: { initialValue: 100 } } : undefined }) }));
+vi.mock('../useStudyConfig', () => ({
+  useStudyConfig: () => ({
+    globalVariables: state.enabled ? { budget: { initialValue: 100 } } : undefined,
+    uiConfig: { requireEntireScreen: state.requireEntireScreen },
+  }),
+}));
 
 let owner: StudyStore;
 const newOwner = () => ({ trialAssetEntry: undefined } as unknown as StudyStore);
@@ -24,9 +29,10 @@ const wrapper = (store: StudyStore) => function Wrapper({ children }: { children
 const mount = (store = owner) => renderHook(useTrialAssetIdentifier, { wrapper: wrapper(store) });
 
 beforeEach(() => {
+  window.sessionStorage.clear();
   owner = newOwner();
   Object.assign(state, {
-    identifier: 'purchase_0', globalStoreRevision: 0, enabled: true, globalStoreSubmitting: false, globalStorePendingRevision: 0,
+    identifier: 'purchase_0', studyId: 'study-one', globalStoreRevision: 0, enabled: true, requireEntireScreen: false, globalStoreSubmitting: false, globalStorePendingRevision: 0,
   });
 });
 
@@ -96,4 +102,87 @@ test('changing the participant store at the same trial allocates a different key
   owner = newOwner();
   hook.rerender();
   expect(hook.result.current).not.toBe(original);
+});
+
+test('whole-screen recordings get a fresh stable asset key per page visit without global variables', () => {
+  state.enabled = false;
+  state.requireEntireScreen = true;
+  const recorder = mount();
+  const currentVisitKey = recorder.result.current;
+  expect(currentVisitKey).toMatch(/^purchase_0__screen_/);
+  const submitter = mount();
+  expect(submitter.result.current).toBe(currentVisitKey);
+
+  const key = 'revisit-recording-asset:study-one:anonymous:purchase_0';
+  window.sessionStorage.setItem(key, JSON.stringify({ lifecycleId: 'previous-page', key: currentVisitKey }));
+  const reloadedVisit = mount(newOwner());
+  expect(reloadedVisit.result.current).toMatch(/^purchase_0__screen_/);
+  expect(reloadedVisit.result.current).not.toBe(currentVisitKey);
+});
+
+test('whole-screen reload retains the previous asset key in the segment list', () => {
+  state.enabled = false;
+  state.requireEntireScreen = true;
+  const firstVisit = mount();
+  const previousKey = firstVisit.result.current;
+  window.sessionStorage.setItem('revisit-recording-asset:study-one:anonymous:purchase_0', JSON.stringify({
+    lifecycleId: 'previous-page', key: previousKey, segments: [previousKey],
+  }));
+
+  const resumed = renderHook(useTrialAssetSegments, { wrapper: wrapper(newOwner()) });
+  expect(resumed.result.current).toHaveLength(2);
+  expect(resumed.result.current).toContain(previousKey);
+  expect(resumed.result.current[1]).not.toBe(previousKey);
+});
+
+test('whole-screen checkpoints do not cross study boundaries when participant and task identifiers match', () => {
+  state.enabled = false;
+  state.requireEntireScreen = true;
+  const firstStudy = mount();
+  const firstStudyKey = firstStudy.result.current;
+  window.sessionStorage.setItem('revisit-recording-asset:study-one:anonymous:purchase_0', JSON.stringify({
+    key: firstStudyKey,
+    segments: [firstStudyKey],
+  }));
+
+  state.studyId = 'study-two';
+  const secondStudy = mount();
+
+  expect(secondStudy.result.current).not.toBe(firstStudyKey);
+  expect(secondStudy.result.current).not.toContain(firstStudyKey);
+  expect(secondStudy.result.current).toMatch(/^purchase_0__screen_/);
+});
+
+test('rotating a whole-screen recorder key retains the interrupted segment', () => {
+  state.enabled = false;
+  state.requireEntireScreen = true;
+  const hook = renderHook(() => ({ key: useTrialAssetIdentifier(), segments: useTrialAssetSegments(), rotate: useRotateTrialAssetIdentifier() }), { wrapper: wrapper(owner) });
+  const previousKey = hook.result.current.key;
+  let nextKey = '';
+  act(() => { nextKey = hook.result.current.rotate() ?? ''; hook.rerender(); });
+  expect(nextKey).not.toBe(previousKey);
+  expect(hook.result.current.key).toBe(nextKey);
+  expect(hook.result.current.segments).toEqual([previousKey, nextKey]);
+});
+
+test('revisiting an unfinished whole-screen task allocates a new segment', () => {
+  state.enabled = false;
+  state.requireEntireScreen = true;
+  const hook = renderHook(() => ({ key: useTrialAssetIdentifier(), segments: useTrialAssetSegments() }), { wrapper: wrapper(owner) });
+  const firstVisitKey = hook.result.current.key;
+  act(() => { state.identifier = 'other_1'; hook.rerender(); });
+  act(() => { state.identifier = 'purchase_0'; hook.rerender(); });
+  expect(hook.result.current.key).not.toBe(firstVisitKey);
+  expect(hook.result.current.segments).toContain(firstVisitKey);
+});
+
+test('recreating the study store in the same page allocates a fresh unfinished-task segment', () => {
+  state.enabled = false;
+  state.requireEntireScreen = true;
+  const firstStore = renderHook(() => ({ key: useTrialAssetIdentifier(), segments: useTrialAssetSegments() }), { wrapper: wrapper(newOwner()) });
+  const earlierKey = firstStore.result.current.key;
+  const recreatedStore = renderHook(() => ({ key: useTrialAssetIdentifier(), segments: useTrialAssetSegments() }), { wrapper: wrapper(newOwner()) });
+  expect(recreatedStore.result.current.key).not.toBe(earlierKey);
+  expect(recreatedStore.result.current.segments).toContain(earlierKey);
+  expect(recreatedStore.result.current.segments).toContain(recreatedStore.result.current.key);
 });

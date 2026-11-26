@@ -13,6 +13,7 @@ import { StoredAnswer, StudyConfig } from '../../../parser/types';
 import { getComponentAnswerStatus } from '../../../utils/componentCorrectness';
 import { getCorrectAnswerDisplayValue } from '../../../utils/correctAnswer';
 import { parseConditionParam } from '../../../utils/handleConditionLogic';
+import { getRecordingEventLabel } from '../../../utils/recordingEvents';
 import { studyComponentToIndividualComponent } from '../../../utils/handleComponentInheritance';
 import {
   compareReplayAnswerEntries,
@@ -28,6 +29,13 @@ import {
 
 const LABEL_GAP = 25;
 const CHARACTER_SIZE = 8;
+type StudyActivityMarker = {
+  identifier: string;
+  timestamp: number;
+  x: number;
+  label: string;
+  kind: 'activity' | 'display' | 'interruption';
+};
 
 const margin = {
   left: 20, top: 20, right: 20, bottom: 20,
@@ -68,16 +76,6 @@ export function AllTasksTimeline({
   const [timelineContainerRef, { width: containerWidth }] = useResizeObserver();
   const availableWidth = Math.max(containerWidth || width, 0);
 
-  const percentComplete = useMemo(() => {
-    const totalEntries = Object.entries(participantData.answers || {}).length;
-    if (totalEntries === 0) {
-      return 1;
-    }
-    const incompleteEntries = Object.entries(participantData.answers || {}).filter((e) => e[1].startTime === 0);
-
-    return (totalEntries - incompleteEntries.length) / totalEntries;
-  }, [participantData.answers]);
-
   const timelineWidth = useMemo(() => {
     if (timelineMode === 'time') {
       return availableWidth;
@@ -90,23 +88,48 @@ export function AllTasksTimeline({
     }).timelineWidth;
   }, [availableWidth, participantData.answers, timelineMode]);
 
+  const timelineAnswers = useMemo(() => Object.fromEntries(Object.entries(participantData.answers || {}).map(([identifier, answer]) => {
+    const ranges = answer.recordingSegmentRanges ?? [];
+    const segmentTimes = Object.values(answer.recordingSegmentTimes ?? {});
+    const observedRanges = ranges.length > 0 ? ranges : segmentTimes;
+    const rangeStartTime = observedRanges.length > 0
+      ? Math.min(...observedRanges.map((range) => range.startTime))
+      : answer.recordingStartTime ?? answer.startTime;
+    // Reset answers can remain incomplete while their earlier recording visits
+    // are still replayable. Use those ranges for geometry only.
+    const observedStartTime = observedRanges.length > 0
+      ? (answer.startTime > 0 ? Math.min(answer.startTime, rangeStartTime) : rangeStartTime)
+      : (answer.startTime === 0 && answer.recordingStartTime ? answer.recordingStartTime : answer.startTime);
+    const rangeEndTime = observedRanges.length > 0 ? Math.max(...observedRanges.map((range) => range.endTime)) : answer.endTime;
+    const observedEndTime = Math.max(answer.recordingEndTime ?? answer.endTime, rangeEndTime);
+    return [identifier, observedEndTime > observedStartTime || observedStartTime < answer.startTime
+      ? { ...answer, startTime: observedStartTime, endTime: Math.max(answer.endTime, observedEndTime) }
+      : answer];
+  })), [participantData.answers]);
+
+  const percentComplete = useMemo(() => {
+    const entries = Object.values(timelineAnswers);
+    if (entries.length === 0) return 1;
+    return entries.filter((answer) => answer.startTime !== 0).length / entries.length;
+  }, [timelineAnswers]);
+
   const { xScale, collapsedGaps, completedTimelineEnd } = useMemo(() => {
     if (timelineMode === 'uniform') {
       return {
-        xScale: d3.scaleLinear([margin.left, timelineWidth - margin.right]).domain([0, Math.max(Object.entries(participantData.answers || {}).length, 1)]).clamp(true),
+        xScale: d3.scaleLinear([margin.left, timelineWidth - margin.right]).domain([0, Math.max(Object.keys(timelineAnswers).length, 1)]).clamp(true),
         collapsedGaps: [],
         completedTimelineEnd: timelineWidth - margin.right,
       };
     }
 
     const layout = getGapAwareTimelineLayout({
-      answers: participantData.answers || {},
+      answers: timelineAnswers,
       rangeStart: margin.left,
       rangeEnd: timelineWidth * percentComplete - (percentComplete !== 1 ? 0 : margin.right),
       maxLength,
     });
     return { xScale: layout.scale, collapsedGaps: layout.collapsedGaps, completedTimelineEnd: layout.rangeEnd };
-  }, [maxLength, participantData.answers, percentComplete, timelineMode, timelineWidth]);
+  }, [maxLength, percentComplete, timelineAnswers, timelineMode, timelineWidth]);
 
   const renderedTimelineWidth = useMemo(() => {
     if (timelineMode === 'uniform') {
@@ -118,13 +141,14 @@ export function AllTasksTimeline({
   }, [completedTimelineEnd, percentComplete, timelineMode, timelineWidth]);
 
   const incompleteXScale = useMemo(() => {
-    const scale = d3.scaleLinear([completedTimelineEnd, renderedTimelineWidth - margin.right]).domain([0, Object.entries(participantData.answers || {}).filter((e) => e[1].startTime === 0).length]).clamp(true);
+    const incompleteCount = Object.keys(timelineAnswers).filter((identifier) => timelineAnswers[identifier].startTime === 0).length;
+    const scale = d3.scaleLinear([completedTimelineEnd, renderedTimelineWidth - margin.right]).domain([0, incompleteCount]).clamp(true);
 
     return scale;
-  }, [completedTimelineEnd, participantData.answers, renderedTimelineWidth]);
+  }, [completedTimelineEnd, renderedTimelineWidth, timelineAnswers]);
 
   const maxHeight = useMemo(() => {
-    const incompleteEntries = Object.entries(participantData.answers || {}).filter((e) => e[1].startTime === 0).sort(compareReplayAnswerEntries);
+    const incompleteEntries = Object.entries(participantData.answers || {}).filter(([identifier]) => timelineAnswers[identifier]?.startTime === 0).sort(compareReplayAnswerEntries);
     const incompleteEntryIndexes = new Map(incompleteEntries.map(([identifier], index) => [identifier, index]));
     const sortedEntries = orderedReplayAnswerEntries(participantData.answers, taskOrder);
     const entryIndexes = new Map(sortedEntries.map(([identifier], index) => [identifier, index]));
@@ -137,18 +161,20 @@ export function AllTasksTimeline({
 
       // Check if the previous entry overlaps with the current entry
       const prev = i > 0 ? sortedEntries[i - currentHeight - 1] : null;
-      const prevScale = timelineMode === 'uniform' || (prev && prev[1].startTime !== 0) ? xScale : incompleteXScale;
+      const previousGeometryAnswer = prev ? timelineAnswers[prev[0]] ?? prev[1] : undefined;
+      const prevScale = timelineMode === 'uniform' || (previousGeometryAnswer && previousGeometryAnswer.startTime !== 0) ? xScale : incompleteXScale;
       const prevStart = prev ? timelineMode === 'uniform'
         ? entryIndexes.get(prev[0]) ?? 0
-        : prev[1].startTime === 0
+        : previousGeometryAnswer?.startTime === 0
           ? incompleteEntryIndexes.get(prev[0]) ?? 0
-          : isValidTimelineInterval(prev[1]) ? prev[1].startTime : invalidTimelineAnchor(prev[1], xScale) : 0;
-      const scale = timelineMode === 'uniform' || answer.startTime !== 0 ? xScale : incompleteXScale;
+          : previousGeometryAnswer && isValidTimelineInterval(previousGeometryAnswer) ? previousGeometryAnswer.startTime : previousGeometryAnswer ? invalidTimelineAnchor(previousGeometryAnswer, xScale) : 0 : 0;
+      const geometryAnswer = timelineAnswers[identifier] ?? answer;
+      const scale = timelineMode === 'uniform' || geometryAnswer.startTime !== 0 ? xScale : incompleteXScale;
       const scaleStart = timelineMode === 'uniform'
         ? entryIndexes.get(identifier) ?? 0
-        : answer.startTime === 0
+        : geometryAnswer.startTime === 0
           ? incompleteEntryIndexes.get(identifier) ?? 0
-          : isValidTimelineInterval(answer) ? answer.startTime : invalidTimelineAnchor(answer, xScale);
+          : isValidTimelineInterval(geometryAnswer) ? geometryAnswer.startTime : invalidTimelineAnchor(geometryAnswer, xScale);
 
       // If the previous entry overlaps with the current entry , increase the height
       if (prev && prev[0].length * (CHARACTER_SIZE + 1) + prevScale(prevStart) > scale(scaleStart)) {
@@ -163,7 +189,7 @@ export function AllTasksTimeline({
     });
 
     return (_maxHeight + 1) * LABEL_GAP + margin.top + margin.bottom;
-  }, [incompleteXScale, participantData.answers, taskOrder, timelineMode, xScale]);
+  }, [incompleteXScale, participantData.answers, taskOrder, timelineAnswers, timelineMode, xScale]);
 
   const conditionParam = useMemo(() => {
     const parsedConditions = parseConditionParam(participantData.conditions ?? participantData.searchParams?.condition);
@@ -174,33 +200,36 @@ export function AllTasksTimeline({
   const tasks: { identifier: string, line: JSX.Element, label: JSX.Element }[] = useMemo(() => {
     let currentHeight = 0;
 
-    const incompleteEntries = Object.entries(participantData.answers || {}).filter((e) => e[1].startTime === 0).sort(compareReplayAnswerEntries);
+    const incompleteEntries = Object.entries(participantData.answers || {}).filter(([identifier]) => timelineAnswers[identifier]?.startTime === 0).sort(compareReplayAnswerEntries);
     const incompleteEntryIndexes = new Map(incompleteEntries.map(([identifier], index) => [identifier, index]));
     const combined = orderedReplayAnswerEntries(participantData.answers, taskOrder);
     const entryIndexes = new Map(combined.map(([identifier], index) => [identifier, index]));
 
     const allElements = combined.map((entry, i) => {
-      const scale = timelineMode === 'uniform' || entry[1].startTime !== 0 ? xScale : incompleteXScale;
-
       const [identifier, answer] = entry;
+      const geometryAnswer = timelineAnswers[identifier] ?? answer;
+      const scale = timelineMode === 'uniform' || geometryAnswer.startTime !== 0 ? xScale : incompleteXScale;
 
       const prev = i > 0 ? combined[i - currentHeight - 1] : null;
+      const previousGeometryAnswer = prev ? timelineAnswers[prev[0]] ?? prev[1] : undefined;
 
-      const prevScale = timelineMode === 'uniform' || (prev && prev[1].startTime !== 0) ? xScale : incompleteXScale;
+      const prevScale = timelineMode === 'uniform' || (previousGeometryAnswer && previousGeometryAnswer.startTime !== 0) ? xScale : incompleteXScale;
       const prevStart = prev ? timelineMode === 'uniform'
         ? entryIndexes.get(prev[0]) ?? 0
-        : prev[1].startTime === 0
+        : previousGeometryAnswer?.startTime === 0
           ? incompleteEntryIndexes.get(prev[0]) ?? 0
-          : isValidTimelineInterval(prev[1]) ? prev[1].startTime : invalidTimelineAnchor(prev[1], xScale) : 0;
+          : previousGeometryAnswer && isValidTimelineInterval(previousGeometryAnswer)
+            ? previousGeometryAnswer.startTime
+            : previousGeometryAnswer ? invalidTimelineAnchor(previousGeometryAnswer, xScale) : 0 : 0;
       const incompleteEntryIndex = incompleteEntryIndexes.get(identifier) ?? 0;
       const uniformEntryIndex = entryIndexes.get(identifier) ?? 0;
-      const hasValidTiming = isValidTimelineInterval(answer);
+      const hasValidTiming = isValidTimelineInterval(geometryAnswer);
       const scaleStart = timelineMode === 'uniform'
         ? uniformEntryIndex
-        : answer.startTime === 0 ? incompleteEntryIndex : hasValidTiming ? answer.startTime : invalidTimelineAnchor(answer, xScale);
+        : geometryAnswer.startTime === 0 ? incompleteEntryIndex : hasValidTiming ? geometryAnswer.startTime : invalidTimelineAnchor(geometryAnswer, xScale);
       const scaleEnd = timelineMode === 'uniform'
         ? uniformEntryIndex + 1
-        : answer.startTime === 0 ? incompleteEntryIndex + 1 : hasValidTiming ? answer.endTime : scaleStart;
+        : geometryAnswer.startTime === 0 ? incompleteEntryIndex + 1 : hasValidTiming ? geometryAnswer.endTime : scaleStart;
 
       if (prev && prev[0].length * (CHARACTER_SIZE + 1) + prevScale(prevStart) > scale(scaleStart)) {
         currentHeight += 1;
@@ -246,14 +275,14 @@ export function AllTasksTimeline({
             )}
           >
             <g>
-              <SingleTask incomplete={answer.startTime === 0} answerStatus={answerStatus} hasAudio={hasAudio} hasScreenRecording={hasScreenRecording} hasWebcamRecording={hasWebcamRecording} key={identifier} labelHeight={currentHeight * LABEL_GAP} height={maxHeight} identifier={identifier} xScale={scale} scaleStart={scaleStart} scaleEnd={scaleEnd} trialOrder={answer.trialOrder} participantId={participantData.participantId} studyId={studyId} condition={conditionParam} isHovered={hoveredTaskIdentifier === identifier} isDimmed={hoveredTaskIdentifier !== null && hoveredTaskIdentifier !== identifier} onHover={() => setHoveredTaskIdentifier(identifier)} onHoverEnd={() => setHoveredTaskIdentifier(null)} />
+              <SingleTask incomplete={answer.startTime === 0 || answer.endTime <= 0} answerStatus={answerStatus} hasAudio={hasAudio} hasScreenRecording={hasScreenRecording} hasWebcamRecording={hasWebcamRecording} key={identifier} labelHeight={currentHeight * LABEL_GAP} height={maxHeight} identifier={identifier} xScale={scale} scaleStart={scaleStart} scaleEnd={scaleEnd} trialOrder={answer.trialOrder} participantId={participantData.participantId} studyId={studyId} condition={conditionParam} isHovered={hoveredTaskIdentifier === identifier} isDimmed={hoveredTaskIdentifier !== null && hoveredTaskIdentifier !== identifier} onHover={() => setHoveredTaskIdentifier(identifier)} onHoverEnd={() => setHoveredTaskIdentifier(null)} />
             </g>
           </Tooltip>),
       };
     });
 
     return allElements;
-  }, [participantData.answers, participantData.participantId, incompleteXScale, xScale, studyConfig, maxHeight, studyId, conditionParam, hoveredTaskIdentifier, taskOrder, timelineMode]);
+  }, [participantData.answers, participantData.participantId, incompleteXScale, xScale, studyConfig, maxHeight, studyId, conditionParam, hoveredTaskIdentifier, taskOrder, timelineAnswers, timelineMode]);
 
   // Find entries of someone browsing away. Show them
   const browsedAway = useMemo(() => {
@@ -292,6 +321,52 @@ export function AllTasksTimeline({
   }, [xScale, maxHeight, participantData.answers, timelineMode]);
 
   const hoveredTask = tasks.find((task) => task.identifier === hoveredTaskIdentifier);
+  const studyActivityMarkers = useMemo(() => {
+    const markers: StudyActivityMarker[] = [];
+    const taskIndexes = new Map(orderedReplayAnswerEntries(participantData.answers, taskOrder)
+      .map(([identifier], index) => [identifier, index]));
+    Object.entries(participantData.answers || {}).forEach(([identifier, answer]) => {
+      const timelineAnswer = timelineAnswers[identifier] ?? answer;
+      (answer.windowEvents || []).forEach((event) => {
+        const label = getRecordingEventLabel(event);
+        if (!label) return;
+        const taskIndex = taskIndexes.get(identifier) ?? 0;
+        const taskDuration = timelineAnswer.endTime - timelineAnswer.startTime;
+        const taskFraction = taskDuration > 0 && timelineAnswer.startTime > 0
+          ? Math.max(0, Math.min(1, (event[0] - timelineAnswer.startTime) / taskDuration))
+          : 0.5;
+        const x = timelineMode === 'uniform'
+          ? xScale(taskIndex + taskFraction)
+          : xScale(event[0]);
+        if (event[1] === 'studyactivity') {
+          markers.push({
+            identifier,
+            timestamp: event[0],
+            x,
+            label,
+            kind: 'activity',
+          });
+        } else if (event[1] === 'displaystatus') {
+          markers.push({
+            identifier,
+            timestamp: event[0],
+            x,
+            label,
+            kind: 'display',
+          });
+        } else if (event[1] === 'captureinterrupted') {
+          markers.push({
+            identifier,
+            timestamp: event[0],
+            x,
+            label,
+            kind: 'interruption',
+          });
+        }
+      });
+    });
+    return markers;
+  }, [participantData.answers, taskOrder, timelineAnswers, timelineMode, xScale]);
 
   return (
     <Box
@@ -330,6 +405,23 @@ export function AllTasksTimeline({
           );
         })}
         {tasks.map((t) => t.line)}
+        {studyActivityMarkers.map((marker, index) => (
+          <Tooltip withinPortal key={`${marker.identifier}-${marker.timestamp}-${index}`} label={`${marker.label} (${marker.identifier})`}>
+            <circle
+              cx={marker.x}
+              cy={maxHeight - 35}
+              r={5}
+              role="img"
+              tabIndex={0}
+              fill={marker.kind === 'activity'
+                ? 'var(--mantine-color-orange-filled)'
+                : 'var(--mantine-color-violet-filled)'}
+              aria-label={`${marker.label} for ${marker.identifier}`}
+              data-testid="study-activity-marker"
+              data-task-identifier={marker.identifier}
+            />
+          </Tooltip>
+        ))}
         {tasks.filter((t) => t.identifier !== hoveredTaskIdentifier).map((t) => t.label)}
         {browsedAway}
         {hoveredTask?.label}

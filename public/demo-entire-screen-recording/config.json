@@ -1,0 +1,53 @@
+{
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v3.0.0/src/parser/StudyConfigSchema.json",
+  "studyMetadata": {
+    "title": "Entire Screen Recording",
+    "version": "pilot",
+    "authors": ["The reVISit Team"],
+    "date": "2026-11-17",
+    "description": "A demo requiring participants to share an entire monitor during a recorded task.",
+    "organizations": ["University of Utah", "WPI"]
+  },
+  "uiConfig": {
+    "contactEmail": "contact@revisit.dev",
+    "helpTextPath": "demo-entire-screen-recording/assets/introduction.md",
+    "logoPath": "revisitAssets/revisitLogoSquare.svg",
+    "withProgressBar": true,
+    "withSidebar": true,
+    "recordScreen": true,
+    "requireEntireScreen": true
+  },
+  "importedLibraries": ["screen-recording"],
+  "components": {
+    "introduction": {
+      "type": "markdown",
+      "recordScreen": false,
+      "path": "demo-entire-screen-recording/assets/introduction.md",
+      "response": []
+    },
+    "recorded_task": {
+      "type": "website",
+      "path": "demo-screen-recording/assets/bar-chart.html",
+      "instruction": "How many bars have a value greater than 1?",
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "answer",
+          "prompt": "Answer:",
+          "location": "sidebar",
+          "type": "numerical",
+          "min": 0,
+          "max": 7
+        }
+      ]
+    }
+  },
+  "sequence": {
+    "order": "fixed",
+    "components": [
+      "introduction",
+      "$screen-recording.components.screenRecordingPermission",
+      "recorded_task"
+    ]
+  }
+}

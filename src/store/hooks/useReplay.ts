@@ -128,8 +128,9 @@ export function useReplay() {
 
   const syntheticReplayTimer = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const searchParamTimestamp = useMemo(() => searchParams.get('t') || '', [searchParams]);
+  const recordingSegment = searchParams.get('recordingSegment');
   const initialTimestamp = useMemo(() => {
     if (!searchParamTimestamp) {
       return 0;
@@ -156,10 +157,11 @@ export function useReplay() {
           seekTime,
           isPlaying,
           speed,
+          recordingSegment,
         },
       });
     }
-  }, [seekTime, isPlaying, speed, isMasterPlayer]);
+  }, [seekTime, isPlaying, speed, recordingSegment, isMasterPlayer]);
 
   useEffect(() => {
     updateMutedState();
@@ -406,15 +408,23 @@ export function useReplay() {
   }, [getSecondaryMediaElements, isPlaying, setIsPlaying]);
 
   useEffect(() => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const replaySyncListener = (newValue: any) => {
+    const replaySyncListener = (newValue: {
+      seekTime: number; isPlaying: boolean; speed: number; recordingSegment?: string | null;
+    }) => {
       const {
-        seekTime: __seekTime, isPlaying: __isPlaying, speed: __speed,
-      } = newValue || {};
+        seekTime: __seekTime, isPlaying: __isPlaying, speed: __speed, recordingSegment: __recordingSegment,
+      } = newValue;
       setMasterPlayer(false);
       setSpeed(__speed, true);
       setSeekTime(__seekTime, true);
       setIsPlaying(__isPlaying, true);
+      if (__recordingSegment !== undefined) {
+        setSearchParams((params) => {
+          if (__recordingSegment === null) params.delete('recordingSegment');
+          else params.set('recordingSegment', __recordingSegment);
+          return params;
+        });
+      }
     };
 
     syncEmitter.on('replaySync', replaySyncListener);
@@ -422,7 +432,7 @@ export function useReplay() {
     return () => {
       syncEmitter.off('replaySync');
     };
-  }, [setIsPlaying, setSeekTime, setMasterPlayer, setSpeed]);
+  }, [setIsPlaying, setSeekTime, setMasterPlayer, setSpeed, setSearchParams]);
 
   useEffect(() => {
     setSeekTime(initialTimestamp);

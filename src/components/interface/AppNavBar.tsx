@@ -12,12 +12,14 @@ import { compileTemplate } from '../../utils/handlebars';
 import { useTemplateAnswerContext } from '../../store/hooks/useTemplateAnswerContext';
 
 export function AppNavBar({
-  width, top, bottom, sidebarOpen,
+  width, top, bottom, sidebarOpen, inert, constrainToViewport = false,
 }: {
   width: number,
   top: number,
   bottom: number,
   sidebarOpen: boolean,
+  inert?: boolean,
+  constrainToViewport?: boolean,
 }) {
   // Get the config for the current step
   const globalStore = useGlobalStore();
@@ -59,6 +61,7 @@ export function AppNavBar({
       bg="light-dark(var(--mantine-color-gray-1), var(--mantine-color-dark-6))"
       display={sidebarOpen ? 'block' : 'none'}
       style={{
+        maxHeight: constrainToViewport ? `calc(100vh - ${top + bottom}px)` : undefined,
         marginBottom: bottom,
         marginTop: top,
         position: 'relative',
@@ -66,6 +69,7 @@ export function AppNavBar({
       }}
       w={width}
       miw={width}
+      inert={inert}
     >
       {instructionInSideBar && instruction !== '' && (
         <Box

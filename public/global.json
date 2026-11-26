@@ -48,6 +48,7 @@
     "demo-react-trrack",
     "demo-codemirror",
     "demo-screen-recording",
+    "demo-entire-screen-recording",
     "demo-gamepad",
     "demo-image",
     "demo-vega",
@@ -149,6 +150,10 @@
     "demo-screen-recording": {
       "tab": "Demo Studies",
       "path": "demo-screen-recording/config.json"
+    },
+    "demo-entire-screen-recording": {
+      "tab": "Demo Studies",
+      "path": "demo-entire-screen-recording/config.json"
     },
     "demo-gamepad": {
       "tab": "Demo Studies",

@@ -293,6 +293,26 @@ class FailingParticipantDataLocalStorageEngine extends LocalStorageEngine {
   }
 }
 
+class FailingScreenRecordingLocalStorageEngine extends LocalStorageEngine {
+  private failNextScreenRecordingUpload = false;
+
+  failNextScreenRecording() {
+    this.failNextScreenRecordingUpload = true;
+  }
+
+  protected override async _pushToStorage<T extends StorageObjectType>(
+    prefix: string,
+    type: T,
+    objectToUpload: StorageObject<T>,
+  ) {
+    if (prefix.startsWith('screenRecording/') && this.failNextScreenRecordingUpload) {
+      this.failNextScreenRecordingUpload = false;
+      throw new Error('Screen recording chunk upload failed');
+    }
+    return super._pushToStorage(prefix, type, objectToUpload);
+  }
+}
+
 describe.each([
   { TestEngine: LocalStorageEngine },
 ])('describe object $TestEngine', ({ TestEngine }) => {
@@ -1672,6 +1692,32 @@ describe.each([
     expect(sequenceAssignment).toEqual(expect.objectContaining(progressData));
   });
 
+  test('retryFailedWrites publishes a successfully retried screen recording chunk', async () => {
+    const failingStorageEngine = new FailingScreenRecordingLocalStorageEngine(true);
+    storageEngine = failingStorageEngine;
+    await storageEngine.connect();
+    await storageEngine.initializeStudyDb(studyId);
+    const participantSession = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
+    const chunkName = 'trial__chunk_0';
+    const chunk = new Blob(['chunk data'], { type: 'video/webm' });
+    const onUploadSuccess = vi.fn();
+    storageEngine.subscribeToAssetUploadSuccess(onUploadSuccess);
+
+    failingStorageEngine.failNextScreenRecording();
+    await expect(storageEngine.saveScreenRecording(chunk, chunkName)).rejects.toThrow('Screen recording chunk upload failed');
+    expect(onUploadSuccess).not.toHaveBeenCalled();
+    await expect(storageEngine.flushPendingAssetUploads()).rejects.toThrow('Screen recording chunk upload failed');
+
+    await storageEngine.retryFailedWrites();
+    await expect(storageEngine.flushPendingAssetUploads()).resolves.toBeUndefined();
+
+    expect(onUploadSuccess).toHaveBeenCalledExactlyOnceWith(`screenRecording/${chunkName}`);
+    const persistedChunk = await (failingStorageEngine as unknown as {
+      _getFromStorage: (prefix: string, type: string) => Promise<Blob | null>;
+    })._getFromStorage(`screenRecording/${participantSession.participantId}`, chunkName);
+    expect(persistedChunk).toBeInstanceOf(Blob);
+  });
+
   test('retryFailedWrites persists failed progress before resolving', async () => {
     const failingStorageEngine = new FailingParticipantDataLocalStorageEngine(true);
     storageEngine = failingStorageEngine;
@@ -1948,6 +1994,24 @@ describe.each([
     expect(sequenceAssignment!.completed).not.toBeNull();
   });
 
+  test('finalizeParticipant waits for registered recording metadata updates', async () => {
+    const participantSession = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
+    let releaseBarrier!: () => void;
+    const barrierStarted = vi.fn();
+    const unregister = storageEngine.registerParticipantFinalizationBarrier(() => {
+      barrierStarted();
+      return new Promise<void>((resolve) => { releaseBarrier = resolve; });
+    });
+
+    const finalization = storageEngine.finalizeParticipant();
+    await vi.waitFor(() => expect(barrierStarted).toHaveBeenCalledOnce());
+    expect(await storageEngine.getParticipantCompletionStatus(participantSession.participantId)).toBe(false);
+
+    releaseBarrier();
+    expect((await finalization).status).toBe('complete');
+    unregister();
+  });
+
   test('finalizeParticipant waits for pending asset uploads and returns an error when an upload fails', async () => {
     storageEngine = new DelayedLocalStorageEngine(true);
     await storageEngine.connect();
@@ -1971,6 +2035,15 @@ describe.each([
       .catch(() => undefined);
     await delayedStorageEngine.waitForHeldAssetUpload();
 
+    const unregisterBarrier = storageEngine.registerParticipantFinalizationBarrier(async () => {
+      try {
+        await storageEngine.flushPendingAssetUploads();
+      } catch {
+        // The storage finalizer owns the structured non-retryable result.
+      }
+      await storageEngine.flushPendingParticipantData();
+    });
+
     const finalizePromise = storageEngine.finalizeParticipant();
 
     delayedStorageEngine.releaseHeldAssetUpload();
@@ -1981,6 +2054,7 @@ describe.each([
     expect(finalizeResult.status).toBe('error');
     expect(finalizeResult.message).toContain('Asset upload failed');
     expect(finalizeResult.retryable).toBe(false);
+    unregisterBarrier();
 
     const participantData = await storageEngine.getParticipantData();
     expect(participantData).toBeDefined();

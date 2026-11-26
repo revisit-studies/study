@@ -11,12 +11,37 @@ import { findIndexOfBlock } from './getSequenceFlatMap';
 import { studyComponentToIndividualComponent } from './handleComponentInheritance';
 import { parseTrialOrder } from './parseTrialOrder';
 
-export type SkipEvaluationAnswer = Pick<StoredAnswer, 'answer' | 'timedOut'> & { checkAnswer?: CheckAnswerState; correctAnswer?: StoredAnswer['correctAnswer']; store?: GlobalStoreValues };
+export type SkipEvaluationAnswer = Pick<StoredAnswer, 'answer' | 'timedOut'> & {
+  componentName?: StoredAnswer['componentName'];
+  trialOrder?: StoredAnswer['trialOrder'];
+  checkAnswer?: CheckAnswerState;
+  correctAnswer?: StoredAnswer['correctAnswer'];
+  store?: GlobalStoreValues;
+};
 
 export type SkipConditionWithExtents = SkipConditions[number] & {
   firstIndex: number;
   lastIndex: number;
 };
+
+function getSkipEvaluationComponentName(
+  identifier: string,
+  responseObj: Pick<SkipEvaluationAnswer, 'componentName' | 'trialOrder'>,
+  studyConfig: StudyConfig,
+) {
+  if (
+    responseObj.componentName
+    && responseObj.trialOrder
+    && parseTrialOrder(responseObj.trialOrder).funcIndex !== null
+  ) {
+    return responseObj.componentName;
+  }
+
+  const identifierComponentName = identifier.slice(0, identifier.lastIndexOf('_'));
+  return Object.hasOwn(studyConfig.components, identifierComponentName)
+    ? identifierComponentName
+    : responseObj.componentName ?? identifierComponentName;
+}
 
 export function areComponentAnswersCorrect(
   answers: StoredAnswer['answer'],
@@ -49,25 +74,30 @@ export function areComponentAnswersCorrect(
 }
 
 export function getSkipConditionCorrectAnswers(
-  componentsToCheck: Array<[string, Pick<SkipEvaluationAnswer, 'answer' | 'checkAnswer' | 'correctAnswer' | 'store'>]>,
+  componentsToCheck: Array<[string, Pick<SkipEvaluationAnswer, 'answer' | 'componentName' | 'trialOrder' | 'checkAnswer' | 'correctAnswer' | 'store'>]>,
   studyConfig: StudyConfig,
 ) {
-  return componentsToCheck.map(([candidateComponentName, responseObj]) => areComponentAnswersCorrect(
-    responseObj.answer,
-    studyConfig.components[candidateComponentName.slice(0, candidateComponentName.lastIndexOf('_'))],
-    studyConfig,
-    responseObj.checkAnswer,
-    responseObj.correctAnswer,
-    responseObj.store,
-  ));
+  return componentsToCheck.map(([candidateComponentName, responseObj]) => {
+    const componentName = getSkipEvaluationComponentName(candidateComponentName, responseObj, studyConfig);
+    return areComponentAnswersCorrect(
+      responseObj.answer,
+      studyConfig.components[componentName],
+      studyConfig,
+      responseObj.checkAnswer,
+      responseObj.correctAnswer,
+      responseObj.store,
+    );
+  });
 }
 
 export function getStoredAnswersForSkipEvaluation(answers: Record<string, StoredAnswer>) {
   return Object.entries(answers).reduce<Record<string, SkipEvaluationAnswer>>((acc, [key, responseObj]) => {
-    if (!responseObj.timedOut) {
+    if (!responseObj.timedOut && !responseObj.recordingArchived) {
       acc[key] = {
         answer: responseObj.answer,
         timedOut: false,
+        componentName: responseObj.componentName,
+        trialOrder: responseObj.trialOrder,
         checkAnswer: responseObj.checkAnswer,
         correctAnswer: responseObj.correctAnswer,
         store: responseObj.globalStoreEntry,
@@ -106,7 +136,9 @@ export function conditionIsTriggered(
     return Object.hasOwn(store, condition.variable) && compareResponseValues(store[condition.variable], condition.value, condition.comparison);
   }
   const validationCandidates = Object.entries(answersForSkipEvaluation).reduce<Record<string, SkipEvaluationAnswer>>((acc, [key, responseObj]) => {
-    const componentIndex = parseTrialOrder(key.slice(key.lastIndexOf('_') + 1)).step;
+    const componentIndex = parseTrialOrder(
+      responseObj.trialOrder ?? key.slice(key.lastIndexOf('_') + 1),
+    ).step;
     if (componentIndex !== null && componentIndex >= condition.firstIndex && componentIndex <= condition.lastIndex) {
       acc[key] = responseObj;
     }
@@ -114,7 +146,9 @@ export function conditionIsTriggered(
   }, {});
 
   const componentsToCheck = condition.check !== 'block'
-    ? Object.entries(validationCandidates).filter(([key]) => key.slice(0, key.lastIndexOf('_')) === condition.name)
+    ? Object.entries(validationCandidates).filter(([key, responseObj]) => (
+      getSkipEvaluationComponentName(key, responseObj, studyConfig) === condition.name
+    ))
     : Object.entries(validationCandidates);
 
   if (componentsToCheck.length === 0) {
@@ -133,9 +167,10 @@ export function conditionIsTriggered(
 
   if (condition.check === 'responses') {
     const [componentId, response] = componentsToCheck[0];
+    const componentName = getSkipEvaluationComponentName(componentId, response, studyConfig);
     return areComponentAnswersCorrect(
       response.answer,
-      studyConfig.components[componentId.slice(0, componentId.lastIndexOf('_'))],
+      studyConfig.components[componentName],
       studyConfig,
       response.checkAnswer,
       response.correctAnswer,

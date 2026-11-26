@@ -22,6 +22,7 @@ const mocks = vi.hoisted(() => ({
 vi.mock('react-router', () => ({
   useParams: () => ({ studyId: 'study', index: '0', funcIndex: '0' }),
   useNavigate: () => mocks.navigate,
+  useSearchParams: () => [new URLSearchParams(), vi.fn()],
 }));
 vi.mock('../../../utils/encryptDecryptIndex', () => ({ decryptIndex: Number, encryptIndex: String }));
 vi.mock('../useIsAnalysis', () => ({ useIsAnalysis: () => false }));

@@ -27,12 +27,34 @@ export function projectHistoricalGlobalStore(graph: GlobalStoreGraph, nodeId: st
   const answers: ParticipantData['answers'] = {};
   Object.entries(currentAnswers).forEach(([identifier, answer]) => {
     if (parseTrialOrder(answer.trialOrder).funcIndex !== null) return;
+    const placeholder = { ...answer };
+    delete placeholder.assetIdentifier;
+    delete placeholder.recordingSegments;
+    delete placeholder.recordingSegmentRanges;
+    delete placeholder.recordingSegmentTimes;
+    delete placeholder.recordingChunkKeys;
+    delete placeholder.recordingEndTime;
+    delete placeholder.recordingStartTime;
     answers[identifier] = {
-      ...answer, globalStoreEntry: undefined, assetIdentifier: undefined, answer: {}, startTime: 0, endTime: -1, windowEvents: [], checkAnswer: undefined,
+      ...placeholder, globalStoreEntry: undefined, answer: {}, startTime: 0, endTime: -1, windowEvents: [], checkAnswer: undefined,
     };
   });
   getActiveGlobalStoreSubmissions(historicalGraph).forEach(({ submission }) => {
-    answers[submission.answer.identifier] = structuredClone(submission.answer);
+    const historicalAnswer = structuredClone(submission.answer);
+    const currentAnswer = currentAnswers[submission.answer.identifier];
+    const retainedSegments = new Set([
+      ...(historicalAnswer.recordingSegments ?? []),
+      ...(historicalAnswer.assetIdentifier ? [historicalAnswer.assetIdentifier] : []),
+    ]);
+    const recordingChunkKeys = { ...(historicalAnswer.recordingChunkKeys ?? {}) };
+    retainedSegments.forEach((segment) => {
+      const lateChunkKeys = currentAnswer?.recordingChunkKeys?.[segment] ?? [];
+      if (lateChunkKeys.length > 0) {
+        recordingChunkKeys[segment] = Array.from(new Set([...(recordingChunkKeys[segment] ?? []), ...lateChunkKeys]));
+      }
+    });
+    if (Object.keys(recordingChunkKeys).length > 0) historicalAnswer.recordingChunkKeys = recordingChunkKeys;
+    answers[submission.answer.identifier] = historicalAnswer;
   });
   return { graph: historicalGraph, answers };
 }

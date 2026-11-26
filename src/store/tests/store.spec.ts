@@ -114,6 +114,49 @@ describe('studyStoreCreator', () => {
     expect(resumed.graph.backend.nodes[saved.root]).toMatchObject({ id: saved.root, state: saved.nodes[saved.root].state, createdOn: saved.nodes[saved.root].createdOn });
   });
 
+  test('global-store replacement removes archived sequence slots before regenerating the same dynamic trial', async () => {
+    const { store, actions } = await studyStoreCreator('test', minimalConfig, minimalSequence, metadata, emptyAnswers, modes, 'p1', false, false);
+    const identifier = 'myFunc_5_intro_0';
+    store.dispatch(actions.pushToFuncSequence({
+      component: 'intro', funcName: 'myFunc', index: 5, funcIndex: 0, parameters: {}, correctAnswer: [],
+    }));
+    store.dispatch(actions.saveTrialAnswer(makeStoredAnswer({
+      identifier,
+      componentName: 'intro',
+      trialOrder: '5_0',
+      assetIdentifier: 'segment-1',
+      recordingSegments: ['segment-1'],
+      recordingChunkKeys: { 'segment-1': ['chunk-1'] },
+      windowEvents: [[15, 'displaystatus', 'single']],
+    })));
+    const archived = {
+      ...store.getState().answers[identifier],
+      answer: {},
+      endTime: -1,
+      recordingArchived: true,
+    };
+    const earlier = makeStoredAnswer({ identifier: 'intro_0', componentName: 'intro', trialOrder: '0' });
+    const revised = createGlobalStoreSubmission(undefined, { budget: 100 }, earlier, { budget: 90 }, [], {});
+    store.dispatch(actions.acceptGlobalStoreSubmission({
+      graph: revised.graph,
+      revision: 1,
+      answers: { intro_0: earlier, [identifier]: archived },
+      invalidateAfter: '0',
+    }));
+
+    expect(store.getState().funcSequence.myFunc).toEqual([]);
+    store.dispatch(actions.pushToFuncSequence({
+      component: 'intro', funcName: 'myFunc', index: 5, funcIndex: 0, parameters: {}, correctAnswer: [],
+    }));
+    expect(store.getState().funcSequence.myFunc[0]).toBe('intro');
+    expect(store.getState().answers[identifier]).not.toHaveProperty('recordingArchived');
+    expect(store.getState().answers[identifier]).toMatchObject({
+      recordingSegments: ['segment-1'],
+      recordingChunkKeys: { 'segment-1': ['chunk-1'] },
+      windowEvents: [[15, 'displaystatus', 'single']],
+    });
+  });
+
   test('creates a store with dispatch and getState', async () => {
     const { store } = await studyStoreCreator(
       'test-study',
@@ -519,6 +562,37 @@ describe('studyStoreCreator', () => {
       trialOrder: '0',
     })));
     expect(store.getState().answers.intro_0?.answer).toEqual({ q1: 'yes' });
+  });
+
+  test('regenerating an archived dynamic answer preserves its recording observations', async () => {
+    const { store, actions } = await studyStoreCreator('test', minimalConfig, minimalSequence, metadata, emptyAnswers, modes, 'p1', false, false);
+    const identifier = 'myFunc_5_intro_0';
+    store.dispatch(actions.saveTrialAnswer(makeStoredAnswer({
+      identifier,
+      componentName: 'intro',
+      trialOrder: '5_0',
+      assetIdentifier: 'segment-1',
+      recordingSegments: ['segment-1'],
+      recordingSegmentRanges: [{ assetIdentifier: 'segment-1', startTime: 10, endTime: 20 }],
+      recordingChunkKeys: { 'segment-1': ['chunk-1'] },
+      windowEvents: [[15, 'displaystatus', 'single']],
+    })));
+    store.dispatch(actions.deleteDynamicBlockAnswers({ currentStep: 5, funcIndex: 0, funcName: 'myFunc' }));
+    const reloadedAnswers = structuredClone(store.getState().answers);
+    const reloaded = await studyStoreCreator('test', minimalConfig, minimalSequence, metadata, reloadedAnswers, modes, 'p1', false, false);
+    const reloadedActions = reloaded.actions;
+    reloaded.store.dispatch(reloadedActions.pushToFuncSequence({
+      component: 'intro', funcName: 'myFunc', index: 5, funcIndex: 0, parameters: {}, correctAnswer: [],
+    }));
+
+    expect(reloaded.store.getState().answers[identifier]).not.toHaveProperty('recordingArchived');
+    expect(reloaded.store.getState().answers[identifier]).toMatchObject({
+      recordingSegments: ['segment-1'],
+      recordingSegmentRanges: [{ assetIdentifier: 'segment-1', startTime: 10, endTime: 20 }],
+      recordingChunkKeys: { 'segment-1': ['chunk-1'] },
+      windowEvents: [[15, 'displaystatus', 'single']],
+      answer: {},
+    });
   });
 
   test('incrementHelpCounter increments helpButtonClickedCount', async () => {

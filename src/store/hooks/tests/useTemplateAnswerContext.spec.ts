@@ -1,11 +1,15 @@
 import { renderHook } from '@testing-library/react';
 import {
-  afterEach, describe, expect, test, vi,
+  afterEach, beforeEach, describe, expect, test, vi,
 } from 'vitest';
 
 import { useParams } from 'react-router';
 import { useCurrentComponent } from '../../../routes/utils';
 import { useTemplateAnswerContext } from '../useTemplateAnswerContext';
+import type { StoredAnswer } from '../../types';
+import { makeStoredAnswer } from '../../../tests/utils';
+
+const mockState = vi.hoisted(() => ({ answers: {} as Record<string, StoredAnswer> }));
 
 vi.mock('react-router', () => ({
   useParams: vi.fn(() => ({})),
@@ -13,7 +17,7 @@ vi.mock('react-router', () => ({
 
 vi.mock('../../store', () => ({
   useFlatSequence: vi.fn(() => ['intro', 'trial1']),
-  useStoreSelector: vi.fn((selector: (s: unknown) => unknown) => selector({ answers: {} })),
+  useStoreSelector: vi.fn((selector: (s: unknown) => unknown) => selector(mockState)),
 }));
 
 vi.mock('../../../routes/utils', () => ({
@@ -28,6 +32,8 @@ vi.mock('../../../utils/encryptDecryptIndex', () => ({
 afterEach(() => vi.restoreAllMocks());
 
 describe('useTemplateAnswerContext', () => {
+  beforeEach(() => { mockState.answers = {}; });
+
   test('returns the resolved template data when the current component is known', () => {
     const { result } = renderHook(() => useTemplateAnswerContext());
 
@@ -58,6 +64,26 @@ describe('useTemplateAnswerContext', () => {
       currentComponent: 'dynamicTrial',
       funcIndex: 3,
     }));
+  });
+
+  test('does not expose archived dynamic answers to participant templates', () => {
+    mockState.answers = {
+      active: makeStoredAnswer({
+        identifier: 'active',
+        componentName: 'active',
+        trialOrder: '0',
+        answer: { value: 'active' },
+      }),
+      archived: makeStoredAnswer({
+        identifier: 'archived',
+        componentName: 'archived',
+        trialOrder: '1_0',
+        answer: { value: 'old' },
+        recordingArchived: true,
+      }),
+    };
+    const { result } = renderHook(() => useTemplateAnswerContext());
+    expect(result.current?.answers).toEqual({ active: mockState.answers.active });
   });
 });
 

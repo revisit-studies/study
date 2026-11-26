@@ -829,6 +829,14 @@ export async function parseStudyConfig(fileData: string): Promise<ParsedConfig<S
 
   // We can only run our custom validator if the schema validation passes
   if (validatedData && data) {
+    if (data.uiConfig.requireEntireScreen && !data.uiConfig.recordScreen) {
+      errors.push({
+        message: 'requireEntireScreen requires uiConfig.recordScreen to be true',
+        instancePath: '/uiConfig/requireEntireScreen',
+        params: {},
+        category: 'invalid-config',
+      });
+    }
     const importedLibraries = data.importedLibraries || [];
     const importedLibrariesData = await loadLibrariesParseNamespace(importedLibraries, errors, warnings);
 

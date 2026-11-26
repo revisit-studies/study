@@ -475,6 +475,14 @@ describe('getTableData', () => {
       participantTags: ['pilot', 'review'],
       stage: 'COMPLETE',
     });
+    participant.answers.archivedDynamic = {
+      ...participant.answers.testComponent_0,
+      identifier: 'adaptive_0_testComponent_0',
+      trialOrder: '0_0',
+      answer: {},
+      endTime: -1,
+      recordingArchived: true,
+    };
     const storageEngine = makeStorageEngine({
       'hash-1': configSimple,
     });
@@ -506,6 +514,37 @@ describe('getTableData', () => {
       rejectTime: new Date(rejectedAt).toISOString(),
       percentComplete: '100.00',
     }));
+  });
+
+  test('excludes archived dynamic placeholders from tidy rows', async () => {
+    const participant = makeParticipant();
+    participant.answers.archivedDynamic = {
+      ...participant.answers.testComponent_0,
+      identifier: 'adaptive_0_testComponent_0',
+      trialOrder: '0_0',
+      answer: {},
+      endTime: -1,
+      recordingArchived: true,
+    };
+    const storageEngine = makeStorageEngine({
+      'hash-1': configSimple,
+    });
+
+    const tableData = await getTableData(
+      ['answer'],
+      [participant],
+      storageEngine,
+      'test-study',
+    );
+
+    expect(tableData.rows).toHaveLength(1);
+    expect(tableData.rows[0]).toMatchObject({
+      trialId: 'testComponent',
+      trialOrder: '0',
+      responseId: 'response',
+      answer: 'participant answer',
+    });
+    expect(tableData.rows).not.toContainEqual(expect.objectContaining({ trialOrder: '0_0' }));
   });
 
   test('omits window event rows by default', async () => {

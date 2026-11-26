@@ -26,10 +26,13 @@ export function buildTaskNavigationTarget({
     };
   }
 
+  const searchParams = new URLSearchParams(search);
+  searchParams.set('analysisAnswerId', answerIdentifier);
+
   return {
     pathname: funcIndex === null
       ? `/${studyId}/${encryptIndex(step)}`
       : `/${studyId}/${encryptIndex(step)}/${encryptIndex(funcIndex)}`,
-    search,
+    search: `?${searchParams.toString()}`,
   };
 }

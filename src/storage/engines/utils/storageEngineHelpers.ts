@@ -69,7 +69,7 @@ export function calculateProgressData(
   currentStep: number | string,
   funcIndex: string | undefined,
 ): { total: number; answered: string[]; isDynamic: boolean } {
-  const answered = Object.values(answers).filter((answer) => answer.endTime > -1).map((answer) => answer.componentName);
+  const answered = Object.values(answers).filter((answer) => !answer.recordingArchived && answer.endTime > -1).map((answer) => answer.componentName);
 
   const isDynamic = funcIndex !== undefined;
 
@@ -78,7 +78,7 @@ export function calculateProgressData(
       return 1;
     }
 
-    return Object.entries(answers).filter(([key, _]) => key.includes(`${step}_`)).length;
+    return Object.entries(answers).filter(([key, answer]) => key.includes(`${step}_`) && !answer.recordingArchived).length;
   }).reduce((a, b) => a + b, 0);
 
   return { total, answered, isDynamic };

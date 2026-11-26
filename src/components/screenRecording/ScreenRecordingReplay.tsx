@@ -17,6 +17,7 @@ import {
 import { useCurrentIdentifier } from '../../routes/utils';
 import { useIsAnalysis } from '../../store/hooks/useIsAnalysis';
 import { ReplayLayout, useReplayContext } from '../../store/hooks/useReplay';
+import { getScreenRecordingSegmentUrl } from '../../utils/recordingAssets';
 
 type ScreenRecordingReplayProps = {
   webcamOnly?: boolean;
@@ -37,6 +38,7 @@ type WebcamReplayOverlayProps = {
   videoRef: RefObject<HTMLVideoElement | null>;
   videoStyle: CSSProperties;
   hasWebcamVideo: boolean;
+  onPlaybackError: () => void;
 };
 
 const webcamTopWidths: Record<WebcamTopSize, string> = {
@@ -46,7 +48,7 @@ const webcamTopWidths: Record<WebcamTopSize, string> = {
 };
 
 function WebcamReplayOverlay({
-  mode, videoRef, videoStyle, hasWebcamVideo,
+  mode, videoRef, videoStyle, hasWebcamVideo, onPlaybackError,
 }: WebcamReplayOverlayProps) {
   const webcamOverlayRef = useRef<HTMLDivElement>(null);
   const webcamDragRef = useRef<WebcamDrag | null>(null);
@@ -126,6 +128,7 @@ function WebcamReplayOverlay({
       </button>
       <video
         ref={videoRef}
+        onError={onPlaybackError}
         width="100%"
         style={{
           ...videoStyle,
@@ -135,7 +138,6 @@ function WebcamReplayOverlay({
           objectFit: 'cover',
         }}
       >
-        <source type="video/mp4" />
         Your browser does not support the video tag.
       </video>
     </Box>
@@ -160,6 +162,7 @@ export function ScreenRecordingReplay({ webcamOnly = false }: ScreenRecordingRep
 
   const [hasScreenVideo, setHasScreenVideo] = useState(false);
   const [hasWebcamVideo, setHasWebcamVideo] = useState(false);
+  const [playbackError, setPlaybackError] = useState(false);
   const [webcamTopSize, setWebcamTopSize] = useState<WebcamTopSize>('small');
   const webcamRecordingUrl = useRef<string | null>(null);
 
@@ -184,7 +187,12 @@ export function ScreenRecordingReplay({ webcamOnly = false }: ScreenRecordingRep
   const isAnalysis = useIsAnalysis();
 
   const identifier = useCurrentIdentifier();
-  const assetIdentifier = useStoredAnswer()?.assetIdentifier ?? identifier;
+  const storedAnswer = useStoredAnswer();
+  const assetIdentifier = storedAnswer?.assetIdentifier ?? identifier;
+  const requestedSegment = searchParams.get('recordingSegment');
+  const screenAssetIdentifier = requestedSegment && storedAnswer?.recordingSegments?.includes(requestedSegment)
+    ? requestedSegment
+    : assetIdentifier;
 
   useEffect(
     () => {
@@ -201,6 +209,7 @@ export function ScreenRecordingReplay({ webcamOnly = false }: ScreenRecordingRep
       };
       const screenVideo = screenVideoRef.current;
       const webcamVideo = webcamVideoRef.current;
+      setPlaybackError(false);
       webcamRecordingUrl.current = null;
       clearVideoSource(screenVideo);
       clearVideoSource(webcamVideo);
@@ -225,8 +234,13 @@ export function ScreenRecordingReplay({ webcamOnly = false }: ScreenRecordingRep
               }
             };
             const [screenUrl, webcamUrl] = await Promise.all([
-              safeGetRecording(() => storageEngine.getScreenRecording(assetIdentifier, participantId)),
-              safeGetRecording(() => storageEngine.getWebcamRecording(assetIdentifier, participantId)),
+              safeGetRecording(() => getScreenRecordingSegmentUrl(
+                storageEngine,
+                participantId,
+                screenAssetIdentifier,
+                storedAnswer?.recordingChunkKeys?.[screenAssetIdentifier] ?? [],
+              )),
+              safeGetRecording(() => storageEngine.getWebcamRecording(screenAssetIdentifier, participantId)),
             ]);
 
             if (cancelled) {
@@ -291,6 +305,9 @@ export function ScreenRecordingReplay({ webcamOnly = false }: ScreenRecordingRep
     [
       isAnalysis,
       assetIdentifier,
+      screenAssetIdentifier,
+      storedAnswer?.recordingChunkKeys,
+      storedAnswer?.recordingSegments,
       identifier, storageEngine,
       participantId,
       storeDispatch,
@@ -331,6 +348,7 @@ export function ScreenRecordingReplay({ webcamOnly = false }: ScreenRecordingRep
         videoRef={webcamVideoRef}
         videoStyle={videoStyle}
         hasWebcamVideo={hasWebcamVideo}
+        onPlaybackError={() => setPlaybackError(true)}
       />
     );
   }
@@ -376,13 +394,13 @@ export function ScreenRecordingReplay({ webcamOnly = false }: ScreenRecordingRep
           </Text>
           <video
             ref={screenVideoRef}
+            onError={() => setPlaybackError(true)}
             width="100%"
             style={{
               ...videoStyle,
               display: hasScreenVideo ? 'block' : 'none',
             }}
           >
-            <source type="video/mp4" />
             Your browser does not support the video tag.
           </video>
         </Box>
@@ -398,6 +416,7 @@ export function ScreenRecordingReplay({ webcamOnly = false }: ScreenRecordingRep
             </Text>
             <video
               ref={webcamVideoRef}
+              onError={() => setPlaybackError(true)}
               width="100%"
               style={{
                 ...videoStyle,
@@ -405,18 +424,23 @@ export function ScreenRecordingReplay({ webcamOnly = false }: ScreenRecordingRep
                 objectFit: 'cover',
               }}
             >
-              <source type="video/mp4" />
               Your browser does not support the video tag.
             </video>
           </Box>
         )}
       </Flex>
+      {playbackError && (
+        <Text c="red" role="alert">
+          This recording format is not supported by the current browser. Try opening it in the browser used to record it.
+        </Text>
+      )}
       {isPictureInPictureLayout && (
         <WebcamReplayOverlay
           mode="picture-in-picture"
           videoRef={webcamVideoRef}
           videoStyle={videoStyle}
           hasWebcamVideo={hasWebcamVideo}
+          onPlaybackError={() => setPlaybackError(true)}
         />
       )}
     </Box>

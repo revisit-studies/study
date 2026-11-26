@@ -81,7 +81,7 @@ export function AppHeader({
   const currentStep = useCurrentStep();
 
   const progressPercent = useMemo(() => {
-    const answered = Object.values(answers).filter((answer) => answer.endTime > -1).length;
+    const answered = Object.values(answers).filter((answer) => !answer.recordingArchived && answer.endTime > -1).length;
     const total = flatSequence.map((step, idx) => {
       // If the step is a component, it adds 1 to the total
       if (studyConfig.components[step]) {
@@ -92,7 +92,7 @@ export function AppHeader({
         return 55;
       }
       // Otherwise, count the number of answers for this dynamic block
-      return Object.entries(answers).filter(([key, _]) => key.includes(`${step}_`)).length;
+      return Object.entries(answers).filter(([key, answer]) => key.includes(`${step}_`) && !answer.recordingArchived).length;
     }).reduce((a, b) => a + b, 0);
 
     return (answered / total) * 100;

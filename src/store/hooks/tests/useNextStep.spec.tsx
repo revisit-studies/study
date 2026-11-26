@@ -36,11 +36,14 @@ let mockStoredAnswer: {
   correctAnswer: Answer[];
   optionOrders: Record<string, string>;
   questionOrders: Record<string, string>;
+  assetIdentifier?: string;
+  recordingSegments?: string[];
   responseSubmitAttempted?: boolean;
 };
 
 let mockAnswers: Record<string, unknown>;
-let capturedGoToNextStep: ((collectData?: boolean) => void) | undefined;
+let mockCurrentIdentifier = 'intro_0';
+let capturedGoToNextStep: ((collectData?: boolean) => Promise<void>) | undefined;
 let mockSequence: {
   id: string;
   orderPath: string;
@@ -51,9 +54,12 @@ let mockSequence: {
 let mockFlatSequence: string[];
 let mockStudyConfig: {
   components: Record<string, unknown>;
+  uiConfig: Record<string, unknown>;
 };
 let mockTrialValidation: Record<string, unknown>;
 let capturedIsNextDisabled: boolean | undefined;
+let mockScreenCaptureActive = false;
+let mockWindowEvents: { current: never[]; visitFinalizing: boolean };
 
 const mockDispatch = vi.fn((action) => {
   if (action.type === 'saveTrialAnswer') {
@@ -95,7 +101,7 @@ vi.mock('../../store', async (importOriginal) => ({
 }));
 
 vi.mock('../../../routes/utils', () => ({
-  useCurrentIdentifier: () => 'intro_0',
+  useCurrentIdentifier: () => mockCurrentIdentifier,
   useCurrentStep: () => 0,
   useStudyId: () => 'study-1',
 }));
@@ -113,8 +119,13 @@ vi.mock('../useStoredAnswer', () => ({
   useStoredAnswer: () => mockStoredAnswer,
 }));
 
+vi.mock('../useTrialAssetIdentifier', () => ({ useTrialAssetSegments: () => ['intro_screen_visit'] }));
+vi.mock('../useRecording', () => ({
+  useOptionalRecordingContext: () => ({ hasActiveVerifiedScreenCapture: () => mockScreenCaptureActive }),
+}));
+
 vi.mock('../useWindowEvents', () => ({
-  useWindowEvents: () => ({ current: [] }),
+  useWindowEvents: () => mockWindowEvents,
 }));
 
 vi.mock('../useGlobalStore', () => ({ useGlobalStore: () => ({}) }));
@@ -158,6 +169,7 @@ describe('useNextStep', () => {
     mockSetAlertModal.mockClear();
     mockDispatch.mockClear();
     mockAnswers = {};
+    mockCurrentIdentifier = 'intro_0';
     mockTrialValidation = {
       intro_0: {
         aboveStimulus: { valid: false, values: {} },
@@ -184,6 +196,7 @@ describe('useNextStep', () => {
       components: {
         intro: {},
       },
+      uiConfig: {},
     };
     mockStoredAnswer = {
       answer: {},
@@ -204,6 +217,8 @@ describe('useNextStep', () => {
     };
     capturedGoToNextStep = undefined;
     capturedIsNextDisabled = undefined;
+    mockScreenCaptureActive = false;
+    mockWindowEvents = { current: [], visitFinalizing: false };
 
     vi.stubGlobal('window', {
       location: { search: '' },
@@ -236,6 +251,45 @@ describe('useNextStep', () => {
     expect(mockStoredAnswer.endTime).toBeGreaterThan(-1);
   });
 
+  test('rejects Next while Previous is finalizing the current visit', async () => {
+    mockWindowEvents.visitFinalizing = true;
+    renderToStaticMarkup(<HookHarness />);
+
+    expect(capturedIsNextDisabled).toBe(true);
+    await capturedGoToNextStep?.();
+
+    expect(mockSaveAnswers).not.toHaveBeenCalled();
+    expect(mockNavigate).not.toHaveBeenCalled();
+  });
+
+  test('persists full-screen metadata from an accepted non-global revisit without replacing its answer', async () => {
+    mockStudyConfig.uiConfig = { requireEntireScreen: true, recordScreen: true };
+    mockScreenCaptureActive = true;
+    mockStoredAnswer = {
+      ...mockStoredAnswer,
+      answer: { response: 'accepted-answer' },
+      assetIdentifier: 'previous-screen-segment',
+      recordingSegments: ['previous-screen-segment'],
+      startTime: 100,
+      endTime: 200,
+    };
+    mockAnswers = { intro_0: mockStoredAnswer };
+    renderToStaticMarkup(<HookHarness />);
+
+    await capturedGoToNextStep?.();
+
+    expect(mockSaveAnswers).toHaveBeenCalledWith(expect.objectContaining({
+      intro_0: expect.objectContaining({
+        answer: { response: 'accepted-answer' },
+        assetIdentifier: 'intro_screen_visit',
+        endTime: 200,
+        recordingSegments: expect.arrayContaining(['previous-screen-segment', 'intro_screen_visit']),
+        recordingSegmentRanges: expect.arrayContaining([expect.objectContaining({ assetIdentifier: 'intro_screen_visit' })]),
+      }),
+    }));
+    expect(mockNavigate).toHaveBeenCalledOnce();
+  });
+
   test('submits a required unanswered response as incorrect when its threshold is zero', async () => {
     const correctAnswer = [{ id: 'response', answer: 10, correctnessThreshold: 0 }];
     mockStoredAnswer.correctAnswer = correctAnswer;
@@ -266,6 +320,7 @@ describe('useNextStep', () => {
           correctAnswer,
         },
       },
+      uiConfig: {},
     };
 
     renderToStaticMarkup(<HookHarness />);
@@ -312,6 +367,89 @@ describe('useNextStep', () => {
     expect(mockSaveAnswers).toHaveBeenCalledTimes(1);
     expect(mockNavigate).toHaveBeenCalledTimes(1);
     expect(mockSetAlertModal).not.toHaveBeenCalled();
+  });
+
+  test('blocks participant submission when whole-screen capture is no longer active', async () => {
+    mockStudyConfig = {
+      components: { intro: { recordScreen: true } },
+      uiConfig: { recordScreen: true, requireEntireScreen: true },
+    };
+    mockScreenCaptureActive = false;
+    renderToStaticMarkup(<HookHarness />);
+
+    expect(capturedIsNextDisabled).toBe(true);
+    await capturedGoToNextStep?.();
+    expect(mockSaveTrialAnswer).not.toHaveBeenCalled();
+    expect(mockNavigate).not.toHaveBeenCalled();
+  });
+
+  test('saves the current whole-screen asset key and keeps prior segment keys', async () => {
+    mockStudyConfig = {
+      components: { intro: { recordScreen: true } },
+      uiConfig: { recordScreen: true, requireEntireScreen: true },
+    };
+    mockStoredAnswer = {
+      ...mockStoredAnswer,
+      assetIdentifier: 'intro_previous_screen_segment',
+      recordingSegments: ['intro_previous_screen_segment'],
+    };
+    mockScreenCaptureActive = true;
+    renderToStaticMarkup(<HookHarness />);
+
+    await capturedGoToNextStep?.();
+    expect(mockSaveTrialAnswer).toHaveBeenCalledWith(expect.objectContaining({
+      assetIdentifier: 'intro_screen_visit',
+      recordingSegments: ['intro_previous_screen_segment', 'intro_screen_visit'],
+    }));
+  });
+
+  test('does not create recording metadata when whole-screen recording is disabled for the task', async () => {
+    mockStudyConfig = {
+      components: {
+        intro: { recordScreen: false, recordAudio: false, recordWebcam: false },
+      },
+      uiConfig: {
+        recordScreen: true, recordAudio: true, recordWebcam: true, requireEntireScreen: true,
+      },
+    };
+    mockCurrentIdentifier = 'adaptive_0_intro_0';
+    mockStoredAnswer = {
+      ...mockStoredAnswer, componentName: 'intro', identifier: mockCurrentIdentifier, trialOrder: '0_0',
+    };
+    mockAnswers = { [mockCurrentIdentifier]: mockStoredAnswer };
+    mockTrialValidation = { [mockCurrentIdentifier]: mockTrialValidation.intro_0 };
+    mockScreenCaptureActive = false;
+    renderToStaticMarkup(<HookHarness />);
+
+    await capturedGoToNextStep?.();
+
+    expect(mockSaveTrialAnswer).toHaveBeenCalledWith(expect.not.objectContaining({
+      assetIdentifier: expect.any(String),
+      recordingSegments: expect.any(Array),
+      recordingSegmentRanges: expect.any(Array),
+    }));
+  });
+
+  test('retains an audio-only segment without inventing a screen recording range', async () => {
+    mockScreenCaptureActive = true;
+    mockStudyConfig = {
+      components: {
+        intro: { recordScreen: false, recordAudio: true, recordWebcam: false },
+      },
+      uiConfig: {
+        recordScreen: true, recordAudio: false, recordWebcam: false, requireEntireScreen: true,
+      },
+    };
+    mockStoredAnswer = { ...mockStoredAnswer, componentName: 'intro' };
+    renderToStaticMarkup(<HookHarness />);
+
+    await capturedGoToNextStep?.();
+
+    expect(mockSaveTrialAnswer).toHaveBeenCalledWith(expect.objectContaining({
+      assetIdentifier: 'intro_screen_visit',
+      recordingSegments: ['intro_screen_visit'],
+      recordingSegmentRanges: [],
+    }));
   });
 
   test('does not disable next when stimulus validation fails', () => {
@@ -376,6 +514,7 @@ describe('useNextStep', () => {
         followup: {},
         'skip-target': {},
       },
+      uiConfig: {},
     };
 
     renderToStaticMarkup(<HookHarness />);
@@ -423,6 +562,7 @@ describe('useNextStep', () => {
         followup: {},
         'skip-target': {},
       },
+      uiConfig: {},
     };
 
     renderToStaticMarkup(<HookHarness />);

@@ -12,8 +12,24 @@ export function projectGlobalStoreAnswers(answers: ParticipantData['answers'], a
     Object.entries(result).forEach(([identifier, candidate]) => {
       const order = parseTrialOrder(candidate.trialOrder);
       if (order.step === null || order.step < currentStep || (order.step === currentStep && (order.funcIndex ?? -1) <= (currentOrder.funcIndex ?? -1))) return;
-      if (order.funcIndex !== null) delete result[identifier];
-      else {
+      if (order.funcIndex !== null) {
+        const hasRecording = candidate.recordingSegments?.length
+          || candidate.assetIdentifier
+          || (candidate.recordingChunkKeys && Object.keys(candidate.recordingChunkKeys).length > 0);
+        if (hasRecording) {
+          result[identifier] = {
+            ...candidate,
+            answer: {},
+            endTime: -1,
+            recordingArchived: true,
+          };
+        } else {
+          delete result[identifier];
+        }
+      } else {
+        const hasRecording = candidate.recordingSegments?.length
+          || candidate.assetIdentifier
+          || (candidate.recordingChunkKeys && Object.keys(candidate.recordingChunkKeys).length > 0);
         result[identifier] = {
           ...candidate,
           globalStoreEntry: undefined,
@@ -22,11 +38,11 @@ export function projectGlobalStoreAnswers(answers: ParticipantData['answers'], a
           incorrectAnswers: {},
           startTime: 0,
           endTime: -1,
-          windowEvents: [],
           timedOut: false,
           helpButtonClickedCount: 0,
           checkAnswer: undefined,
           responseSubmitAttempted: false,
+          windowEvents: hasRecording ? candidate.windowEvents : [],
         };
       }
     });

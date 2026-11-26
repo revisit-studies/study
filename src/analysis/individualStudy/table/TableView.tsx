@@ -90,12 +90,12 @@ export function TableView({
     return [
       {
         accessorFn: (row: ParticipantDataWithStatus) => {
-          const incompleteEntries = Object.entries(row.answers || {}).filter((e) => e[1].startTime === 0);
+          const completedEntries = Object.values(row.answers || {}).filter((answer) => !answer.recordingArchived && answer.endTime > 0);
 
           const denominator = Math.max(getSequenceFlatMap(row.sequence).length - 1, 1);
 
           return {
-            percent: (Object.entries(row.answers).length - incompleteEntries.length) / denominator,
+            percent: completedEntries.length / denominator,
             status: getParticipantDataStatus(row),
             rejected: row.rejected,
           };
