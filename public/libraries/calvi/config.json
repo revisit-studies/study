@@ -857,7 +857,7 @@
           "type": "radio",
           "required": true,
           "location": "sidebar",
-          "prompt": "What is the total number of visitors at amusement park B as a proportion of that at amusement park C from May to December?",
+          "prompt": "Approximately, what is the total number of visitors at amusement park B as a proportion of that at amusement park C from May to December?",
           "options": [
             {
               "label": "33%",
@@ -939,7 +939,7 @@
           "type": "radio",
           "required": true,
           "location": "sidebar",
-          "prompt": "Predatory species Z is more prevalent in NC than in AZ.",
+          "prompt": "True or False: Predatory species Z is more prevalent in NC than in AZ.",
           "options": [
             {
               "label": "True",
@@ -976,7 +976,7 @@
           "type": "radio",
           "required": true,
           "location": "sidebar",
-          "prompt": "WY has a higher risk of bacteria Z infection than ND.",
+          "prompt": "True or False: WY has a higher risk of bacteria Z infection than ND.",
           "options": [
             {
               "label": "True",
@@ -1013,7 +1013,7 @@
           "type": "radio",
           "required": true,
           "location": "sidebar",
-          "prompt": "The annual number of trees planted in town Z has been increasing from 1960 to 1980.",
+          "prompt": "True or False: The annual number of trees planted in town Z has been increasing from 1960 to 1980.",
           "options": [
             {
               "label": "True",
@@ -1366,7 +1366,7 @@
           "type": "radio",
           "required": true,
           "location": "sidebar",
-          "prompt": "Which statement about rainfall (mm) is true for the past 14 days?",
+          "prompt": "Assuming today is May 10 and given the chart below, which statement about rainfall (mm) is true for the past 14 days?",
           "options": [
             {
               "label": "The amount of rainfall peaked at the end of the past 14 days.",
@@ -2105,7 +2105,7 @@
           "type": "radio",
           "required": true,
           "location": "sidebar",
-          "prompt": "Which of the following is true?",
+          "prompt": "Assuming today is May 01, and half of the votes from each state for a favorite ice cream brand have been counted. The color of each state corresponds to the brand that has received the most votes in that state so far. The brand with the most number of colored states will be the most popular brand, and the results will be finalized on May 15. Which of the following is true?",
           "options": [
             {
               "label": "A will be the most popular brand of ice cream.",
@@ -2220,7 +2220,7 @@
           "type": "radio",
           "required": true,
           "location": "sidebar",
-          "prompt": "Which of the following is true?",
+          "prompt": "The residents of town Y are voting on a favorite hiking trail, and half of the votes have been counted. The poll closes on Sep 01, 2022. Which of the following is true?",
           "options": [
             {
               "label": "Hiking trail A will be voted as the favorite trail.",
