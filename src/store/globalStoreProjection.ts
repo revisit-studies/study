@@ -27,6 +27,9 @@ export function projectGlobalStoreAnswers(answers: ParticipantData['answers'], a
           delete result[identifier];
         }
       } else {
+        const hasRecording = candidate.recordingSegments?.length
+          || candidate.assetIdentifier
+          || (candidate.recordingChunkKeys && Object.keys(candidate.recordingChunkKeys).length > 0);
         result[identifier] = {
           ...candidate,
           globalStoreEntry: undefined,
@@ -39,6 +42,7 @@ export function projectGlobalStoreAnswers(answers: ParticipantData['answers'], a
           helpButtonClickedCount: 0,
           checkAnswer: undefined,
           responseSubmitAttempted: false,
+          windowEvents: hasRecording ? candidate.windowEvents : [],
         };
       }
     });

@@ -276,9 +276,12 @@ export function StepsPanel({
     ? fullFlatTree.filter((item): item is ComponentStepItem => item.type === 'component'
       && item.href === location.pathname && !item.isExcluded)
     : [];
-  const effectiveReplayAnswerId = isReplay
-    ? replayRowsForCurrentPath.find((item) => item.analysisAnswerId === selectedAnalysisAnswerId)?.analysisAnswerId
-      ?? replayRowsForCurrentPath[0]?.analysisAnswerId
+  const selectedReplayAnswerIsArchived = !!selectedAnalysisAnswerId
+    && participantAnswers[selectedAnalysisAnswerId]?.recordingArchived === true;
+  const selectedReplayRow = replayRowsForCurrentPath
+    .find((item) => item.analysisAnswerId === selectedAnalysisAnswerId);
+  const effectiveReplayAnswerId = isReplay && !selectedReplayAnswerIsArchived
+    ? selectedReplayRow?.analysisAnswerId ?? replayRowsForCurrentPath[0]?.analysisAnswerId
     : undefined;
 
   const fullOrder = useMemo(() => {
