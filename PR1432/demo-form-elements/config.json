@@ -1,0 +1,1228 @@
+{
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.4.3/src/parser/StudyConfigSchema.json",
+  "studyMetadata": {
+    "title": "Form Elements Demo",
+    "version": "pilot",
+    "authors": [
+      "The reVISit Team"
+    ],
+    "date": "2026-02-23",
+    "description": "A demo of form elements in reVISit.",
+    "organizations": [
+      "University of Utah",
+      "WPI"
+    ]
+  },
+  "uiConfig": {
+    "contactEmail": "contact@revisit.dev",
+    "helpTextPath": "demo-form-elements/assets/introduction.md",
+    "logoPath": "revisitAssets/revisitLogoSquare.svg",
+    "withProgressBar": true,
+    "autoDownloadStudy": false,
+    "withSidebar": true,
+    "enumerateQuestions": true
+  },
+  "components": {
+    "Introduction": {
+      "type": "markdown",
+      "path": "demo-form-elements/assets/introduction.md",
+      "response": []
+    },
+    "Form Elements": {
+      "type": "questionnaire",
+      "response": [
+        {
+          "id": "title",
+          "type": "textOnly",
+          "prompt": "# Form Elements\n\n This page shows many of the form elements that are supported in reVISit.",
+          "restartEnumeration": true
+        },
+        {
+          "id": "textFieldDemo",
+          "type": "textOnly",
+          "prompt": "## This is a level 2 text header\n\n ### This is a level 3 subheader\n\n You can use text fields with markdown headings to structure your survey. You can make it **bold** or *italic*. You can also add links like [this](https://revisit.dev). Markdown also works in question prompts and secondary text."
+        },
+        {
+          "id": "numericalInputTitle",
+          "type": "textOnly",
+          "prompt": "## Numerical Inputs",
+          "restartEnumeration": true
+        },
+        {
+          "id": "q-numerical",
+          "prompt": "Numerical example",
+          "secondaryText": "A numeric example that is required to complete and has an option to say 'Don't know'.",
+          "infoText": "This numerical input accepts values between 0 and 100.",
+          "type": "numerical",
+          "placeholder": "Enter your age here, range from 0 to 100",
+          "max": 100,
+          "min": 0,
+          "withDontKnow": true
+        },
+        {
+          "id": "q-slider",
+          "prompt": "Slider example",
+          "secondaryText": "A slider for 0-100 with 3 breakpoints for bad, mid, and good",
+          "infoText": "Use the slider to indicate your rating on a scale from 'Bad' to 'Good'.",
+          "type": "slider",
+          "startingValue": 50,
+          "spacing": 50,
+          "options": [
+            {
+              "label": "Bad",
+              "value": 0
+            },
+            {
+              "label": "Mid",
+              "value": 50
+            },
+            {
+              "label": "Good",
+              "value": 100
+            }
+          ]
+        },
+        {
+          "id": "textInputTitle",
+          "type": "textOnly",
+          "prompt": "## Text Inputs",
+          "restartEnumeration": true
+        },
+        {
+          "id": "q-short-text",
+          "prompt": "Short text example",
+          "secondaryText": "A short text example",
+          "infoText": "Your response can be a few words or a short sentence.",
+          "type": "shortText",
+          "placeholder": "Enter your answer here"
+        },
+        {
+          "id": "q-long-text",
+          "prompt": "Long text example",
+          "secondaryText": "A text box for long text",
+          "infoText": "Your response can be a detailed explanation or multiple sentences.",
+          "type": "longText",
+          "placeholder": "Enter your long comments here"
+        },
+        {
+          "id": "radioInputTitle",
+          "type": "textOnly",
+          "prompt": "## Dropdowns, Radios, Checkboxes and Buttons",
+          "restartEnumeration": true
+        },
+        {
+          "id": "q-dropdown",
+          "prompt": "Dropdown example – which chart do you like best?",
+          "secondaryText": "You can specify secondary text to clarify your question.",
+          "infoText": "Select the chart type you prefer from the dropdown menu.",
+          "type": "dropdown",
+          "placeholder": "Enter your preference",
+          "options": [
+            {
+              "label": "Bar",
+              "infoText": "A bar chart is useful for comparing values across categories."
+            },
+            "Bubble",
+            "Pie",
+            "Stacked Bar"
+          ]
+        },
+        {
+          "id": "q-multiselect-dropdown",
+          "prompt": "Multiselect dropdown example - which charts have you used before?",
+          "secondaryText": "Dropdown for multi-selection",
+          "infoText": "Select the chart types you have used before. You have to select at least 2 options and up to 3 options.",
+          "type": "dropdown",
+          "placeholder": "Enter your responses",
+          "options": [
+            "Bar",
+            "Bubble",
+            "Pie",
+            "Stacked Bar",
+            {
+              "label": "Line",
+              "infoText": "A line chart is commonly used for trends over time."
+            },
+            "Scatter",
+            "Histogram"
+          ],
+          "minSelections": 2,
+          "maxSelections": 3
+        },
+        {
+          "id": "q-country-dropdown",
+          "prompt": "Country dropdown example",
+          "type": "dropdown",
+          "options": "countries"
+        },
+        {
+          "id": "q-checkbox",
+          "prompt": "Checkbox example, but this time with a long title that makes a ton of sense and is really cool",
+          "secondaryText": "Checkboxes for multi-selection",
+          "infoText": "Select your top 2 choices from the available options.",
+          "minSelections": 2,
+          "maxSelections": 2,
+          "type": "checkbox",
+          "options": [
+            "Option 1",
+            "Option 2",
+            "Option 3"
+          ],
+          "withOther": true
+        },
+        {
+          "id": "q-checkbox-horizontal",
+          "prompt": "Horizontal Checkbox example, but this time with a long title that makes a ton of sense and is really cool",
+          "secondaryText": "Checkboxes for multi-selection",
+          "infoText": "Select your top 2 choices from the available options.",
+          "minSelections": 2,
+          "maxSelections": 2,
+          "type": "checkbox",
+          "options": [
+            "Option 1",
+            "Option 2",
+            "Option 3"
+          ],
+          "horizontal": true,
+          "withOther": true
+        },
+        {
+          "id": "q-radio",
+          "prompt": "Radio button example",
+          "secondaryText": "Radio buttons for single selection",
+          "infoText": "Select the option that best represents your choice.",
+          "type": "radio",
+          "options": [
+            {
+              "label": "Option 1",
+              "infoText": "This is info text for Option 1."
+            },
+            {
+              "label": "Option 2",
+              "value": "Option 2"
+            }
+          ],
+          "withOther": true
+        },
+        {
+          "id": "q-radio-horizontal",
+          "prompt": "Horizontal Radio button example",
+          "secondaryText": "Radio buttons for single selection",
+          "infoText": "Select the option that best represents your choice.",
+          "type": "radio",
+          "options": [
+            "Option 1",
+            "Option 2 is a long option that will wrap"
+          ],
+          "horizontal": true,
+          "withOther": true
+        },
+        {
+          "id": "q-buttons",
+          "type": "buttons",
+          "prompt": "Buttons example",
+          "secondaryText": "Buttons that function as radio buttons, but look like buttons. Control with the arrow keys.",
+          "infoText": "Choose the option that best represents your answer.",
+          "options": [
+            {
+              "label": "Option 1",
+              "infoText": "This is info text for button option 1."
+            },
+            "Option 2",
+            "Option 3",
+            "Option 4"
+          ]
+        },
+        {
+          "id": "divider1",
+          "type": "divider"
+        },
+        {
+          "id": "matrixHeaderTitle",
+          "type": "textOnly",
+          "prompt": "## Likert Scales and Matrix Form Elements\n\n Matrix form elements allow you to ask a series of related questions that share the same set of answer options. This is useful for Likert scales, satisfaction ratings, and categorization tasks.",
+          "restartEnumeration": true
+        },
+        {
+          "id": "q-likert",
+          "prompt": "Likert scale example",
+          "secondaryText": "A Likert example with 9 items, also showing how to add a divider after the element.",
+          "infoText": "This is a 9-point Likert scale from 'Dislike' to 'Like'. Select the number that best represents your opinion.",
+          "type": "likert",
+          "numItems": 9,
+          "rightLabel": "Like",
+          "leftLabel": "Dislike"
+        },
+        {
+          "id": "divider2",
+          "type": "divider"
+        },
+        {
+          "id": "q-multi-satisfaction",
+          "prompt": "Rate your satisfaction from 1 (Highly Unsatisfied) to 5 (Highly Satisfied) for the following items.",
+          "secondaryText": "A simple matrix of Likert responses with predefined options for satisfaction.",
+          "infoText": "This is a matrix radio where you rate each item on a 5-point scale from 'Highly Unsatisfied' to 'Highly Satisfied'.",
+          "type": "matrix-radio",
+          "answerOptions": "satisfaction5",
+          "questionOptions": [
+            "The tool we created",
+            "The technique we developed",
+            "The authors of the tools"
+          ]
+        },
+        {
+          "id": "multi-custom",
+          "prompt": "Which categories do the following items belong to?",
+          "secondaryText": "A matrix of checkboxes with custom options for categorization.",
+          "infoText": "For each animal, select all the categories that apply. You can select multiple checkboxes per row.",
+          "type": "matrix-checkbox",
+          "answerOptions": [
+            {
+              "label": "Has Legs",
+              "infoText": "Use this when the animal has legs."
+            },
+            {
+              "label": "Has Wings",
+              "infoText": "Use this when the animal has wings."
+            },
+            {
+              "label": "Can Swim",
+              "infoText": "Use this when the animal can swim."
+            }
+          ],
+          "questionOptions": [
+            "Dog",
+            {
+              "label": "Snake",
+              "infoText": "Snakes do not have legs."
+            },
+            {
+              "label": "Eagle",
+              "infoText": "Eagles are birds with wings."
+            },
+            {
+              "label": "Salmon",
+              "infoText": "Salmon can swim."
+            },
+            "Platypus"
+          ]
+        }
+      ]
+    },
+    "Text Validation": {
+      "type": "questionnaire",
+      "response": [
+        {
+          "id": "text-validation-title",
+          "type": "textOnly",
+          "prompt": "# Text Validation\n\nThis page demonstrates validation rules for short and long text responses. Enter a value that satisfies each instruction, then continue to see how the rules are validated. For help writing regular expression patterns, see the [MDN regular expression syntax cheat sheet](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_expressions/Cheatsheet).",
+          "restartEnumeration": true
+        },
+        {
+          "id": "text-validation-regex",
+          "type": "shortText",
+          "prompt": "Enter a code with three uppercase letters, a hyphen, and three digits.",
+          "secondaryText": "For example: ABC-123. This response uses matchesRegex with the pattern ^[A-Z]{3}-\\d{3}$.",
+          "placeholder": "ABC-123",
+          "textValidation": [
+            {
+              "type": "matchesRegex",
+              "value": "^[A-Z]{3}-\\d{3}$"
+            }
+          ]
+        },
+        {
+          "id": "text-validation-contains",
+          "type": "longText",
+          "prompt": "Please give us feedback on ReVISit.",
+          "secondaryText": "Your response must contain the exact text “ReVISit” and must not contain the exact lowercase text “test”. Both validations are case-sensitive.",
+          "placeholder": "Share your feedback...",
+          "textValidation": [
+            {
+              "type": "contains",
+              "value": "ReVISit"
+            },
+            {
+              "type": "doesNotContain",
+              "value": "test"
+            }
+          ]
+        },
+        {
+          "id": "text-validation-equals",
+          "type": "shortText",
+          "prompt": "Enter exactly “ReVISit”.",
+          "secondaryText": "This response uses equals and is case-sensitive.",
+          "placeholder": "ReVISit",
+          "textValidation": [
+            {
+              "type": "equals",
+              "value": "ReVISit"
+            }
+          ]
+        },
+        {
+          "id": "length-validation-title",
+          "type": "textOnly",
+          "prompt": "## Length Validation\n\nShort and long text responses can require a minimum and maximum number of characters or words.",
+          "restartEnumeration": true
+        },
+        {
+          "id": "character-length-short",
+          "type": "shortText",
+          "prompt": "Enter between 3 and 10 characters.",
+          "secondaryText": "This short text response uses minCharLength: 3 and maxCharLength: 10.",
+          "placeholder": "3–10 characters",
+          "minCharLength": 3,
+          "maxCharLength": 10
+        },
+        {
+          "id": "word-length-long",
+          "type": "longText",
+          "prompt": "Enter between four and ten words.",
+          "secondaryText": "This long text response uses minWordLength: 4 and maxWordLength: 10.",
+          "placeholder": "4–10 words",
+          "minWordLength": 4,
+          "maxWordLength": 10
+        },
+        {
+          "id": "built-in-validation-title",
+          "type": "textOnly",
+          "prompt": "## Built-in Validation\n\nShort text responses can use built-in validation to ensure the entered data is in the correct format.",
+          "restartEnumeration": true
+        },
+        {
+          "id": "built-in-validation-email",
+          "type": "shortText",
+          "prompt": "Enter an email address.",
+          "secondaryText": "For example: test@revisit.dev.",
+          "placeholder": "test@revisit.dev",
+          "builtInValidation": "email"
+        },
+        {
+          "id": "built-in-validation-phone-number",
+          "type": "shortText",
+          "prompt": "Enter an international phone number containing 7 to 15 digits.",
+          "secondaryText": "It may begin with + and use hyphens between digits. For example: +800-0000-0000 or 8000000000.",
+          "placeholder": "+800-0000-0000",
+          "builtInValidation": "phoneNumber"
+        },
+        {
+          "id": "built-in-validation-us-phone-number",
+          "type": "shortText",
+          "prompt": "Enter a 10-digit US phone number with two hyphens.",
+          "secondaryText": "For example: 800-000-0000.",
+          "placeholder": "800-000-0000",
+          "builtInValidation": "usPhoneNumber"
+        },
+        {
+          "id": "built-in-validation-url",
+          "type": "shortText",
+          "prompt": "Enter an HTTP or HTTPS URL.",
+          "secondaryText": "For example: https://revisit.dev.",
+          "placeholder": "https://revisit.dev",
+          "builtInValidation": "url"
+        },
+        {
+          "id": "date-time-response-title",
+          "type": "textOnly",
+          "prompt": "## Date and Time Responses\n\nDate and time responses use dedicated inputs and store their values as strings. The examples below demonstrate each date and time option separately.",
+          "restartEnumeration": true
+        },
+        {
+          "id": "date-range-response",
+          "type": "date",
+          "prompt": "Date within a range.",
+          "secondaryText": "This response uses min: 06/01/2026 and max: 08/30/2026.",
+          "min": "06/01/2026",
+          "max": "08/30/2026"
+        },
+        {
+          "id": "month-picker-response",
+          "type": "date",
+          "options": "month",
+          "prompt": "Month input.",
+          "default": "06/2026",
+          "min": "01/2026",
+          "max": "12/2026"
+        },
+        {
+          "id": "year-picker-response",
+          "type": "date",
+          "options": "year",
+          "prompt": "Year input.",
+          "default": "2026",
+          "min": "2000",
+          "max": "2030"
+        },
+        {
+          "id": "time-standard-response",
+          "type": "time",
+          "prompt": "Time without seconds.",
+          "secondaryText": "By default, time responses use the 24-hour HH:mm format."
+        },
+        {
+          "id": "time-12-hour-response",
+          "type": "time",
+          "prompt": "Time in 12-hour format.",
+          "secondaryText": "This response uses format: 12h.",
+          "format": "12h",
+          "default": "14:28"
+        },
+        {
+          "id": "time-range-response",
+          "type": "time",
+          "prompt": "Time within a range.",
+          "secondaryText": "This response uses min: 09:00 and max: 18:00.",
+          "min": "09:00",
+          "max": "18:00"
+        },
+        {
+          "id": "time-seconds-response",
+          "type": "time",
+          "prompt": "Time with seconds.",
+          "secondaryText": "This response uses withSeconds: true and the HH:mm:ss format.",
+          "withSeconds": true
+        }
+      ]
+    },
+    "Default Values": {
+      "type": "questionnaire",
+      "response": [
+        {
+          "id": "default-values-title",
+          "type": "textOnly",
+          "prompt": "# Default Values Demo\n\nThis page is a local test for response defaults. Every input below should render prefilled without participant interaction.",
+          "restartEnumeration": true
+        },
+        {
+          "id": "default-numerical",
+          "type": "numerical",
+          "prompt": "Numerical default",
+          "min": 0,
+          "max": 100,
+          "default": 42
+        },
+        {
+          "id": "default-short-text",
+          "type": "shortText",
+          "prompt": "Short text default",
+          "default": "Prefilled short text"
+        },
+        {
+          "id": "default-long-text",
+          "type": "longText",
+          "prompt": "Long text default",
+          "default": "Prefilled long text value for local testing."
+        },
+        {
+          "id": "default-date",
+          "type": "date",
+          "prompt": "Date default",
+          "default": "06/24/2026",
+          "min": "06/01/2026",
+          "max": "06/30/2026"
+        },
+        {
+          "id": "default-month",
+          "type": "date",
+          "options": "month",
+          "prompt": "Month default",
+          "default": "06/2026"
+        },
+        {
+          "id": "default-year",
+          "type": "date",
+          "options": "year",
+          "prompt": "Year default",
+          "default": "2026"
+        },
+        {
+          "id": "default-time",
+          "type": "time",
+          "prompt": "Time default",
+          "default": "14:28:30",
+          "min": "09:00:00",
+          "max": "18:00:00",
+          "withSeconds": true
+        },
+        {
+          "id": "default-likert",
+          "type": "likert",
+          "prompt": "Likert default (numeric)",
+          "numItems": 7,
+          "leftLabel": "Disagree",
+          "rightLabel": "Agree",
+          "default": 4
+        },
+        {
+          "id": "default-slider",
+          "type": "slider",
+          "prompt": "Slider default",
+          "options": [
+            {
+              "label": "Low",
+              "value": 0
+            },
+            {
+              "label": "Middle",
+              "value": 50
+            },
+            {
+              "label": "High",
+              "value": 100
+            }
+          ],
+          "default": 75
+        },
+        {
+          "id": "default-dropdown-single",
+          "type": "dropdown",
+          "prompt": "Single dropdown default",
+          "options": [
+            {
+              "label": "Bar",
+              "value": "bar"
+            },
+            {
+              "label": "Pie",
+              "value": "pie"
+            },
+            {
+              "label": "Line",
+              "value": "line"
+            }
+          ],
+          "default": "pie"
+        },
+        {
+          "id": "default-dropdown-country",
+          "type": "dropdown",
+          "prompt": "Country dropdown default",
+          "options": "countries",
+          "default": "US"
+        },
+        {
+          "id": "default-dropdown-multiselect",
+          "type": "dropdown",
+          "prompt": "Multiselect dropdown default (string input normalized to array)",
+          "options": [
+            "Bar",
+            "Pie",
+            "Line",
+            "Scatter"
+          ],
+          "minSelections": 1,
+          "maxSelections": 3,
+          "default": "Line"
+        },
+        {
+          "id": "default-radio",
+          "type": "radio",
+          "prompt": "Radio default",
+          "options": [
+            {
+              "label": "Option A",
+              "value": "option-a"
+            },
+            {
+              "label": "Option B",
+              "value": "option-b"
+            }
+          ],
+          "default": "option-b"
+        },
+        {
+          "id": "default-checkbox",
+          "type": "checkbox",
+          "prompt": "Checkbox default",
+          "options": [
+            "Option 1",
+            "Option 2",
+            "Option 3"
+          ],
+          "default": [
+            "Option 1",
+            "Option 3"
+          ]
+        },
+        {
+          "id": "default-checkbox-with-dont-know",
+          "type": "checkbox",
+          "prompt": "Checkbox default with Don't know option",
+          "secondaryText": "This includes the I don't know checkbox for local testing.",
+          "options": [
+            "Option A",
+            "Option B",
+            "Option C"
+          ],
+          "withDontKnow": true,
+          "default": [
+            "Option B",
+            "I don't know"
+          ]
+        },
+        {
+          "id": "default-buttons",
+          "type": "buttons",
+          "prompt": "Buttons default",
+          "options": [
+            {
+              "label": "Primary",
+              "value": "primary"
+            },
+            {
+              "label": "Secondary",
+              "value": "secondary"
+            }
+          ],
+          "default": "secondary"
+        },
+        {
+          "id": "default-matrix-radio",
+          "type": "matrix-radio",
+          "prompt": "Matrix radio default",
+          "answerOptions": [
+            {
+              "label": "Low",
+              "value": "low"
+            },
+            {
+              "label": "Medium",
+              "value": "medium"
+            },
+            {
+              "label": "High",
+              "value": "high"
+            }
+          ],
+          "questionOptions": [
+            "Clarity",
+            "Speed"
+          ],
+          "default": {
+            "Clarity": "high",
+            "Speed": "medium"
+          }
+        },
+        {
+          "id": "default-matrix-checkbox",
+          "type": "matrix-checkbox",
+          "prompt": "Matrix checkbox default",
+          "answerOptions": [
+            "Has Legs",
+            "Has Wings",
+            "Can Swim"
+          ],
+          "questionOptions": [
+            "Dog",
+            "Eagle"
+          ],
+          "default": {
+            "Dog": [
+              "Has Legs",
+              "Can Swim"
+            ],
+            "Eagle": [
+              "Has Wings"
+            ]
+          }
+        },
+        {
+          "id": "default-ranking-sublist",
+          "type": "ranking-sublist",
+          "prompt": "Ranking sublist default",
+          "options": [
+            "Apple",
+            "Banana",
+            "Orange",
+            "Grape"
+          ],
+          "numItems": 2,
+          "default": {
+            "Orange": "0",
+            "Apple": "1"
+          }
+        },
+        {
+          "id": "default-ranking-categorical",
+          "type": "ranking-categorical",
+          "prompt": "Ranking categorical default",
+          "options": [
+            "Drawing",
+            "Singing",
+            "Hiking"
+          ],
+          "default": {
+            "Drawing": "HIGH",
+            "Hiking": "MEDIUM",
+            "Singing": "LOW"
+          }
+        },
+        {
+          "id": "default-ranking-pairwise",
+          "type": "ranking-pairwise",
+          "prompt": "Ranking pairwise default",
+          "options": [
+            "Pizza",
+            "Sushi",
+            "Burger"
+          ],
+          "default": {
+            "Pizza": "pair-0-high",
+            "Sushi": "pair-0-low"
+          }
+        }
+      ]
+    },
+    "Custom Response": {
+      "type": "questionnaire",
+      "response": [
+        {
+          "id": "custom-response-title",
+          "type": "textOnly",
+          "prompt": "# Custom Response\n\nThis page demonstrates a `custom` response implemented with React code from `src/public`. The widget below writes a structured JSON value into a single response id and contributes its own validation.",
+          "restartEnumeration": true
+        },
+        {
+          "id": "custom-response-demo",
+          "type": "custom",
+          "prompt": "Pick a chart type and set your confidence.",
+          "secondaryText": "The answer is stored as an object with `chartType`, `confidence`, and `rationale`.",
+          "path": "demo-form-elements/assets/CustomResponseCard.tsx",
+          "parameters": {
+            "chartOptions": [
+              "Bar",
+              "Line",
+              "Scatter"
+            ],
+            "minimumConfidence": 70
+          }
+        }
+      ]
+    },
+    "Randomizing Options": {
+      "type": "questionnaire",
+      "response": [
+        {
+          "id": "textField",
+          "type": "textOnly",
+          "prompt": "# Randomizing responses within a form element. \n\n This shows how to randomize the order of questions inside a matrix response and how to randomize the order of options for buttons, checkboxes and radio questions.",
+          "restartEnumeration": true
+        },
+        {
+          "id": "q-multi-satisfaction",
+          "prompt": "Matrix Radio example",
+          "secondaryText": "The order of questions is randomized",
+          "type": "matrix-radio",
+          "answerOptions": "satisfaction5",
+          "questionOptions": [
+            "Question 1",
+            "Question 2",
+            "Question 3"
+          ],
+          "questionOrder": "random"
+        },
+        {
+          "id": "multi-custom",
+          "prompt": "Matrix Checkbox example",
+          "secondaryText": "The order of questions is randomized",
+          "type": "matrix-checkbox",
+          "answerOptions": [
+            "Answer 1",
+            "Answer 2",
+            "Answer 3"
+          ],
+          "questionOptions": [
+            "Question 1",
+            "Question 2",
+            "Question 3"
+          ],
+          "questionOrder": "random"
+        },
+        {
+          "id": "q-checkbox",
+          "prompt": "Checkbox example",
+          "secondaryText": "The order of options is randomized",
+          "minSelections": 2,
+          "maxSelections": 2,
+          "type": "checkbox",
+          "options": [
+            "Option 1",
+            "Option 2",
+            "Option 3"
+          ],
+          "optionOrder": "random",
+          "withOther": true
+        },
+        {
+          "id": "q-checkbox-horizontal",
+          "prompt": "Horizontal Checkbox example",
+          "secondaryText": "The order of options is randomized",
+          "minSelections": 2,
+          "maxSelections": 2,
+          "type": "checkbox",
+          "options": [
+            "Option 1",
+            "Option 2",
+            "Option 3"
+          ],
+          "optionOrder": "random",
+          "horizontal": true,
+          "withOther": true
+        },
+        {
+          "id": "q-radio",
+          "prompt": "Radio button example",
+          "secondaryText": "The order of options is randomized",
+          "type": "radio",
+          "options": [
+            "Option 1",
+            "Option 2",
+            "Option 3",
+            "Option 4"
+          ],
+          "optionOrder": "random"
+        },
+        {
+          "id": "q-radio-horizontal",
+          "prompt": "Horizontal Radio button example",
+          "secondaryText": "The order of options is randomized",
+          "type": "radio",
+          "options": [
+            "Option 1",
+            "Option 2",
+            "Option 3",
+            "Option 4"
+          ],
+          "horizontal": true,
+          "optionOrder": "random"
+        },
+        {
+          "id": "q-buttons",
+          "type": "buttons",
+          "prompt": "Buttons example",
+          "secondaryText": "The order of options is randomized",
+          "options": [
+            "Option 1",
+            "Option 2",
+            "Option 3",
+            "Option 4"
+          ],
+          "optionOrder": "random"
+        }
+      ]
+    },
+    "Randomizing Questions": {
+      "type": "questionnaire",
+      "response": [
+        {
+          "id": "textField",
+          "type": "textOnly",
+          "prompt": "# Randomizing Questions in a Form\n\n This shows how to randomize the order of questions in the form. Notice how the number before each question is different from the order number specified in the text. Note that currently the title is not randomized; you can exclude a form element from being randomized if you need to.",
+          "excludeFromRandomization": true
+        },
+        {
+          "id": "q-dropdown",
+          "prompt": "**Order 1:** Dropdown example",
+          "type": "dropdown",
+          "placeholder": "Select an option",
+          "options": [
+            "Option 1",
+            "Option 2"
+          ]
+        },
+        {
+          "id": "q-likert",
+          "prompt": "**Order 2:** Likert scale example",
+          "type": "likert",
+          "numItems": 9,
+          "rightLabel": "Like",
+          "leftLabel": "Dislike"
+        },
+        {
+          "id": "q-short-text",
+          "prompt": "**Order 3:** Short text example",
+          "type": "shortText",
+          "placeholder": "Enter your answer here"
+        },
+        {
+          "id": "q-radio",
+          "prompt": "**Order 4:** Radio button example",
+          "type": "radio",
+          "options": [
+            "Option 1",
+            "Option 2"
+          ]
+        },
+        {
+          "id": "q-slider",
+          "prompt": "**Order 5:** Slider example",
+          "type": "slider",
+          "startingValue": 50,
+          "options": [
+            {
+              "label": "Bad",
+              "value": 0
+            },
+            {
+              "label": "Mid",
+              "value": 50
+            },
+            {
+              "label": "Good",
+              "value": 100
+            }
+          ]
+        }
+      ],
+      "responseOrder": "random"
+    },
+    "Ranking Widgets": {
+      "type": "questionnaire",
+      "response": [
+        {
+          "id": "rankingTitle",
+          "type": "textOnly",
+          "prompt": "# Ranking Widgets\n\n This page shows the three types of ranking widgets available in reVISit: sublist ranking, categorical ranking, and pairwise ranking."
+        },
+        {
+          "id": "ranking-sublist",
+          "type": "ranking-sublist",
+          "prompt": "Rank your top 2 favorite fruits from the list below.",
+          "location": "belowStimulus",
+          "options": [
+            "Apple",
+            "Banana",
+            "Orange",
+            "Strawberry",
+            "Grapes"
+          ],
+          "numItems": 2,
+          "required": false
+        },
+        {
+          "id": "ranking-categorical",
+          "type": "ranking-categorical",
+          "prompt": "Sort these hobbies into the categories of HIGH, MEDIUM, and LOW based on your level of interest.",
+          "location": "belowStimulus",
+          "options": [
+            "Drawing",
+            "Singing",
+            "Hiking",
+            "Dancing",
+            "Photography"
+          ],
+          "required": false
+        },
+        {
+          "id": "ranking-pairwise",
+          "type": "ranking-pairwise",
+          "prompt": "Which meal would you prefer?",
+          "location": "belowStimulus",
+          "options": [
+            "Pizza",
+            "Sushi",
+            "Burger",
+            "Pasta",
+            "Salad",
+            "Tacos"
+          ],
+          "required": false
+        }
+      ]
+    },
+    "Sidebar Form Elements": {
+      "type": "questionnaire",
+      "response": [
+        {
+          "id": "title",
+          "type": "textOnly",
+          "prompt": "# Form Elements in Sidebars \n\n This page shows form elements that can be used in the sidebar. \n\n For all elements that have horizontal and vertical variants, you should always use the vertical one in the sidebars. \n\n Matrix form elements are not supported in the sidebar. \n\n Limit Likert scales to 6 or fewer to fit. \n\n Limit the number of buttons to avoid overflow.",
+          "restartEnumeration": true
+        },
+        {
+          "id": "numericalInputTitle",
+          "type": "textOnly",
+          "prompt": "## Numerical Inputs",
+          "restartEnumeration": true,
+          "location": "sidebar"
+        },
+        {
+          "id": "q-numerical",
+          "prompt": "Numerical example",
+          "secondaryText": "A numeric example that is required to complete and has an option to say 'Don't know'.",
+          "type": "numerical",
+          "placeholder": "Enter your age here, range from 0 to 100",
+          "max": 100,
+          "min": 0,
+          "withDontKnow": true,
+          "location": "sidebar"
+        },
+        {
+          "id": "q-slider",
+          "prompt": "Slider example",
+          "secondaryText": "A slider for 0 to 100 with three breakpoints for Bad, Mid, and Good",
+          "type": "slider",
+          "startingValue": 50,
+          "spacing": 50,
+          "options": [
+            {
+              "label": "Bad",
+              "value": 0
+            },
+            {
+              "label": "Mid",
+              "value": 50
+            },
+            {
+              "label": "Good",
+              "value": 100
+            }
+          ],
+          "location": "sidebar"
+        },
+        {
+          "id": "textInputTitle",
+          "type": "textOnly",
+          "prompt": "## Text Inputs",
+          "restartEnumeration": true,
+          "location": "sidebar"
+        },
+        {
+          "id": "q-short-text",
+          "prompt": "Short text example",
+          "secondaryText": "A short text example",
+          "type": "shortText",
+          "placeholder": "Enter your answer here",
+          "location": "sidebar"
+        },
+        {
+          "id": "q-long-text",
+          "prompt": "Long text example",
+          "secondaryText": "A text box for long text",
+          "type": "longText",
+          "placeholder": "Enter your long comments here",
+          "location": "sidebar"
+        },
+        {
+          "id": "radioInputTitle",
+          "type": "textOnly",
+          "prompt": "## Dropdowns, Radios, Checkboxes and Buttons",
+          "restartEnumeration": true,
+          "location": "sidebar"
+        },
+        {
+          "id": "q-dropdown",
+          "prompt": "Dropdown example – which chart do you like best?",
+          "secondaryText": "You can specify secondary text to clarify your question.",
+          "type": "dropdown",
+          "placeholder": "Enter your preference",
+          "options": [
+            "Bar",
+            "Bubble",
+            "Pie",
+            "Stacked Bar"
+          ],
+          "location": "sidebar"
+        },
+        {
+          "id": "q-multiselect-dropdown",
+          "prompt": "Multiselect dropdown example - which charts have you used before?",
+          "secondaryText": "Dropdown for multi-selection",
+          "infoText": "Select the chart types you have used before. You have to select at least 2 options and up to 3 options.",
+          "type": "dropdown",
+          "placeholder": "Enter your responses",
+          "options": [
+            "Bar",
+            "Bubble",
+            "Pie",
+            "Stacked Bar",
+            "Line",
+            "Scatter",
+            "Histogram"
+          ],
+          "location": "sidebar",
+          "minSelections": 2,
+          "maxSelections": 3
+        },
+        {
+          "id": "q-checkbox",
+          "prompt": "Checkbox example, but this time with a long title that makes a ton of sense and is really cool",
+          "secondaryText": "Checkboxes for multi-selection",
+          "minSelections": 2,
+          "maxSelections": 2,
+          "type": "checkbox",
+          "options": [
+            "Option 1",
+            "Option 2",
+            "Option 3"
+          ],
+          "withOther": true,
+          "location": "sidebar"
+        },
+        {
+          "id": "q-radio",
+          "prompt": "Radio button example",
+          "secondaryText": "Radio buttons for single selection",
+          "type": "radio",
+          "options": [
+            "Option 1",
+            "Option 2"
+          ],
+          "withOther": true,
+          "location": "sidebar"
+        },
+        {
+          "id": "q-buttons",
+          "type": "buttons",
+          "prompt": "Buttons example",
+          "secondaryText": "Buttons that function as radio buttons, but look like buttons. Control with the arrow keys.",
+          "options": [
+            "Option 1",
+            "Option 2",
+            "Option 3"
+          ],
+          "location": "sidebar"
+        },
+        {
+          "id": "divider",
+          "type": "divider",
+          "location": "sidebar"
+        },
+        {
+          "id": "matrixHeaderTitle",
+          "type": "textOnly",
+          "prompt": "## Likert Scales and Matrix Form Elements\n\n Matrix form elements allow you to ask a series of related questions that share the same set of answer options. This is useful for Likert scales, satisfaction ratings, and categorization tasks.",
+          "restartEnumeration": true,
+          "location": "sidebar"
+        },
+        {
+          "id": "q-likert",
+          "prompt": "Likert scale example",
+          "secondaryText": "A Likert example with 5 items",
+          "type": "likert",
+          "numItems": 5,
+          "rightLabel": "Like",
+          "leftLabel": "Dislike",
+          "labelLocation": "above",
+          "location": "sidebar"
+        }
+      ]
+    }
+  },
+  "sequence": {
+    "order": "fixed",
+    "components": [
+      "Introduction",
+      "Form Elements",
+      "Text Validation",
+      "Default Values",
+      "Custom Response",
+      "Randomizing Options",
+      "Randomizing Questions",
+      "Ranking Widgets",
+      "Sidebar Form Elements"
+    ]
+  }
+}

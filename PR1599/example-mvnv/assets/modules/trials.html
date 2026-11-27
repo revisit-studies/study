@@ -1,0 +1,148 @@
+<div class="modal modalTrialFeedback">
+  <div class="modal-background"></div>
+  <div class="modal-card" style="width:300px">
+
+      <article class="message is-link">
+          <div class="message-header">
+            <p class="correctMsg">Correct!</p>
+            <a id="nextTrialTask" class="button is-pulled-right">Next Practice Task</a>
+          </div>
+   
+        </article>
+  </div>
+</div>
+
+
+<div class="modal modalStartTrials">
+  <div class="modal-background"></div>
+  <div class="modal-card">
+
+
+    <header class="modal-card-head">
+      <p class="modal-card-title">
+        Let's start off with some Practice Tasks <span>
+      </p>
+    </header>
+    <section class="modal-card-body">
+      <div class="content">
+
+        <p>In this section, you will get familiar with the visualization by following a guided tour of
+          the visualization, and then answering two practice tasks.</p>
+
+          <p>
+
+              <p><strong>Reminder: In order to be compensated for this study, you must complete the guided tour that will pop up at the start of the trials!
+              </strong></p>
+
+          <strong>You will only be allowed to proceed once you have
+          answered the trial questions correctly.</strong> </p>
+
+        <p>You are not being timed for this portion of the study so take your time!</p>
+
+      </div>
+    </section>
+
+    <footer class="modal-card-foot">
+      <a href="#" id="startTrials" class="button is-pulled-right">Start Practice Session</a>
+    </footer>
+  </div>
+</div>
+
+<script>
+  //turn on 'welcome modal' 
+ 
+  // console.log(getCookie('onPage'))
+  // if (getCookie('onPage') === 'trials'){
+  //   startTrials();
+  // } else {
+  //   d3.select('.modalStartTrials').classed('is-active', true);
+  // }
+
+  d3.select('.modalStartTrials').classed('is-active', true);
+
+  experimentr.hideNext()
+
+  setCookie('onPage','trials');
+
+
+  d3.select('#startTrials').on('click', startTrials);
+
+  async function startTrials(){
+    d3.select('.modalStartTrials').classed('is-active', false);
+
+
+    onTrials = true;
+
+    if (vis === undefined){
+      assignVisType();
+    }
+
+    await loadTasks(vis, 'trials');
+
+    if (track) {
+      trackResults('trial_results');
+    }
+
+
+    if (!taskMenu) {
+      d3.select('.taskMenu').remove();
+    } else {
+      d3.select('.taskMenu').style('display', 'none');
+    }
+
+    d3.select('.hit').style('display', 'inline');
+
+    if (vis === 'nodeLink') {
+      loadVis("vis");
+    } else {
+      // included script already auto loads the vis. 
+    }
+
+    updateStudyProvenance('started trials')
+
+    await resetPanel();
+
+    // setTimeout(function(){startTour();}, 5000);
+   
+    
+    d3.select('#nextTrialTask').on("click", async function () {
+
+      let taskObj = taskList[currentTask];
+
+      if (track) {
+        //update taskList with the answer for that task.
+        db.collection(onTrials ? 'trial_results' : 'results')
+          .doc(workerID)
+          .update({
+            [taskObj.taskID + ".answer"]: taskObj.answer,
+            [taskObj.taskID + ".startTime"]: taskObj.startTime,
+            [taskObj.taskID + ".endTime"]: taskObj.endTime,
+            [taskObj.taskID + ".minutesToComplete"]: taskObj.minutesToComplete
+          });
+      }
+
+      //increment current task;
+      if (currentTask === taskList.length-1) {
+
+        d3.select(".hit").style("display", "none");
+        updateStudyProvenance("ended task",{"taskID":taskList[currentTask].taskID})
+        updateStudyProvenance('ended trials')
+        experimentr.next();
+      } else {
+        
+        updateStudyProvenance("ended task",{"taskID":taskList[currentTask].taskID})
+        
+        currentTask = currentTask + 1;
+        //set startTime for next task;
+        taskList[currentTask].startTime = new Date().toString();
+
+        resetPanel();
+
+        d3.select('.modalTrialFeedback').classed('is-active', false);
+
+
+      }
+
+    })
+  }
+</script>

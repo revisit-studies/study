@@ -1,0 +1,41 @@
+{
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v3.0.0/src/parser/StudyConfigSchema.json",
+  "studyMetadata": {
+    "title": "Color-Blindness Test",
+    "version": "1.0.0",
+    "authors": [
+      "The reVISit Team"
+    ],
+    "date": "2026-02-23",
+    "description": "Example study using the color-blindness library. See the [color-blindness library docs](https://revisit.dev/docs/libraries/color-blindness/) and how to use [plugin libraries](https://revisit.dev/docs/designing-studies/plugin-libraries/).",
+    "organizations": [
+      "University of Utah",
+      "WPI"
+    ],
+    "thumbnail": "library-color-blindness/assets/thumbnail.png"
+  },
+  "uiConfig": {
+    "contactEmail": "contact@revisit.dev",
+    "logoPath": "revisitAssets/revisitLogoSquare.svg",
+    "withProgressBar": true,
+    "withSidebar": true
+  },
+  "importedLibraries": [
+    "color-blindness"
+  ],
+  "components": {
+    "introduction": {
+      "type": "markdown",
+      "path": "library-color-blindness/assets/color-blindness.md",
+      "response": []
+    }
+  },
+  "sequence": {
+    "order": "fixed",
+    "components": [
+      "introduction",
+      "$color-blindness.sequences.short-test",
+      "$color-blindness.sequences.full-test"
+    ]
+  }
+}

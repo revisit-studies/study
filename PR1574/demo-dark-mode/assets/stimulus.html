@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Theme-aware HTML stimulus</title>
+  <style>
+    :root { color-scheme: light dark; }
+    body {
+      margin: 0;
+      padding: 24px;
+      font: 18px/1.5 system-ui, sans-serif;
+      background: light-dark(#ffffff, #242424);
+      color: light-dark(#212529, #dee2e6);
+    }
+    button {
+      padding: 8px 16px;
+      border: 1px solid light-dark(#868e96, #adb5bd);
+      border-radius: 4px;
+      background: light-dark(#f1f3f5, #373a40);
+      color: inherit;
+      font: inherit;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <h1>HTML stimulus</h1>
+  <p>This page supports light and dark themes without changing its content.</p>
+  <button type="button" aria-expanded="false" aria-controls="details">Toggle details</button>
+  <p id="details" hidden>The HTML stimulus keeps its own interaction state.</p>
+  <script>
+    const button = document.querySelector('button');
+    const details = document.querySelector('#details');
+    button.addEventListener('click', () => {
+      details.hidden = !details.hidden;
+      button.setAttribute('aria-expanded', String(!details.hidden));
+    });
+  </script>
+</body>
+</html>

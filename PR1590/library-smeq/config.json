@@ -1,0 +1,40 @@
+{
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v3.0.0/src/parser/StudyConfigSchema.json",
+  "studyMetadata": {
+    "title": "SMEQ: Subjective Mental Effort Questionnaire",
+    "version": "1.0.0",
+    "authors": [
+      "The reVISit Team"
+    ],
+    "date": "2026-02-23",
+    "description": "Example study using the smeq library. See the [smeq library docs](https://revisit.dev/docs/libraries/smeq/) and how to use [plugin libraries](https://revisit.dev/docs/designing-studies/plugin-libraries/).",
+    "organizations": [
+      "University of Utah",
+      "WPI"
+    ],
+    "thumbnail": "library-smeq/assets/thumbnail.png"
+  },
+  "uiConfig": {
+    "contactEmail": "contact@revisit.dev",
+    "logoPath": "revisitAssets/revisitLogoSquare.svg",
+    "withProgressBar": true,
+    "withSidebar": false
+  },
+  "importedLibraries": [
+    "smeq"
+  ],
+  "components": {
+    "introduction": {
+      "type": "markdown",
+      "path": "library-smeq/assets/smeq.md",
+      "response": []
+    }
+  },
+  "sequence": {
+    "order": "fixed",
+    "components": [
+      "introduction",
+      "$smeq.components.smeq"
+    ]
+  }
+}

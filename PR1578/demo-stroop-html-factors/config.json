@@ -1,0 +1,81 @@
+{
+  "$schema": "../../src/parser/StudyConfigSchema.json",
+  "studyMetadata": {
+    "title": "Stroop Test in HTML with Factors",
+    "version": "pilot",
+    "authors": ["The reVISit Team"],
+    "date": "2026-08-20",
+    "description": "An HTML Stroop test that crosses fourteen color words with two congruence levels to generate 28 trials.",
+    "organizations": ["University of Utah", "WPI", "University of Toronto"]
+  },
+  "uiConfig": {
+    "contactEmail": "contact@revisit.dev",
+    "helpTextPath": "demo-stroop-html-factors/assets/introduction.md",
+    "logoPath": "revisitAssets/revisitLogoSquare.svg",
+    "withProgressBar": true,
+    "autoDownloadStudy": false,
+    "withSidebar": false,
+    "windowEventDebounceTime": 200
+  },
+  "factors": {
+    "color": ["RED", "ORANGE", "YELLOW", "GREEN", "BLUE", "PURPLE", "PINK", "BROWN", "GRAY", "BLACK", "CYAN", "MAGENTA", "LIME", "TEAL"],
+    "congruence": ["neutral", "incongruent"],
+    "stroopConditions": {
+      "action": "cross",
+      "factors": ["color", "congruence"]
+    }
+  },
+  "baseComponents": {
+    "stroopTrial": {
+      "type": "website",
+      "path": "demo-stroop-html-factors/assets/trial.html",
+      "nextButtonLocation": "belowStimulus",
+      "response": [
+        {
+          "id": "response",
+          "prompt": "Report the word's ink color, not the color named by the word. Use the buttons or the corresponding shortcut key.",
+          "secondaryText": "Keyboard shortcuts: 1-0, Q, W, E, R",
+          "type": "buttons",
+          "options": [
+            {"label": "RED", "value": "RED", "key": "1"},
+            {"label": "ORANGE", "value": "ORANGE", "key": "2"},
+            {"label": "YELLOW", "value": "YELLOW", "key": "3"},
+            {"label": "GREEN", "value": "GREEN", "key": "4"},
+            {"label": "BLUE", "value": "BLUE", "key": "5"},
+            {"label": "PURPLE", "value": "PURPLE", "key": "6"},
+            {"label": "PINK", "value": "PINK", "key": "7"},
+            {"label": "BROWN", "value": "BROWN", "key": "8"},
+            {"label": "GRAY", "value": "GRAY", "key": "9"},
+            {"label": "BLACK", "value": "BLACK", "key": "0"},
+            {"label": "CYAN", "value": "CYAN", "key": "q"},
+            {"label": "MAGENTA", "value": "MAGENTA", "key": "w"},
+            {"label": "LIME", "value": "LIME", "key": "e"},
+            {"label": "TEAL", "value": "TEAL", "key": "r"}
+          ],
+          "location": "belowStimulus",
+          "required": true
+        }
+      ]
+    }
+  },
+  "components": {
+    "introduction": {
+      "type": "markdown",
+      "path": "demo-stroop-html-factors/assets/introduction.md",
+      "response": []
+    }
+  },
+  "sequence": {
+    "order": "fixed",
+    "components": [
+      "introduction",
+      {
+        "type": "factor",
+        "id": "stroopTrials",
+        "factor": "stroopConditions",
+        "components": "stroopTrial",
+        "order": "random"
+      }
+    ]
+  }
+}
