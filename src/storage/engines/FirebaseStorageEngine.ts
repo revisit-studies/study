@@ -299,8 +299,9 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
     // only surface when the request eventually times out -- stalling study loads
     // by 30-50s and hanging the end-of-study upload for exactly 30s. Forcing
     // long-polling closes the request as soon as the backend sends data, but
-    // costs one or two extra round trips per read or write, which adds up to
-    // tens of seconds over a study load. Other engines stream the response, so
+    // each new listen or write then costs an extra round trip to reopen the
+    // channel (about nine extra on a new participant's load; see
+    // loadPerformance.spec.ts). Other engines stream the response, so
     // they keep the default transport. Note this cannot be combined with
     // experimentalAutoDetectLongPolling, which is enabled by default and does not
     // prevent the stall.
@@ -851,38 +852,49 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
     });
   }
 
-  // The server time measured at `measuredAt` (performance.now).
-  private serverClock: { serverMs: number; measuredAt: number; studyCollection: string } | undefined;
+  // The server time at `measuredAt` (performance.now) and `wallAt` (Date.now),
+  // read at the same instant.
+  private serverClock: { serverMs: number; measuredAt: number; wallAt: number } | undefined;
 
   private serverClockMeasurement: Promise<void> | undefined;
 
   private static readonly SERVER_CLOCK_MAX_AGE_MS = 5 * 60_000;
+
+  // How far the monotonic and wall clocks may disagree before the cached
+  // measurement is distrusted.
+  private static readonly SERVER_CLOCK_MAX_DRIFT_MS = 1_000;
 
   // Firestore has no clock to query, so stamp a document with the server's
   // time and read the committed value back. Each engine uses its own document
   // so independent browsers don't write one study-wide clock hotspot.
   private async measureServerClock() {
     const serverTimeDocument = doc(collection(doc(this.studyCollection, 'serverTime'), 'clients'), this.serverClockId);
-    await setDoc(serverTimeDocument, { readAt: serverTimestamp() }, { merge: true });
+    // Anchor at the send: the server stamps the write after this instant, so
+    // the cached time never runs behind the server and a lease written from it
+    // cannot outlive its own local expiry.
     const measuredAt = performance.now();
+    const wallAt = Date.now();
+    await setDoc(serverTimeDocument, { readAt: serverTimestamp() }, { merge: true });
     const snapshot = await getDoc(serverTimeDocument);
     const readAt = snapshot.data()?.readAt;
     if (!(readAt instanceof Timestamp)) {
       throw new Error('Failed to read the server clock');
     }
-    this.serverClock = { serverMs: readAt.toMillis(), measuredAt, studyCollection: this.studyCollection.path };
+    this.serverClock = { serverMs: readAt.toMillis(), measuredAt, wallAt };
   }
 
   // Measuring costs a write and a read, so measure once and advance the result
-  // with the monotonic clock, as the leases already do for their own expiry.
-  // Like a fresh measurement, it is accurate to about one round trip.
+  // with the monotonic clock. Some platforms pause performance.now() while the
+  // device sleeps, which would leave the cached time behind the server, so
+  // re-measure whenever the wall clock has advanced differently.
   protected async _getServerTimeMs(): Promise<number> {
     await this.verifyStudyDatabase();
     const clock = this.serverClock;
+    const elapsed = clock ? performance.now() - clock.measuredAt : 0;
     if (
       !clock
-      || clock.studyCollection !== this.studyCollection.path
-      || performance.now() - clock.measuredAt > FirebaseStorageEngine.SERVER_CLOCK_MAX_AGE_MS
+      || elapsed > FirebaseStorageEngine.SERVER_CLOCK_MAX_AGE_MS
+      || Math.abs((Date.now() - clock.wallAt) - elapsed) > FirebaseStorageEngine.SERVER_CLOCK_MAX_DRIFT_MS
     ) {
       // Concurrent callers share one measurement.
       this.serverClockMeasurement ??= this.measureServerClock().finally(() => {

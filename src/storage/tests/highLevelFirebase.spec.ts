@@ -1930,6 +1930,51 @@ describe.each([
     expect(storageEngine.isNewlyCreatedParticipant(created.participantId)).toBe(false);
   });
 
+  test('the backend clock is measured again after the monotonic clock pauses', async () => {
+    // @ts-expect-error Exercise the backend clock used for leases and timeouts.
+    const first = await storageEngine._getServerTimeMs();
+    vi.mocked(setDoc).mockClear();
+    // A sleeping device can stop performance.now() while the wall clock moves on.
+    const realDateNow = Date.now.bind(Date);
+    const slept = vi.spyOn(Date, 'now').mockImplementation(() => realDateNow() + 10 * 60_000);
+    try {
+      // @ts-expect-error Exercise the backend clock used for leases and timeouts.
+      expect(await storageEngine._getServerTimeMs()).toBeGreaterThanOrEqual(first - 1);
+    } finally {
+      slept.mockRestore();
+    }
+    expect(vi.mocked(setDoc).mock.calls.filter(([, data]) => 'readAt' in data)).toHaveLength(1);
+  });
+
+  test('reusing a completed assignment does not report a newly created participant', async () => {
+    const createAssignment = (
+      storageEngine as unknown as {
+        _createSequenceAssignment: (
+          participantId: string,
+          assignment: SequenceAssignment,
+          withServerTimestamp: boolean,
+        ) => Promise<void>;
+      }
+    )._createSequenceAssignment.bind(storageEngine);
+    await createAssignment('completed-orphan', {
+      participantId: 'completed-orphan',
+      timestamp: 1,
+      rejected: false,
+      claimed: false,
+      completed: 2,
+      createdTime: 1,
+      total: 0,
+      answered: [],
+      isDynamic: false,
+      stage: 'DEFAULT',
+    }, false);
+
+    const participant = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'completed-orphan');
+    expect(participant.participantId).toBe('completed-orphan');
+    expect(storageEngine.isNewlyCreatedParticipant('completed-orphan')).toBe(false);
+    expect(await storageEngine.getParticipantCompletionStatus('completed-orphan')).toBe(true);
+  });
+
   test('fresh participant startup does not scan all sequence assignments', async () => {
     const scanSpy = vi.spyOn(storageEngine, 'getAllSequenceAssignments');
     const countMock = vi.mocked(getCountFromServer);

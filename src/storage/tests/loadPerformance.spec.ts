@@ -63,13 +63,7 @@ const USER_AGENTS: Record<Transport, string> = {
   streaming: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
 };
 
-// Set to the measured values, so any added cost fails. For reference, dev
-// before the zc/performance changes measured (long-polling, then streaming):
-//   new participant:                       6237ms / 6237ms, 43 requests
-//   returning participant, same browser:   2222ms / 2222ms, 13 requests
-//   returning participant, new browser:    2323ms / 2323ms, 14 requests
-//   first participant after config change: 8449ms / 8449ms, 60 requests
-//   ten participants arriving at once:    13464ms / 13464ms, 655 requests
+// Set to the measured values, so any added cost fails.
 const BUDGETS: Record<string, Record<Transport, Budget>> = {
   'new participant': {
     longPolling: { ms: 4126, requests: 32, downloadedKb: 505 },

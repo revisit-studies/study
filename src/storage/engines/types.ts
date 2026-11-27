@@ -1863,7 +1863,9 @@ export abstract class StorageEngine {
           // and leave only a browser-local participant snapshot.
           await this.persistCurrentParticipantData({ immediate: true });
           participantRecordPersisted = true;
-          participantCreated = true;
+          // A completed assignment can be reused when its participant record is
+          // missing. Leave the flag unset so startup still checks completion.
+          participantCreated = !existingReservation || existingReservation.completed === null;
           if (!await this.confirmParticipantReservation(participantData, sequence.reservationToken)) {
             throw new Error('The participant reservation changed while joining. Please reload.');
           }
