@@ -1,5 +1,9 @@
-import { describe, expect, test } from 'vitest';
-import { isWebKitBrowser } from '../storageEngineHelpers';
+import {
+  afterEach, beforeEach, describe, expect, test, vi,
+} from 'vitest';
+import {
+  isTransactionContentionError, isWebKitBrowser, retrySequenceAllocation, SEQUENCE_ALLOCATION_CONTENTION_RETRIES,
+} from '../storageEngineHelpers';
 
 describe('isWebKitBrowser', () => {
   test.each([
@@ -15,5 +19,49 @@ describe('isWebKitBrowser', () => {
     ['no user agent', '', false],
   ])('%s', (_name, userAgent, expected) => {
     expect(isWebKitBrowser(userAgent)).toBe(expected);
+  });
+});
+
+describe('retrySequenceAllocation', () => {
+  const contention = Object.assign(new Error('Transaction failed'), { name: 'FirebaseError', code: 'aborted' });
+
+  beforeEach(() => { vi.useFakeTimers(); });
+  afterEach(() => { vi.useRealTimers(); });
+
+  test.each([
+    [contention, true],
+    [{ code: 'failed-precondition' }, true],
+    [{ code: 'permission-denied' }, false],
+    [new Error('aborted'), false],
+    [null, false],
+  ])('classifies %o as contention: %s', (error, expected) => {
+    expect(isTransactionContentionError(error)).toBe(expected);
+  });
+
+  test('retries an allocation whose transaction lost to contention', async () => {
+    const allocate = vi.fn()
+      .mockRejectedValueOnce(contention)
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce('allocated');
+    const result = retrySequenceAllocation(allocate);
+    await vi.runAllTimersAsync();
+    await expect(result).resolves.toBe('allocated');
+    expect(allocate).toHaveBeenCalledTimes(3);
+  });
+
+  test('reports contention once its retries are used up', async () => {
+    const allocate = vi.fn().mockRejectedValue(contention);
+    const result = retrySequenceAllocation(allocate);
+    const assertion = expect(result).rejects.toBe(contention);
+    await vi.runAllTimersAsync();
+    await assertion;
+    expect(allocate).toHaveBeenCalledTimes(SEQUENCE_ALLOCATION_CONTENTION_RETRIES + 1);
+  });
+
+  test('does not retry other errors', async () => {
+    const failure = new Error('Latin square not initialized');
+    const allocate = vi.fn().mockRejectedValue(failure);
+    await expect(retrySequenceAllocation(allocate)).rejects.toBe(failure);
+    expect(allocate).toHaveBeenCalledTimes(1);
   });
 });

@@ -53,6 +53,20 @@ export const simulation = {
   pendingRealWork: 0,
 };
 
+export const transactionStats = {
+  retries: 0,
+  aborted: 0,
+  maxAttempts: 0,
+};
+
+// A seeded Park-Miller generator for transaction backoff jitter, reset with
+// the simulation so every run draws the same delays.
+let jitterState = 1;
+function nextJitter() {
+  jitterState = (jitterState * 48271) % 2147483647;
+  return jitterState / 2147483647 - 0.5;
+}
+
 export function resetSimulation() {
   simulation.firestoreData = {};
   simulation.storageObjects = {};
@@ -60,6 +74,10 @@ export function resetSimulation() {
   simulation.currentBrowser = 'browser-0';
   simulation.calls = [];
   simulation.pendingRealWork = 0;
+  transactionStats.retries = 0;
+  transactionStats.aborted = 0;
+  transactionStats.maxAttempts = 0;
+  jitterState = 1;
 }
 
 /** Engines constructed after this call use the named browser's local storage. */
@@ -213,10 +231,43 @@ type TransactionHandle = {
   delete: (ref: Ref) => void;
 };
 
-async function runTransaction<T>(_firestore: unknown, updateFunction: (transaction: TransactionHandle) => Promise<T>): Promise<T> {
+// The web SDK's transaction retry policy (TransactionRunner in
+// @firebase/firestore): 5 attempts in all, the first immediately, then after an
+// exponential backoff whose base starts at 1s and grows 1.5x per retry. Time
+// already spent in the previous attempt counts toward the delay. The SDK adds
+// +/-50% jitter, which the simulation draws from a seeded generator so runs
+// stay deterministic.
+export const TRANSACTION_MAX_ATTEMPTS = 5;
+const TRANSACTION_BACKOFF_INITIAL_MS = 1000;
+const TRANSACTION_BACKOFF_FACTOR = 1.5;
+
+export class SimulatedTransactionAbortedError extends Error {
+  name = 'FirebaseError';
+
+  code = 'aborted';
+
+  constructor(path: string) {
+    super(`Transaction on ${path} still conflicted after ${TRANSACTION_MAX_ATTEMPTS} attempts`);
+  }
+}
+
+export async function simulatedRunTransaction<T>(_firestore: unknown, updateFunction: (transaction: TransactionHandle) => Promise<T>): Promise<T> {
   // Optimistic concurrency: each read is a lookup, the commit is one more round
   // trip, and a conflicting commit retries the whole function.
-  for (let attempt = 0; attempt < 20; attempt += 1) {
+  let backoffMs = 0;
+  let lastAttemptAt = Date.now();
+  let firstPath = '';
+  for (let attempt = 1; attempt <= TRANSACTION_MAX_ATTEMPTS; attempt += 1) {
+    const delay = Math.max(0, Math.floor(backoffMs + nextJitter() * backoffMs) - (Date.now() - lastAttemptAt));
+    if (delay > 0) {
+      // eslint-disable-next-line no-await-in-loop
+      await new Promise<void>((resolve) => { setTimeout(resolve, delay); });
+    }
+    lastAttemptAt = Date.now();
+    backoffMs = Math.max(TRANSACTION_BACKOFF_INITIAL_MS, backoffMs * TRANSACTION_BACKOFF_FACTOR);
+    transactionStats.maxAttempts = Math.max(transactionStats.maxAttempts, attempt);
+    if (attempt > 1) transactionStats.retries += 1;
+
     const reads = new Map<string, string | undefined>();
     const writes: Array<() => void> = [];
     const transaction: TransactionHandle = {
@@ -232,8 +283,9 @@ async function runTransaction<T>(_firestore: unknown, updateFunction: (transacti
     };
     // eslint-disable-next-line no-await-in-loop
     const result = await updateFunction(transaction);
+    firstPath = [...reads.keys()][0] ?? '';
     // eslint-disable-next-line no-await-in-loop
-    await network('transaction.commit', [...reads.keys()][0] ?? '', 1);
+    await network('transaction.commit', firstPath, 1);
     const conflict = [...reads].some(([path, snapshot]) => JSON.stringify(simulation.firestoreData[path]) !== snapshot);
     if (!conflict) {
       const before = structuredClone(simulation.firestoreData);
@@ -246,7 +298,8 @@ async function runTransaction<T>(_firestore: unknown, updateFunction: (transacti
       return result;
     }
   }
-  throw new Error('Transaction contention exceeded the retry limit');
+  transactionStats.aborted += 1;
+  throw new SimulatedTransactionAbortedError(firstPath);
 }
 
 export function createFirestoreMock() {
@@ -306,7 +359,7 @@ export function createFirestoreMock() {
         },
       };
     }),
-    runTransaction: vi.fn(runTransaction),
+    runTransaction: vi.fn(simulatedRunTransaction),
     // Live listeners serve the analysis views, not participant loads.
     onSnapshot: vi.fn(() => vi.fn()),
     deleteField: vi.fn(() => DELETE_FIELD),

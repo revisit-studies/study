@@ -17,7 +17,8 @@ import {
 } from 'vitest';
 import {
   createFirestoreMock, createLocalforageMock, createStorageMock, drainBackgroundWork, formatCalls, resetSimulation,
-  ROUND_TRIP_MS, runOnSimulatedNetwork, simulatedDigest, simulatedFetch, simulation, switchBrowser, type SimulatedRun,
+  ROUND_TRIP_MS, runOnSimulatedNetwork, simulatedDigest, simulatedFetch, simulatedRunTransaction, simulation, switchBrowser, TRANSACTION_MAX_ATTEMPTS, transactionStats,
+  type SimulatedRun,
 } from './utils/simulatedFirebase';
 import { FirebaseStorageEngine } from '../engines/FirebaseStorageEngine';
 import { hash } from '../engines/utils/storageEngineHelpers';
@@ -81,9 +82,11 @@ const BUDGETS: Record<string, Record<Transport, Budget>> = {
     longPolling: { ms: 6540, requests: 52, downloadedKb: 6 },
     streaming: { ms: 5240, requests: 52, downloadedKb: 6 },
   },
+  // Contended transactions back off with seeded jitter, as the SDK does, so
+  // this budget depends on which retries collide and moves more than the others.
   'ten participants arriving at once': {
-    longPolling: { ms: 6844, requests: 590, downloadedKb: 5090 },
-    streaming: { ms: 5944, requests: 590, downloadedKb: 5090 },
+    longPolling: { ms: 11902, requests: 446, downloadedKb: 5070 },
+    streaming: { ms: 11002, requests: 446, downloadedKb: 5070 },
   },
 };
 
@@ -263,6 +266,8 @@ describe.each(['longPolling', 'streaming'] as const)('study load budgets (%s)', 
     const engines = await Promise.all(Array.from({ length: 10 }, (_, index) => connectedEngine(`burst-${index}`)));
     const run = await runOnSimulatedNetwork(() => Promise.all(engines.map((engine) => loadStudy(engine, config))));
     expect(new Set(run.result.map((session) => session.participantId)).size).toBe(10);
+    // A transaction can exhaust the SDK's attempts in a burst; the allocation
+    // retries it, so every participant still joins (checked above).
     // The slowest participant's wait, and the requests all of them made.
     expectWithinBudget('ten participants arriving at once', transport, run);
   });
@@ -296,4 +301,24 @@ describe.each(['longPolling', 'streaming'] as const)('study load budgets (%s)', 
     expect(parallel.calls).toHaveLength(3);
     expect(simulation.calls.length).toBeGreaterThan(0);
   });
+});
+
+test('contended transactions give up after the SDK attempt limit', async () => {
+  // Guards the retry model: a document that changes during every attempt.
+  const ref = { _path: 'contended/document', _longPolling: false };
+  simulation.firestoreData[ref._path] = { version: 0 };
+  let attempts = 0;
+  const run = runOnSimulatedNetwork(() => simulatedRunTransaction(undefined, async (transaction) => {
+    attempts += 1;
+    await transaction.get(ref as never);
+    simulation.firestoreData[ref._path] = { version: attempts };
+  }));
+  await expect(run).rejects.toMatchObject({ name: 'FirebaseError', code: 'aborted' });
+  expect(attempts).toBe(TRANSACTION_MAX_ATTEMPTS);
+  expect(transactionStats).toMatchObject({ retries: TRANSACTION_MAX_ATTEMPTS - 1, aborted: 1, maxAttempts: TRANSACTION_MAX_ATTEMPTS });
+  // Each retry waited for its backoff, about 1s, 1.5s, 2.25s and 3.4s.
+  const commits = simulation.calls.filter((call) => call.kind === 'transaction.commit');
+  const gaps = commits.slice(1).map((call, index) => call.start - commits[index].end);
+  gaps.forEach((gap) => expect(gap).toBeGreaterThan(0));
+  expect(commits.at(-1)!.end - commits[0].start).toBeGreaterThan(0.5 * (1000 + 1500 + 2250 + 3375));
 });

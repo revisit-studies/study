@@ -14,16 +14,39 @@ export async function waitForAllocationRetry(attempt: number) {
   });
 }
 
+// Contended Firestore transactions give up with one of these codes once the SDK
+// has used its own attempts.
+const TRANSACTION_CONTENTION_CODES = new Set(['aborted', 'failed-precondition']);
+
+// Each contention failure has already spent several seconds in the SDK's own
+// backoff, so allow only a few before reporting it.
+export const SEQUENCE_ALLOCATION_CONTENTION_RETRIES = 3;
+
+export function isTransactionContentionError(error: unknown) {
+  return typeof error === 'object' && error !== null && 'code' in error
+    && TRANSACTION_CONTENTION_CODES.has(String((error as { code: unknown }).code));
+}
+
 export async function retrySequenceAllocation<T>(
   allocate: () => Promise<T | null>,
 ): Promise<T> {
+  let contentionRetries = 0;
   for (let attempt = 0; attempt < SEQUENCE_ALLOCATION_ATTEMPTS; attempt += 1) {
     if (attempt > 0) {
       // eslint-disable-next-line no-await-in-loop
       await waitForAllocationRetry(attempt);
     }
-    // eslint-disable-next-line no-await-in-loop
-    const allocation = await allocate();
+    let allocation: T | null;
+    try {
+      // eslint-disable-next-line no-await-in-loop
+      allocation = await allocate();
+    } catch (error) {
+      // A transaction that lost every race committed nothing, so running the
+      // allocation again is safe.
+      if (!isTransactionContentionError(error) || contentionRetries >= SEQUENCE_ALLOCATION_CONTENTION_RETRIES) throw error;
+      contentionRetries += 1;
+      allocation = null;
+    }
     if (allocation) {
       return allocation;
     }
