@@ -181,6 +181,9 @@ export type ModesAndStageData = {
   modes: StudyModes;
   stageData: StageData;
   sequenceArray?: Sequence[];
+  // The participant's assignment as just read, or null when it has none.
+  // Undefined means the engine must read it.
+  existingAssignment?: SequenceAssignment | null;
 };
 
 // Reuse the orders prepared during startup. Admission still rechecks policy
@@ -574,6 +577,13 @@ export abstract class StorageEngine {
 
   // Caches an object in the storage engine (using cache headers) to avoid fetching it from the server every time.
   protected abstract _cacheStorageObject<T extends StorageObjectType>(prefix: string, type: T): Promise<void>;
+
+  // Whether a non-empty object is stored. Engines that can check metadata
+  // override this so the check does not download the object.
+  protected async _storageObjectExists<T extends StorageObjectType>(prefix: string, type: T): Promise<boolean> {
+    const stored = await this._getFromStorage(prefix, type);
+    return !!stored && Object.keys(stored).length > 0;
+  }
 
   /* Realtime database --------------------------------------------------- */
   // Verifies that the realtime study database and storage is set up correctly.
@@ -1380,13 +1390,18 @@ export abstract class StorageEngine {
   }
 
   async saveConfig(config: StudyConfig) {
+    // Every participant load calls this, so the common case (this config is
+    // already active and stored) must not take the study-wide lock or download
+    // the stored config. Activation stores the config and registers its
+    // conditions before it publishes the hash, so a matching hash with a stored
+    // config means activation already finished.
+    if (!this.studyId) throw new Error('Study ID is not set');
+    const [activeConfigHash, configHash] = await Promise.all([this._getCurrentConfigHash(), hash(JSON.stringify(config))]);
+    if (activeConfigHash === configHash && await this._storageObjectExists(`configs/${configHash}`, 'config')) return;
+
     await this._runWithLock(ADMISSION_POLICY_LOCK_KEY, async () => {
       if (!this.studyId) throw new Error('Study ID is not set');
-      const currentConfigHash = await this._getCurrentConfigHash();
-      const configHash = await hash(JSON.stringify(config));
-      const storedConfig = currentConfigHash === configHash
-        ? await this._getFromStorage(`configs/${configHash}`, 'config') : null;
-      if (storedConfig && Object.keys(storedConfig).length > 0) return;
+      if (await this._getCurrentConfigHash() === configHash && await this._storageObjectExists(`configs/${configHash}`, 'config')) return;
       const keys = getConfigConditionKeys(config);
       await this.validateStageConditions(this.studyId, keys);
       await this._pushToStorage(`configs/${configHash}`, 'config', config);
@@ -1687,6 +1702,9 @@ export abstract class StorageEngine {
 
   protected hasAtomicSequenceReservation = false;
 
+  // Set when the last initializeParticipantSession created this participant.
+  private newlyCreatedParticipant: { studyId: string; participantId: string } | undefined;
+
   protected async prepareParticipantReservation(participantId: string) {
     return this._getSequenceAssignment(participantId);
   }
@@ -1713,6 +1731,7 @@ export abstract class StorageEngine {
     urlParticipantId?: string,
     bootstrapData?: ParticipantSessionBootstrapData,
   ) {
+    this.newlyCreatedParticipant = undefined;
     await this.verifyStudyDatabase();
 
     // Ensure that we have a participantId
@@ -1770,6 +1789,7 @@ export abstract class StorageEngine {
     }
 
     let autoTimeoutEnabled = false;
+    let participantCreated = false;
     const initializeParticipant = async (): Promise<ParticipantData> => {
       // Another session may have completed initialization while this session waited
       // for the lock, so always read the participant record again inside it.
@@ -1807,7 +1827,9 @@ export abstract class StorageEngine {
       const conditions = parsedConditions.length > 0 ? parsedConditions : undefined;
       let sequence: { currentRow: Sequence; creationIndex: number; stage?: string; reservationToken?: string };
       try {
-        sequence = await this._getSequence(conditions, { modes, stageData, sequenceArray: bootstrapData?.sequenceArray }, config, participantConfigHash);
+        sequence = await this._getSequence(conditions, {
+          modes, stageData, sequenceArray: bootstrapData?.sequenceArray, existingAssignment: existingReservation,
+        }, config, participantConfigHash);
       } catch (error) {
         // _getSequence writes the sequence assignment before it picks a row, so a
         // later failure leaves an assignment that occupies a stage slot with no
@@ -1841,6 +1863,7 @@ export abstract class StorageEngine {
           // and leave only a browser-local participant snapshot.
           await this.persistCurrentParticipantData({ immediate: true });
           participantRecordPersisted = true;
+          participantCreated = true;
           if (!await this.confirmParticipantReservation(participantData, sequence.reservationToken)) {
             throw new Error('The participant reservation changed while joining. Please reload.');
           }
@@ -1893,6 +1916,7 @@ export abstract class StorageEngine {
     }
 
     this.participantData = initializedParticipant;
+    if (participantCreated) this.newlyCreatedParticipant = { studyId: this.studyId!, participantId: initializedParticipant.participantId };
     return initializedParticipant;
   }
 
@@ -2479,6 +2503,15 @@ export abstract class StorageEngine {
       this.recordParticipantDataWriteError(error);
       throw error;
     }
+  }
+
+  /**
+   * Whether the last initializeParticipantSession created this participant,
+   * rather than resuming one. A participant created moments ago cannot have
+   * completed, so startup can skip asking the backend.
+   */
+  isNewlyCreatedParticipant(participantId: string) {
+    return this.newlyCreatedParticipant?.studyId === this.studyId && this.newlyCreatedParticipant?.participantId === participantId;
   }
 
   async getParticipantCompletionStatus(participantId?: string, studyId?: string): Promise<boolean> {

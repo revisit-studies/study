@@ -4,7 +4,7 @@ import localforage from 'localforage';
 import { v4 as uuidv4 } from 'uuid';
 import { initializeApp } from 'firebase/app';
 import {
-  deleteObject, getBlob, getDownloadURL, getStorage, ref, uploadBytes, listAll, FirebaseStorage, updateMetadata,
+  deleteObject, getBlob, getDownloadURL, getMetadata, getStorage, ref, uploadBytes, listAll, FirebaseStorage, updateMetadata,
 } from 'firebase/storage';
 import {
   CollectionReference, DocumentData, Firestore, Query, Transaction, Timestamp, collection, deleteField, doc, enableNetwork, getDoc, getDocs, getDocsFromServer, initializeFirestore, onSnapshot, runTransaction, serverTimestamp, setDoc, updateDoc, getCountFromServer, limit, orderBy, query, where,
@@ -13,7 +13,9 @@ import { ReCaptchaV3Provider, ReCaptchaEnterpriseProvider, initializeAppCheck } 
 import {
   browserPopupRedirectResolver, getAuth, GoogleAuthProvider, onAuthStateChanged, signInAnonymously, signInWithPopup, signOut,
 } from '@firebase/auth';
-import { isParticipantData, rebuildSequenceAllocator, retrySequenceAllocation } from './utils/storageEngineHelpers';
+import {
+  isParticipantData, isWebKitBrowser, rebuildSequenceAllocator, retrySequenceAllocation,
+} from './utils/storageEngineHelpers';
 import {
   assertAutoTimeoutRestoreSupported, shouldValidateAutoTimeoutStage, assertAutoTimeoutStageSupported, StageAllocation, CloudStorageEngine, REVISIT_MODE, StorageObjectType, StorageObject, UserManagementData, SequenceAssignment, SnapshotDocContent, StoredUser, RuntimeStudySettings, cleanupModes, consumesCapacity, isStageParticipantLimitEnabled, ModesAndStageData, StageInfo, StageUpdates, StageData, applyStageUpdates, StageCapacityExceededError, StageNoAvailableConditionsError, StageOnlyDisabledConditionsHaveCapacityError, getBetweenSubjectsCombinationKey, getConfigConditionKeys, getDesiredParticipantCountsByCombination, getLeastServedSequence, getStageAllocationFromAssignments, getStageParticipantCounts, isSequenceEnabledForStage, assertAppendOnlyConditions, validateStageParticipantLimits, SequenceAssignmentAllocation, SequenceAllocator,
 } from './types';
@@ -107,7 +109,9 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
     const reservationToken = uuidv4();
     const assignments = collection(doc(this.studyCollection, 'sequenceAssignment'), 'sequenceAssignment');
     const allocatorReference = doc(this.studyCollection, 'sequenceAssignmentAllocator');
-    const existing = await this._getSequenceAssignment(participantId);
+    // The caller usually just read this assignment while preparing the reservation.
+    const existing = bootstrapData.existingAssignment !== undefined
+      ? bootstrapData.existingAssignment : await this._getSequenceAssignment(participantId);
     if (existing && !existing.rejected && !existing.initialization) {
       const allocation = await this._allocateSequenceAssignment(participantId, existing);
       const prefix = `${participantConfigHash}:`;
@@ -116,8 +120,12 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
       if (!currentRow) throw new Error('The unfinished reservation uses a different study configuration. Please contact the study administrator.');
       return { currentRow, creationIndex: allocation.creationIndex + 1, stage: existing.stage };
     }
+    let attempt = 0;
     return retrySequenceAllocation(async () => {
-      const { stageData } = await this.getModesAndStageData(this.studyId!);
+      // The first attempt uses the stage the caller just read. The transaction
+      // rereads the modes, and a stale stage only causes a retry, which rereads.
+      attempt += 1;
+      const { stageData } = attempt === 1 ? bootstrapData : await this.getModesAndStageData(this.studyId!);
       await this.getStageAllocation(stageData.currentStage.stageName, conditionKeys);
       const allocatorSnapshot = await getDoc(allocatorReference);
       const seed = allocatorSnapshot.exists() ? allocatorSnapshot.data() as SequenceAllocator : await this.getSequenceAllocatorSeed(assignments);
@@ -137,16 +145,23 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
       const legacyIndex = sourceData && sourceData.sequenceIndex === undefined && sourceData.reusableSequenceIndex === undefined
         ? await this.getLegacySequenceIndex(assignments, sourceData.timestamp) : undefined;
       return runTransaction(this.firestore, async (transaction) => {
-        const revision = await transaction.get(doc(this.studyCollection, 'allocation'));
+        // Independent reads run together; each sequential read is a round trip.
         const modesReference = doc(this.studyCollection, 'modes');
-        const modes = (await transaction.get(modesReference)).data();
+        const [revision, modesSnapshot, ownSnapshot, allocatorSnapshotInTransaction, sourceSnapshot] = await Promise.all([
+          transaction.get(doc(this.studyCollection, 'allocation')),
+          transaction.get(modesReference),
+          transaction.get(this.assignmentReference(participantId)),
+          transaction.get(allocatorReference),
+          candidate ? transaction.get(this.assignmentReference(candidate.id)) : Promise.resolve(undefined),
+        ]);
+        const modes = modesSnapshot.data();
         if (!modes?.dataCollectionEnabled) throw new Error('Study settings changed while joining. Please reload.');
         const stages = modes.stage as StageData;
         const stage = stages.allStages.find((item) => item.stageName === stages.currentStage.stageName)!;
-        const own = (await transaction.get(this.assignmentReference(participantId))).data() as SequenceAssignment | undefined;
-        const allocator = ((await transaction.get(allocatorReference)).data() ?? seed) as SequenceAllocator;
+        const own = ownSnapshot.data() as SequenceAssignment | undefined;
+        const allocator = (allocatorSnapshotInTransaction.data() ?? seed) as SequenceAllocator;
         const stageSnapshot = await transaction.get(this.stageAllocationReference(stage.stageName));
-        const source = candidate ? (await transaction.get(this.assignmentReference(candidate.id))).data() as SequenceAssignment | undefined : undefined;
+        const source = sourceSnapshot?.data() as SequenceAssignment | undefined;
         if (!stageSnapshot.exists()) return null;
         const state = { rowCounts: {}, ...stageSnapshot.data() } as FirebaseStageAllocation;
         if (own && !own.rejected) {
@@ -277,18 +292,20 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
 
     const firebaseConfig = hjsonParse(import.meta.env.VITE_FIREBASE_CONFIG);
     const firebaseApp = initializeApp(firebaseConfig);
-    // Force long-polling instead of letting the SDK auto-detect the transport.
-    // By default the WebChannel backchannel is held open in case the backend has
-    // more data to send. Safari buffers that response rather than delivering it
-    // incrementally, so listener data and write acknowledgements only surface
-    // when the request eventually times out -- stalling study loads by 30-50s and
-    // hanging the end-of-study upload for exactly 30s. Forcing long-polling closes
-    // the request as soon as the backend sends data, costing one extra round trip
-    // per message. Note this cannot be combined with
+    // In WebKit, force long-polling instead of letting the SDK auto-detect the
+    // transport. By default the WebChannel backchannel is held open in case the
+    // backend has more data to send. Safari buffers that response rather than
+    // delivering it incrementally, so listener data and write acknowledgements
+    // only surface when the request eventually times out -- stalling study loads
+    // by 30-50s and hanging the end-of-study upload for exactly 30s. Forcing
+    // long-polling closes the request as soon as the backend sends data, but
+    // costs one or two extra round trips per read or write, which adds up to
+    // tens of seconds over a study load. Other engines stream the response, so
+    // they keep the default transport. Note this cannot be combined with
     // experimentalAutoDetectLongPolling, which is enabled by default and does not
     // prevent the stall.
     this.firestore = initializeFirestore(firebaseApp, {
-      experimentalForceLongPolling: true,
+      experimentalForceLongPolling: isWebKitBrowser(typeof navigator === 'undefined' ? '' : navigator.userAgent),
     });
     this.studyCollection = collection(
       this.firestore,
@@ -369,6 +386,21 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
       `${this.collectionPrefix}${this.studyId}/${prefix}_${type}`,
     );
     await deleteObject(storageRef);
+  }
+
+  protected override async _storageObjectExists<T extends StorageObjectType>(prefix: string, type: T) {
+    const storageRef = ref(
+      this.storage,
+      `${this.collectionPrefix}${this.studyId}/${prefix}_${type}`,
+    );
+    try {
+      return (await getMetadata(storageRef)).size > 0;
+    } catch (error) {
+      if ((error as { code?: string } | null)?.code === 'storage/object-not-found') return false;
+      // Fall back to reading the object rather than reporting it missing, since
+      // a missing config makes the caller activate it again.
+      return super._storageObjectExists(prefix, type);
+    }
   }
 
   protected async _cacheStorageObject<T extends StorageObjectType>(prefix: string, type: T) {
@@ -819,19 +851,47 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
     });
   }
 
-  protected async _getServerTimeMs(): Promise<number> {
-    await this.verifyStudyDatabase();
-    // Firestore has no clock to query, so stamp a document with the server's
-    // time and read the committed value back. Each engine uses its own document
-    // so independent browsers don't write one study-wide clock hotspot.
+  // The server time measured at `measuredAt` (performance.now).
+  private serverClock: { serverMs: number; measuredAt: number; studyCollection: string } | undefined;
+
+  private serverClockMeasurement: Promise<void> | undefined;
+
+  private static readonly SERVER_CLOCK_MAX_AGE_MS = 5 * 60_000;
+
+  // Firestore has no clock to query, so stamp a document with the server's
+  // time and read the committed value back. Each engine uses its own document
+  // so independent browsers don't write one study-wide clock hotspot.
+  private async measureServerClock() {
     const serverTimeDocument = doc(collection(doc(this.studyCollection, 'serverTime'), 'clients'), this.serverClockId);
     await setDoc(serverTimeDocument, { readAt: serverTimestamp() }, { merge: true });
+    const measuredAt = performance.now();
     const snapshot = await getDoc(serverTimeDocument);
     const readAt = snapshot.data()?.readAt;
     if (!(readAt instanceof Timestamp)) {
       throw new Error('Failed to read the server clock');
     }
-    return readAt.toMillis();
+    this.serverClock = { serverMs: readAt.toMillis(), measuredAt, studyCollection: this.studyCollection.path };
+  }
+
+  // Measuring costs a write and a read, so measure once and advance the result
+  // with the monotonic clock, as the leases already do for their own expiry.
+  // Like a fresh measurement, it is accurate to about one round trip.
+  protected async _getServerTimeMs(): Promise<number> {
+    await this.verifyStudyDatabase();
+    const clock = this.serverClock;
+    if (
+      !clock
+      || clock.studyCollection !== this.studyCollection.path
+      || performance.now() - clock.measuredAt > FirebaseStorageEngine.SERVER_CLOCK_MAX_AGE_MS
+    ) {
+      // Concurrent callers share one measurement.
+      this.serverClockMeasurement ??= this.measureServerClock().finally(() => {
+        this.serverClockMeasurement = undefined;
+      });
+      await this.serverClockMeasurement;
+    }
+    const measured = this.serverClock!;
+    return measured.serverMs + (performance.now() - measured.measuredAt);
   }
 
   // The timeout transaction rechecks the settings and retries if they change, so

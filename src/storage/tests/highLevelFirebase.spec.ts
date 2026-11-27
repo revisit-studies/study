@@ -2,6 +2,7 @@ import {
   beforeAll, beforeEach, afterAll, afterEach, describe, expect, test, vi,
 } from 'vitest';
 import { signInAnonymously, signOut } from '@firebase/auth';
+import { getBlob, getMetadata } from 'firebase/storage';
 import {
   enableNetwork, Timestamp, runTransaction, getCountFromServer, getDocs, getDoc, getDocsFromServer, setDoc,
 } from 'firebase/firestore';
@@ -99,6 +100,13 @@ vi.mock('firebase/storage', () => {
       return Promise.resolve({ items, prefixes: [] });
     }),
     updateMetadata: vi.fn(() => Promise.resolve({})),
+    getMetadata: vi.fn((refObj: { path: string }) => {
+      const data = storageObjects[refObj.path];
+      if (data === undefined) {
+        return Promise.reject(Object.assign(new Error('storage/object-not-found'), { code: 'storage/object-not-found' }));
+      }
+      return Promise.resolve({ size: data.length });
+    }),
   };
 });
 
@@ -861,7 +869,9 @@ describe.each([
     // @ts-expect-error Exercise an independent browser clock query.
     const secondTime = await second._getServerTimeMs();
     expect(firstTime).toBeGreaterThan(0);
-    expect(secondTime).toBeGreaterThanOrEqual(firstTime);
+    // Each browser advances its own measurement locally, so two browsers agree
+    // only to within the backend timestamp's millisecond resolution.
+    expect(secondTime).toBeGreaterThanOrEqual(firstTime - 1);
     const paths = vi.mocked(setDoc).mock.calls.filter(([, data]) => 'readAt' in data)
       .map(([reference]) => (reference as unknown as { _path: string })._path);
     expect(paths).toHaveLength(2);
@@ -1861,6 +1871,63 @@ describe.each([
     await storageEngine.updateStage(studyId, 'FRESH', { maxParticipants: 1 });
     await expect(storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'blocked', { modesDocument, sequenceArray }))
       .rejects.toThrow(/participant limit/);
+  });
+
+  test('saving the already active config neither locks nor downloads it', async () => {
+    await storageEngine.saveConfig(configSimple);
+    const transactionMock = vi.mocked(runTransaction);
+    transactionMock.mockClear();
+    vi.mocked(getBlob).mockClear();
+    vi.mocked(getMetadata).mockClear();
+
+    await storageEngine.saveConfig(configSimple);
+    expect(transactionMock).not.toHaveBeenCalled();
+    expect(getBlob).not.toHaveBeenCalled();
+    expect(getMetadata).toHaveBeenCalledTimes(1);
+  });
+
+  test('saving the active config activates it again when its stored copy is missing', async () => {
+    await storageEngine.saveConfig(configSimple);
+    const configPath = Object.keys(storageObjects).find((path) => path.endsWith('_config'))!;
+    delete storageObjects[configPath];
+
+    await storageEngine.saveConfig(configSimple);
+    expect(storageObjects[configPath]).toBeDefined();
+  });
+
+  test('the backend clock is measured once for repeated leases', async () => {
+    vi.mocked(setDoc).mockClear();
+    // @ts-expect-error Exercise the provider's actual distributed lock.
+    await storageEngine._runWithLock('clock-a', async () => {});
+    // @ts-expect-error Exercise the provider's actual distributed lock.
+    await storageEngine._runWithLock('clock-b', async () => {});
+    const clockWrites = vi.mocked(setDoc).mock.calls.filter(([, data]) => 'readAt' in data);
+    expect(clockWrites).toHaveLength(1);
+  });
+
+  test('the backend clock is measured again once it is old', async () => {
+    // @ts-expect-error Exercise the backend clock used for leases and timeouts.
+    const first = await storageEngine._getServerTimeMs();
+    vi.mocked(setDoc).mockClear();
+    const realPerformanceNow = performance.now.bind(performance);
+    const later = vi.spyOn(performance, 'now').mockImplementation(() => realPerformanceNow() + 6 * 60_000);
+    try {
+      // @ts-expect-error Exercise the backend clock used for leases and timeouts.
+      expect(await storageEngine._getServerTimeMs()).toBeGreaterThanOrEqual(first - 1);
+    } finally {
+      later.mockRestore();
+    }
+    expect(vi.mocked(setDoc).mock.calls.filter(([, data]) => 'readAt' in data)).toHaveLength(1);
+  });
+
+  test('reports whether the last session start created the participant', async () => {
+    const created = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'created-now');
+    expect(storageEngine.isNewlyCreatedParticipant(created.participantId)).toBe(true);
+    expect(storageEngine.isNewlyCreatedParticipant('someone-else')).toBe(false);
+
+    const resumed = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'created-now');
+    expect(resumed.participantId).toBe(created.participantId);
+    expect(storageEngine.isNewlyCreatedParticipant(created.participantId)).toBe(false);
   });
 
   test('fresh participant startup does not scan all sequence assignments', async () => {

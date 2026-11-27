@@ -83,3 +83,12 @@ export function calculateProgressData(
 
   return { total, answered, isDynamic };
 }
+
+/**
+ * Whether the browser is built on WebKit rather than Blink or Gecko. This
+ * includes desktop Safari and every iOS and iPadOS browser, since Apple requires
+ * them all to use WebKit (Chrome on iOS reports CriOS, not Chrome).
+ */
+export function isWebKitBrowser(userAgent: string) {
+  return /AppleWebKit/.test(userAgent) && !/(Chrome|Chromium|Edg|OPR)\//.test(userAgent);
+}

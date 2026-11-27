@@ -206,6 +206,7 @@ function setupThemeSession(colorMode: StudyConfig['uiConfig']['colorMode'], save
     })),
     getAllConfigsFromHash: vi.fn().mockResolvedValue({ abc123: config }),
     getParticipantCompletionStatus: vi.fn().mockResolvedValue(false),
+    isNewlyCreatedParticipant: vi.fn().mockReturnValue(false),
     peekCurrentParticipantId: vi.fn().mockResolvedValue(undefined),
     updateParticipantMetadata: vi.fn().mockResolvedValue(undefined),
     isConnected: vi.fn().mockReturnValue(true),
@@ -221,6 +222,7 @@ function makeStartupEngine() {
     getModes: vi.fn().mockResolvedValue({ developmentModeEnabled: false, dataSharingEnabled: false, dataCollectionEnabled: true }),
     initializeParticipantSession: vi.fn().mockResolvedValue({ ...baseSession, metadata: { ip: '' } }),
     getParticipantCompletionStatus: vi.fn().mockResolvedValue(false),
+    isNewlyCreatedParticipant: vi.fn().mockReturnValue(false),
     updateParticipantMetadata: vi.fn().mockResolvedValue(undefined),
     peekCurrentParticipantId: vi.fn().mockResolvedValue(undefined),
     isConnected: vi.fn().mockReturnValue(true),
@@ -523,6 +525,7 @@ describe('Shell', () => {
       }),
       initializeParticipantSession: vi.fn().mockResolvedValue(baseSession),
       getParticipantCompletionStatus: vi.fn(() => pendingCompletion),
+      isNewlyCreatedParticipant: vi.fn().mockReturnValue(false),
       peekCurrentParticipantId: vi.fn().mockResolvedValue(undefined),
       getAllConfigsFromHash: vi.fn().mockResolvedValue({}),
       isConnected: vi.fn().mockReturnValue(true),
@@ -647,6 +650,7 @@ describe('Shell', () => {
       getModes: vi.fn().mockResolvedValue({ developmentModeEnabled: false, dataSharingEnabled: false, dataCollectionEnabled: true }),
       initializeParticipantSession: vi.fn().mockResolvedValue(baseSession),
       getParticipantCompletionStatus: vi.fn().mockResolvedValue(false),
+      isNewlyCreatedParticipant: vi.fn().mockReturnValue(false),
       peekCurrentParticipantId: vi.fn().mockResolvedValue(undefined),
       getAllConfigsFromHash: vi.fn().mockResolvedValue({}),
       isConnected: vi.fn().mockReturnValue(true),
@@ -739,6 +743,17 @@ describe('Shell', () => {
     expect(engine.updateStudyCondition).not.toHaveBeenCalled();
   });
 
+  test('skips the completion lookup for a participant created during this startup', async () => {
+    vi.mocked(getStudyConfig).mockResolvedValue(mockActiveConfig);
+    const engine = makeStartupEngine();
+    engine.isNewlyCreatedParticipant.mockReturnValue(true);
+    mockStorageEngine = engine;
+    const { queryByTestId } = render(<Shell globalConfig={globalConfig} />);
+    await waitFor(() => expect(queryByTestId('study-loading-barrier')).toBeNull());
+    expect(engine.isNewlyCreatedParticipant).toHaveBeenCalledWith(baseSession.participantId);
+    expect(engine.getParticipantCompletionStatus).not.toHaveBeenCalled();
+  });
+
   test('does not start metadata work when completion resolves after unmount', async () => {
     vi.mocked(getStudyConfig).mockResolvedValue(mockActiveConfig);
     const engine = makeStartupEngine();
@@ -805,6 +820,7 @@ describe('Shell', () => {
       initializeParticipantSession: vi.fn().mockResolvedValue(baseSession),
       updateParticipantMetadata: vi.fn().mockResolvedValue(undefined),
       getParticipantCompletionStatus: vi.fn().mockResolvedValue(false),
+      isNewlyCreatedParticipant: vi.fn().mockReturnValue(false),
       peekCurrentParticipantId: vi.fn().mockResolvedValue(undefined),
       getAllConfigsFromHash: vi.fn().mockResolvedValue({}),
       isConnected: vi.fn().mockReturnValue(true),
@@ -829,6 +845,7 @@ describe('Shell', () => {
       getModes: vi.fn().mockResolvedValue({ developmentModeEnabled: false, dataSharingEnabled: false, dataCollectionEnabled: true }),
       initializeParticipantSession: vi.fn().mockResolvedValue(baseSession),
       getParticipantCompletionStatus: vi.fn().mockResolvedValue(false),
+      isNewlyCreatedParticipant: vi.fn().mockReturnValue(false),
       peekCurrentParticipantId: vi.fn().mockResolvedValue(undefined),
       getAllConfigsFromHash: vi.fn().mockResolvedValue({}),
       isConnected: vi.fn().mockReturnValue(true),
@@ -852,6 +869,7 @@ describe('Shell', () => {
       getModes: vi.fn().mockResolvedValue({ developmentModeEnabled: false, dataSharingEnabled: false, dataCollectionEnabled: true }),
       initializeParticipantSession: vi.fn().mockResolvedValue(baseSession),
       getParticipantCompletionStatus: vi.fn().mockResolvedValue(false),
+      isNewlyCreatedParticipant: vi.fn().mockReturnValue(false),
       peekCurrentParticipantId: vi.fn().mockResolvedValue(undefined),
       getAllConfigsFromHash: vi.fn().mockResolvedValue({}),
       isConnected: vi.fn().mockReturnValue(true),
@@ -925,6 +943,7 @@ describe('Shell', () => {
       updateParticipantSearchParams: vi.fn().mockResolvedValue(undefined),
       updateStudyCondition: vi.fn().mockResolvedValue(undefined),
       getParticipantCompletionStatus: vi.fn().mockResolvedValue(false),
+      isNewlyCreatedParticipant: vi.fn().mockReturnValue(false),
       peekCurrentParticipantId: vi.fn().mockResolvedValue(undefined),
       getAllConfigsFromHash: vi.fn().mockResolvedValue({}),
       isConnected: vi.fn().mockReturnValue(true),
@@ -948,6 +967,7 @@ describe('Shell', () => {
         participantConfigHash: 'differentHash', // differs from hash() mock ('abc123')
       }),
       getParticipantCompletionStatus: vi.fn().mockResolvedValue(false),
+      isNewlyCreatedParticipant: vi.fn().mockReturnValue(false),
       peekCurrentParticipantId: vi.fn().mockResolvedValue(undefined),
       getAllConfigsFromHash: vi.fn().mockResolvedValue({ differentHash: mockActiveConfig }),
       isConnected: vi.fn().mockReturnValue(true),
@@ -968,6 +988,7 @@ describe('Shell', () => {
       getEngine: vi.fn().mockReturnValue('firebase'),
       getModes: vi.fn().mockResolvedValue({ developmentModeEnabled: true, dataSharingEnabled: true, dataCollectionEnabled: true }),
       getParticipantCompletionStatus: vi.fn().mockResolvedValue(false),
+      isNewlyCreatedParticipant: vi.fn().mockReturnValue(false),
       peekCurrentParticipantId: vi.fn().mockResolvedValue(undefined),
     };
 

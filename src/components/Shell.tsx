@@ -631,6 +631,9 @@ function StudyShell({ globalConfig }: { globalConfig: GlobalConfig }) {
 
         if (!resolvedModes.dataCollectionEnabled) {
           finishStartup(!!participantSession.finalized);
+        } else if (storageEngine.isNewlyCreatedParticipant(participantSession.participantId)) {
+          // A participant created during this startup cannot have completed yet.
+          finishStartup(false);
         } else {
           storageEngine.getParticipantCompletionStatus(participantSession.participantId).then((participantCompleted) => {
             if (isCurrentStartup()) {
