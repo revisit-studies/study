@@ -58,7 +58,9 @@ yarn test
 
 ## Release Instructions
 
-Releasing reVISit.dev happens automatically when a PR is merged into the `main` branch. The pull request title must exactly match the release version, e.g. `v1.0.0`. The release workflow updates version-pinned references, creates a release commit, and pushes a tag with the same name as the PR. Pushing the tag automatically creates the official GitHub release with generated release notes. The `main` branch is protected and requires two reviews before merging.
+The root `VERSION` file is the source of truth for the application version. On `dev`, update it manually with a `-dev` suffix and run `node scripts/release-version.mjs sync dev` to synchronize package metadata and current-release schema and source pointers. CI validates this state but does not update `dev`. On `main`, the release workflow reads `VERSION` from the merged release PR, removes the `-dev` suffix to set the stable version, and updates its pointers.
+
+Releasing reVISit.dev happens automatically when a release PR is merged into the `main` branch. The pull request title must exactly match the version in `VERSION` without `-dev`, e.g. `VERSION` set to `X.Y.Z-dev` requires a title of `vX.Y.Z`. CI checks on the release PR that this version is strictly higher than the latest stable release tag. The release workflow updates current-release pointers, creates a release commit, and pushes a tag with that version. The Pages workflow skips the intermediate `-dev` merge commit and deploys after the stable release commit is pushed. Pushing the tag automatically creates the official GitHub release with generated release notes. The `main` branch is protected and requires two reviews before merging.
 
 The workflow for release looks as follows:
 Develop features on feature branch

@@ -5,7 +5,7 @@ You'll also see how to randomize the order of options within a question, as well
 Make sure to review [the documentation for BaseResponse](https://revisit.dev/docs/typedoc/interfaces/BaseResponse/).
 
 ## Relevant files:
- * [The Config](https://github.com/revisit-studies/study/blob/main/public/demo-form-elements/config.json)
+ * [The Config](https://github.com/revisit-studies/study/blob/dev/public/demo-form-elements/config.json)
 
 ## Relevant documentation:
  * [Designing Forms](https://revisit.dev/docs/designing-studies/forms/)

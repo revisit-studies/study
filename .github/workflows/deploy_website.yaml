@@ -14,11 +14,35 @@ concurrency:
   queue: max
 
 jobs:
+  validate-main-version:
+    runs-on: ubuntu-latest
+    if: ${{ github.ref == 'refs/heads/main' }}
+    outputs:
+      deploy: ${{ steps.version.outputs.deploy }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Validate main version
+        id: version
+        shell: bash
+        run: |
+          set -euo pipefail
+          version="$(tr -d '\r\n' < VERSION)"
+          if [[ "$version" == *-dev ]]; then
+            node scripts/release-version.mjs check dev
+            echo "deploy=false" >> "$GITHUB_OUTPUT"
+            echo "Skipping Pages deployment while the release workflow prepares the stable version."
+          else
+            node scripts/release-version.mjs check main
+            echo "deploy=true" >> "$GITHUB_OUTPUT"
+          fi
+
   deploy-main:
+    needs: validate-main-version
     runs-on: ubuntu-latest
     permissions:
       contents: write
-    if: ${{ github.ref == 'refs/heads/main' }}
+    if: ${{ github.ref == 'refs/heads/main' && needs.validate-main-version.outputs.deploy == 'true' }}
 
     steps:
       - uses: actions/checkout@v7
@@ -33,7 +57,7 @@ jobs:
       - name: Build main deployment
         run: |
           if [ "$GITHUB_REPOSITORY" = "revisit-studies/study" ]; then
-            VITE_RECAPTCHA_ENTERPRISE_SITE_KEY=6LeksfUtAAAAADwbkOg-HyN8ZkMD04uIbJvrSWeX VITE_STORAGE_ENGINE=firebase VITE_REPO_URL=https://github.com/revisit-studies/study/tree/main/public/ yarn build
+            VITE_RECAPTCHA_ENTERPRISE_SITE_KEY=6LeksfUtAAAAADwbkOg-HyN8ZkMD04uIbJvrSWeX VITE_STORAGE_ENGINE=firebase VITE_REPO_URL=https://github.com/revisit-studies/study/tree/dev/public/ yarn build
           else
             if [ -z "$VITE_STORAGE_ENGINE" ]; then unset VITE_STORAGE_ENGINE; fi
             yarn build
@@ -58,7 +82,7 @@ jobs:
         run: yarn build
         env:
           VITE_BASE_PATH: "/${{ github.event.repository.name }}/supabase/"
-          VITE_REPO_URL: "https://github.com/revisit-studies/study/tree/main/public/"
+          VITE_REPO_URL: "https://github.com/revisit-studies/study/tree/dev/public/"
           VITE_STORAGE_ENGINE: supabase
 
       - name: Deploy current-only main Supabase snapshot

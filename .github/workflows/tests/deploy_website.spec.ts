@@ -10,9 +10,10 @@ import { afterEach, expect, test } from 'vitest';
 import { loadEnv } from 'vite';
 import { parse } from 'yaml';
 
-type Step = { name?: string; if?: string; uses?: string; run?: string; env?: Record<string, string>; with?: Record<string, string> };
+type Step = { name?: string; id?: string; if?: string; uses?: string; run?: string; env?: Record<string, string>; with?: Record<string, string> };
+type Job = { steps: Step[]; needs?: string; if?: string; outputs?: Record<string, string> };
 const root = fileURLToPath(new URL('../../../', import.meta.url));
-const workflow = parse(readFileSync(resolve(root, '.github/workflows/deploy_website.yaml'), 'utf8')) as { jobs: Record<string, { steps: Step[] }> };
+const workflow = parse(readFileSync(resolve(root, '.github/workflows/deploy_website.yaml'), 'utf8')) as { jobs: Record<string, Job> };
 const temporaryDirectories: string[] = [];
 function temporaryDirectory() {
   const directory = mkdtempSync(resolve(tmpdir(), 'revisit-pages-'));
@@ -28,6 +29,22 @@ function expand(value: string, engine = '') {
     'github.event.number': '1',
   }[expression] ?? ''));
 }
+
+test('main deployment waits for a stable version and skips the merged dev-version release commit', () => {
+  const validationJob = workflow.jobs['validate-main-version'];
+  const validation = validationJob.steps.find(({ name }) => name === 'Validate main version');
+  const deployJob = workflow.jobs['deploy-main'];
+
+  // eslint-disable-next-line no-template-curly-in-string -- Literal GitHub Actions expression.
+  expect(validationJob.outputs?.deploy).toBe('${{ steps.version.outputs.deploy }}');
+  expect(validation?.id).toBe('version');
+  expect(validation?.run).toContain('node scripts/release-version.mjs check dev');
+  expect(validation?.run).toContain('node scripts/release-version.mjs check main');
+  expect(validation?.run).toContain('deploy=false');
+  expect(validation?.run).toContain('deploy=true');
+  expect(deployJob.needs).toBe('validate-main-version');
+  expect(deployJob.if).toContain("needs.validate-main-version.outputs.deploy == 'true'");
+});
 
 test.each(['deploy-main', 'deploy-dev', 'pr-deploy'])('release regression: %s honors the downstream storage variable', (job) => {
   const directory = temporaryDirectory();

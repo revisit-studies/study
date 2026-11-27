@@ -13,12 +13,28 @@ jobs:
     name: Release pushed tag
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.ref }}
+          fetch-depth: 0
+
+      - name: Validate prepared release tag
+        env:
+          tag: ${{ github.ref_name }}
+        run: |
+          git fetch origin main
+          node scripts/release-version.mjs validate-tag "$tag"
+
       - name: Create release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           tag: ${{ github.ref_name }}
         run: |
-          gh release create "$tag" \
-              --repo="$GITHUB_REPOSITORY" \
-              --title="${tag}" \
-              --generate-notes
+          if gh release view "$tag" --repo="$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "Release $tag already exists; skipping duplicate release creation."
+          else
+            gh release create "$tag" \
+                --repo="$GITHUB_REPOSITORY" \
+                --title="${tag}" \
+                --generate-notes
+          fi

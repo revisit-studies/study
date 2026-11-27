@@ -16,7 +16,7 @@ The study uses `"colorMode": "dark"` in `uiConfig`.
 
 ## Relevant files:
 
-- [The Config](https://github.com/revisit-studies/study/blob/main/public/demo-dark-mode/config.json)
+- [The Config](https://github.com/revisit-studies/study/blob/dev/public/demo-dark-mode/config.json)
 
 ## Relevant documentation:
 

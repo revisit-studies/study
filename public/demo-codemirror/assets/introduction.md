@@ -38,9 +38,9 @@ Your final code, the results of your last test run, how many times you ran the t
 Every entry becomes its own node in the trial's provenance graph. Each node keeps the eight most recent log entries and the total count, rather than copying the entire log into every state. When an analyst scrubs through a recorded session, the editor is driven back to the document, caret or selection, recent log, and last test results at that node. The editor is locked during replay, and replay activity is not recorded as participant input.
 
 ## Relevant files:
- * [The Config](https://github.com/revisit-studies/study/blob/main/public/demo-codemirror/config.json)
- * [The React Stimulus](https://github.com/revisit-studies/study/blob/main/src/public/demo-codemirror/assets/CodeEditorTask.tsx)
- * [The CodeMirror Extension](https://github.com/revisit-studies/study/blob/main/src/public/demo-codemirror/assets/trrackCodeMirror.ts)
+ * [The Config](https://github.com/revisit-studies/study/blob/dev/public/demo-codemirror/config.json)
+ * [The React Stimulus](https://github.com/revisit-studies/study/blob/dev/src/public/demo-codemirror/assets/CodeEditorTask.tsx)
+ * [The CodeMirror Extension](https://github.com/revisit-studies/study/blob/dev/src/public/demo-codemirror/assets/trrackCodeMirror.ts)
 
 ## Relevant documentation:
  * [Designing a React Stimulus](https://revisit.dev/docs/designing-studies/react-stimulus/)

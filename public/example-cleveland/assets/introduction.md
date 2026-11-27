@@ -5,8 +5,8 @@ This is a more complex example to show how to embed React.js components into the
 This study is a replication of a graphical perception study by Cleveland & McGill 1984 with the Heer & Bostock 2010 extension.
 
 ## Relevant files:
- * [The Config](https://github.com/revisit-studies/study/blob/main/public/example-cleveland/config.json)
- * [cm-training.png](https://github.com/revisit-studies/study/blob/main/public/example-cleveland/assets/cm-training.png)
- * [consent-cm.md](https://github.com/revisit-studies/study/blob/main/public/example-cleveland/assets/consent-cm.md)
- * [help.md](https://github.com/revisit-studies/study/blob/main/public/example-cleveland/assets/help.md)
+ * [The Config](https://github.com/revisit-studies/study/blob/dev/public/example-cleveland/config.json)
+ * [cm-training.png](https://github.com/revisit-studies/study/blob/dev/public/example-cleveland/assets/cm-training.png)
+ * [consent-cm.md](https://github.com/revisit-studies/study/blob/dev/public/example-cleveland/assets/consent-cm.md)
+ * [help.md](https://github.com/revisit-studies/study/blob/dev/public/example-cleveland/assets/help.md)
 

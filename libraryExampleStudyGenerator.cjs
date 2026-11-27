@@ -12,8 +12,14 @@ const path = require('path');
 const { generateLibraryDocs, getLibraries } = require('./libraryDocGenerator.cjs');
 
 // Create example study config template
-const createExampleConfig = (libraryName) => ({
-  $schema: 'https://raw.githubusercontent.com/revisit-studies/study/dev/src/parser/StudyConfigSchema.json',
+const getSourceRef = (base) => {
+  const versionPath = path.join(base, 'VERSION');
+  const version = fs.existsSync(versionPath) ? fs.readFileSync(versionPath, 'utf8').trim() : '0.0.0-dev';
+  return version.endsWith('-dev') ? 'dev' : `v${version}`;
+};
+
+const createExampleConfig = (libraryName, sourceRef = 'dev') => ({
+  $schema: `https://raw.githubusercontent.com/revisit-studies/study/${sourceRef}/src/parser/StudyConfigSchema.json`,
   studyMetadata: {
     title: `${libraryName} Example Study`,
     version: '1.0.0',
@@ -47,6 +53,7 @@ const createExampleConfig = (libraryName) => ({
 const generateLibraryExamples = (base, generateDocsFn = generateLibraryDocs) => {
   const librariesPath = path.join(base, 'public', 'libraries');
   const publicPath = path.join(base, 'public');
+  const sourceRef = getSourceRef(base);
 
   // Process each library
   const libraries = getLibraries(librariesPath);
@@ -70,7 +77,7 @@ const generateLibraryExamples = (base, generateDocsFn = generateLibraryDocs) => 
 
       // Create config.json
       const configPath = path.join(examplePath, 'config.json');
-      const configContent = createExampleConfig(library);
+      const configContent = createExampleConfig(library, sourceRef);
       fs.writeFileSync(configPath, `${JSON.stringify(configContent, null, 2)}\n`);
       // eslint-disable-next-line no-console
       console.log(`Created/Updated ${exampleFolderName}/config.json`);

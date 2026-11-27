@@ -8,7 +8,7 @@ For example, if the word RED is shown in blue, type "BLUE."
 You can proceed when you have entered a response.
 
 ## Relevant files:
- * [The Config](https://github.com/revisit-studies/study/blob/main/public/demo-react-trrack/config.json)
+ * [The Config](https://github.com/revisit-studies/study/blob/dev/public/demo-react-trrack/config.json)
  
 ## Relevant documentation:
  * [Designing a React Stimulus](https://revisit.dev/docs/designing-studies/react-stimulus/)

@@ -5,57 +5,159 @@ on:
     branches: [main]
     types: [closed]
 
-jobs:
-  release:
-    if: github.event.pull_request.merged && startsWith(github.event.pull_request.title, 'v')
-    runs-on: ubuntu-latest
-    env:
-      RELEASE_TAG: ${{ github.event.pull_request.title }}
-    steps:
-      - name: Ensure PR title matches vx.x.x
-        run: |
-          [[ "$RELEASE_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]
-        shell: bash
+permissions:
+  contents: write
+  actions: read
+  pull-requests: read
 
+jobs:
+  prepare:
+    if: github.event.pull_request.merged
+    runs-on: ubuntu-latest
+    outputs:
+      publish: ${{ steps.prepare.outputs.publish }}
+      release_tag: ${{ steps.prepare.outputs.release_tag }}
+    env:
+      RELEASE_TITLE: ${{ github.event.pull_request.title }}
+      RELEASE_MERGE_SHA: ${{ github.event.pull_request.merge_commit_sha }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
       - uses: actions/checkout@v7
         with:
+          ref: main
+          fetch-depth: 0
           token: ${{ secrets.PAT }}
 
-      - name: Run make-release.sh to modify version numbers across the repo
-        run: |
-          find src public -type f -exec env LANG=C sed -i -E "s/githubusercontent\.com\/re[Vv][Ii][Ss]it-studies\/study\/.*\/src/githubusercontent.com\/revisit-studies\/study\/${RELEASE_TAG}\/src/g" {} +
-          find src public -type f -exec env LANG=C sed -i -E "s/github.com\/re[Vv][Ii][Ss]it-studies\/study\/tree\/v[^\/]*\/([^\s]*)/github.com\/revisit-studies\/study\/tree\/${RELEASE_TAG}\/\1/g" {} +
+      - name: Validate release PR title
+        run: node scripts/release-version.mjs validate-title "$RELEASE_TITLE"
 
-      - name: Commit changes
+      - name: Prepare release
+        id: prepare
+        shell: bash
         run: |
+          set -euo pipefail
+          git fetch origin main
+          git checkout --detach origin/main
+          git merge-base --is-ancestor "$RELEASE_MERGE_SHA" HEAD || {
+            echo "Release PR merge $RELEASE_MERGE_SHA is not present on main." >&2
+            exit 1
+          }
+
+          MERGED_VERSION="$(git show "$RELEASE_MERGE_SHA:VERSION")"
+          RELEASE_TAG="$(node scripts/release-version.mjs release-tag "$MERGED_VERSION" "$RELEASE_TITLE")"
+          echo "release_tag=$RELEASE_TAG" >> "$GITHUB_OUTPUT"
+
+          if git show-ref --verify --quiet "refs/tags/$RELEASE_TAG"; then
+            validation_root="$(mktemp -d)"
+            trap 'git worktree remove --force "$validation_root/checkout" >/dev/null 2>&1 || true; rmdir "$validation_root" 2>/dev/null || true' EXIT
+            git worktree add --detach "$validation_root/checkout" "$RELEASE_TAG"
+            node "$validation_root/checkout/scripts/release-version.mjs" validate-tag "$RELEASE_TAG" "$RELEASE_MERGE_SHA"
+            echo "publish=true" >> "$GITHUB_OUTPUT"
+            echo "Release $RELEASE_TAG was already prepared for this PR; allowing publication jobs to retry."
+            exit 0
+          fi
+
+          gh api --paginate --jq '.[] | select(.merged_at != null and .merge_commit_sha != null) | {title, merge_commit_sha}' \
+            "repos/$GITHUB_REPOSITORY/pulls?state=closed&base=main&per_page=100" \
+            > "$RUNNER_TEMP/merged-main-prs.jsonl"
+          node scripts/release-version.mjs validate-release-order "${RELEASE_TAG#v}" "$RELEASE_MERGE_SHA" "$RUNNER_TEMP/merged-main-prs.jsonl"
+          node scripts/release-version.mjs release "$RELEASE_TAG"
+          git add VERSION package.json package-lock.json src public README.md .env .github/workflows
+          if [[ -f typedocReadMe.md ]]; then git add typedocReadMe.md; fi
           git config --local user.email "jackwilburn@tutanota.com"
           git config --local user.name "Jack Wilburn"
-          git add .
-          git commit -m "Release version $RELEASE_TAG"
-          git tag -a "$RELEASE_TAG" -m "Release version $RELEASE_TAG"
-          git push --follow-tags
+          git commit --allow-empty -m "Release version $RELEASE_TAG"
+          test "$(tr -d '\n' < VERSION)" = "${RELEASE_TAG#v}"
+          git tag -a "$RELEASE_TAG" -m "Release version $RELEASE_TAG" -m "Release PR merge $RELEASE_MERGE_SHA"
+          git push --atomic origin HEAD:refs/heads/main "refs/tags/$RELEASE_TAG"
+          echo "publish=true" >> "$GITHUB_OUTPUT"
 
+  publish-docs:
+    name: publish-docs
+    needs: prepare
+    if: ${{ github.repository_owner == 'revisit-studies' && needs.prepare.outputs.publish == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Skip dispatch already completed in an earlier attempt
+        id: prior
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          for ((attempt = 1; attempt < GITHUB_RUN_ATTEMPT; attempt++)); do
+            prior_jobs="$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/attempts/$attempt/jobs")"
+            jq -e 'type == "object" and (.jobs | type == "array")' <<< "$prior_jobs" > /dev/null
+            if jq -e --arg job "$GITHUB_JOB" 'any(.jobs[]; .name == $job and .conclusion == "success")' <<< "$prior_jobs" > /dev/null; then
+              echo "skip=true" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+          done
+          echo "skip=false" >> "$GITHUB_OUTPUT"
       - uses: peter-evans/repository-dispatch@v4
-        name: Build documentation in revisit.dev if repo is in revisit-studies
-        if: ${{ github.repository_owner == 'revisit-studies' }}
+        name: Build documentation in revisit.dev
+        if: steps.prior.outputs.skip != 'true'
         with:
           token: ${{ secrets.PAT }}
           repository: revisit-studies/reVISit-studies.github.io
           event-type: study_repo_publish
-          client-payload: '{"release_tag": "${{ env.RELEASE_TAG }}"}'
+          client-payload: '{"release_tag": "${{ needs.prepare.outputs.release_tag }}"}'
 
+  publish-revisitpy:
+    name: publish-revisitpy
+    needs: prepare
+    if: ${{ github.repository_owner == 'revisit-studies' && needs.prepare.outputs.publish == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Skip dispatch already completed in an earlier attempt
+        id: prior
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          for ((attempt = 1; attempt < GITHUB_RUN_ATTEMPT; attempt++)); do
+            prior_jobs="$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/attempts/$attempt/jobs")"
+            jq -e 'type == "object" and (.jobs | type == "array")' <<< "$prior_jobs" > /dev/null
+            if jq -e --arg job "$GITHUB_JOB" 'any(.jobs[]; .name == $job and .conclusion == "success")' <<< "$prior_jobs" > /dev/null; then
+              echo "skip=true" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+          done
+          echo "skip=false" >> "$GITHUB_OUTPUT"
       - uses: peter-evans/repository-dispatch@v4
-        name: Build documentation in revisit.dev if repo is in revisit-studies
-        if: ${{ github.repository_owner == 'revisit-studies' }}
+        name: Publish revisitpy
+        if: steps.prior.outputs.skip != 'true'
         with:
           token: ${{ secrets.PAT }}
           repository: revisit-studies/revisitpy
           event-type: study_repo_publish
+          client-payload: '{"release_tag": "${{ needs.prepare.outputs.release_tag }}"}'
 
+  publish-revisitpy-server:
+    name: publish-revisitpy-server
+    needs: prepare
+    if: ${{ github.repository_owner == 'revisit-studies' && needs.prepare.outputs.publish == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Skip dispatch already completed in an earlier attempt
+        id: prior
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          for ((attempt = 1; attempt < GITHUB_RUN_ATTEMPT; attempt++)); do
+            prior_jobs="$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/attempts/$attempt/jobs")"
+            jq -e 'type == "object" and (.jobs | type == "array")' <<< "$prior_jobs" > /dev/null
+            if jq -e --arg job "$GITHUB_JOB" 'any(.jobs[]; .name == $job and .conclusion == "success")' <<< "$prior_jobs" > /dev/null; then
+              echo "skip=true" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+          done
+          echo "skip=false" >> "$GITHUB_OUTPUT"
       - uses: peter-evans/repository-dispatch@v4
-        name: Build documentation in revisit.dev if repo is in revisit-studies
-        if: ${{ github.repository_owner == 'revisit-studies' }}
+        name: Publish revisitpy-server
+        if: steps.prior.outputs.skip != 'true'
         with:
           token: ${{ secrets.PAT }}
           repository: revisit-studies/revisitpy-server
           event-type: study_repo_publish
+          client-payload: '{"release_tag": "${{ needs.prepare.outputs.release_tag }}"}'

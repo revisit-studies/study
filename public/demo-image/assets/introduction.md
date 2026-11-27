@@ -35,7 +35,7 @@ You will receive an extra $0.15 for every $1,000 that
 you have in your budget at the end of 48 days.
 
 ## Relevant files:
- * [The Config](https://github.com/revisit-studies/study/blob/main/public/demo-image/config.json)
+ * [The Config](https://github.com/revisit-studies/study/blob/dev/public/demo-image/config.json)
 
 ## Relevant documentation:
  * [Designing Image/Video Stimuli](https://revisit.dev/docs/designing-studies/image-video-stimulus/)
