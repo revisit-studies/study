@@ -10,9 +10,10 @@ import { afterEach, expect, test } from 'vitest';
 import { loadEnv } from 'vite';
 import { parse } from 'yaml';
 
-type Step = { name?: string; if?: string; uses?: string; run?: string; env?: Record<string, string>; with?: Record<string, string> };
+type Step = { name?: string; id?: string; if?: string; uses?: string; run?: string; env?: Record<string, string>; with?: Record<string, string> };
+type Job = { steps: Step[]; needs?: string; if?: string; outputs?: Record<string, string> };
 const root = fileURLToPath(new URL('../../../', import.meta.url));
-const workflow = parse(readFileSync(resolve(root, '.github/workflows/deploy_website.yaml'), 'utf8')) as { jobs: Record<string, { steps: Step[] }> };
+const workflow = parse(readFileSync(resolve(root, '.github/workflows/deploy_website.yaml'), 'utf8')) as { jobs: Record<string, Job> };
 const temporaryDirectories: string[] = [];
 function temporaryDirectory() {
   const directory = mkdtempSync(resolve(tmpdir(), 'revisit-pages-'));
@@ -29,16 +30,20 @@ function expand(value: string, engine = '') {
   }[expression] ?? ''));
 }
 
-test('main deployment validates stable version metadata before building', () => {
-  const { steps } = workflow.jobs['deploy-main'];
-  const validationIndex = steps.findIndex(({ name }) => name === 'Validate stable release version');
-  const buildIndex = steps.findIndex(({ name }) => name === 'Build main deployment');
-  const publishIndex = steps.findIndex(({ name }) => name === 'Deploy current-only main snapshot');
+test('main deployment waits for a stable version and skips the merged dev-version release commit', () => {
+  const validationJob = workflow.jobs['validate-main-version'];
+  const validation = validationJob.steps.find(({ name }) => name === 'Validate main version');
+  const deployJob = workflow.jobs['deploy-main'];
 
-  expect(validationIndex).toBeGreaterThan(-1);
-  expect(steps[validationIndex].run).toBe('node scripts/release-version.mjs check main');
-  expect(validationIndex).toBeLessThan(buildIndex);
-  expect(validationIndex).toBeLessThan(publishIndex);
+  // eslint-disable-next-line no-template-curly-in-string -- Literal GitHub Actions expression.
+  expect(validationJob.outputs?.deploy).toBe('${{ steps.version.outputs.deploy }}');
+  expect(validation?.id).toBe('version');
+  expect(validation?.run).toContain('node scripts/release-version.mjs check dev');
+  expect(validation?.run).toContain('node scripts/release-version.mjs check main');
+  expect(validation?.run).toContain('deploy=false');
+  expect(validation?.run).toContain('deploy=true');
+  expect(deployJob.needs).toBe('validate-main-version');
+  expect(deployJob.if).toContain("needs.validate-main-version.outputs.deploy == 'true'");
 });
 
 test.each(['deploy-main', 'deploy-dev', 'pr-deploy'])('release regression: %s honors the downstream storage variable', (job) => {

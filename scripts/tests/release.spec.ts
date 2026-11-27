@@ -10,7 +10,7 @@ import {
 } from 'vitest';
 import { parse } from 'yaml';
 import {
-  branchForPullRequestCheck, checkVersion, mergedReleaseVersionsAfter, parseReleaseTitle, setVersion, syncVersion, validatePreparedTag, validateReleaseOrder, validateVersionForBranch,
+  branchForPullRequestCheck, checkVersion, mergedReleaseVersionsAfter, parseReleaseTitle, releaseTagFromDevVersion, setVersion, syncVersion, validatePreparedTag, validateReleaseOrder, validateReleaseVersionAboveLatest, validateVersionForBranch,
 } from '../release-version.mjs';
 
 const workflow = parse(await readFile(new URL('../../.github/workflows/release.yaml', import.meta.url), 'utf8'));
@@ -117,7 +117,7 @@ afterEach(async () => {
 describe('study release workflow contract', () => {
   it('validates every merged pull request targeting main before publication', () => {
     expect(prepare.if).toBe('github.event.pull_request.merged');
-    expect(prepare.steps[1].run).toContain('validate-title "$RELEASE_TAG"');
+    expect(prepare.steps[1].run).toContain('validate-title "$RELEASE_TITLE"');
   });
 
   it.each([
@@ -129,6 +129,32 @@ describe('study release workflow contract', () => {
 
   it.each(['v3.0.0-beta.1', 'v3.0', '3.0.0', 'v3.0.0\n', 'v3.0.0$(true)'])('rejects invalid release title %j', (title) => {
     expect(() => parseReleaseTitle(title)).toThrow(/must exactly match vX\.Y\.Z/);
+  });
+
+  it('derives the release tag from the merged dev VERSION and checks the PR title', () => {
+    expect(releaseTagFromDevVersion('3.2.1-dev\n', 'v3.2.1')).toBe('v3.2.1');
+    expect(() => releaseTagFromDevVersion('3.2.1-dev', 'v3.2.0')).toThrow(/must match the merged VERSION/);
+    expect(() => releaseTagFromDevVersion('3.2.1', 'v3.2.1')).toThrow(/dev branch VERSION must end in -dev/);
+  });
+
+  it('requires a proposed release to be strictly newer than the latest release tag', () => {
+    expect(validateReleaseVersionAboveLatest('3.2.1-dev', 'v3.2.1', ['v3.0.0', 'v3.2.0'])).toBe('v3.2.1');
+    expect(validateReleaseVersionAboveLatest('3.2.1-dev', 'v3.2.1', [])).toBe('v3.2.1');
+    expect(() => validateReleaseVersionAboveLatest('3.2.0-dev', 'v3.2.0', ['v3.2.0'])).toThrow(/must be higher than the latest release v3\.2\.0/);
+    expect(() => validateReleaseVersionAboveLatest('3.1.9-dev', 'v3.1.9', ['v3.2.0'])).toThrow(/must be higher than the latest release v3\.2\.0/);
+  });
+
+  it('checks release PR versions on pull request events targeting main', async () => {
+    const lintWorkflow = parse(await readFile(new URL('../../.github/workflows/lint_build.yaml', import.meta.url), 'utf8'));
+    const { steps } = lintWorkflow.jobs.lint;
+    const fetchTagsIndex = steps.findIndex((step: { name?: string }) => step.name === 'Fetch stable release tags');
+    const validateReleaseIndex = steps.findIndex((step: { name?: string }) => step.name === 'Check proposed release version is newer than the latest release');
+
+    expect(fetchTagsIndex).toBeGreaterThan(-1);
+    expect(validateReleaseIndex).toBeGreaterThan(fetchTagsIndex);
+    expect(steps[fetchTagsIndex].run).toBe('git fetch --tags --force origin');
+    expect(steps[validateReleaseIndex].run).toContain('validate-release-pr "$PR_TITLE"');
+    expect(steps[validateReleaseIndex].if).toContain("github.base_ref == 'main'");
   });
 
   it('requires development and stable versions on their respective branches', () => {
@@ -160,6 +186,38 @@ describe('study release workflow contract', () => {
     }));
 
     expect(() => execFileSync(process.execPath, [script, 'check-pr', 'main', 'v3.0.0'])).not.toThrow();
+  });
+
+  it('CLI derives the release tag and validates it against fetched tags', async () => {
+    const directory = await mkdtemp(path.join(os.tmpdir(), 'revisit-release-cli-'));
+    temporaryDirectories.push(directory);
+    const scriptDirectory = path.join(directory, 'scripts');
+    await mkdir(scriptDirectory);
+    const script = path.join(scriptDirectory, 'release-version.mjs');
+    await copyFile(new URL('../release-version.mjs', import.meta.url), script);
+    await writeFile(path.join(directory, 'VERSION'), '3.2.1-dev\n');
+
+    const git = (args: string[]) => execFileSync('git', args, { cwd: directory, encoding: 'utf8' });
+    git(['init', '--initial-branch=main']);
+    git(['config', 'user.email', 'release-test@example.com']);
+    git(['config', 'user.name', 'Release Test']);
+    git(['add', 'VERSION']);
+    git(['commit', '-m', 'Set release candidate version']);
+    git(['tag', '-a', 'v3.2.0', '-m', 'Release v3.2.0']);
+
+    expect(execFileSync(process.execPath, [script, 'release-tag', '3.2.1-dev', 'v3.2.1'], { encoding: 'utf8' })).toBe('v3.2.1\n');
+    expect(() => execFileSync(process.execPath, [script, 'validate-release-pr', 'v3.2.1'])).not.toThrow();
+
+    await writeFile(path.join(directory, 'VERSION'), '3.2.0-dev\n');
+    const staleRelease = spawnSync(process.execPath, [script, 'validate-release-pr', 'v3.2.0'], { encoding: 'utf8' });
+    expect(staleRelease.status).toBe(1);
+    expect(staleRelease.stderr).toContain('must be higher than the latest release v3.2.0');
+  });
+
+  it('reruns release version validation when the pull request title is edited', async () => {
+    const lintWorkflow = parse(await readFile(new URL('../../.github/workflows/lint_build.yaml', import.meta.url), 'utf8'));
+
+    expect(lintWorkflow.on.pull_request.types).toEqual(['opened', 'synchronize', 'reopened', 'edited']);
   });
 
   it('rejects delayed releases older than the version already prepared on main', () => {
@@ -242,6 +300,9 @@ describe('study release workflow contract', () => {
 
     expect(prepareStep.run).toContain('git show-ref --verify --quiet "refs/tags/$RELEASE_TAG"');
     expect(prepareStep.run).toContain('git merge-base --is-ancestor "$RELEASE_MERGE_SHA" HEAD');
+    expect(prepareStep.run).toContain('git show "$RELEASE_MERGE_SHA:VERSION"');
+    expect(prepareStep.run).toContain('release-tag "$MERGED_VERSION" "$RELEASE_TITLE"');
+    expect(prepareStep.run).toContain('release_tag=$RELEASE_TAG');
     expect(prepareStep.run).toContain('git worktree add --detach "$validation_root/checkout" "$RELEASE_TAG"');
     expect(prepareStep.run).toContain('validate-tag "$RELEASE_TAG" "$RELEASE_MERGE_SHA"');
     expect(prepare.steps[0].with.ref).toBe('main');
@@ -263,6 +324,10 @@ describe('study release workflow contract', () => {
       && !job.steps[0].run?.includes('| grep')
       && job.steps[1].if?.includes("steps.prior.outputs.skip != 'true'"));
     expect(dispatchJobsHaveExpectedGuards).toBe(true);
+    dispatchJobs.forEach((job: { steps: { with?: { 'client-payload'?: string } }[] }) => {
+      // eslint-disable-next-line no-template-curly-in-string -- Literal GitHub Actions expression.
+      expect(job.steps[1].with?.['client-payload']).toContain('${{ needs.prepare.outputs.release_tag }}');
+    });
   });
 
   it('keeps release workflow shell steps syntactically valid', () => {

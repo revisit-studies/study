@@ -2,6 +2,7 @@ name: Lint and build
 
 on: 
   pull_request:
+    types: [opened, synchronize, reopened, edited]
     branches:
       - '**'
   
@@ -15,6 +16,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+
+      - name: Fetch stable release tags
+        if: ${{ github.event_name == 'pull_request' && github.base_ref == 'main' && startsWith(github.event.pull_request.title, 'v') }}
+        run: git fetch --tags --force origin
 
       - uses: actions/setup-node@v7
         with:
@@ -33,6 +38,12 @@ jobs:
           fi
         env:
           GITHUB_BASE_REF: ${{ github.base_ref }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+
+      - name: Check proposed release version is newer than the latest release
+        if: ${{ github.event_name == 'pull_request' && github.base_ref == 'main' && startsWith(github.event.pull_request.title, 'v') }}
+        run: node scripts/release-version.mjs validate-release-pr "$PR_TITLE"
+        env:
           PR_TITLE: ${{ github.event.pull_request.title }}
 
       - name: Run linter

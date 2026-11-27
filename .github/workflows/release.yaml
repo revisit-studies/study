@@ -16,8 +16,9 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       publish: ${{ steps.prepare.outputs.publish }}
+      release_tag: ${{ steps.prepare.outputs.release_tag }}
     env:
-      RELEASE_TAG: ${{ github.event.pull_request.title }}
+      RELEASE_TITLE: ${{ github.event.pull_request.title }}
       RELEASE_MERGE_SHA: ${{ github.event.pull_request.merge_commit_sha }}
       GH_TOKEN: ${{ github.token }}
     steps:
@@ -28,7 +29,7 @@ jobs:
           token: ${{ secrets.PAT }}
 
       - name: Validate release PR title
-        run: node scripts/release-version.mjs validate-title "$RELEASE_TAG"
+        run: node scripts/release-version.mjs validate-title "$RELEASE_TITLE"
 
       - name: Prepare release
         id: prepare
@@ -41,6 +42,10 @@ jobs:
             echo "Release PR merge $RELEASE_MERGE_SHA is not present on main." >&2
             exit 1
           }
+
+          MERGED_VERSION="$(git show "$RELEASE_MERGE_SHA:VERSION")"
+          RELEASE_TAG="$(node scripts/release-version.mjs release-tag "$MERGED_VERSION" "$RELEASE_TITLE")"
+          echo "release_tag=$RELEASE_TAG" >> "$GITHUB_OUTPUT"
 
           if git show-ref --verify --quiet "refs/tags/$RELEASE_TAG"; then
             validation_root="$(mktemp -d)"
@@ -95,7 +100,7 @@ jobs:
           token: ${{ secrets.PAT }}
           repository: revisit-studies/reVISit-studies.github.io
           event-type: study_repo_publish
-          client-payload: '{"release_tag": "${{ github.event.pull_request.title }}"}'
+          client-payload: '{"release_tag": "${{ needs.prepare.outputs.release_tag }}"}'
 
   publish-revisitpy:
     name: publish-revisitpy
@@ -125,7 +130,7 @@ jobs:
           token: ${{ secrets.PAT }}
           repository: revisit-studies/revisitpy
           event-type: study_repo_publish
-          client-payload: '{"release_tag": "${{ github.event.pull_request.title }}"}'
+          client-payload: '{"release_tag": "${{ needs.prepare.outputs.release_tag }}"}'
 
   publish-revisitpy-server:
     name: publish-revisitpy-server
@@ -155,4 +160,4 @@ jobs:
           token: ${{ secrets.PAT }}
           repository: revisit-studies/revisitpy-server
           event-type: study_repo_publish
-          client-payload: '{"release_tag": "${{ github.event.pull_request.title }}"}'
+          client-payload: '{"release_tag": "${{ needs.prepare.outputs.release_tag }}"}'

@@ -14,17 +14,38 @@ concurrency:
   queue: max
 
 jobs:
-  deploy-main:
+  validate-main-version:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
     if: ${{ github.ref == 'refs/heads/main' }}
-
+    outputs:
+      deploy: ${{ steps.version.outputs.deploy }}
     steps:
       - uses: actions/checkout@v7
 
-      - name: Validate stable release version
-        run: node scripts/release-version.mjs check main
+      - name: Validate main version
+        id: version
+        shell: bash
+        run: |
+          set -euo pipefail
+          version="$(tr -d '\r\n' < VERSION)"
+          if [[ "$version" == *-dev ]]; then
+            node scripts/release-version.mjs check dev
+            echo "deploy=false" >> "$GITHUB_OUTPUT"
+            echo "Skipping Pages deployment while the release workflow prepares the stable version."
+          else
+            node scripts/release-version.mjs check main
+            echo "deploy=true" >> "$GITHUB_OUTPUT"
+          fi
+
+  deploy-main:
+    needs: validate-main-version
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    if: ${{ github.ref == 'refs/heads/main' && needs.validate-main-version.outputs.deploy == 'true' }}
+
+    steps:
+      - uses: actions/checkout@v7
 
       - uses: actions/setup-node@v7
         with:

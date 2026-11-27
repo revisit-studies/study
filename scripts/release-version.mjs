@@ -19,6 +19,16 @@ export function parseReleaseTitle(title) {
   return match.slice(1).join('.');
 }
 
+export function releaseTagFromDevVersion(version, title) {
+  const devVersion = version.trim();
+  validateVersionForBranch(devVersion, 'dev');
+  const releaseVersion = devVersion.slice(0, -'-dev'.length);
+  if (parseReleaseTitle(title) !== releaseVersion) {
+    throw new Error(`Release PR title must match the merged VERSION ${devVersion}`);
+  }
+  return `v${releaseVersion}`;
+}
+
 export function validateVersionForBranch(version, branch) {
   if (!VERSION_PATTERN.test(version)) {
     throw new Error(`VERSION must contain a semantic version with an optional -dev suffix; received ${JSON.stringify(version)}`);
@@ -62,6 +72,24 @@ export function validateReleaseOrder(currentVersion, releaseVersion, laterReleas
   if (supersedingRelease) {
     throw new Error(`Release ${releaseVersion} is superseded by later merged release ${supersedingRelease}`);
   }
+}
+
+export function validateReleaseVersionAboveLatest(devVersion, title, releaseTags) {
+  const releaseTag = releaseTagFromDevVersion(devVersion, title);
+  const releaseVersion = parseReleaseTitle(releaseTag);
+  const latestVersion = releaseTags.reduce((latest, tag) => {
+    try {
+      const version = parseReleaseTitle(tag);
+      return latest === undefined || compareVersions(version, latest) > 0 ? version : latest;
+    } catch {
+      return latest;
+    }
+  }, undefined);
+
+  if (latestVersion !== undefined && compareVersions(releaseVersion, latestVersion) <= 0) {
+    throw new Error(`Release version ${releaseVersion} must be higher than the latest release v${latestVersion}`);
+  }
+  return releaseTag;
 }
 
 async function* walk(directory) {
@@ -200,6 +228,18 @@ async function main() {
     parseReleaseTitle(value ?? '');
     return;
   }
+  if (command === 'release-tag') {
+    const [, devVersion, title] = process.argv.slice(2);
+    console.log(releaseTagFromDevVersion(devVersion ?? '', title ?? ''));
+    return;
+  }
+  if (command === 'validate-release-pr') {
+    const [, title] = process.argv.slice(2);
+    const version = (await readFile(path.join(ROOT, 'VERSION'), 'utf8')).trim();
+    const tags = git(ROOT, ['tag', '--list', 'v*']).split('\n').filter(Boolean);
+    validateReleaseVersionAboveLatest(version, title ?? '', tags);
+    return;
+  }
   if (command === 'validate-release-order') {
     const currentVersion = (await readFile(path.join(ROOT, 'VERSION'), 'utf8')).trim();
     const [,, releaseMergeSha, pullRequestsPath] = process.argv.slice(2);
@@ -240,7 +280,7 @@ async function main() {
     await syncVersion(ROOT, value);
     return;
   }
-  throw new Error('Usage: node scripts/release-version.mjs validate-title <title> | validate-release-order <version> [merge-sha] [merged-prs.jsonl] | validate-tag <vX.Y.Z> | check [branch] | check-pr <base-branch> <title> | release <vX.Y.Z> | sync <branch>');
+  throw new Error('Usage: node scripts/release-version.mjs validate-title <title> | release-tag <dev-version> <title> | validate-release-pr <title> | validate-release-order <version> [merge-sha] [merged-prs.jsonl] | validate-tag <vX.Y.Z> | check [branch] | check-pr <base-branch> <title> | release <vX.Y.Z> | sync <branch>');
 }
 
 if (process.argv[1] && realpathSync(process.argv[1]) === realpathSync(fileURLToPath(import.meta.url))) {
