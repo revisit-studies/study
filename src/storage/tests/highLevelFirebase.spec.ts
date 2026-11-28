@@ -880,6 +880,7 @@ describe.each([
 
   test('releases literal participant lock keys containing periods', async () => {
     await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'subject.1');
+    await storageEngine.settleLockReleases();
     expect(Object.keys(firestoreData).filter((path) => path.startsWith(`dev-${studyId}/locks/keys/`))).toEqual([]);
     await expect(storageEngine.updateParticipantMetadata(participantMetadata)).resolves.toBeUndefined();
   });
@@ -1893,6 +1894,39 @@ describe.each([
 
     await storageEngine.saveConfig(configSimple);
     expect(storageObjects[configPath]).toBeDefined();
+  });
+
+  test('lock releases finish in the background', async () => {
+    const lockPath = `dev-${studyId}/locks/keys/${await hash('background-release')}`;
+    // @ts-expect-error Acquire the clock lease before holding up the release.
+    await storageEngine._runWithLock('warm-up', async () => {});
+    await storageEngine.settleLockReleases();
+    const transactionMock = vi.mocked(runTransaction);
+    const realTransaction = transactionMock.getMockImplementation()!;
+    let releaseStarted = false;
+    let finishRelease!: () => void;
+    const releaseHeld = new Promise<void>((resolve) => { finishRelease = resolve; });
+    // Let the acquire through, then hold the release until the test lets it go.
+    transactionMock
+      .mockImplementationOnce(realTransaction)
+      .mockImplementationOnce(async (...args) => {
+        releaseStarted = true;
+        await releaseHeld;
+        return realTransaction(...args);
+      });
+
+    // @ts-expect-error Exercise the provider's actual distributed lock.
+    await expect(storageEngine._runWithLock('background-release', async () => 'done')).resolves.toBe('done');
+    expect(releaseStarted).toBe(true);
+    expect(firestoreData[lockPath]).toBeDefined();
+
+    let settled = false;
+    const settling = storageEngine.settleLockReleases().then(() => { settled = true; });
+    await Promise.resolve();
+    expect(settled).toBe(false);
+    finishRelease();
+    await settling;
+    expect(firestoreData[lockPath]).toBeUndefined();
   });
 
   test('the backend clock is measured once for repeated leases', async () => {

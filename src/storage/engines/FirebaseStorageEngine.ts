@@ -126,17 +126,20 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
       // rereads the modes, and a stale stage only causes a retry, which rereads.
       attempt += 1;
       const { stageData } = attempt === 1 ? bootstrapData : await this.getModesAndStageData(this.studyId!);
-      await this.getStageAllocation(stageData.currentStage.stageName, conditionKeys);
-      const allocatorSnapshot = await getDoc(allocatorReference);
+      // These reads are independent, so they share one round trip.
+      const [, allocatorSnapshot, candidates] = await Promise.all([
+        this.getStageAllocation(stageData.currentStage.stageName, conditionKeys),
+        getDoc(allocatorReference),
+        Promise.all([0, Timestamp.fromMillis(0)].map((threshold) => getDocs(query(
+          assignments,
+          where('rejected', '==', true),
+          where('claimed', '==', false),
+          where('timestamp', '>=', threshold),
+          orderBy('timestamp', 'asc'),
+          limit(2),
+        )))),
+      ]);
       const seed = allocatorSnapshot.exists() ? allocatorSnapshot.data() as SequenceAllocator : await this.getSequenceAllocatorSeed(assignments);
-      const candidates = await Promise.all([0, Timestamp.fromMillis(0)].map((threshold) => getDocs(query(
-        assignments,
-        where('rejected', '==', true),
-        where('claimed', '==', false),
-        where('timestamp', '>=', threshold),
-        orderBy('timestamp', 'asc'),
-        limit(2),
-      ))));
       const candidate = candidates.flatMap((snapshot) => snapshot.docs).filter((item) => item.id !== participantId).sort((a, b) => {
         const left = a.data().timestamp; const right = b.data().timestamp;
         return (left instanceof Timestamp ? left.toMillis() : left) - (right instanceof Timestamp ? right.toMillis() : right);
@@ -636,6 +639,9 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
     // Equal keys still coordinate across browsers; unrelated keys must not
     // invalidate one another's Firestore transactions.
     const lockDocument = doc(collection(doc(this.studyCollection, 'locks'), 'keys'), sha256(lockKey).toString());
+    // Our own release of this key may still be in flight. Wait for it rather
+    // than finding our old lease and backing off.
+    await this.pendingLockReleases.get(lockDocument.path);
     const token = uuidv4();
     const expiresInMs = 60_000;
     // Backend time governs shared expiry; a monotonic clock bounds our local lease.
@@ -707,7 +713,10 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
       return result;
     } finally {
       clearInterval(refreshTimer);
-      await runTransaction(this.firestore, async (transaction) => {
+      // The operation is complete, so the caller need not wait for the release.
+      // Other browsers see the lock until it commits, or until it expires if
+      // the release fails, exactly as when the caller waited.
+      const release = runTransaction(this.firestore, async (transaction) => {
         const snapshot = await transaction.get(lockDocument);
         const existingLock = snapshot.data() as { token?: string } | undefined;
         if (existingLock?.token === token) {
@@ -716,7 +725,21 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
       }).catch((error) => {
         console.warn('Failed to release study update lock:', error);
       });
+      // A lost lease can let a second holder release while the first release
+      // is still pending, so keep waiting for both.
+      const previous = this.pendingLockReleases.get(lockDocument.path);
+      const pending: Promise<void> = (previous ? Promise.all([previous, release]).then(() => undefined) : release).finally(() => {
+        if (this.pendingLockReleases.get(lockDocument.path) === pending) this.pendingLockReleases.delete(lockDocument.path);
+      });
+      this.pendingLockReleases.set(lockDocument.path, pending);
     }
+  }
+
+  // Lock releases still committing, by lock document path.
+  private readonly pendingLockReleases = new Map<string, Promise<void>>();
+
+  override async settleLockReleases() {
+    await Promise.all(this.pendingLockReleases.values());
   }
 
   protected async _completeCurrentParticipantRealtime() {

@@ -64,11 +64,14 @@ const USER_AGENTS: Record<Transport, string> = {
   streaming: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
 };
 
-// Set to the measured values, so any added cost fails.
+// Set to the measured values, so any added cost fails. A measurement ends when
+// the participant can continue, so lock releases that finish in the background
+// afterward are not counted; 'finishing the study leaves no lock...' checks that
+// they still complete.
 const BUDGETS: Record<string, Record<Transport, Budget>> = {
   'new participant': {
-    longPolling: { ms: 4126, requests: 32, downloadedKb: 505 },
-    streaming: { ms: 3226, requests: 32, downloadedKb: 505 },
+    longPolling: { ms: 3023, requests: 30, downloadedKb: 505 },
+    streaming: { ms: 2423, requests: 30, downloadedKb: 505 },
   },
   'returning participant in the same browser': {
     longPolling: { ms: 1417, requests: 7, downloadedKb: 504 },
@@ -79,14 +82,14 @@ const BUDGETS: Record<string, Record<Transport, Budget>> = {
     streaming: { ms: 1218, requests: 8, downloadedKb: 505 },
   },
   'first participant after the config changes': {
-    longPolling: { ms: 6540, requests: 52, downloadedKb: 6 },
-    streaming: { ms: 5240, requests: 52, downloadedKb: 6 },
+    longPolling: { ms: 5136, requests: 50, downloadedKb: 6 },
+    streaming: { ms: 4136, requests: 50, downloadedKb: 6 },
   },
   // Contended transactions back off with seeded jitter, as the SDK does, so
   // this budget depends on which retries collide and moves more than the others.
   'ten participants arriving at once': {
-    longPolling: { ms: 11902, requests: 446, downloadedKb: 5070 },
-    streaming: { ms: 11002, requests: 446, downloadedKb: 5070 },
+    longPolling: { ms: 10915, requests: 444, downloadedKb: 5070 },
+    streaming: { ms: 10315, requests: 444, downloadedKb: 5070 },
   },
 };
 
@@ -280,6 +283,29 @@ describe.each(['longPolling', 'streaming'] as const)('study load budgets (%s)', 
       return summarize(await runOnSimulatedNetwork(() => loadStudy(engine, config)));
     };
     expect(await measure()).toEqual(await measure());
+  });
+
+  test('reacquiring a lock waits for its own release instead of backing off', async () => {
+    const engine = await connectedEngine('relock');
+    await engine.initializeStudyDb(studyId);
+    // @ts-expect-error Exercise the provider's actual distributed lock.
+    await runOnSimulatedNetwork(() => engine._runWithLock('relock', async () => {}));
+    // @ts-expect-error Exercise the provider's actual distributed lock.
+    const second = await runOnSimulatedNetwork(() => engine._runWithLock('relock', async () => {}));
+    // The first release (get and commit), then this acquire. Finding the old
+    // lease instead would add a 100ms backoff and another acquire attempt.
+    expect(second.calls.map((call) => call.kind)).toEqual(['transaction.get', 'transaction.commit', 'transaction.get', 'transaction.commit']);
+    expect(second.elapsedMs).toBeLessThan(5 * ROUND_TRIP_MS);
+  });
+
+  test('finishing the study leaves no lock for a redirect to strand', async () => {
+    await prepareLiveStudy(3);
+    const engine = await connectedEngine('finishing');
+    await runOnSimulatedNetwork(() => loadStudy(engine, config));
+    await drainBackgroundWork();
+    await runOnSimulatedNetwork(() => engine.finalizeParticipant());
+    // The study end page can redirect as soon as finalizing resolves.
+    expect(Object.keys(simulation.firestoreData).filter((path) => path.includes('/locks/keys/'))).toEqual([]);
   });
 
   test('sequential reads add up and parallel reads overlap', async () => {

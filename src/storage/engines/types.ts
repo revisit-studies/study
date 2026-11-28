@@ -653,6 +653,11 @@ export abstract class StorageEngine {
   // the final available participant slot or rejecting a participant with a pending save.
   protected abstract _runWithLock<T>(lockKey: string, operation: () => Promise<T>): Promise<T>;
 
+  /** Waits for lock releases still committing in the background, if the engine has any. */
+  async settleLockReleases(): Promise<void> {
+    // Engines that release locks before returning have nothing to wait for.
+  }
+
   // Sets up the study database (firestore, indexedDB, etc.) for the given studyId. Also sets the studyId in the storage engine.
   abstract initializeStudyDb(studyId: string): Promise<void>;
 
@@ -1793,10 +1798,18 @@ export abstract class StorageEngine {
     const initializeParticipant = async (): Promise<ParticipantData> => {
       // Another session may have completed initialization while this session waited
       // for the lock, so always read the participant record again inside it.
-      let existingParticipant = await this._getFromStorage(
-        `participants/${this.currentParticipantId}`,
-        'participantData',
-      );
+      // The reservation and settings reads do not depend on this record, so all
+      // three share one round trip; a found record simply discards the others.
+      // The reservation matters when a previous attempt left an active
+      // assignment with no participant record, because both its participant
+      // write and its own cleanup failed. It is reused or released below, so
+      // the abandoned slot cannot keep the participant out of the stage.
+      const [participantRecord, existingReservation, { modes, stageData }] = await Promise.all([
+        this._getFromStorage(`participants/${this.currentParticipantId}`, 'participantData'),
+        this.prepareParticipantReservation(this.currentParticipantId!),
+        this.getModesAndStageData(this.studyId!, this.cloudEngine ? undefined : bootstrapData?.modesDocument),
+      ]);
+      let existingParticipant = participantRecord;
       if (isParticipantData(existingParticipant) && (existingParticipant.globalStoreRevision !== undefined || config.globalVariables !== undefined)) {
         existingParticipant = await this.getParticipantSessionSnapshot(this.currentParticipantId!);
       }
@@ -1805,13 +1818,6 @@ export abstract class StorageEngine {
         return existingParticipant;
       }
 
-      // A previous attempt can leave an active assignment with no participant
-      // record when both its participant write and its own cleanup failed. Release
-      // it before counting, so the participant's abandoned slot cannot keep them
-      // out of the stage, and the retry below assigns them afresh.
-      const existingReservation = await this.prepareParticipantReservation(this.currentParticipantId!);
-
-      const { modes, stageData } = await this.getModesAndStageData(this.studyId!, this.cloudEngine ? undefined : bootstrapData?.modesDocument);
       const currentStage = stageData.currentStage.stageName;
       autoTimeoutEnabled = modes.dataCollectionEnabled && modes.autoTimeoutMinutes !== undefined;
       const currentStageInfo = stageData.allStages.find((stage) => stage.stageName === currentStage);
@@ -2549,7 +2555,11 @@ export abstract class StorageEngine {
     const { studyId, currentParticipantId } = this;
     // Keep finalization in the local update queue through the final flush and
     // completion marker, so accepted background writes cannot arrive afterward.
-    return this.updateParticipantDataLocally(studyId, currentParticipantId, (assertCurrentSession) => this.finalizeParticipantSession(assertCurrentSession));
+    const result = await this.updateParticipantDataLocally(studyId, currentParticipantId, (assertCurrentSession) => this.finalizeParticipantSession(assertCurrentSession));
+    // The study end page may redirect right away, which would cut off a release
+    // still committing and leave the participant's lock held until it expires.
+    await this.settleLockReleases();
+    return result;
   }
 
   private async finalizeParticipantSession(assertCurrentSession: () => void): Promise<FinalizeParticipantResult> {
