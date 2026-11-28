@@ -60,6 +60,9 @@ import {
   StartupInteractionProvider,
   useStudyStorageReady,
 } from './StartupContext';
+import {
+  appendLoadTiming, getConnectionType, getDocumentLoadedMs, markLoadPhase,
+} from '../utils/loadTiming';
 
 type StartupStorageStatus = Pick<StorageEngine, 'getEngine' | 'isConnected'>;
 type StartupPhase = 'config-loading' | 'participant-loading' | 'ready' | 'error';
@@ -246,6 +249,8 @@ function StudyShell({ globalConfig }: { globalConfig: GlobalConfig }) {
     retryParticipantStartup?: boolean;
   } | null>(null);
   const [startupPhase, setStartupPhase] = useState<StartupPhase>('config-loading');
+  // When the study config finished loading, for the participant's load timing.
+  const configLoadedAtRef = useRef<number | undefined>(undefined);
   const [stageEntryError, setStageEntryError] = useState<
     StageCapacityExceededError | StageNoAvailableConditionsError | StageOnlyDisabledConditionsHaveCapacityError | null
   >(null);
@@ -266,6 +271,7 @@ function StudyShell({ globalConfig }: { globalConfig: GlobalConfig }) {
         try {
           const config = await getStudyConfig(routeStudyId, globalConfig);
           if (!cancelled) {
+            configLoadedAtRef.current = markLoadPhase('config-loaded');
             setActiveConfig(config);
             setStartupPhase('participant-loading');
           }
@@ -486,6 +492,7 @@ function StudyShell({ globalConfig }: { globalConfig: GlobalConfig }) {
       setStageEntryError(null);
       setStartupError(null);
       setStartupPhase('participant-loading');
+      const storageReadyMs = markLoadPhase('storage-ready');
 
       let modes: Record<REVISIT_MODE, boolean> | null = null;
       const initialColorMode = activeConfig.uiConfig.colorMode === 'userPreference'
@@ -494,11 +501,13 @@ function StudyShell({ globalConfig }: { globalConfig: GlobalConfig }) {
         // Make sure that we have a study database and that the study database has a sequence array
         await storageEngine.initializeStudyDb(canonicalStudyId);
         if (!isCurrentStartup()) return;
+        const studyDatabaseReadyMs = markLoadPhase('study-database-ready');
 
         const activeHashPromise = hash(JSON.stringify(activeConfig));
 
         await storageEngine.saveConfig(activeConfig);
         if (!isCurrentStartup()) return;
+        const configSavedMs = markLoadPhase('config-saved');
 
         const activeHash = await activeHashPromise;
         const sequenceArray = await storageEngine.getOrCreateSequenceArray(
@@ -506,6 +515,7 @@ function StudyShell({ globalConfig }: { globalConfig: GlobalConfig }) {
           () => generateSequenceArray(activeConfig),
         );
         if (!isCurrentStartup()) return;
+        const sequenceArrayLoadedMs = markLoadPhase('sequence-array-loaded');
 
         // Get or generate participant session
         const searchParamsObject = Object.fromEntries(searchParams.entries());
@@ -528,6 +538,8 @@ function StudyShell({ globalConfig }: { globalConfig: GlobalConfig }) {
         );
 
         if (!isCurrentStartup()) return;
+        const participantJoinedMs = markLoadPhase('participant-joined');
+        const newParticipant = storageEngine.isNewlyCreatedParticipant(participantSession.participantId);
 
         if (!participantSession.finalized && studyCondition.length > 0 && resolvedModes.developmentModeEnabled) {
           const updatedSearchParams = {
@@ -604,34 +616,53 @@ function StudyShell({ globalConfig }: { globalConfig: GlobalConfig }) {
           setStore(newStore);
           setIsCompletionCheckResolved(true);
           setStartupPhase('ready');
+          const readyMs = markLoadPhase('ready');
 
           if (participantCompleted || !resolvedModes.dataCollectionEnabled || searchParams.has('participantId')) {
             return;
           }
-          fetchParticipantIp().then(async (ip) => {
-            if (!isCurrentStartup() || newStore.store.getState().completed || !ip.ip || participantSession.metadata.ip === ip.ip) {
+          const loadTiming = {
+            recordedAt: Date.now(),
+            newParticipant,
+            attempt: startupAttempt,
+            documentLoadedMs: getDocumentLoadedMs(),
+            configLoadedMs: configLoadedAtRef.current,
+            storageReadyMs,
+            studyDatabaseReadyMs,
+            configSavedMs,
+            sequenceArrayLoadedMs,
+            participantJoinedMs,
+            readyMs,
+            connection: getConnectionType(),
+          };
+          // The IP and this load's timing share one metadata write.
+          fetchParticipantIp().catch(() => ({ ip: '' })).then(async (ip) => {
+            if (!isCurrentStartup() || newStore.store.getState().completed) {
               return;
             }
 
-            const metadataWithIp = { ...participantSession.metadata, ip: ip.ip };
+            const metadataWithLoad = appendLoadTiming({
+              ...participantSession.metadata,
+              ...(ip.ip ? { ip: ip.ip } : {}),
+            }, loadTiming);
             participantSession = {
               ...participantSession,
-              metadata: metadataWithIp,
+              metadata: metadataWithLoad,
             };
 
-            await storageEngine.updateParticipantMetadata(metadataWithIp);
+            await storageEngine.updateParticipantMetadata(metadataWithLoad);
 
             if (isCurrentStartup() && !newStore.store.getState().completed) {
-              newStore.store.dispatch(newStore.actions.setMetadata(metadataWithIp));
+              newStore.store.dispatch(newStore.actions.setMetadata(metadataWithLoad));
             }
           }).catch((error) => {
-            console.error('Error fetching participant IP:', error);
+            console.error('Error saving participant metadata:', error);
           });
         };
 
         if (!resolvedModes.dataCollectionEnabled) {
           finishStartup(!!participantSession.finalized);
-        } else if (storageEngine.isNewlyCreatedParticipant(participantSession.participantId)) {
+        } else if (newParticipant) {
           // A participant created during this startup cannot have completed yet.
           finishStartup(false);
         } else {

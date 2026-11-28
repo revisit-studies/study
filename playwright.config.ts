@@ -24,6 +24,8 @@ export default defineConfig({
   },
 
   testDir: './tests',
+  // The real-network load test runs on its own config (yarn test:perf-real).
+  testIgnore: ['perf/**'],
   fullyParallel: true,
   // The full MVNV participant journey is covered separately from the fast
   // replay smoke test. Set PW_INCLUDE_SLOW=1 when the long journey is needed.

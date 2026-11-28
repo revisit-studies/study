@@ -16,6 +16,7 @@
     "generate-library-docs": "node libraryDocGenerator.cjs",
     "generate-library-examples": "node libraryExampleStudyGenerator.cjs",
     "test": "playwright test",
+    "test:perf-real": "playwright test --config playwright.perf.config.ts",
     "unittest": "vitest",
     "unittest-coverage": "vitest run --coverage --coverage.reporter=text",
     "find-revisit-users": "bash scripts/find-revisit-users.sh",
@@ -132,5 +133,6 @@
     "lint-staged": "^17.2.0",
     "typescript": "npm:@typescript/typescript6@^6.0.2",
     "vitest": "^5.0.5"
-  }
+  },
+  "packageManager": "yarn@1.22.22+sha512.a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e"
 }

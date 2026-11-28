@@ -2,6 +2,7 @@ import { Box, Spoiler, Stack } from '@mantine/core';
 import { ParticipantMetadata } from '../../../store/types';
 
 export function MetaCell({ metaData }: { metaData: ParticipantMetadata | undefined }) {
+  const firstLoad = metaData?.loadTimings?.[0];
   return (
     <Spoiler w={200} hideLabel="hide" maxHeight={50} showLabel="more">
       <Stack gap="xs" fz="sm">
@@ -25,6 +26,14 @@ export function MetaCell({ metaData }: { metaData: ParticipantMetadata | undefin
           {' '}
           {metaData?.language || 'null'}
         </Box>
+        {firstLoad && (
+          <Box>
+            <strong>Load time:</strong>
+            {' '}
+            {`${(firstLoad.readyMs / 1000).toFixed(1)}s`}
+            {metaData!.loadTimings!.length > 1 && ` (first of ${metaData!.loadTimings!.length} loads)`}
+          </Box>
+        )}
       </Stack>
     </Spoiler>
   );

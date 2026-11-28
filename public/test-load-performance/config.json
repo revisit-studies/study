@@ -1,0 +1,1402 @@
+{
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v3.0.0/src/parser/StudyConfigSchema.json",
+  "studyMetadata": {
+    "title": "Test Load Performance",
+    "version": "1.0.0",
+    "authors": [
+      "The reVISit Team"
+    ],
+    "date": "2026-11-27",
+    "description": "Used by the real-network load test (yarn test:perf-real). Its 80 randomly ordered trials across 1000 sequences give a large sequence array, like a full study.",
+    "organizations": [
+      "University of Utah",
+      "WPI"
+    ]
+  },
+  "uiConfig": {
+    "contactEmail": "contact@revisit.dev",
+    "logoPath": "revisitAssets/revisitLogoSquare.svg",
+    "withProgressBar": true,
+    "autoDownloadStudy": false,
+    "withSidebar": false,
+    "urlParticipantIdParam": "PROLIFIC_PID"
+  },
+  "components": {
+    "intro": {
+      "type": "markdown",
+      "path": "test-load-performance/assets/intro.md",
+      "response": []
+    },
+    "trial-01": {
+      "type": "markdown",
+      "path": "test-load-performance/assets/trial.md",
+      "response": [
+        {
+          "id": "answer",
+          "type": "radio",
+          "prompt": "Pick one",
+          "location": "belowStimulus",
+          "options": [
+            "A",
+            "B"
+          ]
+        }
+      ]
+    },
+    "trial-02": {
+      "type": "markdown",
+      "path": "test-load-performance/assets/trial.md",
+      "response": [
+        {
+          "id": "answer",
+          "type": "radio",
+          "prompt": "Pick one",
+          "location": "belowStimulus",
+          "options": [
+            "A",
+            "B"
+          ]
+        }
+      ]
+    },
+    "trial-03": {
+      "type": "markdown",
+      "path": "test-load-performance/assets/trial.md",
+      "response": [
+        {
+          "id": "answer",
+          "type": "radio",
+          "prompt": "Pick one",
+          "location": "belowStimulus",
+          "options": [
+            "A",
+            "B"
+          ]
+        }
+      ]
+    },
+    "trial-04": {
+      "type": "markdown",
+      "path": "test-load-performance/assets/trial.md",
+      "response": [
+        {
+          "id": "answer",
+          "type": "radio",
+          "prompt": "Pick one",
+          "location": "belowStimulus",
+          "options": [
+            "A",
+            "B"
+          ]
+        }
+      ]
+    },
+    "trial-05": {
+      "type": "markdown",
+      "path": "test-load-performance/assets/trial.md",
+      "response": [
+        {
+          "id": "answer",
+          "type": "radio",
+          "prompt": "Pick one",
+          "location": "belowStimulus",
+          "options": [
+            "A",
+            "B"
+          ]
+        }
+      ]
+    },
+    "trial-06": {
+      "type": "markdown",
+      "path": "test-load-performance/assets/trial.md",
+      "response": [
+        {
+          "id": "answer",
+          "type": "radio",
+          "prompt": "Pick one",
+          "location": "belowStimulus",
+          "options": [
+            "A",
+            "B"
+          ]
+        }
+      ]
+    },
+    "trial-07": {
+      "type": "markdown",
+      "path": "test-load-performance/assets/trial.md",
+      "response": [
+        {
+          "id": "answer",
+          "type": "radio",
+          "prompt": "Pick one",
+          "location": "belowStimulus",
+          "options": [
+            "A",
+            "B"
+          ]
+        }
+      ]
+    },
+    "trial-08": {
+      "type": "markdown",
+      "path": "test-load-performance/assets/trial.md",
+      "response": [
+        {
+          "id": "answer",
+          "type": "radio",
+          "prompt": "Pick one",
+          "location": "belowStimulus",
+          "options": [
+            "A",
+            "B"
+          ]
+        }
+      ]
+    },
+    "trial-09": {
+      "type": "markdown",
+      "path": "test-load-performance/assets/trial.md",
+      "response": [
+        {
+          "id": "answer",
+          "type": "radio",
+          "prompt": "Pick one",
+          "location": "belowStimulus",
+          "options": [
+            "A",
+            "B"
+          ]
+        }
+      ]
+    },
+    "trial-10": {
+      "type": "markdown",
+      "path": "test-load-performance/assets/trial.md",
+      "response": [
+        {
+          "id": "answer",
+          "type": "radio",
+          "prompt": "Pick one",
+          "location": "belowStimulus",
+          "options": [
+            "A",
+            "B"
+          ]
+        }
+      ]
+    },
+    "trial-11": {
+      "type": "markdown",
+      "path": "test-load-performance/assets/trial.md",
+      "response": [
+        {
+          "id": "answer",
+          "type": "radio",
+          "prompt": "Pick one",
+          "location": "belowStimulus",
+          "options": [
+            "A",
+            "B"
+          ]
+        }
+      ]
+    },
+    "trial-12": {
+      "type": "markdown",
+      "path": "test-load-performance/assets/trial.md",
+      "response": [
+        {
+          "id": "answer",
+          "type": "radio",
+          "prompt": "Pick one",
+          "location": "belowStimulus",
+          "options": [
+            "A",
+            "B"
+          ]
+        }
+      ]
+    },
+    "trial-13": {
+      "type": "markdown",
+      "path": "test-load-performance/assets/trial.md",
+      "response": [
+        {
+          "id": "answer",
+          "type": "radio",
+          "prompt": "Pick one",
+          "location": "belowStimulus",
+          "options": [
+            "A",
+            "B"
+          ]
+        }
+      ]
+    },
+    "trial-14": {
+      "type": "markdown",
+      "path": "test-load-performance/assets/trial.md",
+      "response": [
+        {
+          "id": "answer",
+          "type": "radio",
+          "prompt": "Pick one",
+          "location": "belowStimulus",
+          "options": [
+            "A",
+            "B"
+          ]
+        }
+      ]
+    },
+    "trial-15": {
+      "type": "markdown",
+      "path": "test-load-performance/assets/trial.md",
+      "response": [
+        {
+          "id": "answer",
+          "type": "radio",
+          "prompt": "Pick one",
+          "location": "belowStimulus",
+          "options": [
+            "A",
+            "B"
+          ]
+        }
+      ]
+    },
+    "trial-16": {
+      "type": "markdown",
+      "path": "test-load-performance/assets/trial.md",
+      "response": [
+        {
+          "id": "answer",
+          "type": "radio",
+          "prompt": "Pick one",
+          "location": "belowStimulus",
+          "options": [
+            "A",
+            "B"
+          ]
+        }
+      ]
+    },
+    "trial-17": {
+      "type": "markdown",
+      "path": "test-load-performance/assets/trial.md",
+      "response": [
+        {
+          "id": "answer",
+          "type": "radio",
+          "prompt": "Pick one",
+          "location": "belowStimulus",
+          "options": [
+            "A",
+            "B"
+          ]
+        }
+      ]
+    },
+    "trial-18": {
+      "type": "markdown",
+      "path": "test-load-performance/assets/trial.md",
+      "response": [
+        {
+          "id": "answer",
+          "type": "radio",
+          "prompt": "Pick one",
+          "location": "belowStimulus",
+          "options": [
+            "A",
+            "B"
+          ]
+        }
+      ]
+    },
+    "trial-19": {
+      "type": "markdown",
+      "path": "test-load-performance/assets/trial.md",
+      "response": [
+        {
+          "id": "answer",
+          "type": "radio",
+          "prompt": "Pick one",
+          "location": "belowStimulus",
+          "options": [
+            "A",
+            "B"
+          ]
+        }
+      ]
+    },
+    "trial-20": {
+      "type": "markdown",
+      "path": "test-load-performance/assets/trial.md",
+      "response": [
+        {
+          "id": "answer",
+          "type": "radio",
+          "prompt": "Pick one",
+          "location": "belowStimulus",
+          "options": [
+            "A",
+            "B"
+          ]
+        }
+      ]
+    },
+    "trial-21": {
+      "type": "markdown",
+      "path": "test-load-performance/assets/trial.md",
+      "response": [
+        {
+          "id": "answer",
+          "type": "radio",
+          "prompt": "Pick one",
+          "location": "belowStimulus",
+          "options": [
+            "A",
+            "B"
+          ]
+        }
+      ]
+    },
+    "trial-22": {
+      "type": "markdown",
+      "path": "test-load-performance/assets/trial.md",
+      "response": [
+        {
+          "id": "answer",
+          "type": "radio",
+          "prompt": "Pick one",
+          "location": "belowStimulus",
+          "options": [
+            "A",
+            "B"
+          ]
+        }
+      ]
+    },
+    "trial-23": {
+      "type": "markdown",
+      "path": "test-load-performance/assets/trial.md",
+      "response": [
+        {
+          "id": "answer",
+          "type": "radio",
+          "prompt": "Pick one",
+          "location": "belowStimulus",
+          "options": [
+            "A",
+            "B"
+          ]
+        }
+      ]
+    },
+    "trial-24": {
+      "type": "markdown",
+      "path": "test-load-performance/assets/trial.md",
+      "response": [
+        {
+          "id": "answer",
+          "type": "radio",
+          "prompt": "Pick one",
+          "location": "belowStimulus",
+          "options": [
+            "A",
+            "B"
+          ]
+        }
+      ]
+    },
+    "trial-25": {
+      "type": "markdown",
+      "path": "test-load-performance/assets/trial.md",
+      "response": [
+        {
+          "id": "answer",
+          "type": "radio",
+          "prompt": "Pick one",
+          "location": "belowStimulus",
+          "options": [
+            "A",
+            "B"
+          ]
+        }
+      ]
+    },
+    "trial-26": {
+      "type": "markdown",
+      "path": "test-load-performance/assets/trial.md",
+      "response": [
+        {
+          "id": "answer",
+          "type": "radio",
+          "prompt": "Pick one",
+          "location": "belowStimulus",
+          "options": [
+            "A",
+            "B"
+          ]
+        }
+      ]
+    },
+    "trial-27": {
+      "type": "markdown",
+      "path": "test-load-performance/assets/trial.md",
+      "response": [
+        {
+          "id": "answer",
+          "type": "radio",
+          "prompt": "Pick one",
+          "location": "belowStimulus",
+          "options": [
+            "A",
+            "B"
+          ]
+        }
+      ]
+    },
+    "trial-28": {
+      "type": "markdown",
+      "path": "test-load-performance/assets/trial.md",
+      "response": [
+        {
+          "id": "answer",
+          "type": "radio",
+          "prompt": "Pick one",
+          "location": "belowStimulus",
+          "options": [
+            "A",
+            "B"
+          ]
+        }
+      ]
+    },
+    "trial-29": {
+      "type": "markdown",
+      "path": "test-load-performance/assets/trial.md",
+      "response": [
+        {
+          "id": "answer",
+          "type": "radio",
+          "prompt": "Pick one",
+          "location": "belowStimulus",
+          "options": [
+            "A",
+            "B"
+          ]
+        }
+      ]
+    },
+    "trial-30": {
+      "type": "markdown",
+      "path": "test-load-performance/assets/trial.md",
+      "response": [
+        {
+          "id": "answer",
+          "type": "radio",
+          "prompt": "Pick one",
+          "location": "belowStimulus",
+          "options": [
+            "A",
+            "B"
+          ]
+        }
+      ]
+    },
+    "trial-31": {
+      "type": "markdown",
+      "path": "test-load-performance/assets/trial.md",
+      "response": [
+        {
+          "id": "answer",
+          "type": "radio",
+          "prompt": "Pick one",
+          "location": "belowStimulus",
+          "options": [
+            "A",
+            "B"
+          ]
+        }
+      ]
+    },
+    "trial-32": {
+      "type": "markdown",
+      "path": "test-load-performance/assets/trial.md",
+      "response": [
+        {
+          "id": "answer",
+          "type": "radio",
+          "prompt": "Pick one",
+          "location": "belowStimulus",
+          "options": [
+            "A",
+            "B"
+          ]
+        }
+      ]
+    },
+    "trial-33": {
+      "type": "markdown",
+      "path": "test-load-performance/assets/trial.md",
+      "response": [
+        {
+          "id": "answer",
+          "type": "radio",
+          "prompt": "Pick one",
+          "location": "belowStimulus",
+          "options": [
+            "A",
+            "B"
+          ]
+        }
+      ]
+    },
+    "trial-34": {
+      "type": "markdown",
+      "path": "test-load-performance/assets/trial.md",
+      "response": [
+        {
+          "id": "answer",
+          "type": "radio",
+          "prompt": "Pick one",
+          "location": "belowStimulus",
+          "options": [
+            "A",
+            "B"
+          ]
+        }
+      ]
+    },
+    "trial-35": {
+      "type": "markdown",
+      "path": "test-load-performance/assets/trial.md",
+      "response": [
+        {
+          "id": "answer",
+          "type": "radio",
+          "prompt": "Pick one",
+          "location": "belowStimulus",
+          "options": [
+            "A",
+            "B"
+          ]
+        }
+      ]
+    },
+    "trial-36": {
+      "type": "markdown",
+      "path": "test-load-performance/assets/trial.md",
+      "response": [
+        {
+          "id": "answer",
+          "type": "radio",
+          "prompt": "Pick one",
+          "location": "belowStimulus",
+          "options": [
+            "A",
+            "B"
+          ]
+        }
+      ]
+    },
+    "trial-37": {
+      "type": "markdown",
+      "path": "test-load-performance/assets/trial.md",
+      "response": [
+        {
+          "id": "answer",
+          "type": "radio",
+          "prompt": "Pick one",
+          "location": "belowStimulus",
+          "options": [
+            "A",
+            "B"
+          ]
+        }
+      ]
+    },
+    "trial-38": {
+      "type": "markdown",
+      "path": "test-load-performance/assets/trial.md",
+      "response": [
+        {
+          "id": "answer",
+          "type": "radio",
+          "prompt": "Pick one",
+          "location": "belowStimulus",
+          "options": [
+            "A",
+            "B"
+          ]
+        }
+      ]
+    },
+    "trial-39": {
+      "type": "markdown",
+      "path": "test-load-performance/assets/trial.md",
+      "response": [
+        {
+          "id": "answer",
+          "type": "radio",
+          "prompt": "Pick one",
+          "location": "belowStimulus",
+          "options": [
+            "A",
+            "B"
+          ]
+        }
+      ]
+    },
+    "trial-40": {
+      "type": "markdown",
+      "path": "test-load-performance/assets/trial.md",
+      "response": [
+        {
+          "id": "answer",
+          "type": "radio",
+          "prompt": "Pick one",
+          "location": "belowStimulus",
+          "options": [
+            "A",
+            "B"
+          ]
+        }
+      ]
+    },
+    "trial-41": {
+      "type": "markdown",
+      "path": "test-load-performance/assets/trial.md",
+      "response": [
+        {
+          "id": "answer",
+          "type": "radio",
+          "prompt": "Pick one",
+          "location": "belowStimulus",
+          "options": [
+            "A",
+            "B"
+          ]
+        }
+      ]
+    },
+    "trial-42": {
+      "type": "markdown",
+      "path": "test-load-performance/assets/trial.md",
+      "response": [
+        {
+          "id": "answer",
+          "type": "radio",
+          "prompt": "Pick one",
+          "location": "belowStimulus",
+          "options": [
+            "A",
+            "B"
+          ]
+        }
+      ]
+    },
+    "trial-43": {
+      "type": "markdown",
+      "path": "test-load-performance/assets/trial.md",
+      "response": [
+        {
+          "id": "answer",
+          "type": "radio",
+          "prompt": "Pick one",
+          "location": "belowStimulus",
+          "options": [
+            "A",
+            "B"
+          ]
+        }
+      ]
+    },
+    "trial-44": {
+      "type": "markdown",
+      "path": "test-load-performance/assets/trial.md",
+      "response": [
+        {
+          "id": "answer",
+          "type": "radio",
+          "prompt": "Pick one",
+          "location": "belowStimulus",
+          "options": [
+            "A",
+            "B"
+          ]
+        }
+      ]
+    },
+    "trial-45": {
+      "type": "markdown",
+      "path": "test-load-performance/assets/trial.md",
+      "response": [
+        {
+          "id": "answer",
+          "type": "radio",
+          "prompt": "Pick one",
+          "location": "belowStimulus",
+          "options": [
+            "A",
+            "B"
+          ]
+        }
+      ]
+    },
+    "trial-46": {
+      "type": "markdown",
+      "path": "test-load-performance/assets/trial.md",
+      "response": [
+        {
+          "id": "answer",
+          "type": "radio",
+          "prompt": "Pick one",
+          "location": "belowStimulus",
+          "options": [
+            "A",
+            "B"
+          ]
+        }
+      ]
+    },
+    "trial-47": {
+      "type": "markdown",
+      "path": "test-load-performance/assets/trial.md",
+      "response": [
+        {
+          "id": "answer",
+          "type": "radio",
+          "prompt": "Pick one",
+          "location": "belowStimulus",
+          "options": [
+            "A",
+            "B"
+          ]
+        }
+      ]
+    },
+    "trial-48": {
+      "type": "markdown",
+      "path": "test-load-performance/assets/trial.md",
+      "response": [
+        {
+          "id": "answer",
+          "type": "radio",
+          "prompt": "Pick one",
+          "location": "belowStimulus",
+          "options": [
+            "A",
+            "B"
+          ]
+        }
+      ]
+    },
+    "trial-49": {
+      "type": "markdown",
+      "path": "test-load-performance/assets/trial.md",
+      "response": [
+        {
+          "id": "answer",
+          "type": "radio",
+          "prompt": "Pick one",
+          "location": "belowStimulus",
+          "options": [
+            "A",
+            "B"
+          ]
+        }
+      ]
+    },
+    "trial-50": {
+      "type": "markdown",
+      "path": "test-load-performance/assets/trial.md",
+      "response": [
+        {
+          "id": "answer",
+          "type": "radio",
+          "prompt": "Pick one",
+          "location": "belowStimulus",
+          "options": [
+            "A",
+            "B"
+          ]
+        }
+      ]
+    },
+    "trial-51": {
+      "type": "markdown",
+      "path": "test-load-performance/assets/trial.md",
+      "response": [
+        {
+          "id": "answer",
+          "type": "radio",
+          "prompt": "Pick one",
+          "location": "belowStimulus",
+          "options": [
+            "A",
+            "B"
+          ]
+        }
+      ]
+    },
+    "trial-52": {
+      "type": "markdown",
+      "path": "test-load-performance/assets/trial.md",
+      "response": [
+        {
+          "id": "answer",
+          "type": "radio",
+          "prompt": "Pick one",
+          "location": "belowStimulus",
+          "options": [
+            "A",
+            "B"
+          ]
+        }
+      ]
+    },
+    "trial-53": {
+      "type": "markdown",
+      "path": "test-load-performance/assets/trial.md",
+      "response": [
+        {
+          "id": "answer",
+          "type": "radio",
+          "prompt": "Pick one",
+          "location": "belowStimulus",
+          "options": [
+            "A",
+            "B"
+          ]
+        }
+      ]
+    },
+    "trial-54": {
+      "type": "markdown",
+      "path": "test-load-performance/assets/trial.md",
+      "response": [
+        {
+          "id": "answer",
+          "type": "radio",
+          "prompt": "Pick one",
+          "location": "belowStimulus",
+          "options": [
+            "A",
+            "B"
+          ]
+        }
+      ]
+    },
+    "trial-55": {
+      "type": "markdown",
+      "path": "test-load-performance/assets/trial.md",
+      "response": [
+        {
+          "id": "answer",
+          "type": "radio",
+          "prompt": "Pick one",
+          "location": "belowStimulus",
+          "options": [
+            "A",
+            "B"
+          ]
+        }
+      ]
+    },
+    "trial-56": {
+      "type": "markdown",
+      "path": "test-load-performance/assets/trial.md",
+      "response": [
+        {
+          "id": "answer",
+          "type": "radio",
+          "prompt": "Pick one",
+          "location": "belowStimulus",
+          "options": [
+            "A",
+            "B"
+          ]
+        }
+      ]
+    },
+    "trial-57": {
+      "type": "markdown",
+      "path": "test-load-performance/assets/trial.md",
+      "response": [
+        {
+          "id": "answer",
+          "type": "radio",
+          "prompt": "Pick one",
+          "location": "belowStimulus",
+          "options": [
+            "A",
+            "B"
+          ]
+        }
+      ]
+    },
+    "trial-58": {
+      "type": "markdown",
+      "path": "test-load-performance/assets/trial.md",
+      "response": [
+        {
+          "id": "answer",
+          "type": "radio",
+          "prompt": "Pick one",
+          "location": "belowStimulus",
+          "options": [
+            "A",
+            "B"
+          ]
+        }
+      ]
+    },
+    "trial-59": {
+      "type": "markdown",
+      "path": "test-load-performance/assets/trial.md",
+      "response": [
+        {
+          "id": "answer",
+          "type": "radio",
+          "prompt": "Pick one",
+          "location": "belowStimulus",
+          "options": [
+            "A",
+            "B"
+          ]
+        }
+      ]
+    },
+    "trial-60": {
+      "type": "markdown",
+      "path": "test-load-performance/assets/trial.md",
+      "response": [
+        {
+          "id": "answer",
+          "type": "radio",
+          "prompt": "Pick one",
+          "location": "belowStimulus",
+          "options": [
+            "A",
+            "B"
+          ]
+        }
+      ]
+    },
+    "trial-61": {
+      "type": "markdown",
+      "path": "test-load-performance/assets/trial.md",
+      "response": [
+        {
+          "id": "answer",
+          "type": "radio",
+          "prompt": "Pick one",
+          "location": "belowStimulus",
+          "options": [
+            "A",
+            "B"
+          ]
+        }
+      ]
+    },
+    "trial-62": {
+      "type": "markdown",
+      "path": "test-load-performance/assets/trial.md",
+      "response": [
+        {
+          "id": "answer",
+          "type": "radio",
+          "prompt": "Pick one",
+          "location": "belowStimulus",
+          "options": [
+            "A",
+            "B"
+          ]
+        }
+      ]
+    },
+    "trial-63": {
+      "type": "markdown",
+      "path": "test-load-performance/assets/trial.md",
+      "response": [
+        {
+          "id": "answer",
+          "type": "radio",
+          "prompt": "Pick one",
+          "location": "belowStimulus",
+          "options": [
+            "A",
+            "B"
+          ]
+        }
+      ]
+    },
+    "trial-64": {
+      "type": "markdown",
+      "path": "test-load-performance/assets/trial.md",
+      "response": [
+        {
+          "id": "answer",
+          "type": "radio",
+          "prompt": "Pick one",
+          "location": "belowStimulus",
+          "options": [
+            "A",
+            "B"
+          ]
+        }
+      ]
+    },
+    "trial-65": {
+      "type": "markdown",
+      "path": "test-load-performance/assets/trial.md",
+      "response": [
+        {
+          "id": "answer",
+          "type": "radio",
+          "prompt": "Pick one",
+          "location": "belowStimulus",
+          "options": [
+            "A",
+            "B"
+          ]
+        }
+      ]
+    },
+    "trial-66": {
+      "type": "markdown",
+      "path": "test-load-performance/assets/trial.md",
+      "response": [
+        {
+          "id": "answer",
+          "type": "radio",
+          "prompt": "Pick one",
+          "location": "belowStimulus",
+          "options": [
+            "A",
+            "B"
+          ]
+        }
+      ]
+    },
+    "trial-67": {
+      "type": "markdown",
+      "path": "test-load-performance/assets/trial.md",
+      "response": [
+        {
+          "id": "answer",
+          "type": "radio",
+          "prompt": "Pick one",
+          "location": "belowStimulus",
+          "options": [
+            "A",
+            "B"
+          ]
+        }
+      ]
+    },
+    "trial-68": {
+      "type": "markdown",
+      "path": "test-load-performance/assets/trial.md",
+      "response": [
+        {
+          "id": "answer",
+          "type": "radio",
+          "prompt": "Pick one",
+          "location": "belowStimulus",
+          "options": [
+            "A",
+            "B"
+          ]
+        }
+      ]
+    },
+    "trial-69": {
+      "type": "markdown",
+      "path": "test-load-performance/assets/trial.md",
+      "response": [
+        {
+          "id": "answer",
+          "type": "radio",
+          "prompt": "Pick one",
+          "location": "belowStimulus",
+          "options": [
+            "A",
+            "B"
+          ]
+        }
+      ]
+    },
+    "trial-70": {
+      "type": "markdown",
+      "path": "test-load-performance/assets/trial.md",
+      "response": [
+        {
+          "id": "answer",
+          "type": "radio",
+          "prompt": "Pick one",
+          "location": "belowStimulus",
+          "options": [
+            "A",
+            "B"
+          ]
+        }
+      ]
+    },
+    "trial-71": {
+      "type": "markdown",
+      "path": "test-load-performance/assets/trial.md",
+      "response": [
+        {
+          "id": "answer",
+          "type": "radio",
+          "prompt": "Pick one",
+          "location": "belowStimulus",
+          "options": [
+            "A",
+            "B"
+          ]
+        }
+      ]
+    },
+    "trial-72": {
+      "type": "markdown",
+      "path": "test-load-performance/assets/trial.md",
+      "response": [
+        {
+          "id": "answer",
+          "type": "radio",
+          "prompt": "Pick one",
+          "location": "belowStimulus",
+          "options": [
+            "A",
+            "B"
+          ]
+        }
+      ]
+    },
+    "trial-73": {
+      "type": "markdown",
+      "path": "test-load-performance/assets/trial.md",
+      "response": [
+        {
+          "id": "answer",
+          "type": "radio",
+          "prompt": "Pick one",
+          "location": "belowStimulus",
+          "options": [
+            "A",
+            "B"
+          ]
+        }
+      ]
+    },
+    "trial-74": {
+      "type": "markdown",
+      "path": "test-load-performance/assets/trial.md",
+      "response": [
+        {
+          "id": "answer",
+          "type": "radio",
+          "prompt": "Pick one",
+          "location": "belowStimulus",
+          "options": [
+            "A",
+            "B"
+          ]
+        }
+      ]
+    },
+    "trial-75": {
+      "type": "markdown",
+      "path": "test-load-performance/assets/trial.md",
+      "response": [
+        {
+          "id": "answer",
+          "type": "radio",
+          "prompt": "Pick one",
+          "location": "belowStimulus",
+          "options": [
+            "A",
+            "B"
+          ]
+        }
+      ]
+    },
+    "trial-76": {
+      "type": "markdown",
+      "path": "test-load-performance/assets/trial.md",
+      "response": [
+        {
+          "id": "answer",
+          "type": "radio",
+          "prompt": "Pick one",
+          "location": "belowStimulus",
+          "options": [
+            "A",
+            "B"
+          ]
+        }
+      ]
+    },
+    "trial-77": {
+      "type": "markdown",
+      "path": "test-load-performance/assets/trial.md",
+      "response": [
+        {
+          "id": "answer",
+          "type": "radio",
+          "prompt": "Pick one",
+          "location": "belowStimulus",
+          "options": [
+            "A",
+            "B"
+          ]
+        }
+      ]
+    },
+    "trial-78": {
+      "type": "markdown",
+      "path": "test-load-performance/assets/trial.md",
+      "response": [
+        {
+          "id": "answer",
+          "type": "radio",
+          "prompt": "Pick one",
+          "location": "belowStimulus",
+          "options": [
+            "A",
+            "B"
+          ]
+        }
+      ]
+    },
+    "trial-79": {
+      "type": "markdown",
+      "path": "test-load-performance/assets/trial.md",
+      "response": [
+        {
+          "id": "answer",
+          "type": "radio",
+          "prompt": "Pick one",
+          "location": "belowStimulus",
+          "options": [
+            "A",
+            "B"
+          ]
+        }
+      ]
+    },
+    "trial-80": {
+      "type": "markdown",
+      "path": "test-load-performance/assets/trial.md",
+      "response": [
+        {
+          "id": "answer",
+          "type": "radio",
+          "prompt": "Pick one",
+          "location": "belowStimulus",
+          "options": [
+            "A",
+            "B"
+          ]
+        }
+      ]
+    }
+  },
+  "sequence": {
+    "order": "fixed",
+    "components": [
+      "intro",
+      {
+        "order": "random",
+        "components": [
+          "trial-01",
+          "trial-02",
+          "trial-03",
+          "trial-04",
+          "trial-05",
+          "trial-06",
+          "trial-07",
+          "trial-08",
+          "trial-09",
+          "trial-10",
+          "trial-11",
+          "trial-12",
+          "trial-13",
+          "trial-14",
+          "trial-15",
+          "trial-16",
+          "trial-17",
+          "trial-18",
+          "trial-19",
+          "trial-20",
+          "trial-21",
+          "trial-22",
+          "trial-23",
+          "trial-24",
+          "trial-25",
+          "trial-26",
+          "trial-27",
+          "trial-28",
+          "trial-29",
+          "trial-30",
+          "trial-31",
+          "trial-32",
+          "trial-33",
+          "trial-34",
+          "trial-35",
+          "trial-36",
+          "trial-37",
+          "trial-38",
+          "trial-39",
+          "trial-40",
+          "trial-41",
+          "trial-42",
+          "trial-43",
+          "trial-44",
+          "trial-45",
+          "trial-46",
+          "trial-47",
+          "trial-48",
+          "trial-49",
+          "trial-50",
+          "trial-51",
+          "trial-52",
+          "trial-53",
+          "trial-54",
+          "trial-55",
+          "trial-56",
+          "trial-57",
+          "trial-58",
+          "trial-59",
+          "trial-60",
+          "trial-61",
+          "trial-62",
+          "trial-63",
+          "trial-64",
+          "trial-65",
+          "trial-66",
+          "trial-67",
+          "trial-68",
+          "trial-69",
+          "trial-70",
+          "trial-71",
+          "trial-72",
+          "trial-73",
+          "trial-74",
+          "trial-75",
+          "trial-76",
+          "trial-77",
+          "trial-78",
+          "trial-79",
+          "trial-80"
+        ]
+      }
+    ]
+  }
+}

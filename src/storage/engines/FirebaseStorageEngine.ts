@@ -317,10 +317,11 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
     );
     this.storage = getStorage();
 
-    // Check if we're in dev, if so use a debug token
+    // In dev, use an App Check debug token. Keep one that is already set, such
+    // as a registered token the real-network load test injects.
     if (import.meta.env.DEV) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (window as any).FIREBASE_APPCHECK_DEBUG_TOKEN = true;
+      (window as any).FIREBASE_APPCHECK_DEBUG_TOKEN ??= true;
     }
     try {
       initializeAppCheck(firebaseApp, {

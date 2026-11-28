@@ -23,6 +23,40 @@ export interface ParticipantMetadata {
   ip: string | null;
   /** The effective color mode chosen when participation starts, retained for resume and replay. Absent in older data. */
   colorMode?: 'light' | 'dark';
+  /** How long each of the participant's recent study loads took, oldest first. Absent in older data. */
+  loadTimings?: ParticipantLoadTiming[];
+}
+
+/**
+ * The phases of one study load. Each `...Ms` value is milliseconds since the
+ * page began loading (performance.now()), so the gaps between them are the
+ * time each phase took.
+ */
+export interface ParticipantLoadTiming {
+  /** When the load finished, as epoch milliseconds. */
+  recordedAt: number;
+  /** Whether this load created the participant, rather than resuming them. */
+  newParticipant: boolean;
+  /** Retries after a failed startup; 0 for the first attempt. */
+  attempt: number;
+  /** The HTML was parsed and the app's scripts had run. */
+  documentLoadedMs?: number;
+  /** The study config was fetched and parsed. */
+  configLoadedMs?: number;
+  /** The storage engine was connected and signed in. */
+  storageReadyMs: number;
+  /** The study's database was initialized. */
+  studyDatabaseReadyMs: number;
+  /** The config was saved, or found already saved. */
+  configSavedMs: number;
+  /** The sequence array was loaded or created. */
+  sequenceArrayLoadedMs: number;
+  /** The participant was created or resumed. */
+  participantJoinedMs: number;
+  /** The first trial could be shown. */
+  readyMs: number;
+  /** The browser's estimate of the connection (navigator.connection.effectiveType), when it reports one. */
+  connection?: string;
 }
 
 export type ProvenanceTraversalEvent = {

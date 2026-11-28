@@ -319,8 +319,33 @@ describe('Shell', () => {
     setupThemeSession('userPreference', { ...baseSession.metadata, colorMode: 'dark' });
     render(<Shell globalConfig={globalConfig} />);
     await waitFor(() => expect(useStudyColorMode).toHaveBeenLastCalledWith('dark'));
-    if (isReplay) expect(fetch).not.toHaveBeenCalled();
-    expect(mockStorageEngine!.updateParticipantMetadata).not.toHaveBeenCalled();
+    if (isReplay) {
+      expect(fetch).not.toHaveBeenCalled();
+      expect(mockStorageEngine!.updateParticipantMetadata).not.toHaveBeenCalled();
+    } else {
+      // A resume records its load time and keeps the saved mode.
+      await waitFor(() => expect(mockStorageEngine!.updateParticipantMetadata).toHaveBeenCalledWith(
+        expect.objectContaining({ colorMode: 'dark', loadTimings: [expect.objectContaining({ newParticipant: false })] }),
+      ));
+    }
+  });
+
+  test('records the phases of a new participant\'s load with the IP in one metadata write', async () => {
+    setupThemeSession('light');
+    mockStorageEngine!.isNewlyCreatedParticipant.mockReturnValue(true);
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(JSON.stringify({ ip: '1.2.3.4' }))));
+    render(<Shell globalConfig={globalConfig} />);
+    await waitFor(() => expect(mockStorageEngine!.updateParticipantMetadata).toHaveBeenCalled());
+    expect(mockStorageEngine!.updateParticipantMetadata).toHaveBeenCalledTimes(1);
+    const [metadata] = mockStorageEngine!.updateParticipantMetadata.mock.calls[0];
+    expect(metadata.ip).toBe('1.2.3.4');
+    expect(metadata.loadTimings).toHaveLength(1);
+    const [timing] = metadata.loadTimings;
+    expect(timing).toMatchObject({ newParticipant: true, attempt: 0 });
+    const phases = [timing.configLoadedMs, timing.storageReadyMs, timing.studyDatabaseReadyMs, timing.configSavedMs,
+      timing.sequenceArrayLoadedMs, timing.participantJoinedMs, timing.readyMs];
+    phases.forEach((phase) => expect(phase).toEqual(expect.any(Number)));
+    expect(phases).toEqual([...phases].sort((left, right) => left - right));
   });
 
   test.each([false, true])('keeps the initial dark preference during startup recovery (disconnected=%s)', async (disconnected) => {
