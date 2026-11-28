@@ -70,26 +70,26 @@ const USER_AGENTS: Record<Transport, string> = {
 // they still complete.
 const BUDGETS: Record<string, Record<Transport, Budget>> = {
   'new participant': {
-    longPolling: { ms: 3023, requests: 30, downloadedKb: 505 },
-    streaming: { ms: 2423, requests: 30, downloadedKb: 505 },
+    longPolling: { ms: 2633, requests: 30, downloadedKb: 29 },
+    streaming: { ms: 2033, requests: 30, downloadedKb: 29 },
   },
   'returning participant in the same browser': {
-    longPolling: { ms: 1417, requests: 7, downloadedKb: 504 },
-    streaming: { ms: 1117, requests: 7, downloadedKb: 504 },
+    longPolling: { ms: 1027, requests: 7, downloadedKb: 28 },
+    streaming: { ms: 727, requests: 7, downloadedKb: 28 },
   },
   'returning participant in a new browser': {
-    longPolling: { ms: 1518, requests: 8, downloadedKb: 505 },
-    streaming: { ms: 1218, requests: 8, downloadedKb: 505 },
+    longPolling: { ms: 1128, requests: 8, downloadedKb: 29 },
+    streaming: { ms: 828, requests: 8, downloadedKb: 29 },
   },
   'first participant after the config changes': {
-    longPolling: { ms: 5136, requests: 50, downloadedKb: 6 },
-    streaming: { ms: 4136, requests: 50, downloadedKb: 6 },
+    longPolling: { ms: 4746, requests: 50, downloadedKb: 6 },
+    streaming: { ms: 3746, requests: 50, downloadedKb: 6 },
   },
   // Contended transactions back off with seeded jitter, as the SDK does, so
   // this budget depends on which retries collide and moves more than the others.
   'ten participants arriving at once': {
-    longPolling: { ms: 10915, requests: 444, downloadedKb: 5070 },
-    streaming: { ms: 10315, requests: 444, downloadedKb: 5070 },
+    longPolling: { ms: 10525, requests: 444, downloadedKb: 314 },
+    streaming: { ms: 9925, requests: 444, downloadedKb: 314 },
   },
 };
 
@@ -216,6 +216,13 @@ beforeEach(() => {
   vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'setInterval', 'clearInterval', 'Date', 'performance'] });
   vi.spyOn(globalThis.crypto.subtle, 'digest').mockImplementation(simulatedDigest);
   vi.spyOn(globalThis, 'fetch').mockImplementation((url) => simulatedFetch(url.toString()) as unknown as Promise<Response>);
+  // Sequence arrays are shuffled, and their compressed size depends on the
+  // shuffle, so seed it to keep the downloaded bytes the same on every run.
+  let seed = 1;
+  vi.spyOn(Math, 'random').mockImplementation(() => {
+    seed = (seed * 48271) % 2147483647;
+    return seed / 2147483647;
+  });
 });
 
 afterEach(() => {

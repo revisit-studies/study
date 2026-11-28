@@ -54,6 +54,33 @@ export async function retrySequenceAllocation<T>(
   throw new Error('Failed to claim a rejected sequence assignment after concurrent updates');
 }
 
+// Every gzip stream starts with these two bytes; JSON text never does.
+const GZIP_MAGIC = [0x1f, 0x8b];
+
+/**
+ * Gzips text for upload, or returns undefined where the browser cannot
+ * (CompressionStream is in every current browser, but not in older ones).
+ */
+export async function gzipText(text: string): Promise<Uint8Array<ArrayBuffer> | undefined> {
+  if (typeof CompressionStream === 'undefined') return undefined;
+  const compressed = new Response(new TextEncoder().encode(text)).body!.pipeThrough(new CompressionStream('gzip'));
+  return new Uint8Array(await new Response(compressed).arrayBuffer());
+}
+
+/**
+ * Reads a downloaded storage object as text. Objects uploaded gzipped are
+ * normally decompressed by the browser, which honors their Content-Encoding;
+ * this also handles one served still compressed.
+ */
+export async function readStorageText(blob: Blob): Promise<string> {
+  const bytes = new Uint8Array(await blob.arrayBuffer());
+  if (bytes[0] === GZIP_MAGIC[0] && bytes[1] === GZIP_MAGIC[1]) {
+    const decompressed = new Response(bytes).body!.pipeThrough(new DecompressionStream('gzip'));
+    return new Response(decompressed).text();
+  }
+  return new TextDecoder().decode(bytes);
+}
+
 export async function hash(input: string) {
   const msgUint8 = new TextEncoder().encode(input);
   const hashBuffer = await crypto.subtle.digest('SHA-256', msgUint8);

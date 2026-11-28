@@ -2,7 +2,7 @@ import {
   beforeAll, beforeEach, afterAll, afterEach, describe, expect, test, vi,
 } from 'vitest';
 import { signInAnonymously, signOut } from '@firebase/auth';
-import { getBlob, getMetadata } from 'firebase/storage';
+import { getBlob, getMetadata, uploadBytes } from 'firebase/storage';
 import {
   enableNetwork, Timestamp, runTransaction, getCountFromServer, getDocs, getDoc, getDocsFromServer, setDoc,
 } from 'firebase/firestore';
@@ -11,7 +11,7 @@ import testConfigSimple from './testConfigSimple.json';
 import testConfigSimple2 from './testConfigSimple2.json';
 import { makeStoredAnswer } from '../../tests/utils';
 import { generateSequenceArray } from '../../utils/handleRandomSequences';
-import { hash } from '../engines/utils/storageEngineHelpers';
+import { gzipText, hash } from '../engines/utils/storageEngineHelpers';
 import { type Sequence } from '../../store/types';
 import { FirebaseStorageEngine } from '../engines/FirebaseStorageEngine';
 import {
@@ -66,8 +66,16 @@ vi.mock('firebase/storage', () => {
   return {
     getStorage: vi.fn(() => ({})),
     ref: vi.fn((_storage: object, path: string) => makeRef(path)),
-    uploadBytes: vi.fn(async (refObj: { path: string }, blob: Blob | object) => {
-      const text = blob instanceof Blob ? await blob.text() : JSON.stringify(blob);
+    uploadBytes: vi.fn(async (refObj: { path: string }, blob: Blob | Uint8Array | object, metadata?: { contentEncoding?: string }) => {
+      let text: string;
+      if (blob instanceof Uint8Array) {
+        // Store what a browser would read back: it decompresses gzip objects itself.
+        text = metadata?.contentEncoding === 'gzip'
+          ? await new Response(new Response(blob.slice()).body!.pipeThrough(new DecompressionStream('gzip'))).text()
+          : new TextDecoder().decode(blob);
+      } else {
+        text = blob instanceof Blob ? await blob.text() : JSON.stringify(blob);
+      }
       storageObjects[refObj.path] = text;
       return { ref: refObj };
     }),
@@ -1927,6 +1935,27 @@ describe.each([
     finishRelease();
     await settling;
     expect(firestoreData[lockPath]).toBeUndefined();
+  });
+
+  test('sequence arrays and participant data are stored gzipped, configs are not', async () => {
+    const upload = vi.mocked(uploadBytes);
+    upload.mockClear();
+    // A config not saved yet, so this test uploads it.
+    const config = { ...configSimple, studyMetadata: { ...configSimple.studyMetadata, version: 'gzip' } };
+    await storageEngine.saveConfig(config);
+    await storageEngine.setSequenceArray(generateSequenceArray(config));
+    await storageEngine.initializeParticipantSession({}, config, participantMetadata, 'gzip-participant');
+    const encodingByType = Object.fromEntries(upload.mock.calls.map(([target, , metadata]) => [
+      (target as unknown as { path: string }).path.split('_').at(-1), (metadata as { contentEncoding?: string } | undefined)?.contentEncoding,
+    ]));
+    expect(encodingByType).toMatchObject({ config: undefined, sequenceArray: 'gzip', participantData: 'gzip' });
+  });
+
+  test('reads a gzipped object that is served still compressed', async () => {
+    await storageEngine.setSequenceArray(sequenceArray);
+    const compressed = (await gzipText(JSON.stringify(sequenceArray)))!;
+    vi.mocked(getBlob).mockResolvedValueOnce(new Blob([compressed]));
+    expect(await storageEngine.getSequenceArray()).toEqual(sequenceArray);
   });
 
   test('the backend clock is measured once for repeated leases', async () => {

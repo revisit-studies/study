@@ -63,8 +63,16 @@ vi.mock('firebase/storage', () => {
   return {
     getStorage: vi.fn(() => ({})),
     ref: vi.fn((_storage: object, path: string) => makeRef(path)),
-    uploadBytes: vi.fn(async (refObj: { path: string }, blob: Blob | object) => {
-      const text = blob instanceof Blob ? await blob.text() : JSON.stringify(blob);
+    uploadBytes: vi.fn(async (refObj: { path: string }, blob: Blob | Uint8Array | object, metadata?: { contentEncoding?: string }) => {
+      let text: string;
+      if (blob instanceof Uint8Array) {
+        // Store what a browser would read back: it decompresses gzip objects itself.
+        text = metadata?.contentEncoding === 'gzip'
+          ? await new Response(new Response(blob.slice()).body!.pipeThrough(new DecompressionStream('gzip'))).text()
+          : new TextDecoder().decode(blob);
+      } else {
+        text = blob instanceof Blob ? await blob.text() : JSON.stringify(blob);
+      }
       storageObjects[refObj.path] = text;
       return { ref: refObj };
     }),

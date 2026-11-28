@@ -14,7 +14,7 @@ import {
   browserPopupRedirectResolver, getAuth, GoogleAuthProvider, onAuthStateChanged, signInAnonymously, signInWithPopup, signOut,
 } from '@firebase/auth';
 import {
-  isParticipantData, isWebKitBrowser, rebuildSequenceAllocator, retrySequenceAllocation,
+  gzipText, isParticipantData, isWebKitBrowser, readStorageText, rebuildSequenceAllocator, retrySequenceAllocation,
 } from './utils/storageEngineHelpers';
 import {
   assertAutoTimeoutRestoreSupported, shouldValidateAutoTimeoutStage, assertAutoTimeoutStageSupported, StageAllocation, CloudStorageEngine, REVISIT_MODE, StorageObjectType, StorageObject, UserManagementData, SequenceAssignment, SnapshotDocContent, StoredUser, RuntimeStudySettings, cleanupModes, consumesCapacity, isStageParticipantLimitEnabled, ModesAndStageData, StageInfo, StageUpdates, StageData, applyStageUpdates, StageCapacityExceededError, StageNoAvailableConditionsError, StageOnlyDisabledConditionsHaveCapacityError, getBetweenSubjectsCombinationKey, getConfigConditionKeys, getDesiredParticipantCountsByCombination, getLeastServedSequence, getStageAllocationFromAssignments, getStageParticipantCounts, isSequenceEnabledForStage, assertAppendOnlyConditions, validateStageParticipantLimits, SequenceAssignmentAllocation, SequenceAllocator,
@@ -352,8 +352,7 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
       } else {
         blob = await getBlob(storageRef);
       }
-      const fullProvStr = await blob.text();
-      storageObj = JSON.parse(fullProvStr);
+      storageObj = JSON.parse(await readStorageText(blob));
       if (type === 'participantData' && !isParticipantData(storageObj)) throw new Error('Invalid participant data');
     } catch (error) {
       // Only confirmed absence may trigger replacement, orphan cleanup, or a legacy fallback.
@@ -375,12 +374,22 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
     if (objectToUpload instanceof Blob) {
       await uploadBytes(storageRef, objectToUpload);
     } else if (Object.keys(objectToUpload).length > 0) {
-      const blob = new Blob([JSON.stringify(objectToUpload)], {
-        type: 'application/json',
-      });
-      await uploadBytes(storageRef, blob);
+      const text = JSON.stringify(objectToUpload);
+      const compressed = FirebaseStorageEngine.COMPRESSED_STORAGE_TYPES.has(type) ? await gzipText(text) : undefined;
+      if (compressed) {
+        // The browser decompresses objects stored with this Content-Encoding.
+        await uploadBytes(storageRef, compressed, { contentType: 'application/json', contentEncoding: 'gzip' });
+      } else {
+        await uploadBytes(storageRef, new Blob([text], { type: 'application/json' }));
+      }
     }
   }
+
+  // The largest JSON objects, and very repetitive: every joining participant
+  // downloads the sequence array (mostly identical rows), and every save
+  // downloads and re-uploads the participant's record (answers and their
+  // window events). Media is already compressed, and stays as uploaded.
+  private static readonly COMPRESSED_STORAGE_TYPES = new Set<StorageObjectType>(['sequenceArray', 'participantData']);
 
   protected async _deleteFromStorage<T extends StorageObjectType>(
     prefix: string,

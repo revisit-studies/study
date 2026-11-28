@@ -2,7 +2,7 @@ import {
   afterEach, beforeEach, describe, expect, test, vi,
 } from 'vitest';
 import {
-  isTransactionContentionError, isWebKitBrowser, retrySequenceAllocation, SEQUENCE_ALLOCATION_CONTENTION_RETRIES,
+  gzipText, isTransactionContentionError, isWebKitBrowser, readStorageText, retrySequenceAllocation, SEQUENCE_ALLOCATION_CONTENTION_RETRIES,
 } from '../storageEngineHelpers';
 
 describe('isWebKitBrowser', () => {
@@ -63,5 +63,28 @@ describe('retrySequenceAllocation', () => {
     const allocate = vi.fn().mockRejectedValue(failure);
     await expect(retrySequenceAllocation(allocate)).rejects.toBe(failure);
     expect(allocate).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('gzipped storage objects', () => {
+  const text = JSON.stringify(Array.from({ length: 200 }, () => ({ order: 'fixed', components: ['intro', 'trial', 'end'] })));
+
+  test('round-trips and shrinks repetitive JSON', async () => {
+    const compressed = (await gzipText(text))!;
+    expect(compressed.byteLength).toBeLessThan(text.length / 20);
+    expect(await readStorageText(new Blob([compressed]))).toBe(text);
+  });
+
+  test('reads uncompressed objects as before', async () => {
+    expect(await readStorageText(new Blob([text]))).toBe(text);
+  });
+
+  test('uploads uncompressed where the browser cannot compress', async () => {
+    vi.stubGlobal('CompressionStream', undefined);
+    try {
+      expect(await gzipText(text)).toBeUndefined();
+    } finally {
+      vi.unstubAllGlobals();
+    }
   });
 });

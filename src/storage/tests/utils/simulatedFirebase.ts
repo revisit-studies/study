@@ -46,6 +46,8 @@ const DELETE_FIELD = { __sentinel: 'deleteField' };
 export const simulation = {
   firestoreData: {} as Record<string, DocData>,
   storageObjects: {} as Record<string, string>,
+  // Bytes sent over the network for objects stored gzipped; others send their text.
+  storageWireBytes: {} as Record<string, number>,
   // Each simulated browser has its own local storage.
   browserStores: {} as Record<string, Record<string, unknown>>,
   currentBrowser: 'browser-0',
@@ -70,6 +72,7 @@ function nextJitter() {
 export function resetSimulation() {
   simulation.firestoreData = {};
   simulation.storageObjects = {};
+  simulation.storageWireBytes = {};
   simulation.browserStores = {};
   simulation.currentBrowser = 'browser-0';
   simulation.calls = [];
@@ -100,6 +103,30 @@ function trackRealWork<T>(work: Promise<T>) {
   simulation.pendingRealWork += 1;
   return work.finally(() => { simulation.pendingRealWork -= 1; });
 }
+
+// The engine gzips some uploads with the platform's streams, which resolve in
+// real time. Count each stream as real work until it finishes, so the runner
+// does not advance virtual time (and expire leases) while one is compressing.
+function trackRealWorkStream<T extends CompressionStream | DecompressionStream>(Stream: new (format: CompressionFormat) => T) {
+  return class TrackedStream {
+    readonly readable: ReadableStream<Uint8Array>;
+
+    readonly writable: WritableStream<BufferSource>;
+
+    constructor(format: CompressionFormat) {
+      const inner = new Stream(format);
+      simulation.pendingRealWork += 1;
+      let finished = false;
+      const finish = () => {
+        if (!finished) { finished = true; simulation.pendingRealWork -= 1; }
+      };
+      this.writable = inner.writable;
+      this.readable = inner.readable.pipeThrough(new TransformStream<Uint8Array, Uint8Array>({ flush: finish }));
+    }
+  };
+}
+globalThis.CompressionStream = trackRealWorkStream(CompressionStream) as unknown as typeof CompressionStream;
+globalThis.DecompressionStream = trackRealWorkStream(DecompressionStream) as unknown as typeof DecompressionStream;
 
 function sizeOf(value: unknown) {
   return value === undefined ? 0 : JSON.stringify(value).length;
@@ -377,22 +404,43 @@ function notFound() {
 
 // Blob stand-in whose text resolves in a microtask rather than real time.
 function storedBlob(text: string) {
-  return { size: text.length, text: () => Promise.resolve(text) };
+  return {
+    size: text.length,
+    text: () => Promise.resolve(text),
+    arrayBuffer: () => Promise.resolve(new TextEncoder().encode(text).buffer),
+  };
+}
+
+// A browser sends an object's stored bytes and decompresses them itself when
+// the object has a gzip Content-Encoding.
+function wireBytes(path: string) {
+  return simulation.storageWireBytes[path] ?? simulation.storageObjects[path]?.length ?? 0;
+}
+
+async function uploadedText(data: Blob | Uint8Array, metadata?: { contentEncoding?: string }) {
+  if (data instanceof Uint8Array) {
+    if (metadata?.contentEncoding !== 'gzip') return new TextDecoder().decode(data);
+    return new Response(new Response(data.slice()).body!.pipeThrough(new DecompressionStream('gzip'))).text();
+  }
+  return data.text();
 }
 
 export function createStorageMock() {
   return {
     getStorage: vi.fn(() => ({})),
     ref: vi.fn((_storage: unknown, path: string) => ({ path, fullPath: path })),
-    uploadBytes: vi.fn(async (ref: { path: string }, blob: Blob) => {
-      const text = trackRealWork(blob.text());
-      await network('storage.upload', ref.path, 1, blob.size);
+    uploadBytes: vi.fn(async (ref: { path: string }, data: Blob | Uint8Array, metadata?: { contentEncoding?: string }) => {
+      const text = trackRealWork(uploadedText(data, metadata));
+      const size = data instanceof Uint8Array ? data.byteLength : data.size;
+      await network('storage.upload', ref.path, 1, size);
       simulation.storageObjects[ref.path] = await text;
+      if (metadata?.contentEncoding === 'gzip') simulation.storageWireBytes[ref.path] = size;
+      else delete simulation.storageWireBytes[ref.path];
       return { ref };
     }),
     getBlob: vi.fn(async (ref: { path: string }) => {
       const data = simulation.storageObjects[ref.path];
-      await network('storage.download', ref.path, 1, data?.length ?? 0);
+      await network('storage.download', ref.path, 1, wireBytes(ref.path));
       if (data === undefined) throw notFound();
       return storedBlob(data);
     }),
@@ -400,7 +448,7 @@ export function createStorageMock() {
       await network('storage.metadata', ref.path, 1);
       const data = simulation.storageObjects[ref.path];
       if (data === undefined) throw notFound();
-      return { size: data.length };
+      return { size: wireBytes(ref.path) };
     }),
     getDownloadURL: vi.fn(async (ref: { path: string }) => {
       await network('storage.downloadUrl', ref.path, 1);
@@ -414,6 +462,7 @@ export function createStorageMock() {
     deleteObject: vi.fn(async (ref: { path: string }) => {
       await network('storage.delete', ref.path, 1);
       delete simulation.storageObjects[ref.path];
+      delete simulation.storageWireBytes[ref.path];
     }),
     listAll: vi.fn(async (ref: { path: string }) => {
       await network('storage.list', ref.path, 1);
@@ -430,7 +479,7 @@ export function createStorageMock() {
 export async function simulatedFetch(url: string) {
   const path = url.slice('simulated-storage://'.length);
   const data = simulation.storageObjects[path];
-  await network('storage.download', path, 1, data?.length ?? 0);
+  await network('storage.download', path, 1, wireBytes(path));
   return {
     ok: data !== undefined,
     status: data === undefined ? 404 : 200,
