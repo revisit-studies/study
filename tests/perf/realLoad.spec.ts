@@ -54,7 +54,9 @@ type LoadResult = {
   scenario: Scenario;
   run: number;
   documentLoadedMs: number;
+  /** The app's `revisit:*` marks, when the build has them. */
   phases: Record<string, number>;
+  /** When the first trial was on screen and usable, in ms since navigation. */
   readyMs: number;
   /** Requests to Firestore, Cloud Storage, and Firebase sign-in and App Check. */
   firebaseRequests: number;
@@ -68,6 +70,7 @@ const FIREBASE_HOSTS = /(firestore|firebasestorage|identitytoolkit|securetoken|f
 
 async function measureLoad(page: Page, scenario: Scenario, run: number, navigate: () => Promise<unknown>): Promise<LoadResult> {
   const requests: Request[] = [];
+  let readyMs = 0;
   const bytes: Promise<number>[] = [];
   const onRequest = (request: Request) => {
     if (FIREBASE_HOSTS.test(request.url())) requests.push(request);
@@ -79,9 +82,15 @@ async function measureLoad(page: Page, scenario: Scenario, run: number, navigate
   page.on('requestfinished', onFinished);
   try {
     await navigate();
-    await expect(page.getByRole('heading', { name: 'Load performance test' })).toBeVisible({ timeout: 120_000 });
-    await expect(page.getByTestId('study-interface')).toHaveAttribute('aria-busy', 'false');
-    await page.waitForFunction(() => performance.getEntriesByName('revisit:ready', 'mark').length > 0);
+    // Timed in the page on every frame, so it works for builds without the
+    // app's marks (such as older branches) and does not include polling delay.
+    const visible = await page.waitForFunction(() => {
+      const shown = [...document.querySelectorAll('h1')].some((heading) => heading.textContent?.trim() === 'Load performance test');
+      const ready = document.querySelector('[data-testid="study-interface"]')?.getAttribute('aria-busy') === 'false';
+      return shown && ready ? Math.round(performance.now()) : false;
+    }, undefined, { polling: 'raf', timeout: 120_000 });
+    readyMs = await visible.jsonValue() as number;
+    await expect(page.getByRole('heading', { name: 'Load performance test' })).toBeVisible();
   } finally {
     page.off('request', onRequest);
     page.off('requestfinished', onFinished);
@@ -100,7 +109,7 @@ async function measureLoad(page: Page, scenario: Scenario, run: number, navigate
     run,
     documentLoadedMs: timing.documentLoadedMs,
     phases: timing.marks,
-    readyMs: timing.marks.ready,
+    readyMs,
     firebaseRequests: requests.length,
     firestoreRequests: urls.filter((url) => url.includes('firestore.googleapis.com')).length,
     storageRequests: urls.filter((url) => url.includes('firebasestorage.googleapis.com')).length,
@@ -120,6 +129,7 @@ function formatTable(results: LoadResult[]) {
     const phaseMedians = PHASES.map((phase, index) => {
       const previous = index === 0 ? undefined : PHASES[index - 1];
       // Time spent in this phase: from the previous mark (or the document load) to this one.
+      if (loads.some((load) => load.phases[phase] === undefined)) return '-';
       return median(loads.map((load) => load.phases[phase] - (previous ? load.phases[previous] : load.documentLoadedMs)));
     });
     return [
@@ -131,7 +141,7 @@ function formatTable(results: LoadResult[]) {
       median(loads.map((load) => load.firebaseKb)),
     ].join(' | ');
   });
-  const header = ['scenario', 'ready ms median (min-max)', 'document', ...PHASES, 'firebase requests', 'firebase KB'].join(' | ');
+  const header = ['scenario', 'first trial shown ms median (min-max)', 'document', ...PHASES, 'firebase requests', 'firebase KB'].join(' | ');
   return [header, ...rows].join('\n');
 }
 
